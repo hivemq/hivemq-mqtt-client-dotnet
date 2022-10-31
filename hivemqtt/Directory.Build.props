@@ -1,0 +1,32 @@
+<Project>
+
+  <PropertyGroup Label="Build">
+    <LangVersion>latest</LangVersion>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Package">
+    <Authors>Peter Giacomo Lombardo</Authors>
+    <Company>HiveMQ, GmbH</Company>
+    <Copyright>Copyright © HiveMQ GmbH. All rights Reserved</Copyright>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageLicenseExpression>Apache License 2.0</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/hivemq/hivemq-mqtt-client-dotnet</PackageProjectUrl>
+    <PackageIcon>Icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/hivemq/hivemq-mqtt-client-dotnet.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReleaseNotes>https://github.com/hivemq/hivemq-mqtt-client-dotnet/releases</PackageReleaseNotes>
+  </PropertyGroup>
+
+  <ItemGroup Label="Package References">
+    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" PrivateAssets="all" Version="17.3.44" />
+    <PackageReference Include="MinVer" PrivateAssets="all" Version="4.2.0" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="all" Version="1.2.0-beta.435" />
+  </ItemGroup>
+
+</Project>

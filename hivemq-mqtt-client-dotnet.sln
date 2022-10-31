@@ -1,0 +1,103 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 17.0.31423.177
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Source", "Source", "{719809C2-A551-4C4A-9EFD-B10FB5E35BC0}"
+	ProjectSection(SolutionItems) = preProject
+		hivemqtt\Source\Directory.Build.props = hivemqtt\Source\Directory.Build.props
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HiveMQtt", "hivemqtt\Source\hivemqtt\HiveMQtt.csproj", "{651E017C-85D6-44E5-A116-1F9081AA1092}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F20E2797-D1E3-4321-91BB-FAE54954D2A0}"
+	ProjectSection(SolutionItems) = preProject
+		hivemqtt\.editorconfig = hivemqtt\.editorconfig
+		hivemqtt\.gitattributes = hivemqtt\.gitattributes
+		hivemqtt\.gitignore = hivemqtt\.gitignore
+		hivemqtt\build.cake = hivemqtt\build.cake
+		hivemqtt\Directory.Build.props = hivemqtt\Directory.Build.props
+		hivemqtt\Directory.Build.targets = hivemqtt\Directory.Build.targets
+		hivemqtt\dotnet-tools.json = hivemqtt\dotnet-tools.json
+		hivemqtt\global.json = hivemqtt\global.json
+		hivemqtt\Key.snk = hivemqtt\Key.snk
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{EFE1E5ED-D337-4874-82EC-D9FA0BC7D3AB}"
+	ProjectSection(SolutionItems) = preProject
+		hivemqtt\.github\dependabot.yml = hivemqtt\.github\dependabot.yml
+		hivemqtt\.github\release-drafter.yml = hivemqtt\.github\release-drafter.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{841C67EF-BBB2-4730-8E29-22FF3FD54306}"
+	ProjectSection(SolutionItems) = preProject
+		hivemqtt\.github\workflows\build.yml = hivemqtt\.github\workflows\build.yml
+		hivemqtt\.github\workflows\codeql-analysis.yml = hivemqtt\.github\workflows\codeql-analysis.yml
+		hivemqtt\.github\workflows\release-drafter.yml = hivemqtt\.github\workflows\release-drafter.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{7EDFA103-DB69-4C88-9DE4-97ADBF8253A1}"
+	ProjectSection(SolutionItems) = preProject
+		hivemqtt\LICENSE.md = hivemqtt\LICENSE.md
+		hivemqtt\README.md = hivemqtt\README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{0555C737-CE4B-4C78-87AB-6296E1E32D01}"
+	ProjectSection(SolutionItems) = preProject
+		hivemqtt\.github\CODE_OF_CONDUCT.md = hivemqtt\.github\CODE_OF_CONDUCT.md
+		hivemqtt\.github\CONTRIBUTING.md = hivemqtt\.github\CONTRIBUTING.md
+		hivemqtt\.github\PULL_REQUEST_TEMPLATE.md = hivemqtt\.github\PULL_REQUEST_TEMPLATE.md
+		hivemqtt\.github\SECURITY.md = hivemqtt\.github\SECURITY.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ISSUE_TEMPLATE", "ISSUE_TEMPLATE", "{566DF0E2-1288-4083-9B55-4C8B69BB1432}"
+	ProjectSection(SolutionItems) = preProject
+		hivemqtt\.github\ISSUE_TEMPLATE\BUG_REPORT.yml = hivemqtt\.github\ISSUE_TEMPLATE\BUG_REPORT.yml
+		hivemqtt\.github\ISSUE_TEMPLATE\FEATURE_REQUEST.yml = hivemqtt\.github\ISSUE_TEMPLATE\FEATURE_REQUEST.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{E1B24F25-B8A4-46EE-B7EB-7803DCFC543F}"
+	ProjectSection(SolutionItems) = preProject
+		hivemqtt\Tests\.editorconfig = hivemqtt\Tests\.editorconfig
+		hivemqtt\Tests\Directory.Build.props = hivemqtt\Tests\Directory.Build.props
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HiveMQtt.Test", "hivemqtt\Tests\hivemqtt.Test\hivemqtt.Test.csproj", "{69FC84C1-751E-45C7-A70F-166812466ED8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Images", "Images", "{26F71F5B-2940-4FB0-9681-A76060CBCEF9}"
+	ProjectSection(SolutionItems) = preProject
+		hivemqtt\Images\Banner.png = hivemqtt\Images\Banner.png
+		hivemqtt\Images\Hero.png = hivemqtt\Images\Hero.png
+		hivemqtt\Images\Icon.png = hivemqtt\Images\Icon.png
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{651E017C-85D6-44E5-A116-1F9081AA1092}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{651E017C-85D6-44E5-A116-1F9081AA1092}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{651E017C-85D6-44E5-A116-1F9081AA1092}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{651E017C-85D6-44E5-A116-1F9081AA1092}.Release|Any CPU.Build.0 = Release|Any CPU
+		{69FC84C1-751E-45C7-A70F-166812466ED8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{69FC84C1-751E-45C7-A70F-166812466ED8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{69FC84C1-751E-45C7-A70F-166812466ED8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{69FC84C1-751E-45C7-A70F-166812466ED8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{651E017C-85D6-44E5-A116-1F9081AA1092} = {719809C2-A551-4C4A-9EFD-B10FB5E35BC0}
+		{EFE1E5ED-D337-4874-82EC-D9FA0BC7D3AB} = {F20E2797-D1E3-4321-91BB-FAE54954D2A0}
+		{841C67EF-BBB2-4730-8E29-22FF3FD54306} = {EFE1E5ED-D337-4874-82EC-D9FA0BC7D3AB}
+		{0555C737-CE4B-4C78-87AB-6296E1E32D01} = {7EDFA103-DB69-4C88-9DE4-97ADBF8253A1}
+		{566DF0E2-1288-4083-9B55-4C8B69BB1432} = {0555C737-CE4B-4C78-87AB-6296E1E32D01}
+		{69FC84C1-751E-45C7-A70F-166812466ED8} = {E1B24F25-B8A4-46EE-B7EB-7803DCFC543F}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {73F36209-F8D6-4066-8951-D97729F773CF}
+	EndGlobalSection
+EndGlobal
