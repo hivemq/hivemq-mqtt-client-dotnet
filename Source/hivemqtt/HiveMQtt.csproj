@@ -2,7 +2,8 @@
 
   <PropertyGroup Label="Build">
     <TargetFramework>net6.0</TargetFramework>
-    <AssemblyName>hivemqtt</AssemblyName>
+    <AssemblyName>HiveMQtt</AssemblyName>
+    <ReleaseVersion>0.1.1</ReleaseVersion>
   </PropertyGroup>
 
   <PropertyGroup Label="Package">

@@ -81,7 +81,7 @@ jobs:
     if: github.event_name == 'release'
     environment:
       name: "NuGet"
-      url: https://www.nuget.org/packages/hivemqtt
+      url: https://www.nuget.org/packages/HiveMQtt
     runs-on: windows-latest
     steps:
       - name: "Download Artefact"

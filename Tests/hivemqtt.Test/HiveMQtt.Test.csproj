@@ -2,10 +2,11 @@
 
   <PropertyGroup Label="Build">
     <TargetFramework>net6.0</TargetFramework>
+    <ReleaseVersion>0.1.1</ReleaseVersion>
   </PropertyGroup>
 
   <ItemGroup Label="Project References">
-    <ProjectReference Include="..\..\Source\hivemqtt\hivemqtt.csproj" />
+    <ProjectReference Include="..\..\Source\HiveMQtt\HiveMQtt.csproj" />
   </ItemGroup>
 
 </Project>
