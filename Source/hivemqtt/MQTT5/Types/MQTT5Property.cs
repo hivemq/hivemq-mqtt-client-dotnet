@@ -1,10 +1,10 @@
 namespace HiveMQtt.MQTT5.Types;
 
-public class Property
+public class MQTT5Property
 {
     public int ID { get; set; }
 
-    public PropertyType Type { get; set; }
+    public MQTT5DataType DataType { get; set; }
 
     public byte? ByteValue { get; set; }
 

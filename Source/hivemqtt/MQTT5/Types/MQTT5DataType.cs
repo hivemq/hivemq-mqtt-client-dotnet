@@ -4,7 +4,7 @@ namespace HiveMQtt.MQTT5.Types;
 /// MQTT v5.0 PropertyType as defined in
 /// https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901027
 /// </summary>
-public enum PropertyType
+public enum MQTT5DataType
 {
     /// <summary>
     /// Property is a Byte.

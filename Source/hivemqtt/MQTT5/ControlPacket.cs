@@ -1,7 +1,9 @@
 namespace HiveMQtt.MQTT5;
 
+using System.Globalization;
 using System.Text;
 using HiveMQtt.MQTT5.Exceptions;
+using HiveMQtt.MQTT5.Types;
 
 /// <summary>
 /// A base class for all MQTT Control Packet types.
@@ -13,6 +15,8 @@ public abstract class ControlPacket
     /// </summary>
     /// <value>ControlPacketType</value>
     public abstract ControlPacketType ControlPacketType { get; }
+
+    public MQTT5Properties? Properties { get; set; }
 
     protected static void EncodeUTF8String(MemoryStream stream, string s)
     {
@@ -41,6 +45,16 @@ public abstract class ControlPacket
 
         stream.WriteByte(valueInBytes[0]);
         stream.WriteByte(valueInBytes[1]);
+    }
+
+    protected static int DecodeTwoByteInteger(MemoryStream stream)
+    {
+        // FIXME: Implement
+    }
+
+    protected static int DecodeFourByteInteger(MemoryStream stream)
+    {
+        // FIXME: Implement
     }
 
     protected static void EncodeVariableByteInteger(MemoryStream stream, int number)
@@ -88,18 +102,23 @@ public abstract class ControlPacket
         };
     }
 
-    public static bool DecodeProperties(MemoryStream stream, int length)
+    public bool DecodeProperties(MemoryStream stream, int length)
     {
         do
         {
             var propertyID = DecodeVariableByteInteger(stream);
+            this.Properties = new MQTT5Properties();
 
-            switch (propertyID.Value)
+            switch ((MQTT5PropertyType)propertyID.Value)
             {
-                case 0x11:
-                    Console.WriteLine("blah");
+                case MQTT5PropertyType.PayloadFormatIndicator:
+                    this.Properties.PayloadFormatIndicator = (byte)stream.ReadByte();
                     break;
-                case 0x12:
+                case MQTT5PropertyType.MessageExpiryInterval:
+                    this.Properties.MessageExpiryInterval = DecodeFourByteInteger(stream);
+                    break;
+                case MQTT5PropertyType.SessionExpiryInterval:
+                    this.Properties.SessionExpiryInterval = DecodeFourByteInteger(stream);
                     break;
                 default:
                     break;
