@@ -370,6 +370,7 @@ dotnet_naming_rule.sanity_check_uncovered_field_case_rule.symbols  = sanity_chec
 dotnet_naming_rule.sanity_check_uncovered_field_case_rule.style    = internal_error_style
 dotnet_naming_rule.sanity_check_uncovered_field_case_rule.severity = error
 
+dotnet_naming_rule.SingleLineCommentsMustBeginWithSingleSpace.severity = warning
 
 ##########################################
 # Other Naming Rules
@@ -434,6 +435,8 @@ dotnet_diagnostic.SA1600.severity = none
 # Justification: Comments turned off
 # https://github.com/DotNetAnalyzers/StyleCopAnalyzers/blob/master/documentation/SA1633.md
 dotnet_diagnostic.SA1633.severity = none
+
+dotnet_diagnostic.CS1591.severity = none
 
 #endif
 ##########################################

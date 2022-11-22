@@ -7,9 +7,22 @@
   </PropertyGroup>
 
   <PropertyGroup Label="Package">
-    <Product>Project Title</Product>
-    <Description>Project Description</Description>
+    <Product>HiveMQtt: A Universal MQTT Client</Product>
+    <Description>A universal MQTT client...</Description>
     <PackageTags>Tag1;Tag2;Tag3</PackageTags>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Remove="MQTT\Connect\" />
+    <None Remove="Connect\" />
+    <None Remove="MQTT5\" />
+    <None Remove="System.IO.Pipelines" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Connect\" />
+    <Folder Include="MQTT5\" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.IO.Pipelines" Version="7.0.0" />
+  </ItemGroup>
 </Project>
