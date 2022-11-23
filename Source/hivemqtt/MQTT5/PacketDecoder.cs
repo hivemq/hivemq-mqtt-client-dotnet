@@ -16,12 +16,13 @@ public class PacketDecoder
             return new PartialPacket();
         }
 
+        // Byte 1: Control Packet Type
         var x = buffer.ToArray();
-        var type = x[0] >> 4;
+        var controlPacketType = x[0] >> 4;
 
-        var vbi = new MemoryStream(x[1]);
-        var remainingLength = ControlPacket.DecodeVariableByteInteger(vbi);
-        var packetLength = remainingLength + 2;
+        // Byte 2: Remaining Length of the Variable Header
+        var remainingLengthOfVH = x[1];
+        var packetLength = remainingLengthOfVH + 2;
 
         if (buffer.Length < packetLength)
         {
@@ -31,7 +32,7 @@ public class PacketDecoder
 
         var packetData = buffer.Slice(0, packetLength);
 
-        ControlPacket packet = type switch
+        ControlPacket packet = controlPacketType switch
         {
             (int)ControlPacketType.ConnAck => new ConnAckPacket(packetData),
             _ => new MalformedPacket(packetData),

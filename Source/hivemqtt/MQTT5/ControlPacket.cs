@@ -1,6 +1,6 @@
 namespace HiveMQtt.MQTT5;
 
-using System.Globalization;
+using System.Buffers;
 using System.Text;
 using HiveMQtt.MQTT5.Exceptions;
 using HiveMQtt.MQTT5.Types;
@@ -47,16 +47,6 @@ public abstract class ControlPacket
         stream.WriteByte(valueInBytes[1]);
     }
 
-    protected static int DecodeTwoByteInteger(MemoryStream stream)
-    {
-        // FIXME: Implement
-    }
-
-    protected static int DecodeFourByteInteger(MemoryStream stream)
-    {
-        // FIXME: Implement
-    }
-
     protected static void EncodeVariableByteInteger(MemoryStream stream, int number)
     {
         do
@@ -73,60 +63,263 @@ public abstract class ControlPacket
         while (number > 0);
     }
 
-    public static VariableByteInteger DecodeVariableByteInteger(MemoryStream stream)
+    /// <summary>
+    /// Decode "Variable Byte Integer" data representation as defined in:
+    /// https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901011
+    /// </summary>
+    /// <param name="reader">SequenceReader containing the packet data to be decoded.</param>
+    /// <returns>The integer value of the Variable Byte Integer.</returns>
+    protected static int DecodeVariableByteInteger(ref SequenceReader<byte> reader)
     {
         var multiplier = 1;
         var value = 0;
-        int encodedByte;
+        byte encodedByte;
         var lengthInBytes = 0;
 
         do
         {
             lengthInBytes++;
-            encodedByte = stream.ReadByte();
-            value += (encodedByte & 127) * multiplier;
 
-            if (multiplier > 128 * 128 * 128)
+            if (reader.TryRead(out encodedByte))
             {
-                throw new MalformedVBIException();
-            }
+                value += (encodedByte & 127) * multiplier;
 
-            multiplier *= 128;
+                if (multiplier > 128 * 128 * 128)
+                {
+                    throw new MalformedVBIException();
+                }
+
+                multiplier *= 128;
+            }
         }
         while ((encodedByte & 128) != 0);
 
-        return new VariableByteInteger
-        {
-            Value = value,
-            Length = lengthInBytes,
-        };
+        return value;
     }
 
-    public bool DecodeProperties(MemoryStream stream, int length)
+    /// <summary>
+    /// Decode "UTF-8 Encoded String" data representation as defined in:
+    /// https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901010
+    /// </summary>
+    /// <param name="reader">SequenceReader containing the packet data to be decoded.</param>
+    /// <returns>A string containing the UTF-8 string.</returns>
+    protected static string? DecodeUTF8String(ref SequenceReader<byte> reader)
+    {
+
+        if (reader.TryReadBigEndian(out Int16 stringLength))
+        {
+            var array = new byte[stringLength];
+            var span = new Span<byte>(array);
+
+            for (var i = 0; i < stringLength; i++)
+            {
+                if (reader.TryRead(out var outValue))
+                {
+                    span[i] = outValue;
+                }
+            }
+
+            return Encoding.UTF8.GetString(span.ToArray());
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Decode "Binary Data" data representation as defined in:
+    /// https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901012
+    /// </summary>
+    /// <param name="reader">SequenceReader containing the packet data to be decoded.</param>
+    /// <returns>A byte[] containing the binary data.</returns>
+    protected static byte[]? DecodeBinaryData(ref SequenceReader<byte> reader)
+    {
+
+        if (reader.TryReadBigEndian(out Int16 stringLength))
+        {
+            var array = new byte[stringLength];
+            var span = new Span<byte>(array);
+
+            for (var i = 0; i < stringLength; i++)
+            {
+                if (reader.TryRead(out var outValue))
+                {
+                    span[i] = outValue;
+                }
+            }
+
+            return span.ToArray();
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Decode "Two Byte Integer" data representation as defined in:
+    /// https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901008
+    /// </summary>
+    /// <param name="reader">SequenceReader containing the packet data to be decoded.</param>
+    /// <returns>The value of the two byte integer.</returns>
+    protected static int? DecodeTwoByteInteger(ref SequenceReader<byte> reader)
+    {
+        if (reader.TryReadBigEndian(out Int16 intValue))
+        {
+            return intValue;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Decode "Four Byte Integer" data representation as defined in:
+    /// https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901009
+    /// </summary>
+    /// <param name="reader">SequenceReader containing the packet data to be decoded.</param>
+    /// <returns>The value of the four byte integer.</returns>
+    protected static int? DecodeFourByteInteger(ref SequenceReader<byte> reader)
+    {
+        if (reader.TryReadBigEndian(out Int32 intValue))
+        {
+            return intValue;
+        }
+
+        return null;
+    }
+
+    protected static byte? DecodeByte(ref SequenceReader<byte> reader)
+    {
+        if (reader.TryRead(out var byteValue))
+        {
+            return byteValue;
+        }
+
+        return null;
+    }
+
+    protected static bool DecodeByteAsBool(ref SequenceReader<byte> reader)
+    {
+        if (reader.TryRead(out var byteValue))
+        {
+            if (byteValue == 0x0)
+            {
+                return false;
+            }
+            else if (byteValue == 0x1)
+            {
+                return true;
+            }
+            else
+            {
+                // FIXME: Raise Protocol Error
+            }
+        }
+
+        return false;
+    }
+
+    protected bool DecodeProperties(ref SequenceReader<byte> reader, int length)
     {
         do
         {
-            var propertyID = DecodeVariableByteInteger(stream);
+            var propertyID = DecodeVariableByteInteger(ref reader);
             this.Properties = new MQTT5Properties();
 
-            switch ((MQTT5PropertyType)propertyID.Value)
+            switch ((MQTT5PropertyType)propertyID)
             {
                 case MQTT5PropertyType.PayloadFormatIndicator:
-                    this.Properties.PayloadFormatIndicator = (byte)stream.ReadByte();
+                    this.Properties.PayloadFormatIndicator = DecodeByte(ref reader);
                     break;
                 case MQTT5PropertyType.MessageExpiryInterval:
-                    this.Properties.MessageExpiryInterval = DecodeFourByteInteger(stream);
+                    this.Properties.MessageExpiryInterval = DecodeFourByteInteger(ref reader);
+                    break;
+                case MQTT5PropertyType.ContentType:
+                    this.Properties.ContentType = DecodeUTF8String(ref reader);
+                    break;
+                case MQTT5PropertyType.ResponseTopic:
+                    this.Properties.ResponseTopic = DecodeUTF8String(ref reader);
+                    break;
+                case MQTT5PropertyType.CorrelationData:
+                    this.Properties.CorrelationData = DecodeBinaryData(ref reader);
+                    break;
+                case MQTT5PropertyType.SubscriptionIdentifier:
+                    this.Properties.SubscriptionIdentifier = DecodeVariableByteInteger(ref reader);
                     break;
                 case MQTT5PropertyType.SessionExpiryInterval:
-                    this.Properties.SessionExpiryInterval = DecodeFourByteInteger(stream);
+                    this.Properties.SessionExpiryInterval = DecodeFourByteInteger(ref reader);
                     break;
+                case MQTT5PropertyType.AssignedClientIdentifier:
+                    this.Properties.AssignedClientIdentifier = DecodeUTF8String(ref reader);
+                    break;
+                case MQTT5PropertyType.ServerKeepAlive:
+                    this.Properties.ServerKeepAlive = DecodeTwoByteInteger(ref reader);
+                    break;
+                case MQTT5PropertyType.AuthenticationMethod:
+                    this.Properties.AuthenticationMethod = DecodeUTF8String(ref reader);
+                    break;
+                case MQTT5PropertyType.AuthenticationData:
+                    this.Properties.AuthenticationData = DecodeBinaryData(ref reader);
+                    break;
+                case MQTT5PropertyType.RequestProblemInformation:
+                    this.Properties.RequestProblemInformation = DecodeByte(ref reader);
+                    break;
+                case MQTT5PropertyType.WillDelayInterval:
+                    this.Properties.WillDelayInterval = DecodeFourByteInteger(ref reader);
+                    break;
+                case MQTT5PropertyType.RequestResponseInformation:
+                    this.Properties.RequestResponseInformation = DecodeByte(ref reader);
+                    break;
+                case MQTT5PropertyType.ResponseInformation:
+                    this.Properties.ResponseInformation = DecodeUTF8String(ref reader);
+                    break;
+                case MQTT5PropertyType.ServerReference:
+                    this.Properties.ServerReference = DecodeUTF8String(ref reader);
+                    break;
+                case MQTT5PropertyType.ReasonString:
+                    this.Properties.ReasonString = DecodeUTF8String(ref reader);
+                    break;
+                case MQTT5PropertyType.ReceiveMaximum:
+                    this.Properties.ReceiveMaximum = DecodeTwoByteInteger(ref reader);
+                    break;
+                case MQTT5PropertyType.TopicAliasMaximum:
+                    this.Properties.TopicAliasMaximum = DecodeTwoByteInteger(ref reader);
+                    break;
+                case MQTT5PropertyType.TopicAlias:
+                    this.Properties.TopicAlias = DecodeTwoByteInteger(ref reader);
+                    break;
+                case MQTT5PropertyType.MaximumQoS:
+                    this.Properties.MaximumQoS = DecodeByte(ref reader);
+                    break;
+                case MQTT5PropertyType.RetainAvailable:
+                    this.Properties.RetainAvailable = DecodeByte(ref reader);
+                    break;
+                case MQTT5PropertyType.UserProperty:
+                    var key = DecodeUTF8String(ref reader);
+                    var value = DecodeUTF8String(ref reader);
+
+                    if (key != null && value != null)
+                    {
+                        this.Properties.UserProperties.Add(key, value);
+                    }
+
+                    break;
+                case MQTT5PropertyType.MaximumPacketSize:
+                    this.Properties.MaximumPacketSize = DecodeFourByteInteger(ref reader);
+                    break;
+                case MQTT5PropertyType.WildcardSubscriptionAvailable:
+                    this.Properties.WildcardSubscriptionAvailable = DecodeByteAsBool(ref reader);
+                    break;
+                case MQTT5PropertyType.SubscriptionIdentifierAvailable:
+                    this.Properties.SubscriptionIdentifierAvailable = DecodeByteAsBool(ref reader);
+                    break;
+                case MQTT5PropertyType.SharedSubscriptionAvailable:
+                    this.Properties.SharedSubscriptionAvailable = DecodeByteAsBool(ref reader);
+                    break;
+
                 default:
                     break;
             }
-
         }
         while (length > 0);
 
-
+        return true;
     }
 }

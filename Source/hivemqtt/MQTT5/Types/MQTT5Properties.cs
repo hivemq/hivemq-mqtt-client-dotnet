@@ -8,6 +8,8 @@ using System.Collections;
 /// </summary>
 public class MQTT5Properties
 {
+    public MQTT5Properties() => this.UserProperties = new Hashtable();
+
     public byte? PayloadFormatIndicator { get; set; }
 
     public int? MessageExpiryInterval { get; set; }
@@ -18,7 +20,7 @@ public class MQTT5Properties
 
     public byte[]? CorrelationData { get; set; }
 
-    public VariableByteInteger? SubscriptionIdentifier { get; set; }
+    public int? SubscriptionIdentifier { get; set; }
 
     public int? SessionExpiryInterval { get; set; }
 
@@ -52,7 +54,7 @@ public class MQTT5Properties
 
     public int? RetainAvailable { get; set; }
 
-    public Hashtable? UserProperties { get; set; }
+    public Hashtable UserProperties { get; set; }
 
     public int? MaximumPacketSize { get; set; }
 

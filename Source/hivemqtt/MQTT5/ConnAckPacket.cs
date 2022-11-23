@@ -29,21 +29,23 @@ public class ConnAckPacket : ControlPacket
     public void Decode()
     {
         var packetLength = this.rawPacketData.Length;
-        var byteData = this.rawPacketData.ToArray();
+        var reader = new SequenceReader<byte>(this.rawPacketData);
 
-        this.AckFlags = byteData[3];
-        this.SessionPresent = (this.AckFlags & 0x1) == 0x0;
+        // Skip past the Fixed Header
+        reader.Advance(2);
 
-        this.ReasonCode = (ConnAckReasonCode)byteData[4];
-
-        var vbi = new MemoryStream(byteData[5]);
-        var propertyLength = DecodeVariableByteInteger(vbi);
-
-        if (propertyLength.Length > 0)
+        if (reader.TryRead(out var ackFlags))
         {
-            var propertiesStart = 5 + propertyLength.Length;
-            var x = DecodeProperties(new MemoryStream(byteData[propertiesStart]), propertyLength.Length);
+            this.SessionPresent = (ackFlags & 0x1) == 0x1;
         }
+
+        if (reader.TryRead(out var reasonCode))
+        {
+            this.ReasonCode = (ConnAckReasonCode)reasonCode;
+        }
+
+        var propertyLength = DecodeVariableByteInteger(reader);
+        DecodeProperties(reader, propertyLength);
     }
 
 }

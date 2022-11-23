@@ -68,7 +68,7 @@ public class Client : IDisposable, IClient
             var x = await this.writer.WriteAsync(packet.Encode()).ConfigureAwait(false);
 
             var result = await this.reader.ReadAsync().ConfigureAwait(false);
-            var packet = PacketDecoder.Decode(result.Buffer);
+            var connAck = PacketDecoder.Decode(result.Buffer);
             Console.WriteLine(result);
 
         }

@@ -12,6 +12,8 @@
     <PackageTags>Tag1;Tag2;Tag3</PackageTags>
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " />
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' " />
   <ItemGroup>
     <None Remove="MQTT\Connect\" />
     <None Remove="Connect\" />
