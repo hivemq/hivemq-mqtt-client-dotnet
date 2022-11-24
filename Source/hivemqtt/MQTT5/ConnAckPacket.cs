@@ -44,8 +44,8 @@ public class ConnAckPacket : ControlPacket
             this.ReasonCode = (ConnAckReasonCode)reasonCode;
         }
 
-        var propertyLength = DecodeVariableByteInteger(reader);
-        DecodeProperties(reader, propertyLength);
+        var propertyLength = DecodeVariableByteInteger(ref reader);
+        _ = this.DecodeProperties(ref reader, propertyLength);
     }
 
 }

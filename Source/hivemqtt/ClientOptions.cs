@@ -46,6 +46,7 @@ public class ClientOptions
 
     /// <summary>
     /// Generate a semi-random client identifier to be used in <c>Client</c> connections.
+    /// hivec#-pid-randomstring
     /// </summary>
     public void GenerateClientID()
     {

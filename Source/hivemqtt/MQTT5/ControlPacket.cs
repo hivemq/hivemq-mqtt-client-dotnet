@@ -10,13 +10,16 @@ using HiveMQtt.MQTT5.Types;
 /// </summary>
 public abstract class ControlPacket
 {
+    public ControlPacket() => this.Properties = new MQTT5Properties();
+
+    public MQTT5Properties Properties { get; set; }
+
     /// <summary>
     /// Gets the type of this <c>ControlPacket</c>.
     /// </summary>
     /// <value>ControlPacketType</value>
     public abstract ControlPacketType ControlPacketType { get; }
 
-    public MQTT5Properties? Properties { get; set; }
 
     protected static void EncodeUTF8String(MemoryStream stream, string s)
     {
@@ -185,6 +188,11 @@ public abstract class ControlPacket
         return null;
     }
 
+    /// <summary>
+    /// Reads and returns one byte.  This is centralized here for error handling.
+    /// </summary>
+    /// <param name="reader">SequenceReader containing the packet data to be decoded.</param>
+    /// <returns>The byte value read from the SequenceReader.</returns>
     protected static byte? DecodeByte(ref SequenceReader<byte> reader)
     {
         if (reader.TryRead(out var byteValue))
@@ -195,6 +203,12 @@ public abstract class ControlPacket
         return null;
     }
 
+    /// <summary>
+    /// Reads and returns one byte to be interpreted as a boolean value.
+    /// A Byte with a value of either 0 or 1. It is a Protocol Error to have a value other than 0 or 1.
+    /// </summary>
+    /// <param name="reader">SequenceReader containing the packet data to be decoded.</param>
+    /// <returns>The byte value read from the SequenceReader.</returns>
     protected static bool DecodeByteAsBool(ref SequenceReader<byte> reader)
     {
         if (reader.TryRead(out var byteValue))
@@ -218,10 +232,11 @@ public abstract class ControlPacket
 
     protected bool DecodeProperties(ref SequenceReader<byte> reader, int length)
     {
+        var readerStart = reader.Consumed;
+
         do
         {
             var propertyID = DecodeVariableByteInteger(ref reader);
-            this.Properties = new MQTT5Properties();
 
             switch ((MQTT5PropertyType)propertyID)
             {
@@ -318,7 +333,7 @@ public abstract class ControlPacket
                     break;
             }
         }
-        while (length > 0);
+        while (reader.Consumed - readerStart < length);
 
         return true;
     }
