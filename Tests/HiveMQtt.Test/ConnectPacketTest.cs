@@ -1,7 +1,6 @@
 namespace HiveMQtt.Test;
 
 using HiveMQtt.MQTT5;
-using Microsoft.VisualStudio.TestPlatform.Common.Utilities;
 using Xunit;
 
 public class ConnectPacketTest

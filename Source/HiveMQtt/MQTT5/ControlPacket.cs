@@ -1,8 +1,9 @@
 namespace HiveMQtt.MQTT5;
 
+using System;
 using System.Buffers;
+using System.IO;
 using System.Text;
-using HiveMQtt.MQTT5.Exceptions;
 using HiveMQtt.MQTT5.Types;
 
 /// <summary>

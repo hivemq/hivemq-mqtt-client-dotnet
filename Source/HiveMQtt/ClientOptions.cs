@@ -1,5 +1,8 @@
 namespace HiveMQtt;
 
+using System;
+using System.Linq;
+
 /// <summary>
 /// A class to manage the MQTT options available in the Client.
 /// </summary>

@@ -1,8 +1,6 @@
 namespace HiveMQtt.MQTT5;
 
 using System.Buffers;
-using System.IO;
-using System.Text;
 
 /// <summary>
 /// A packet with bad or non sensical data.

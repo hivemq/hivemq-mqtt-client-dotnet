@@ -1,4 +1,6 @@
-namespace HiveMQtt.MQTT5.Exceptions;
+namespace HiveMQtt.MQTT5;
+
+using System;
 
 public class MalformedVBIException : ArgumentException
 {
