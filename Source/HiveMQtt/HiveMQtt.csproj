@@ -3,16 +3,19 @@
   <PropertyGroup Label="Build">
     <TargetFramework>net6.0</TargetFramework>
     <AssemblyName>HiveMQtt</AssemblyName>
-    <ReleaseVersion>0.1.1</ReleaseVersion>
+    <ReleaseVersion>0.2.0</ReleaseVersion>
+    <Description>HiveMQ MQTT Client that is a MQTT 5.0 compatible C# client library.</Description>
   </PropertyGroup>
 
   <PropertyGroup Label="Package">
     <Product>HiveMQtt: A Universal MQTT Client</Product>
-    <Description>A universal MQTT client...</Description>
-    <PackageTags>Tag1;Tag2;Tag3</PackageTags>
+    <Description>HiveMQ MQTT Client that is a MQTT 5.0 compatible C# client library.</Description>
+    <PackageTags>MQTT;HIVEMQ;IOT</PackageTags>
   </PropertyGroup>
 
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " />
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' " />
   <ItemGroup>
     <None Remove="MQTT\Connect\" />
