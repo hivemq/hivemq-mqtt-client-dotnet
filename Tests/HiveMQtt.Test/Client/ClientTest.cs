@@ -22,4 +22,13 @@ public class ClientTest
 
         Assert.NotNull(client);
     }
+
+    [Fact]
+    public async void ClientDefaultConnect()
+    {
+        var client = new Client();
+        var result = await client.ConnectAsync().ConfigureAwait(false);
+
+        Assert.NotNull(result);
+    }
 }

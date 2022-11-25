@@ -19,6 +19,10 @@ public class ConnectPacket : ControlPacket
 
     public override ControlPacketType ControlPacketType => ControlPacketType.Connect;
 
+    /// <summary>
+    /// Encode this packet to be sent on the wire.
+    /// </summary>
+    /// <returns>An array of bytes ready to be sent.</returns>
     public byte[] Encode()
     {
         this.clientOptions.ValidateOptions();
@@ -64,9 +68,6 @@ public class ConnectPacket : ControlPacket
         stream.WriteByte(((byte)ControlPacketType.Connect) << 4);
         EncodeVariableByteInteger(stream, (int)length);
 
-        var data = stream.GetBuffer();
-        var segment = new ArraySegment<byte>(data, 0, (int)stream.Length);
-        return segment.ToArray();
+        return stream.ToArray();
     }
-
 }

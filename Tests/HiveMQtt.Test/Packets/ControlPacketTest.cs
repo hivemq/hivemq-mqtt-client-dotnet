@@ -1,5 +1,6 @@
 namespace HiveMQtt.Test;
 
+using System.IO;
 using HiveMQtt.MQTT5;
 using Xunit;
 
@@ -14,7 +15,7 @@ public class ControlPacketTest : ControlPacket
         var value = 128;
 
         EncodeTwoByteInteger(stream, value);
-        var buffer = stream.GetBuffer();
+        var buffer = stream.ToArray();
 
         Assert.Equal(0x8, buffer[0]);
         Assert.Equal(0x0, buffer[1]);

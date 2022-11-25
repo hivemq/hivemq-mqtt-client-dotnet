@@ -37,6 +37,7 @@ public class PacketDecoder
             (int)ControlPacketType.ConnAck => new ConnAckPacket(packetData),
             (int)ControlPacketType.Disconnect => new DisconnectPacket(packetData),
             (int)ControlPacketType.PingResp => new PingRespPacket(packetData),
+            (int)ControlPacketType.Publish => new PublishPacket(packetData),
             _ => new MalformedPacket(packetData),
         };
 

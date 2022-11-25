@@ -12,6 +12,8 @@ public class DisconnectPacket : ControlPacket
 {
     private readonly ReadOnlySequence<byte> rawPacketData;
 
+    public DisconnectPacket() { }
+
     public DisconnectPacket(ReadOnlySequence<byte> data)
     {
         this.rawPacketData = data;
@@ -20,29 +22,47 @@ public class DisconnectPacket : ControlPacket
 
     public override ControlPacketType ControlPacketType => ControlPacketType.Disconnect;
 
+    public DisconnectReasonCode DisconnectReasonCode { get; set; }
+
     public void Decode()
     {
-        var packetLength = this.rawPacketData.Length;
         var reader = new SequenceReader<byte>(this.rawPacketData);
 
         // Skip past the Fixed Header
-        reader.Advance(2);
+        reader.Advance(1);
 
-        if (reader.TryRead(out var ackFlags))
+        if (reader.TryRead(out var remainingLength))
         {
-            this.SessionPresent = (ackFlags & 0x1) == 0x1;
+            if ((remainingLength + 2) > this.rawPacketData.Length)
+            {
+                // Not enough packet data / partial packet
+                // FIXME: Send back to pipeline to get more data
+            }
+            else if (remainingLength < 1)
+            {
+                // Byte 1 in the Variable Header is the Disconnect Reason Code. If the Remaining Length is less
+                // than 1 the value of 0x00 (Normal disconnection) is used.
+                // See <see href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901208">
+                // Disconnect Reason Codes</see>.
+                this.DisconnectReasonCode = DisconnectReasonCode.NormalDisconnection;
+            }
+            else
+            {
+                if (reader.TryRead(out var reasonCode))
+                {
+                    this.DisconnectReasonCode = (DisconnectReasonCode)reasonCode;
+
+                    var propertyLength = DecodeVariableByteInteger(ref reader);
+                    _ = this.DecodeProperties(ref reader, propertyLength);
+                }
+            }
         }
-
-        if (reader.TryRead(out var reasonCode))
-        {
-            this.ReasonCode = (ConnAckReasonCode)reasonCode;
-        }
-
-        var propertyLength = DecodeVariableByteInteger(ref reader);
-        _ = this.DecodeProperties(ref reader, propertyLength);
-
     }
 
+    /// <summary>
+    /// Encode this packet to be sent on the wire.
+    /// </summary>
+    /// <returns>An array of bytes ready to be sent.</returns>
     public byte[] Encode()
     {
 
@@ -63,10 +83,6 @@ public class DisconnectPacket : ControlPacket
         stream.WriteByte(((byte)ControlPacketType.Disconnect) << 4);
         EncodeVariableByteInteger(stream, (int)remainingLength);
 
-        var data = stream.GetBuffer();
-        var segment = new ArraySegment<byte>(data, 0, (int)stream.Length);
-        return segment.ToArray();
+        return stream.ToArray();
     }
-
-
 }
