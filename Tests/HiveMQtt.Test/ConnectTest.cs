@@ -1,5 +1,7 @@
 namespace HiveMQtt.Test;
 
+using System.Threading;
+using System.Threading.Tasks;
 using HiveMQtt;
 using Xunit;
 

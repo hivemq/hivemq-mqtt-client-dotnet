@@ -12,8 +12,7 @@ public class ConnectPacketTest
         Assert.NotNull(options);
 
         var packet = new ConnectPacket(options);
-        var stream = packet.Encode();
-        Assert.NotNull(stream);
+        var packetData = packet.Encode();
+        Assert.NotNull(packetData);
     }
-
 }

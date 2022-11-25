@@ -2,13 +2,12 @@ namespace HiveMQtt;
 
 using System;
 using System.Collections.Concurrent;
+using System.IO.Pipelines;
 using System.Net;
 using System.Net.Sockets;
-using System.IO.Pipelines;
+using System.Threading.Tasks;
 
-using HiveMQtt.Connect;
 using HiveMQtt.MQTT5;
-using System.IO.Pipes;
 
 /// <summary>
 /// The excellent, superb and slightly wonderful HiveMQ MQTT Client.
@@ -17,8 +16,6 @@ using System.IO.Pipes;
 /// </summary>
 public class Client : IDisposable, IClient
 {
-    public ClientOptions Options { get; set; }
-
     private readonly ConcurrentQueue<byte[]> sendQueue;
     private readonly ConcurrentQueue<ControlPacket> receiveQueue;
 
@@ -40,6 +37,8 @@ public class Client : IDisposable, IClient
         this.disposed = false;
     }
 
+    public ClientOptions Options { get; set; }
+
     public bool IsConnected()
     {
         // FIXME: Add MQTT connection state check
@@ -55,7 +54,7 @@ public class Client : IDisposable, IClient
     {
         var socketIsConnected = await this.ConnectSocketAsync().ConfigureAwait(false);
 
-        ConnectResult? connectResult = new ConnectResult();
+        var connectResult = new ConnectResult();
 
         if (socketIsConnected && this.socket != null)
         {
@@ -70,14 +69,12 @@ public class Client : IDisposable, IClient
             var result = await this.reader.ReadAsync().ConfigureAwait(false);
             var connAck = PacketDecoder.Decode(result.Buffer);
             Console.WriteLine(result);
-
         }
         return connectResult;
     }
 
     public async Task DisconnectAsync(DisconnectOptions options)
     {
-
         // var disconnectPacket = new Disconn
         // await this.socket.SendAsync(segment, SocketFlags.None).ConfigureAwait(false);
     }

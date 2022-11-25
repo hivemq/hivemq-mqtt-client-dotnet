@@ -1,6 +1,7 @@
 namespace HiveMQtt;
 
-using HiveMQtt.Connect;
+using System;
+using System.Threading.Tasks;
 
 /// <summary>
 /// Some interface.

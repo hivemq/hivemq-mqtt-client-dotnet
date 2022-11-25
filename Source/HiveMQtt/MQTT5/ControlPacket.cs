@@ -13,15 +13,43 @@ public abstract class ControlPacket
 {
     public ControlPacket() => this.Properties = new MQTT5Properties();
 
+    /// <summary>
+    /// Gets or sets the MQTT v5
+    /// <see href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901027">Properties</see>.
+    /// </summary>
     public MQTT5Properties Properties { get; set; }
 
     /// <summary>
-    /// Gets the type of this <c>ControlPacket</c>.
+    /// Gets the raw packet data received from or to be sent on the wire.
     /// </summary>
-    /// <value>ControlPacketType</value>
+    public ReadOnlySequence<byte> RawPacketData { get; internal set; }
+
+    /// <summary>
+    /// Gets the timestamp of when this packet was sent.
+    /// </summary>
+    public DateTime SentOn { get; internal set; }
+
+    /// <summary>
+    /// Gets timestamp of when this packet was received.
+    /// </summary>
+    public DateTime ReceivedOn { get; internal set; }
+
+    /// <summary>
+    /// Gets the type of this <c>ControlPacket</c>.
+    ///
+    /// See also <seealso href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901022">
+    /// MQTT Control Packet Types</seealso>.
+    /// </summary>
     public abstract ControlPacketType ControlPacketType { get; }
 
-
+    /// <summary>
+    /// Encode a UTF-8 string into a <c>MemoryStream</c>.
+    ///
+    /// See also <seealso href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901010">
+    /// Data Representation: UTF-8 Encoded String</seealso>.
+    /// </summary>
+    /// <param name="stream">The <cref>MemoryStream</cref> to write the UTF-8 string into.</param>
+    /// <param name="s">The string to be encoded and written.</param>
     protected static void EncodeUTF8String(MemoryStream stream, string s)
     {
         var length = (ushort)s.Length;
@@ -32,13 +60,60 @@ public abstract class ControlPacket
         stream.Write(stringBytes, 0, stringBytes.Length);
     }
 
+    /// <summary>
+    /// Decode an MQTT UTF-8 string.
+    ///
+    /// See also <seealso href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901010">
+    /// Data Representation: UTF-8 Encoded String</seealso>.
+    /// </summary>
+    /// <param name="reader">SequenceReader containing the packet data to be decoded.</param>
+    /// <returns>A string containing the UTF-8 string.</returns>
+    protected static string? DecodeUTF8String(ref SequenceReader<byte> reader)
+    {
+
+        if (reader.TryReadBigEndian(out Int16 stringLength))
+        {
+            var array = new byte[stringLength];
+            var span = new Span<byte>(array);
+
+            for (var i = 0; i < stringLength; i++)
+            {
+                if (reader.TryRead(out var outValue))
+                {
+                    span[i] = outValue;
+                }
+            }
+
+            return Encoding.UTF8.GetString(span.ToArray());
+        }
+
+        return null;
+    }
+
+
+    /// <summary>
+    /// Encode a Two Byte Integer into a <c>MemoryStream</c>.
+    ///
+    /// See also <seealso href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901008">
+    /// Data Representation: Two Byte Integer</seealso>.
+    /// </summary>
+    /// <param name="stream">The <cref>MemoryStream</cref> to write the Two Byte Integer into.</param>
+    /// <param name="value">The integer to be encoded and written.</param>
     protected static void EncodeTwoByteInteger(MemoryStream stream, int value)
     {
         var converted = Convert.ToUInt16(value);
         EncodeTwoByteInteger(stream, converted);
     }
 
-    protected static void EncodeTwoByteInteger(MemoryStream stream, ushort value)
+    /// <summary>
+    /// Encode a Two Byte Integer into a <c>MemoryStream</c>.
+    ///
+    /// See also <seealso href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901008">
+    /// Data Representation: Two Byte Integer</seealso>.
+    /// </summary>
+    /// <param name="stream">The <cref>MemoryStream</cref> to write the Two Byte Integer into.</param>
+    /// <param name="value">The integer to be encoded and written.</param>
+    protected static void EncodeTwoByteInteger(MemoryStream stream, UInt16 value)
     {
         var valueInBytes = BitConverter.GetBytes(value);
 
@@ -51,6 +126,32 @@ public abstract class ControlPacket
         stream.WriteByte(valueInBytes[1]);
     }
 
+    /// <summary>
+    /// Decode an MQTT Two Byte Integer.
+    ///
+    /// See also <seealso href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901008">
+    /// Data Representation: Two Byte Integer</seealso>.
+    /// </summary>
+    /// <param name="reader">SequenceReader containing the packet data to be decoded.</param>
+    /// <returns>The value of the two byte integer.</returns>
+    protected static int? DecodeTwoByteInteger(ref SequenceReader<byte> reader)
+    {
+        if (reader.TryReadBigEndian(out Int16 intValue))
+        {
+            return intValue;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Encode an Integer into a <c>MemoryStream</c> as an MQTT Variable Byte Integer.
+    ///
+    /// See also <seealso href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901011">
+    /// Data Representation: Variable Byte Integer</seealso>.
+    /// </summary>
+    /// <param name="stream">The <cref>MemoryStream</cref> to write the Two Byte Integer into.</param>
+    /// <param name="number">The integer to be encoded and written.</param>
     protected static void EncodeVariableByteInteger(MemoryStream stream, int number)
     {
         do
@@ -68,10 +169,12 @@ public abstract class ControlPacket
     }
 
     /// <summary>
-    /// Decode "Variable Byte Integer" data representation as defined in:
-    /// https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901011
+    /// Decode an MQTT Variable Byte Integer data representation.
+    ///
+    /// See also <seealso href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901011">
+    /// Data Representation: Variable Byte Integer</seealso>.
     /// </summary>
-    /// <param name="reader">SequenceReader containing the packet data to be decoded.</param>
+    /// <param name="reader"><cref>SequenceReader</cref> containing the packet data to be decoded.</param>
     /// <returns>The integer value of the Variable Byte Integer.</returns>
     protected static int DecodeVariableByteInteger(ref SequenceReader<byte> reader)
     {
@@ -102,36 +205,10 @@ public abstract class ControlPacket
     }
 
     /// <summary>
-    /// Decode "UTF-8 Encoded String" data representation as defined in:
-    /// https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901010
-    /// </summary>
-    /// <param name="reader">SequenceReader containing the packet data to be decoded.</param>
-    /// <returns>A string containing the UTF-8 string.</returns>
-    protected static string? DecodeUTF8String(ref SequenceReader<byte> reader)
-    {
-
-        if (reader.TryReadBigEndian(out Int16 stringLength))
-        {
-            var array = new byte[stringLength];
-            var span = new Span<byte>(array);
-
-            for (var i = 0; i < stringLength; i++)
-            {
-                if (reader.TryRead(out var outValue))
-                {
-                    span[i] = outValue;
-                }
-            }
-
-            return Encoding.UTF8.GetString(span.ToArray());
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Decode "Binary Data" data representation as defined in:
-    /// https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901012
+    /// Decode an MQTT Binary Data data representation.
+    ///
+    /// See also <seealso href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901012">
+    /// Data Representation: Binary Data</seealso>.
     /// </summary>
     /// <param name="reader">SequenceReader containing the packet data to be decoded.</param>
     /// <returns>A byte[] containing the binary data.</returns>
@@ -158,24 +235,10 @@ public abstract class ControlPacket
     }
 
     /// <summary>
-    /// Decode "Two Byte Integer" data representation as defined in:
-    /// https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901008
-    /// </summary>
-    /// <param name="reader">SequenceReader containing the packet data to be decoded.</param>
-    /// <returns>The value of the two byte integer.</returns>
-    protected static int? DecodeTwoByteInteger(ref SequenceReader<byte> reader)
-    {
-        if (reader.TryReadBigEndian(out Int16 intValue))
-        {
-            return intValue;
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Decode "Four Byte Integer" data representation as defined in:
-    /// https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901009
+    /// Decode an MQTT Four Byte Integer data representation.
+    ///
+    /// See also <seealso href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901009">
+    /// Data Representation: Binary Data</seealso>.
     /// </summary>
     /// <param name="reader">SequenceReader containing the packet data to be decoded.</param>
     /// <returns>The value of the four byte integer.</returns>
@@ -231,6 +294,17 @@ public abstract class ControlPacket
         return false;
     }
 
+    /// <summary>
+    /// Decode a stream of MQTT Properties.
+    ///
+    /// The resulting properties are populated in <cref>this.Properties</cref>.
+    ///
+    /// See also <seealso href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901027">
+    /// Variable Header Properties</seealso>.
+    /// </summary>
+    /// <param name="reader">SequenceReader containing the packet data to be decoded.</param>
+    /// <param name="length">Length of the properties to be decoded.</param>
+    /// <returns>A boolean representing the success or failure of the decoding process.</returns>
     protected bool DecodeProperties(ref SequenceReader<byte> reader, int length)
     {
         var readerStart = reader.Consumed;

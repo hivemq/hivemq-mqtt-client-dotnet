@@ -35,6 +35,8 @@ public class PacketDecoder
         ControlPacket packet = controlPacketType switch
         {
             (int)ControlPacketType.ConnAck => new ConnAckPacket(packetData),
+            (int)ControlPacketType.Disconnect => new DisconnectPacket(packetData),
+            (int)ControlPacketType.PingResp => new PingRespPacket(packetData),
             _ => new MalformedPacket(packetData),
         };
 
