@@ -1,9 +1,8 @@
 namespace HiveMQtt.MQTT5;
 
-using System;
 using System.IO;
 using System.Text;
-using HiveMQtt;
+using HiveMQtt.Client;
 
 /// <summary>
 /// An MQTT Connect Control Packet as defined in:
@@ -11,11 +10,11 @@ using HiveMQtt;
 /// </summary>
 public class ConnectPacket : ControlPacket
 {
-    private readonly ClientOptions clientOptions;
+    private readonly HiveClientOptions clientOptions;
 
     private byte flags;
 
-    public ConnectPacket(ClientOptions clientOptions) => this.clientOptions = clientOptions;
+    public ConnectPacket(HiveClientOptions clientOptions) => this.clientOptions = clientOptions;
 
     public override ControlPacketType ControlPacketType => ControlPacketType.Connect;
 

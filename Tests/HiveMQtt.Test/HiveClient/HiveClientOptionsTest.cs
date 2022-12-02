@@ -1,6 +1,6 @@
 namespace HiveMQtt.Test;
 
-using HiveMQtt;
+using HiveMQtt.Client;
 using Xunit;
 
 public class ClientOptionsTest
@@ -8,7 +8,7 @@ public class ClientOptionsTest
     [Fact]
     public void WithBadKeepAlive()
     {
-        var options = new ClientOptions
+        var options = new HiveClientOptions
         {
             KeepAlive = -300,
         };
@@ -20,7 +20,7 @@ public class ClientOptionsTest
     [Fact]
     public void WithNullifiedClientID()
     {
-        var options = new ClientOptions
+        var options = new HiveClientOptions
         {
             ClientId = null,
         };

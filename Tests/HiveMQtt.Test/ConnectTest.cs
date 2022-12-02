@@ -2,7 +2,7 @@ namespace HiveMQtt.Test;
 
 using System.Threading;
 using System.Threading.Tasks;
-using HiveMQtt;
+using HiveMQtt.Client;
 using Xunit;
 
 public class ConnectTest
@@ -10,7 +10,7 @@ public class ConnectTest
     [Fact]
     public async Task Basic_ConnectAsync()
     {
-        var client = new Client();
+        var client = new HiveClient();
         Assert.NotNull(client);
 
         await client.ConnectAsync().ConfigureAwait(false);

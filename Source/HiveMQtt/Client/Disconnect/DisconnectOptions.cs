@@ -1,4 +1,4 @@
-namespace HiveMQtt;
+namespace HiveMQtt.Client.Disconnect;
 
 using System.Collections;
 using HiveMQtt.MQTT5;

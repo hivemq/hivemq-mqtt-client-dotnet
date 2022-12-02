@@ -1,14 +1,17 @@
-namespace HiveMQtt;
+namespace HiveMQtt.Client;
 
 using System;
 using System.Threading.Tasks;
 
+using HiveMQtt.Client.Connect;
+using HiveMQtt.Client.Disconnect;
+
 /// <summary>
 /// Some interface.
 /// </summary>
-public interface IClient : IDisposable
+public interface IHiveClient : IDisposable
 {
-    ClientOptions Options { get; set; }
+    HiveClientOptions Options { get; set; }
 
     bool IsConnected();
 
@@ -18,5 +21,5 @@ public interface IClient : IDisposable
     /// <returns>A <see cref="Task"/> representing the result of the operation.</returns>
     Task<ConnectResult> ConnectAsync();
 
-    Task<DisconnectResult> DisconnectAsync(DisconnectOptions options);
+    Task<bool> DisconnectAsync(DisconnectOptions options);
 }

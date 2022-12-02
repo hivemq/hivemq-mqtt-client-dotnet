@@ -1,4 +1,4 @@
-namespace HiveMQtt;
+namespace HiveMQtt.Client;
 
 using System;
 using System.Linq;
@@ -6,12 +6,12 @@ using System.Linq;
 /// <summary>
 /// A class to manage the MQTT options available in the Client.
 /// </summary>
-public class ClientOptions
+public class HiveClientOptions
 {
     // The set of valid characters that a client identifier can consist of
     private readonly string clientIdCharset = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-    public ClientOptions()
+    public HiveClientOptions()
     {
         this.GenerateClientID();
         this.Host = "127.0.0.1";

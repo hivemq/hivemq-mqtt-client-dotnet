@@ -1,4 +1,4 @@
-namespace HiveMQtt;
+namespace HiveMQtt.Client.Connect;
 
 /// <summary>
 /// Options class for connect.

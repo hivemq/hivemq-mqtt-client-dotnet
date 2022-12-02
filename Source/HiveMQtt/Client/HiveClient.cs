@@ -1,4 +1,4 @@
-namespace HiveMQtt;
+namespace HiveMQtt.Client;
 
 using System;
 using System.Collections.Concurrent;
@@ -7,6 +7,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
+using HiveMQtt.Client.Connect;
+using HiveMQtt.Client.Disconnect;
 using HiveMQtt.MQTT5;
 
 /// <summary>
@@ -14,7 +16,7 @@ using HiveMQtt.MQTT5;
 /// Fully MQTT compliant and compatible with all respectable MQTT Brokers because sharing is caring
 /// and MQTT is awesome.
 /// </summary>
-public class Client : IDisposable, IClient
+public class HiveClient : IDisposable, IHiveClient
 {
     private readonly ConcurrentQueue<byte[]> sendQueue;
     private readonly ConcurrentQueue<ControlPacket> receiveQueue;
@@ -26,9 +28,9 @@ public class Client : IDisposable, IClient
 
     private bool disposed;
 
-    public Client(ClientOptions? options = null)
+    public HiveClient(HiveClientOptions? options = null)
     {
-        options ??= new ClientOptions();
+        options ??= new HiveClientOptions();
         this.Options = options;
 
         this.sendQueue = new ConcurrentQueue<byte[]>();
@@ -37,7 +39,7 @@ public class Client : IDisposable, IClient
         this.disposed = false;
     }
 
-    public ClientOptions Options { get; set; }
+    public HiveClientOptions Options { get; set; }
 
     public bool IsConnected()
     {
@@ -73,14 +75,13 @@ public class Client : IDisposable, IClient
         return connectResult;
     }
 
-    public async Task DisconnectAsync(DisconnectOptions? options = null)
+    public async Task<bool> DisconnectAsync(DisconnectOptions? options = null)
     {
         var disconnectPacket = new DisconnectPacket();
 
-
-
         disconnectPacket.DisconnectReasonCode = options.DisconnectReasonCode;
-        // await this.socket.SendAsync(segment, SocketFlags.None).ConfigureAwait(false);
+        var x = await this.writer.WriteAsync(disconnectPacket.Encode()).ConfigureAwait(false);
+        return true;
     }
 
     /// <summary>
