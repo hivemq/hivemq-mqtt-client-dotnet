@@ -73,9 +73,13 @@ public class Client : IDisposable, IClient
         return connectResult;
     }
 
-    public async Task DisconnectAsync(DisconnectOptions options)
+    public async Task DisconnectAsync(DisconnectOptions? options = null)
     {
-        // var disconnectPacket = new Disconn
+        var disconnectPacket = new DisconnectPacket();
+
+
+
+        disconnectPacket.DisconnectReasonCode = options.DisconnectReasonCode;
         // await this.socket.SendAsync(segment, SocketFlags.None).ConfigureAwait(false);
     }
 

@@ -27,8 +27,12 @@ public class ClientTest
     public async void ClientDefaultConnect()
     {
         var client = new Client();
-        var result = await client.ConnectAsync().ConfigureAwait(false);
+        var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 
-        Assert.NotNull(result);
+        Assert.NotNull(connectResult);
+        Assert.True(connectResult.ReasonCode == MQTT5.ConnAckReasonCode.Success);
+
+        var disconnectResult = client.DisconnectAsync();
     }
+
 }

@@ -18,5 +18,5 @@ public interface IClient : IDisposable
     /// <returns>A <see cref="Task"/> representing the result of the operation.</returns>
     Task<ConnectResult> ConnectAsync();
 
-    Task DisconnectAsync(DisconnectOptions options);
+    Task<DisconnectResult> DisconnectAsync(DisconnectOptions options);
 }
