@@ -1,7 +1,7 @@
 namespace HiveMQtt.Test.Packets;
 
-using HiveMQtt.MQTT5;
 using HiveMQtt.Client;
+using HiveMQtt.MQTT5;
 using Xunit;
 
 public class ConnectPacketTest

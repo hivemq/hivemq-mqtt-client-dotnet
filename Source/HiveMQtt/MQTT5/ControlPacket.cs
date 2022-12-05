@@ -90,7 +90,6 @@ public abstract class ControlPacket
         return null;
     }
 
-
     /// <summary>
     /// Encode a Two Byte Integer into a <c>MemoryStream</c>.
     ///
@@ -288,6 +287,7 @@ public abstract class ControlPacket
             else
             {
                 // FIXME: Raise Protocol Error
+                // Or log something
             }
         }
 
@@ -379,7 +379,7 @@ public abstract class ControlPacket
                     this.Properties.MaximumQoS = DecodeByte(ref reader);
                     break;
                 case MQTT5PropertyType.RetainAvailable:
-                    this.Properties.RetainAvailable = DecodeByte(ref reader);
+                    this.Properties.RetainAvailable = DecodeByteAsBool(ref reader);
                     break;
                 case MQTT5PropertyType.UserProperty:
                     var key = DecodeUTF8String(ref reader);

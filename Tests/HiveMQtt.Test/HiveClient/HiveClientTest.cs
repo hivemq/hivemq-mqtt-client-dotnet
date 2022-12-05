@@ -1,4 +1,4 @@
-namespace HiveMQtt.Test;
+namespace HiveMQtt.Test.HiveClient;
 
 using HiveMQtt.Client;
 using Xunit;
@@ -21,10 +21,12 @@ public class HiveClientTest
         Assert.Null(client.Options.Password);
 
         Assert.NotNull(client);
+
+        client.Dispose();
     }
 
     [Fact]
-    public async void ClientDefaultConnect()
+    public async Task Client_Has_Default_Connect_Async()
     {
         var client = new HiveClient();
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
@@ -32,7 +34,9 @@ public class HiveClientTest
         Assert.NotNull(connectResult);
         Assert.True(connectResult.ReasonCode == MQTT5.ConnAckReasonCode.Success);
 
-        var disconnectResult = client.DisconnectAsync();
+        var result = await client.DisconnectAsync().ConfigureAwait(false);
+
+        Assert.True(result);
     }
 
 }

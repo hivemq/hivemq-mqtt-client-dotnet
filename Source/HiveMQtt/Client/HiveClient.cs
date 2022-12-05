@@ -5,11 +5,14 @@ using System.Collections.Concurrent;
 using System.IO.Pipelines;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.AccessControl;
 using System.Threading.Tasks;
 
 using HiveMQtt.Client.Connect;
 using HiveMQtt.Client.Disconnect;
 using HiveMQtt.MQTT5;
+using HiveMQtt.MQTT5.Connect;
+using HiveMQtt.MQTT5.Types;
 
 /// <summary>
 /// The excellent, superb and slightly wonderful HiveMQ MQTT Client.
@@ -41,6 +44,8 @@ public class HiveClient : IDisposable, IHiveClient
 
     public HiveClientOptions Options { get; set; }
 
+    public MQTT5Properties ConnectionProperties { get; internal set; }
+
     public bool IsConnected()
     {
         // FIXME: Add MQTT connection state check
@@ -52,11 +57,14 @@ public class HiveClient : IDisposable, IHiveClient
         return false;
     }
 
+    /// <summary>
+    /// Asynchronously makes a TCP connection to the remote specified in HiveClientOptions and then
+    /// proceeds to make an MQTT Connect request.
+    /// </summary>
+    /// <returns>A ConnectResult class respresenting the result of the MQTT connect call.</returns>
     public async Task<ConnectResult> ConnectAsync()
     {
         var socketIsConnected = await this.ConnectSocketAsync().ConfigureAwait(false);
-
-        var connectResult = new ConnectResult();
 
         if (socketIsConnected && this.socket != null)
         {
@@ -69,18 +77,38 @@ public class HiveClient : IDisposable, IHiveClient
             var x = await this.writer.WriteAsync(packet.Encode()).ConfigureAwait(false);
 
             var result = await this.reader.ReadAsync().ConfigureAwait(false);
-            var connAck = PacketDecoder.Decode(result.Buffer);
-            Console.WriteLine(result);
+            var connAck = (ConnAckPacket)PacketDecoder.Decode(result.Buffer);
+
+            return new ConnectResult(connAck.ReasonCode, connAck.SessionPresent, connAck.Properties);
         }
-        return connectResult;
+        // FIXME: Throw exception on unspecified socket error
+        // Include code documentation on which exceptions the socket operation may throw
     }
 
+    /// <summary>
+    /// Asynchronous disconnect from the previously connected MQTT broker.
+    /// </summary>
+    /// <param name="options">The options for the MQTT Disconnect call.</param>
+    /// <returns>A boolean indicating on success or failure.</returns>
     public async Task<bool> DisconnectAsync(DisconnectOptions? options = null)
     {
-        var disconnectPacket = new DisconnectPacket();
+        options ??= new DisconnectOptions();
 
-        disconnectPacket.DisconnectReasonCode = options.DisconnectReasonCode;
-        var x = await this.writer.WriteAsync(disconnectPacket.Encode()).ConfigureAwait(false);
+        var packet = new DisconnectPacket
+        {
+            DisconnectReasonCode = options.ReasonCode,
+        };
+
+        if (this.socket != null && this.socket.Connected)
+        {
+            var x = await this.writer.WriteAsync(packet.Encode()).ConfigureAwait(false);
+
+        }
+        else
+        {
+            // FIXME: Throw some exception
+        }
+
         return true;
     }
 

@@ -1,4 +1,4 @@
-namespace HiveMQtt.MQTT5;
+namespace HiveMQtt.MQTT5.Types;
 
 /// <summary>
 /// Representation of a Variable Byte Integer as defined in:

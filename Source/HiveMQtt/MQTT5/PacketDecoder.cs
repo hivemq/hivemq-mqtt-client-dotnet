@@ -1,6 +1,7 @@
 namespace HiveMQtt.MQTT5;
 
 using System.Buffers;
+using HiveMQtt.MQTT5.Connect;
 
 /// <summary>
 /// An MQTT Connect Control Packet as defined in:

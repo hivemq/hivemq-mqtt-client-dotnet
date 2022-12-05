@@ -57,7 +57,7 @@ public class HiveClientOptions
         var pid_string = Convert.ToString(Environment.ProcessId, System.Globalization.CultureInfo.InvariantCulture);
         var stampLength = 23 - pid_string.Length;
 
-        var clientID = new string(Enumerable.Range(0, stampLength)
+        var clientID = new string(Enumerable.Range(0, stampLength - 1)
                                             .Select(_ =>
                                             this.clientIdCharset[rand.Next(this.clientIdCharset.Length)])
                                             .ToArray());

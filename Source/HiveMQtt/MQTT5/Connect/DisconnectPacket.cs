@@ -1,12 +1,11 @@
-namespace HiveMQtt.MQTT5;
+namespace HiveMQtt.MQTT5.Connect;
 
-using System;
 using System.Buffers;
 using System.IO;
 
 /// <summary>
 /// An MQTT Disconnect Control Packet as defined in:
-/// https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901205
+/// https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901205.
 /// </summary>
 public class DisconnectPacket : ControlPacket
 {
@@ -33,7 +32,7 @@ public class DisconnectPacket : ControlPacket
 
         if (reader.TryRead(out var remainingLength))
         {
-            if ((remainingLength + 2) > this.rawPacketData.Length)
+            if (remainingLength + 2 > this.rawPacketData.Length)
             {
                 // Not enough packet data / partial packet
                 // FIXME: Send back to pipeline to get more data
@@ -80,7 +79,7 @@ public class DisconnectPacket : ControlPacket
         var remainingLength = stream.Length - 2;
 
         stream.Position = 0;
-        stream.WriteByte(((byte)ControlPacketType.Disconnect) << 4);
+        stream.WriteByte((byte)ControlPacketType.Disconnect << 4);
         EncodeVariableByteInteger(stream, (int)remainingLength);
 
         return stream.ToArray();

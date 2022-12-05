@@ -22,10 +22,23 @@ public class MQTT5Properties
 
     public int? SubscriptionIdentifier { get; set; }
 
+    /// <summary>
+    /// Gets or sets a value that represents the session expiration duration in use by the MQTT broker.
+    /// </summary>
     public int? SessionExpiryInterval { get; set; }
 
+    /// <summary>
+    /// Gets or sets the Client Identifier which was assigned by the Server because a zero length Client
+    /// Identifier was found in the CONNECT packet.
+    /// </summary>
     public string? AssignedClientIdentifier { get; set; }
 
+    /// <summary>
+    /// Gets or sets a value indicating the session expiry duration.
+    /// <para>
+    /// If this value is set, this overrides any Keep Alive sent in the Connect request.
+    /// </para>
+    /// </summary>
     public int? ServerKeepAlive { get; set; }
 
     public string? AuthenticationMethod { get; set; }
@@ -42,26 +55,63 @@ public class MQTT5Properties
 
     public string? ServerReference { get; set; }
 
+    /// <summary>
+    /// Gets or sets a value that is a human readable string designed for diagnostics.
+    /// </summary>
     public string? ReasonString { get; set; }
 
+    /// <summary>
+    /// Gets or sets a value that indicates the maximum number of QoS 1 and QoS 2 publications that the
+    /// MQTT broker is willing to process concurrently.
+    /// </summary>
     public int? ReceiveMaximum { get; set; }
 
+    /// <summary>
+    /// Gets or sets a value that indicates the highest value that the Server will accept as a Topic Alias sent by the Client.
+    /// <para>
+    /// The Server uses this value to limit the number of Topic Aliases that it is willing to hold on this Connection.
+    /// A value of 0 indicates that the Server does not accept any Topic Aliases on this connection.
+    /// </para>
+    /// </summary>
     public int? TopicAliasMaximum { get; set; }
 
     public int? TopicAlias { get; set; }
 
+    /// <summary>
+    /// Gets or sets a value that indicates the maximum "Quality of Service" level that the MQTT
+    /// broker is willing to accept.
+    /// </summary>
     public int? MaximumQoS { get; set; }
 
-    public int? RetainAvailable { get; set; }
+    /// <summary>
+    /// Gets or sets a value that indicates whether the MQTT broker supports Retained Messages.
+    /// </summary>
+    public bool? RetainAvailable { get; set; }
 
+    /// <summary>
+    /// Gets or sets a HashTable containing the User Properties returned by the MQTT broker.
+    /// </summary>
     public Hashtable UserProperties { get; set; }
 
-    public int? MaximumPacketSize { get; set; }
+    /// <summary>
+    /// Gets or sets a value that indicates the maximum packet size that the MQTT broker is willing
+    /// accept.
+    /// </summary>
+    public Int32? MaximumPacketSize { get; set; }
 
+    /// <summary>
+    /// Gets or sets a value indicating whether the Server supports Wildcard Subscriptions.
+    /// </summary>
     public bool? WildcardSubscriptionAvailable { get; set; }
 
+    /// <summary>
+    /// Gets or sets a value indicating whether the Server supports Subscription Identifiers.
+    /// </summary>
     public bool? SubscriptionIdentifierAvailable { get; set; }
 
+    /// <summary>
+    /// Gets or sets a value indicating whether the Server supports Shared Subscriptions.
+    /// </summary>
     public bool? SharedSubscriptionAvailable { get; set; }
 
 }
