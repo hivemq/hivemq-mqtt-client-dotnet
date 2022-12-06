@@ -50,7 +50,8 @@ public abstract class ControlPacket
     /// </summary>
     /// <param name="stream">The <cref>MemoryStream</cref> to write the UTF-8 string into.</param>
     /// <param name="s">The string to be encoded and written.</param>
-    protected static void EncodeUTF8String(MemoryStream stream, string s)
+    /// <returns>The number of bytes written into the MemoryStream.</returns>
+    protected static int EncodeUTF8String(MemoryStream stream, string s)
     {
         var length = (ushort)s.Length;
 
@@ -58,6 +59,8 @@ public abstract class ControlPacket
 
         var stringBytes = Encoding.UTF8.GetBytes(s);
         stream.Write(stringBytes, 0, stringBytes.Length);
+
+        return 2 + stringBytes.Length;
     }
 
     /// <summary>
@@ -98,10 +101,12 @@ public abstract class ControlPacket
     /// </summary>
     /// <param name="stream">The <cref>MemoryStream</cref> to write the Two Byte Integer into.</param>
     /// <param name="value">The integer to be encoded and written.</param>
-    protected static void EncodeTwoByteInteger(MemoryStream stream, int value)
+    /// <returns>The value 2 is always returned.</returns>
+    protected static int EncodeTwoByteInteger(MemoryStream stream, int value)
     {
         var converted = Convert.ToUInt16(value);
         EncodeTwoByteInteger(stream, converted);
+        return 2;
     }
 
     /// <summary>
@@ -133,13 +138,12 @@ public abstract class ControlPacket
     /// </summary>
     /// <param name="reader">SequenceReader containing the packet data to be decoded.</param>
     /// <returns>The value of the two byte integer.</returns>
-    protected static int? DecodeTwoByteInteger(ref SequenceReader<byte> reader)
+    protected static UInt16? DecodeTwoByteInteger(ref SequenceReader<byte> reader)
     {
         if (reader.TryReadBigEndian(out Int16 intValue))
         {
-            return intValue;
+            return (UInt16)intValue;
         }
-
         return null;
     }
 
@@ -151,8 +155,10 @@ public abstract class ControlPacket
     /// </summary>
     /// <param name="stream">The <cref>MemoryStream</cref> to write the Two Byte Integer into.</param>
     /// <param name="number">The integer to be encoded and written.</param>
-    protected static void EncodeVariableByteInteger(MemoryStream stream, int number)
+    /// <returns>The number of bytes written into the stream.</returns>
+    protected static short EncodeVariableByteInteger(MemoryStream stream, int number)
     {
+        short written = 0;
         do
         {
             var digit = number % 0x80;
@@ -163,8 +169,10 @@ public abstract class ControlPacket
             }
 
             stream.WriteByte((byte)digit);
+            written++;
         }
         while (number > 0);
+        return written;
     }
 
     /// <summary>
@@ -204,6 +212,22 @@ public abstract class ControlPacket
     }
 
     /// <summary>
+    /// Encode an MQTT Binary Data data representation.
+    ///
+    /// See also <seealso href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901012">
+    /// Data Representation: Binary Data</seealso>.
+    /// </summary>
+    /// <param name="writer">MemoryStream to encode the data into.</param>
+    /// <param name="binaryData">The binary data to encode.</param>
+    /// <returns>A byte[] containing the binary data.</returns>
+    protected static int EncodeBinaryData(MemoryStream writer, byte[] binaryData)
+    {
+        _ = EncodeTwoByteInteger(writer, binaryData.Length);
+        writer.Write(binaryData);
+        return 2 + binaryData.Length;
+    }
+
+    /// <summary>
     /// Decode an MQTT Binary Data data representation.
     ///
     /// See also <seealso href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901012">
@@ -234,6 +258,35 @@ public abstract class ControlPacket
     }
 
     /// <summary>
+    /// Encode a Four Byte Integer into a <c>MemoryStream</c>.
+    ///
+    /// See also <seealso href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901009">
+    /// Data Representation: Four Byte Integer</seealso>.
+    /// </summary>
+    /// <param name="stream">The <cref>MemoryStream</cref> to write the Four Byte Integer into.</param>
+    /// <param name="value">The integer to be encoded and written.</param>
+    /// <returns>The value 4 is always returned.</returns>
+    protected static int EncodeFourByteInteger(MemoryStream stream, UInt32 value)
+    {
+        var valueInBytes = BitConverter.GetBytes(value);
+
+        if (BitConverter.IsLittleEndian)
+        {
+            Array.Reverse(valueInBytes);
+        }
+
+        stream.WriteByte(valueInBytes[0]);
+        stream.WriteByte(valueInBytes[1]);
+        stream.WriteByte(valueInBytes[2]);
+        stream.WriteByte(valueInBytes[3]);
+
+        // We return this just as a helper to simplify code for this pattern:
+        // propertiesLength += EncodeVariableByteInteger(...)
+        // propertiesLength += EncodeFourByteInteger(...)
+        return 4;
+    }
+
+    /// <summary>
     /// Decode an MQTT Four Byte Integer data representation.
     ///
     /// See also <seealso href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901009">
@@ -241,11 +294,11 @@ public abstract class ControlPacket
     /// </summary>
     /// <param name="reader">SequenceReader containing the packet data to be decoded.</param>
     /// <returns>The value of the four byte integer.</returns>
-    protected static int? DecodeFourByteInteger(ref SequenceReader<byte> reader)
+    protected static UInt32? DecodeFourByteInteger(ref SequenceReader<byte> reader)
     {
         if (reader.TryReadBigEndian(out Int32 intValue))
         {
-            return intValue;
+            return (UInt32)intValue;
         }
 
         return null;
@@ -295,6 +348,122 @@ public abstract class ControlPacket
     }
 
     /// <summary>
+    /// Encode a stream of MQTT Properties.
+    /// <para>
+    ///
+    /// See also <seealso href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901027">
+    /// Variable Header Properties</seealso>.
+    /// </para>
+    /// </summary>
+    /// <param name="writer">MemoryStream to encode the properties into.</param>
+    /// <returns>A boolean representing the success or failure of the encoding process.</returns>
+    protected bool EncodeProperties(MemoryStream writer)
+    {
+
+        var propertiesLength = 0;
+        var propertyStream = new MemoryStream(100);
+
+        if (this.Properties.PayloadFormatIndicator != null)
+        {
+            propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.PayloadFormatIndicator);
+            propertyStream.WriteByte((byte)this.Properties.PayloadFormatIndicator);
+            propertiesLength++;
+        }
+        else if (this.Properties.MessageExpiryInterval != null)
+        {
+            propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.MessageExpiryInterval);
+            propertiesLength += EncodeFourByteInteger(propertyStream, (uint)this.Properties.MessageExpiryInterval);
+        }
+        else if (this.Properties.ContentType != null)
+        {
+            propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.ContentType);
+            propertiesLength += EncodeUTF8String(propertyStream, this.Properties.ContentType);
+        }
+        else if (this.Properties.ResponseTopic != null)
+        {
+            propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.ResponseTopic);
+            propertiesLength += EncodeUTF8String(propertyStream, this.Properties.ResponseTopic);
+        }
+        else if (this.Properties.CorrelationData != null)
+        {
+            propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.CorrelationData);
+            propertiesLength += EncodeBinaryData(propertyStream, this.Properties.CorrelationData);
+        }
+        else if (this.Properties.SubscriptionIdentifier != null)
+        {
+            propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.SubscriptionIdentifier);
+            propertiesLength += EncodeVariableByteInteger(propertyStream, (int)this.Properties.SubscriptionIdentifier);
+        }
+        else if (this.Properties.SessionExpiryInterval != null)
+        {
+            propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.SessionExpiryInterval);
+            propertiesLength += EncodeFourByteInteger(propertyStream, (uint)this.Properties.SessionExpiryInterval);
+        }
+        else if (this.Properties.AuthenticationMethod != null)
+        {
+            propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.AuthenticationMethod);
+            propertiesLength += EncodeUTF8String(propertyStream, this.Properties.AuthenticationMethod);
+        }
+        else if (this.Properties.AuthenticationData != null)
+        {
+            propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.AuthenticationData);
+            propertiesLength += EncodeBinaryData(propertyStream, this.Properties.AuthenticationData);
+        }
+        else if (this.Properties.RequestProblemInformation != null)
+        {
+            propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.RequestProblemInformation);
+            propertyStream.WriteByte((byte)this.Properties.RequestProblemInformation);
+            propertiesLength++;
+        }
+        else if (this.Properties.WillDelayInterval != null)
+        {
+            propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.WillDelayInterval);
+            propertiesLength += EncodeFourByteInteger(propertyStream, (uint)this.Properties.WillDelayInterval);
+        }
+        else if (this.Properties.RequestResponseInformation != null)
+        {
+            propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.RequestResponseInformation);
+            propertyStream.WriteByte((byte)this.Properties.RequestResponseInformation);
+            propertiesLength++;
+        }
+        else if (this.Properties.ServerReference != null)
+        {
+            propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.ServerReference);
+            propertiesLength += EncodeUTF8String(propertyStream, this.Properties.ServerReference);
+        }
+        else if (this.Properties.ReasonString != null)
+        {
+            propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.ReasonString);
+            propertiesLength += EncodeUTF8String(propertyStream, this.Properties.ReasonString);
+        }
+        else if (this.Properties.ReceiveMaximum != null)
+        {
+            propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.ReceiveMaximum);
+            propertiesLength += EncodeTwoByteInteger(propertyStream, (int)this.Properties.ReceiveMaximum);
+        }
+        else if (this.Properties.TopicAliasMaximum != null)
+        {
+            propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.TopicAliasMaximum);
+            propertiesLength += EncodeTwoByteInteger(propertyStream, (int)this.Properties.TopicAliasMaximum);
+        }
+        else if (this.Properties.TopicAlias != null)
+        {
+            propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.TopicAlias);
+            propertiesLength += EncodeTwoByteInteger(propertyStream, (int)this.Properties.TopicAlias);
+        }
+        else if (this.Properties.MaximumPacketSize != null)
+        {
+            propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.MaximumPacketSize);
+            propertiesLength += EncodeFourByteInteger(propertyStream, (uint)this.Properties.MaximumPacketSize);
+        }
+
+        _ = EncodeVariableByteInteger(writer, propertiesLength);
+        propertyStream.CopyTo(writer);
+
+        return true;
+    }
+
+    /// <summary>
     /// Decode a stream of MQTT Properties.
     ///
     /// The resulting properties are populated in <cref>this.Properties</cref>.
@@ -331,7 +500,7 @@ public abstract class ControlPacket
                     this.Properties.CorrelationData = DecodeBinaryData(ref reader);
                     break;
                 case MQTT5PropertyType.SubscriptionIdentifier:
-                    this.Properties.SubscriptionIdentifier = DecodeVariableByteInteger(ref reader);
+                    this.Properties.SubscriptionIdentifier = (UInt32)DecodeVariableByteInteger(ref reader);
                     break;
                 case MQTT5PropertyType.SessionExpiryInterval:
                     this.Properties.SessionExpiryInterval = DecodeFourByteInteger(ref reader);

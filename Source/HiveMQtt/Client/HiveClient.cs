@@ -66,23 +66,33 @@ public class HiveClient : IDisposable, IHiveClient
     {
         var socketIsConnected = await this.ConnectSocketAsync().ConfigureAwait(false);
 
-        if (socketIsConnected && this.socket != null)
+        if (!socketIsConnected || this.socket == null)
         {
-            this.stream = new NetworkStream(this.socket);
-            this.reader = PipeReader.Create(this.stream);
-            this.writer = PipeWriter.Create(this.stream);
-
-            // Construct the MQTT Connect packet
-            var packet = new ConnectPacket(this.Options);
-            var x = await this.writer.WriteAsync(packet.Encode()).ConfigureAwait(false);
-
-            var result = await this.reader.ReadAsync().ConfigureAwait(false);
-            var connAck = (ConnAckPacket)PacketDecoder.Decode(result.Buffer);
-
-            return new ConnectResult(connAck.ReasonCode, connAck.SessionPresent, connAck.Properties);
+            // FIXME: Use a real exception
+            throw new InvalidOperationException("Failed to connect socket");
         }
-        // FIXME: Throw exception on unspecified socket error
-        // Include code documentation on which exceptions the socket operation may throw
+
+        this.stream = new NetworkStream(this.socket);
+        this.reader = PipeReader.Create(this.stream);
+        this.writer = PipeWriter.Create(this.stream);
+
+        // Construct the MQTT Connect packet
+        var packet = new ConnectPacket(this.Options);
+        var x = await this.writer.WriteAsync(packet.Encode()).ConfigureAwait(false);
+
+        var result = await this.reader.ReadAsync().ConfigureAwait(false);
+        var connAck = (ConnAckPacket)PacketDecoder.Decode(result.Buffer);
+
+        var connectResult = new ConnectResult(connAck.ReasonCode, connAck.SessionPresent, connAck.Properties);
+
+        // Data massage: This class is used for end users.  Let's prep the data so it's easily understandable.
+        // If the Session Expiry Interval is absent the value in the CONNECT Packet used.
+        if (connectResult.Properties.SessionExpiryInterval == null)
+        {
+            connectResult.Properties.SessionExpiryInterval = (UInt32)this.Options.SessionExpiryInterval;
+        }
+
+        return connectResult;
     }
 
     /// <summary>

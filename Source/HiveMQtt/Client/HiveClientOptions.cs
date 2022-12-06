@@ -1,6 +1,7 @@
 namespace HiveMQtt.Client;
 
 using System;
+using System.Collections;
 using System.Linq;
 
 /// <summary>
@@ -16,8 +17,9 @@ public class HiveClientOptions
         this.GenerateClientID();
         this.Host = "127.0.0.1";
         this.Port = 1883;
-        this.KeepAlive = 60; // FIXME: Taken from Java client; Seems low
+        this.KeepAlive = 60;
         this.CleanStart = true;
+        this.UserProperties = new Hashtable();
     }
 
     // Client Identifier to be used in the Client.  Will be set automatically if not specified.
@@ -48,8 +50,75 @@ public class HiveClientOptions
     public string? Password { get; set; }
 
     /// <summary>
+    /// Gets or sets a value that represents the session expiration interval in use by the MQTT broker.
+    /// <para>
+    /// In order to implement QoS 1 and QoS 2 protocol flows the Client and Server need to associate state
+    /// with the Client Identifier, this is referred to as the Session State. The Server also stores the
+    /// subscriptions as part of the Session State.  The session can continue across a sequence of
+    /// Network Connections.
+    /// </para>
+    /// <para>
+    /// The Session State lasts as long as the latest Network Connection plus the Session Expiry Interval.
+    /// </para>
+    /// </summary>
+    public int? SessionExpiryInterval { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value that indicates the maximum number of QoS 1 and QoS 2 publications that the
+    /// MQTT broker is willing to process concurrently.
+    /// <para>
+    /// The Client uses this value to limit the number of QoS 1 and QoS 2 publications that it is willing
+    /// to process concurrently. There is no mechanism to limit the QoS 0 publications that the Server might
+    /// try to send.
+    /// </para>
+    /// <para>
+    /// The value of Receive Maximum applies only to the current Network Connection. If the Receive Maximum
+    /// value is absent then its value defaults to 65,535.
+    /// </para>
+    /// </summary>
+    public int? ReceiveMaximum { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value that indicates the maximum packet size that the MQTT broker is willing
+    /// accept.
+    /// </summary>
+    public Int32? MaximumPacketSize { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value that indicates the highest value that the Server will accept as a Topic Alias sent by the Client.
+    /// <para>
+    /// The Server uses this value to limit the number of Topic Aliases that it is willing to hold on this Connection.
+    /// A value of 0 indicates that the Server does not accept any Topic Aliases on this connection.
+    /// </para>
+    /// </summary>
+    public int? TopicAliasMaximum { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Request Response Information flag.  The Client uses this value to request the Server to
+    /// return Response Information in the CONNACK.
+    /// </summary>
+    public bool? RequestResponseInformation { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Request Problem Information flag. The Client uses this value to indicate whether the
+    /// Reason String or User Properties are sent in the case of failures.
+    /// </summary>
+    public bool? RequestProblemInformation { get; set; }
+
+    /// <summary>
+    /// Gets or sets a HashTable containing the User Properties returned by the MQTT broker.
+    /// </summary>
+    public Hashtable UserProperties { get; set; }
+
+    public string? AuthenticationMethod { get; set; }
+
+    public byte[]? AuthenticationData { get; set; }
+
+
+
+    /// <summary>
     /// Generate a semi-random client identifier to be used in <c>Client</c> connections.
-    /// hivec#-pid-randomstring
+    /// hivec#-pid-randomstring.
     /// </summary>
     public void GenerateClientID()
     {
