@@ -39,20 +39,18 @@ public class ConnectPacket : ControlPacket
         stream.Write(Encoding.UTF8.GetBytes("MQTT"));
         stream.WriteByte(0x5); // Protocol Version
         stream.WriteByte(this.flags); // Connect Flags
-        EncodeTwoByteInteger(stream, this.clientOptions.KeepAlive);
-        stream.WriteByte(0x0); // Connect Properties
-
+        _ = EncodeTwoByteInteger(stream, this.clientOptions.KeepAlive);
         this.EncodeProperties(stream);
 
         // Payload
-        EncodeUTF8String(stream, this.clientOptions.ClientId);
+        _ = EncodeUTF8String(stream, this.clientOptions.ClientId);
 
         var length = stream.Length - 2;
 
         // Fixed Header - Add to the beginning of the stream
         stream.Position = 0;
         stream.WriteByte(((byte)ControlPacketType.Connect) << 4);
-        EncodeVariableByteInteger(stream, (int)length);
+        _ = EncodeVariableByteInteger(stream, (int)length);
 
         return stream.ToArray();
     }

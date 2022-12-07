@@ -88,7 +88,7 @@ public class HiveClientConnectTest
 
         Assert.True(client.IsConnected());
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
-        // Assert.Equal((UInt32)89, (UInt32)connectResult.Properties.SessionExpiryInterval);
+        Assert.Equal(89, connectResult.SessionExpiryInterval);
 
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);

@@ -6,7 +6,7 @@ using System.Collections;
 /// MQTT version 5 properties as defined in
 /// https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901027
 /// </summary>
-public class MQTT5Properties
+internal class MQTT5Properties
 {
     public MQTT5Properties() => this.UserProperties = new Hashtable();
 
@@ -41,8 +41,14 @@ public class MQTT5Properties
     /// </summary>
     public UInt16? ServerKeepAlive { get; set; }
 
+    /// <summary>
+    /// Gets or sets a string containing the name of the authentication method.
+    /// </summary>
     public string? AuthenticationMethod { get; set; }
 
+    /// <summary>
+    /// Gets or sets a byte array containing authentication data.
+    /// </summary>
     public byte[]? AuthenticationData { get; set; }
 
     public byte? RequestProblemInformation { get; set; }
@@ -51,8 +57,22 @@ public class MQTT5Properties
 
     public byte? RequestResponseInformation { get; set; }
 
+    /// <summary>
+    /// Gets or sets a value that is in response to the RequestResponseInformation flag in the connect
+    /// request.
+    /// <para>
+    /// If null, RequestResponseInformation wasn't set or it is not supported by this MQTT broker.
+    /// </para>
+    /// </summary>
     public string? ResponseInformation { get; set; }
 
+    /// <summary>
+    /// Gets or sets a String which can be used by the Client to identify another Server to use.
+    /// <para>
+    /// The Server uses a Server Reference in either a CONNACK or DISCONNECT packet with
+    /// Reason code of 0x9C (Use another server) or Reason Code 0x9D (Server moved).
+    /// </para>
+    /// </summary>
     public string? ServerReference { get; set; }
 
     /// <summary>
@@ -107,7 +127,7 @@ public class MQTT5Properties
     /// <summary>
     /// Gets or sets a value indicating whether the Server supports Subscription Identifiers.
     /// </summary>
-    public bool? SubscriptionIdentifierAvailable { get; set; }
+    public bool? SubscriptionIdentifiersAvailable { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether the Server supports Shared Subscriptions.

@@ -356,8 +356,7 @@ public abstract class ControlPacket
     /// </para>
     /// </summary>
     /// <param name="writer">MemoryStream to encode the properties into.</param>
-    /// <returns>A boolean representing the success or failure of the encoding process.</returns>
-    protected bool EncodeProperties(MemoryStream writer)
+    protected void EncodeProperties(MemoryStream writer)
     {
 
         var propertiesLength = 0;
@@ -458,9 +457,9 @@ public abstract class ControlPacket
         }
 
         _ = EncodeVariableByteInteger(writer, propertiesLength);
-        propertyStream.CopyTo(writer);
 
-        return true;
+        _ = propertyStream.Seek(0, System.IO.SeekOrigin.Begin);
+        propertyStream.CopyTo(writer, (int)propertyStream.Length);
     }
 
     /// <summary>
