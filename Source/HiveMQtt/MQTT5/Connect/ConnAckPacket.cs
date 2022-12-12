@@ -1,4 +1,4 @@
-namespace HiveMQtt.MQTT5;
+namespace HiveMQtt.MQTT5.Connect;
 
 using System.Buffers;
 
@@ -6,7 +6,7 @@ using System.Buffers;
 /// An MQTT Connect Control Packet as defined in:
 /// https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901074.
 /// </summary>
-public class ConnAckPacket : ControlPacket
+internal class ConnAckPacket : ControlPacket
 {
     public bool SessionPresent { get; set; }
 

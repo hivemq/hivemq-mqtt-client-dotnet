@@ -18,6 +18,7 @@ public class HiveClientOptions
         this.Host = "127.0.0.1";
         this.Port = 1883;
         this.KeepAlive = 60;
+        this.SessionExpiryInterval = 300;
         this.CleanStart = true;
         this.UserProperties = new Hashtable();
     }
@@ -61,11 +62,11 @@ public class HiveClientOptions
     /// The Session State lasts as long as the latest Network Connection plus the Session Expiry Interval.
     /// </para>
     /// </summary>
-    public int? SessionExpiryInterval { get; set; }
+    public int SessionExpiryInterval { get; set; }
 
     /// <summary>
-    /// Gets or sets a value that indicates the maximum number of QoS 1 and QoS 2 publications that the
-    /// MQTT broker is willing to process concurrently.
+    /// Gets or sets a value that indicates the maximum number of QoS 1 and QoS 2 publications that this
+    /// MQTT client is willing to process concurrently.
     /// <para>
     /// The Client uses this value to limit the number of QoS 1 and QoS 2 publications that it is willing
     /// to process concurrently. There is no mechanism to limit the QoS 0 publications that the Server might
@@ -76,22 +77,22 @@ public class HiveClientOptions
     /// value is absent then its value defaults to 65,535.
     /// </para>
     /// </summary>
-    public int? ReceiveMaximum { get; set; }
+    public int? ClientReceiveMaximum { get; set; }
 
     /// <summary>
-    /// Gets or sets a value that indicates the maximum packet size that the MQTT broker is willing
+    /// Gets or sets a value that indicates the maximum packet size that the MQTT client is willing
     /// accept.
     /// </summary>
-    public Int32? MaximumPacketSize { get; set; }
+    public Int32? ClientMaximumPacketSize { get; set; }
 
     /// <summary>
-    /// Gets or sets a value that indicates the highest value that the Server will accept as a Topic Alias sent by the Client.
+    /// Gets or sets a value that indicates the highest value that the Client will accept as a Topic Alias sent by the Server.
     /// <para>
-    /// The Server uses this value to limit the number of Topic Aliases that it is willing to hold on this Connection.
-    /// A value of 0 indicates that the Server does not accept any Topic Aliases on this connection.
+    /// The Client uses this value to limit the number of Topic Aliases that it is willing to hold on this Connection.
+    /// A value of 0 indicates that the Client does not accept any Topic Aliases on this connection.
     /// </para>
     /// </summary>
-    public int? TopicAliasMaximum { get; set; }
+    public int? ClientTopicAliasMaximum { get; set; }
 
     /// <summary>
     /// Gets or sets the Request Response Information flag.  The Client uses this value to request the Server to

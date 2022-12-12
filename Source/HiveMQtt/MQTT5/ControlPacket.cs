@@ -4,6 +4,7 @@ using System;
 using System.Buffers;
 using System.IO;
 using System.Text;
+using HiveMQtt.MQTT5.Exceptions;
 using HiveMQtt.MQTT5.Types;
 
 /// <summary>
@@ -17,7 +18,7 @@ public abstract class ControlPacket
     /// Gets or sets the MQTT v5
     /// <see href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901027">Properties</see>.
     /// </summary>
-    public MQTT5Properties Properties { get; set; }
+    internal MQTT5Properties Properties { get; set; }
 
     /// <summary>
     /// Gets the raw packet data received from or to be sent on the wire.
@@ -566,7 +567,7 @@ public abstract class ControlPacket
                     this.Properties.WildcardSubscriptionAvailable = DecodeByteAsBool(ref reader);
                     break;
                 case MQTT5PropertyType.SubscriptionIdentifierAvailable:
-                    this.Properties.SubscriptionIdentifierAvailable = DecodeByteAsBool(ref reader);
+                    this.Properties.SubscriptionIdentifiersAvailable = DecodeByteAsBool(ref reader);
                     break;
                 case MQTT5PropertyType.SharedSubscriptionAvailable:
                     this.Properties.SharedSubscriptionAvailable = DecodeByteAsBool(ref reader);

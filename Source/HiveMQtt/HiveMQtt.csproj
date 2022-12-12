@@ -30,4 +30,9 @@
   <ItemGroup>
     <PackageReference Include="System.IO.Pipelines" Version="7.0.0" />
   </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="HiveMQtt.Test" PublicKey="fc5550082a9c642c" />
+  </ItemGroup>
+  <ItemGroup>
+</ItemGroup>
 </Project>

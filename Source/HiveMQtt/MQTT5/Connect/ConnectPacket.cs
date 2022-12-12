@@ -1,6 +1,5 @@
-namespace HiveMQtt.MQTT5;
+namespace HiveMQtt.MQTT5.Connect;
 
-using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Text;
 using HiveMQtt.Client;
@@ -77,31 +76,28 @@ public class ConnectPacket : ControlPacket
         }
 
         // Properties
-        if (this.clientOptions.SessionExpiryInterval != null)
-        {
-            this.Properties.SessionExpiryInterval = (uint)RangeValidate(
-                (int)this.clientOptions.SessionExpiryInterval,
-                MQTT5DataType.FourByteInteger);
-        }
+        this.Properties.SessionExpiryInterval = (uint)RangeValidate(
+            this.clientOptions.SessionExpiryInterval,
+            MQTT5DataType.FourByteInteger);
 
-        if (this.clientOptions.ReceiveMaximum != null)
+        if (this.clientOptions.ClientReceiveMaximum != null)
         {
             this.Properties.ReceiveMaximum = (ushort)RangeValidate(
-                (int)this.clientOptions.ReceiveMaximum,
+                (int)this.clientOptions.ClientReceiveMaximum,
                 MQTT5DataType.TwoByteInteger);
         }
 
-        if (this.clientOptions.MaximumPacketSize != null)
+        if (this.clientOptions.ClientMaximumPacketSize != null)
         {
             this.Properties.MaximumPacketSize = (ushort)RangeValidate(
-                (int)this.clientOptions.MaximumPacketSize,
+                (int)this.clientOptions.ClientMaximumPacketSize,
                 MQTT5DataType.FourByteInteger);
         }
 
-        if (this.clientOptions.TopicAliasMaximum != null)
+        if (this.clientOptions.ClientTopicAliasMaximum != null)
         {
             this.Properties.TopicAliasMaximum = (ushort)RangeValidate(
-                (int)this.clientOptions.TopicAliasMaximum,
+                (int)this.clientOptions.ClientTopicAliasMaximum,
                 MQTT5DataType.TwoByteInteger);
         }
 

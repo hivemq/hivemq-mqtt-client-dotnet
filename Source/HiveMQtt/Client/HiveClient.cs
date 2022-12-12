@@ -44,7 +44,7 @@ public class HiveClient : IDisposable, IHiveClient
 
     public HiveClientOptions Options { get; set; }
 
-    public MQTT5Properties ConnectionProperties { get; internal set; }
+    internal MQTT5Properties ConnectionProperties { get; }
 
     public bool IsConnected()
     {
@@ -87,10 +87,7 @@ public class HiveClient : IDisposable, IHiveClient
 
         // Data massage: This class is used for end users.  Let's prep the data so it's easily understandable.
         // If the Session Expiry Interval is absent the value in the CONNECT Packet used.
-        if (connectResult.Properties.SessionExpiryInterval == null)
-        {
-            connectResult.Properties.SessionExpiryInterval = (UInt32)this.Options.SessionExpiryInterval;
-        }
+        connectResult.Properties.SessionExpiryInterval ??= (UInt32)this.Options.SessionExpiryInterval;
 
         return connectResult;
     }

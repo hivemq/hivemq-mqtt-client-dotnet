@@ -1,4 +1,4 @@
-namespace HiveMQtt.MQTT5;
+namespace HiveMQtt.MQTT5.Exceptions;
 
 using System;
 

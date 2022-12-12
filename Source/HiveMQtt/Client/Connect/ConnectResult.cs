@@ -1,7 +1,7 @@
 namespace HiveMQtt.Client.Connect;
 
 using System.Collections;
-using HiveMQtt.MQTT5;
+using HiveMQtt.MQTT5.Connect;
 using HiveMQtt.MQTT5.Types;
 
 /// <summary>
@@ -47,7 +47,17 @@ public class ConnectResult
     /// </para>
     /// </summary>
     /// <returns>The integer value of the maximum number of QoS 1 + QoS 2 concurrent messages.</returns>
-    public int? ReceiveMaximum => this.Properties.ReceiveMaximum;
+    public int? BrokerReceiveMaximum => this.Properties.ReceiveMaximum;
+
+    /// <summary>
+    /// Gets the Maximum Packet Size the MQTT broker is willing to accept.
+    /// <para>
+    /// If the Maximum Packet Size is not present, there is no limit on the packet size imposed beyond
+    /// the limitations in the protocol as a result of the remaining length encoding and the protocol
+    /// header sizes.
+    /// </para>
+    /// </summary>
+    public int? BrokerMaximumPacketSize => (int?)this.Properties.MaximumPacketSize;
 
     /// <summary>
     /// Gets the maximum the maximum quality of service (QoS) that this MQTT broker
@@ -85,16 +95,6 @@ public class ConnectResult
     }
 
     /// <summary>
-    /// Gets the Maximum Packet Size the Server is willing to accept.
-    /// <para>
-    /// If the Maximum Packet Size is not present, there is no limit on the packet size imposed beyond
-    /// the limitations in the protocol as a result of the remaining length encoding and the protocol
-    /// header sizes.
-    /// </para>
-    /// </summary>
-    public int? MaximumPacketSize => (int?)this.Properties.MaximumPacketSize;
-
-    /// <summary>
     /// Gets the Client Identifier which was assigned by the Server because a zero length Client
     /// Identifier was found in the CONNECT packet.
     /// </summary>
@@ -104,7 +104,7 @@ public class ConnectResult
     /// Gets the value that indicates the highest value that the Server will accept as a Topic
     /// Alias sent by the Client.
     /// </summary>
-    public int TopicAliasMaximum
+    public int BrokerTopicAliasMaximum
     {
         get
         {

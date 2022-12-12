@@ -2,12 +2,14 @@ namespace HiveMQtt.MQTT5;
 
 using System.Buffers;
 using HiveMQtt.MQTT5.Connect;
+using HiveMQtt.MQTT5.Ping;
+using HiveMQtt.MQTT5.Publish;
 
 /// <summary>
 /// An MQTT Connect Control Packet as defined in:
 /// https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901074.
 /// </summary>
-public class PacketDecoder
+internal class PacketDecoder
 {
     public static ControlPacket Decode(ReadOnlySequence<byte> buffer)
     {

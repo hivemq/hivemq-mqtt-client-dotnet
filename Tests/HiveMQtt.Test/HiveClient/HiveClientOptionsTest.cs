@@ -3,7 +3,7 @@ namespace HiveMQtt.Test;
 using HiveMQtt.Client;
 using Xunit;
 
-public class ClientOptionsTest
+public class HiveClientOptionsTest
 {
     [Fact]
     public void WithBadKeepAlive()

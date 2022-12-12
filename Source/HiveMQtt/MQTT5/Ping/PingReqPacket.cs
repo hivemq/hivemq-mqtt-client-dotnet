@@ -1,6 +1,5 @@
-namespace HiveMQtt.MQTT5;
+namespace HiveMQtt.MQTT5.Ping;
 
-using System.Buffers;
 using System.IO;
 
 /// <summary>
@@ -9,7 +8,7 @@ using System.IO;
 /// See also <seealso href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901195">
 /// PingReq Control Packet</seealso>.
 /// </summary>
-public class PingReqPacket : ControlPacket
+internal class PingReqPacket : ControlPacket
 {
     public override ControlPacketType ControlPacketType => ControlPacketType.PingResp;
 

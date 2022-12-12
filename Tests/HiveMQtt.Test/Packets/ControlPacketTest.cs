@@ -1,4 +1,4 @@
-namespace HiveMQtt.Test;
+namespace HiveMQtt.Test.Packets;
 
 using System.IO;
 using HiveMQtt.MQTT5;

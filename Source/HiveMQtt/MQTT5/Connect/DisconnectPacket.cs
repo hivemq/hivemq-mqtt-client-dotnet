@@ -7,7 +7,7 @@ using System.IO;
 /// An MQTT Disconnect Control Packet as defined in:
 /// https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901205.
 /// </summary>
-public class DisconnectPacket : ControlPacket
+internal class DisconnectPacket : ControlPacket
 {
     private readonly ReadOnlySequence<byte> rawPacketData;
 
