@@ -1,4 +1,4 @@
-namespace HiveMQtt.Client.Connect;
+namespace HiveMQtt.Client.Results;
 
 using System.Collections;
 using HiveMQtt.MQTT5.Connect;

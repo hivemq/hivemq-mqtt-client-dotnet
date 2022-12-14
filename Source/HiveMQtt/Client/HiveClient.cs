@@ -5,13 +5,13 @@ using System.Collections.Concurrent;
 using System.IO.Pipelines;
 using System.Net;
 using System.Net.Sockets;
-using System.Security.AccessControl;
 using System.Threading.Tasks;
 
-using HiveMQtt.Client.Connect;
-using HiveMQtt.Client.Disconnect;
+using HiveMQtt.Client.Options;
+using HiveMQtt.Client.Results;
 using HiveMQtt.MQTT5;
 using HiveMQtt.MQTT5.Connect;
+using HiveMQtt.MQTT5.Publish;
 using HiveMQtt.MQTT5.Types;
 
 /// <summary>
@@ -117,6 +117,36 @@ public class HiveClient : IDisposable, IHiveClient
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Publish a message to the MQTT broker.
+    /// </summary>
+    /// <param name="options"></param>
+    /// <returns></returns>
+    /// TODO: Implement the PublishResult class
+    public async Task<PublishResult> PublishAsync(PublishOptions options)
+    {
+        var packet = new PublishPacket(options);
+
+        var x = await this.writer.WriteAsync(packet.Encode()).ConfigureAwait(false);
+
+        return new PublishResult();
+    }
+
+    /// <summary>
+    /// Subscribe to a topic on the MQTT broker.
+    /// </summary>
+    /// <param name="options"></param>
+    /// <returns></returns>
+    /// TODO: Implement the SubscribeResult class
+    public async Task<SubscribeResult> SubscribeAsync(SubscribeOptions options)
+    {
+        var packet = new SubscribePacket(options);
+
+        var x = await this.writer.WriteAsync(packet.Encode()).ConfigureAwait(false);
+
+        return new SubscribeResult();
     }
 
     /// <summary>

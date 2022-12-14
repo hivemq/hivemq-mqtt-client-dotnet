@@ -3,8 +3,8 @@ namespace HiveMQtt.Client;
 using System;
 using System.Threading.Tasks;
 
-using HiveMQtt.Client.Connect;
-using HiveMQtt.Client.Disconnect;
+using HiveMQtt.Client.Options;
+using HiveMQtt.Client.Results;
 
 /// <summary>
 /// Some interface.
@@ -22,4 +22,11 @@ public interface IHiveClient : IDisposable
     Task<ConnectResult> ConnectAsync();
 
     Task<bool> DisconnectAsync(DisconnectOptions options);
+
+    Task<SubscribeResult> SubscribeAsync(string topic);
+
+    Task<UnsubscribeResult> UnsubscribeAsync(string topic);
+
+    Task<PublishResult> PublishAsync(string topic, string payload);
+
 }

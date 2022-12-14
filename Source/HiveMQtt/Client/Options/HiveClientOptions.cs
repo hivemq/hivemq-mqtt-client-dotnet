@@ -1,4 +1,4 @@
-namespace HiveMQtt.Client;
+namespace HiveMQtt.Client.Options;
 
 using System;
 using System.Collections;
@@ -62,7 +62,8 @@ public class HiveClientOptions
     /// The Session State lasts as long as the latest Network Connection plus the Session Expiry Interval.
     /// </para>
     /// </summary>
-    public int SessionExpiryInterval { get; set; }
+    /// We use long here because uint in C# is non CLS compliant.  The value range is unsigned 4 byte integer (uint32).
+    public long SessionExpiryInterval { get; set; }
 
     /// <summary>
     /// Gets or sets a value that indicates the maximum number of QoS 1 and QoS 2 publications that this
@@ -83,7 +84,7 @@ public class HiveClientOptions
     /// Gets or sets a value that indicates the maximum packet size that the MQTT client is willing
     /// accept.
     /// </summary>
-    public Int32? ClientMaximumPacketSize { get; set; }
+    public long? ClientMaximumPacketSize { get; set; }
 
     /// <summary>
     /// Gets or sets a value that indicates the highest value that the Client will accept as a Topic Alias sent by the Server.
@@ -111,11 +112,16 @@ public class HiveClientOptions
     /// </summary>
     public Hashtable UserProperties { get; set; }
 
+    /// <summary>
+    /// Gets or sets a UTF-8 Encoded String containing the name of the authentication method used for extended authentication.
+    /// If Authentication Method is absent, extended authentication is not performed.
+    /// </summary>
     public string? AuthenticationMethod { get; set; }
 
+    /// <summary>
+    /// Gets or sets an array of bytes containing the authentication data used for extended authentication.
+    /// </summary>
     public byte[]? AuthenticationData { get; set; }
-
-
 
     /// <summary>
     /// Generate a semi-random client identifier to be used in <c>Client</c> connections.
@@ -141,25 +147,73 @@ public class HiveClientOptions
     public void ValidateOptions()
     {
         // Data Validation
-        if (this.KeepAlive < 0)
+        this.KeepAlive = RangeValidateTwoByteInteger(this.KeepAlive);
+        this.SessionExpiryInterval = RangeValidateFourByteInteger(this.SessionExpiryInterval);
+
+        if (this.ClientReceiveMaximum != null)
         {
-            // FIXME: Warn bad KeepAlive value
-            this.KeepAlive = 0;
+            this.ClientReceiveMaximum = RangeValidateTwoByteInteger((int)this.ClientReceiveMaximum);
         }
-        else if (this.KeepAlive > 65535)
+
+        if (this.ClientMaximumPacketSize != null)
         {
-            // FIXME: Warn bad KeepAlive value
-            this.KeepAlive = 65535;
+            this.ClientMaximumPacketSize = RangeValidateFourByteInteger((long)this.ClientMaximumPacketSize);
         }
+
+        if (this.ClientTopicAliasMaximum != null)
+        {
+            this.ClientTopicAliasMaximum = RangeValidateTwoByteInteger((int)this.ClientTopicAliasMaximum);
+        }
+
+        // TODO: Validate User Properties
+        // TODO: Validate Authentication Method
+        // TODO: Validate Authentication Data
 
         if (this.ClientId == null)
         {
-            // FIXME: Forced regeneration of client id
             this.GenerateClientID();
         }
         else if (this.ClientId.Length > 23)
         {
-            // FIXME: Warn on exceeded length; may not work...
+            // FIXME: Warn on exceeded length; can use but it may not work...
         }
+    }
+
+    /// <summary>
+    /// Validate that the value is within the range of a 2 byte unsigned integer.
+    /// </summary>
+    /// <param name="value">The value to be validated.</param>
+    /// <returns>A corrected value or the original if it was in range.</returns>
+    internal static int RangeValidateTwoByteInteger(int value)
+    {
+        if (value < UInt16.MinValue)
+        {
+            value = UInt16.MinValue;
+        }
+        else if (value > UInt16.MaxValue)
+        {
+            value = UInt16.MaxValue;
+        }
+
+        return value;
+    }
+
+    /// <summary>
+    /// Validate that the value is within the range of a 4 byte unsigned integer.
+    /// </summary>
+    /// <param name="value">The value to be validated.</param>
+    /// <returns>A corrected value or the original if it was in range.</returns>
+    internal static long RangeValidateFourByteInteger(long value)
+    {
+        if (value < UInt32.MinValue)
+        {
+            value = UInt32.MinValue;
+        }
+        else if (value > UInt32.MaxValue)
+        {
+            value = UInt32.MaxValue;
+        }
+
+        return value;
     }
 }

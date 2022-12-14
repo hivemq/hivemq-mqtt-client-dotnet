@@ -2,7 +2,7 @@ namespace HiveMQtt.Test.HiveClient;
 
 using System.Threading.Tasks;
 using HiveMQtt.Client;
-using HiveMQtt.Client.Disconnect;
+using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.Connect;
 using Xunit;
 
@@ -173,4 +173,5 @@ public class HiveClientConnectOptionsTest
     }
 
     // FIXME: Add Authentication Tests
+    // AuthenticationMethod/Data
 }

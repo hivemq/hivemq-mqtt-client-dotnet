@@ -2,7 +2,7 @@ namespace HiveMQtt.MQTT5.Connect;
 
 using System.IO;
 using System.Text;
-using HiveMQtt.Client;
+using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.Types;
 
 /// <summary>
@@ -76,22 +76,16 @@ public class ConnectPacket : ControlPacket
         }
 
         // Properties
-        this.Properties.SessionExpiryInterval = (uint)RangeValidate(
-            this.clientOptions.SessionExpiryInterval,
-            MQTT5DataType.FourByteInteger);
+        this.Properties.SessionExpiryInterval = (UInt32)this.clientOptions.SessionExpiryInterval;
 
         if (this.clientOptions.ClientReceiveMaximum != null)
         {
-            this.Properties.ReceiveMaximum = (ushort)RangeValidate(
-                (int)this.clientOptions.ClientReceiveMaximum,
-                MQTT5DataType.TwoByteInteger);
+            this.Properties.ReceiveMaximum = (UInt16)this.clientOptions.ClientReceiveMaximum;
         }
 
         if (this.clientOptions.ClientMaximumPacketSize != null)
         {
-            this.Properties.MaximumPacketSize = (ushort)RangeValidate(
-                (int)this.clientOptions.ClientMaximumPacketSize,
-                MQTT5DataType.FourByteInteger);
+            this.Properties.MaximumPacketSize = (UInt16)this.clientOptions.ClientMaximumPacketSize;
         }
 
         if (this.clientOptions.ClientTopicAliasMaximum != null)

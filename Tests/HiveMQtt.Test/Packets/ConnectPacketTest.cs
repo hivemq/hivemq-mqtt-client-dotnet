@@ -1,6 +1,6 @@
 namespace HiveMQtt.Test.Packets;
 
-using HiveMQtt.Client;
+using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.Connect;
 using Xunit;
 

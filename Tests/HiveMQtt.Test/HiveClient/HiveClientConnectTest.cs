@@ -2,7 +2,7 @@ namespace HiveMQtt.Test.HiveClient;
 
 using System.Threading.Tasks;
 using HiveMQtt.Client;
-using HiveMQtt.Client.Disconnect;
+using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.Connect;
 using Xunit;
 
@@ -26,4 +26,6 @@ public class HiveClientConnectTest
         var disconnectResult = await client.DisconnectAsync(disconnectOptions).ConfigureAwait(false);
         Assert.True(disconnectResult);
     }
+
+    // FIXME: Add Connect failure tests: non existent brokers, bad SSL etc...
 }
