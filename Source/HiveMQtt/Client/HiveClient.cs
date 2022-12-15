@@ -9,9 +9,11 @@ using System.Threading.Tasks;
 
 using HiveMQtt.Client.Options;
 using HiveMQtt.Client.Results;
+
 using HiveMQtt.MQTT5;
 using HiveMQtt.MQTT5.Connect;
 using HiveMQtt.MQTT5.Publish;
+using HiveMQtt.MQTT5.Subscribe;
 using HiveMQtt.MQTT5.Types;
 
 /// <summary>
@@ -21,6 +23,8 @@ using HiveMQtt.MQTT5.Types;
 /// </summary>
 public class HiveClient : IDisposable, IHiveClient
 {
+    private int lastPacketId;
+
     private readonly ConcurrentQueue<byte[]> sendQueue;
     private readonly ConcurrentQueue<ControlPacket> receiveQueue;
 
@@ -33,6 +37,7 @@ public class HiveClient : IDisposable, IHiveClient
 
     public HiveClient(HiveClientOptions? options = null)
     {
+        this.lastPacketId = 0;
         options ??= new HiveClientOptions();
         this.Options = options;
 
@@ -44,7 +49,7 @@ public class HiveClient : IDisposable, IHiveClient
 
     public HiveClientOptions Options { get; set; }
 
-    internal MQTT5Properties ConnectionProperties { get; }
+    internal MQTT5Properties? ConnectionProperties { get; }
 
     public bool IsConnected()
     {
@@ -57,11 +62,7 @@ public class HiveClient : IDisposable, IHiveClient
         return false;
     }
 
-    /// <summary>
-    /// Asynchronously makes a TCP connection to the remote specified in HiveClientOptions and then
-    /// proceeds to make an MQTT Connect request.
-    /// </summary>
-    /// <returns>A ConnectResult class respresenting the result of the MQTT connect call.</returns>
+    /// <inheritdoc />
     public async Task<ConnectResult> ConnectAsync()
     {
         var socketIsConnected = await this.ConnectSocketAsync().ConfigureAwait(false);
@@ -92,11 +93,7 @@ public class HiveClient : IDisposable, IHiveClient
         return connectResult;
     }
 
-    /// <summary>
-    /// Asynchronous disconnect from the previously connected MQTT broker.
-    /// </summary>
-    /// <param name="options">The options for the MQTT Disconnect call.</param>
-    /// <returns>A boolean indicating on success or failure.</returns>
+    /// <inheritdoc />
     public async Task<bool> DisconnectAsync(DisconnectOptions? options = null)
     {
         options ??= new DisconnectOptions();
@@ -122,15 +119,15 @@ public class HiveClient : IDisposable, IHiveClient
     /// <summary>
     /// Publish a message to the MQTT broker.
     /// </summary>
-    /// <param name="options"></param>
-    /// <returns></returns>
-    /// TODO: Implement the PublishResult class
-    public async Task<PublishResult> PublishAsync(PublishOptions options)
+    /// <param name="options">The <seealso cref="PublishOptions"/> for the Publish.</param>
+    /// <returns>A <seealso cref="PublishResult"/> representing the result of the publish operation.</returns>
+    public async Task<PublishResult> PublishAsync(byte[] message, PublishOptions options)
     {
-        var packet = new PublishPacket(options);
-
-        var x = await this.writer.WriteAsync(packet.Encode()).ConfigureAwait(false);
-
+        var packetIdentifier = this.GeneratePacketIdentifier();
+        var packet = new PublishPacket(options, (ushort)packetIdentifier);
+        _ = await this.writer.WriteAsync(packet.Encode()).ConfigureAwait(false);
+        // TODO: Get the packet identifier from the PublishAck packet
+        // TODO:
         return new PublishResult();
     }
 
@@ -140,6 +137,23 @@ public class HiveClient : IDisposable, IHiveClient
     /// <param name="options"></param>
     /// <returns></returns>
     /// TODO: Implement the SubscribeResult class
+    public async Task<SubscribeResult> SubscribeAsync(string topic, QoS qos = QoS.AtMostOnce)
+    {
+        var options = new SubscribeOptions
+        {
+            TopicFilters = new List<TopicFilter>
+            {
+                new()
+                {
+                    Topic = topic,
+                    QoS = qos,
+                },
+            },
+        };
+
+        return await this.SubscribeAsync(options).ConfigureAwait(false);
+    }
+
     public async Task<SubscribeResult> SubscribeAsync(SubscribeOptions options)
     {
         var packet = new SubscribePacket(options);
@@ -165,6 +179,20 @@ public class HiveClient : IDisposable, IHiveClient
         await this.socket.ConnectAsync(ipEndPoint).ConfigureAwait(false);
 
         return this.socket.Connected;
+    }
+
+    /// <summary>
+    /// Generate a packet identifier.
+    /// </summary>
+    /// <returns>A valid packet identifier.</returns>
+    protected int GeneratePacketIdentifier()
+    {
+        if (this.lastPacketId == ushort.MaxValue)
+        {
+            this.lastPacketId = 0;
+        }
+
+        return Interlocked.Increment(ref this.lastPacketId);
     }
 
     /// <summary>

@@ -16,11 +16,17 @@ public interface IHiveClient : IDisposable
     bool IsConnected();
 
     /// <summary>
-    /// Asyncronously connect to an MQTT broker.
+    /// Asynchronously makes a TCP connection to the remote specified in HiveClientOptions and then
+    /// proceeds to make an MQTT Connect request.
     /// </summary>
-    /// <returns>A <see cref="Task"/> representing the result of the operation.</returns>
+    /// <returns>A ConnectResult class respresenting the result of the MQTT connect call.</returns>
     Task<ConnectResult> ConnectAsync();
 
+    /// <summary>
+    /// Asynchronous disconnect from the previously connected MQTT broker.
+    /// </summary>
+    /// <param name="options">The options for the MQTT Disconnect call.</param>
+    /// <returns>A boolean indicating on success or failure.</returns>
     Task<bool> DisconnectAsync(DisconnectOptions options);
 
     Task<SubscribeResult> SubscribeAsync(string topic);

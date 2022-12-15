@@ -15,12 +15,6 @@ public abstract class ControlPacket
     public ControlPacket() => this.Properties = new MQTT5Properties();
 
     /// <summary>
-    /// Gets or sets the MQTT v5
-    /// <see href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901027">Properties</see>.
-    /// </summary>
-    internal MQTT5Properties Properties { get; set; }
-
-    /// <summary>
     /// Gets the raw packet data received from or to be sent on the wire.
     /// </summary>
     public ReadOnlySequence<byte> RawPacketData { get; internal set; }
@@ -42,6 +36,17 @@ public abstract class ControlPacket
     /// MQTT Control Packet Types</seealso>.
     /// </summary>
     public abstract ControlPacketType ControlPacketType { get; }
+
+    /// <summary>
+    /// Gets or sets the MQTT v5
+    /// <see href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901027">Properties</see>.
+    /// </summary>
+    internal MQTT5Properties Properties { get; set; }
+
+    /// <summary>
+    /// Gets or sets the packet identifier for this packet.
+    /// </summary>
+    internal ushort PacketIdentifier { get; set; }
 
     /// <summary>
     /// Encode a UTF-8 string into a <c>MemoryStream</c>.
@@ -459,7 +464,7 @@ public abstract class ControlPacket
 
         _ = EncodeVariableByteInteger(writer, propertiesLength);
 
-        _ = propertyStream.Seek(0, System.IO.SeekOrigin.Begin);
+        _ = propertyStream.Seek(0, SeekOrigin.Begin);
         propertyStream.CopyTo(writer, (int)propertyStream.Length);
     }
 
@@ -581,4 +586,5 @@ public abstract class ControlPacket
 
         return true;
     }
+
 }

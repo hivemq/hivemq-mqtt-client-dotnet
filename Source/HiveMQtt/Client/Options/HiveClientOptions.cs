@@ -4,6 +4,8 @@ using System;
 using System.Collections;
 using System.Linq;
 
+using HiveMQtt.Client.Exceptions;
+
 /// <summary>
 /// A class to manage the MQTT options available in the Client.
 /// </summary>
@@ -146,7 +148,6 @@ public class HiveClientOptions
     /// </summary>
     public void ValidateOptions()
     {
-        // Data Validation
         this.KeepAlive = RangeValidateTwoByteInteger(this.KeepAlive);
         this.SessionExpiryInterval = RangeValidateFourByteInteger(this.SessionExpiryInterval);
 
@@ -165,9 +166,28 @@ public class HiveClientOptions
             this.ClientTopicAliasMaximum = RangeValidateTwoByteInteger((int)this.ClientTopicAliasMaximum);
         }
 
-        // TODO: Validate User Properties
-        // TODO: Validate Authentication Method
-        // TODO: Validate Authentication Data
+        foreach (DictionaryEntry property in this.UserProperties)
+        {
+            if (property.Key is not string key || key.Length > 65535)
+            {
+                throw new HiveMQttClientException("User Property Key must be less than 65535 characters.");
+            }
+
+            if (property.Value is not string value || value.Length > 65535)
+            {
+                throw new HiveMQttClientException("User Property Value must be less than 65535 characters.");
+            }
+        }
+
+        if (this.AuthenticationMethod != null && this.AuthenticationMethod.Length > 65535)
+        {
+            throw new HiveMQttClientException("Authentication Method must be less than 65535 characters.");
+        }
+
+        if (this.AuthenticationData != null && this.AuthenticationData.Length > 65535)
+        {
+            throw new HiveMQttClientException("Authentication Data must be less than 65535 bytes.");
+        }
 
         if (this.ClientId == null)
         {
