@@ -2,10 +2,11 @@ namespace HiveMQtt.Test.HiveClient;
 
 using System.Threading.Tasks;
 using HiveMQtt.Client;
+using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.Connect;
 using Xunit;
 
-public class HiveClientPubSubTest
+public class HiveClientSubscribeTest
 {
     [Fact]
     public async Task Subscribe()
@@ -14,6 +15,7 @@ public class HiveClientPubSubTest
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
+        var options = new SubscribeOptions()
         var subResult = await subClient.SubscribeAsync("data/topic").ConfigureAwait(false);
 
 

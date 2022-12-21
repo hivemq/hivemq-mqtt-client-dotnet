@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 
 using HiveMQtt.Client.Options;
 using HiveMQtt.Client.Results;
+using HiveMQtt.MQTT5.Types;
 
 /// <summary>
 /// Some interface.
@@ -33,6 +34,10 @@ public interface IHiveClient : IDisposable
 
     Task<UnsubscribeResult> UnsubscribeAsync(string topic);
 
-    Task<PublishResult> PublishAsync(string topic, string payload);
+    Task<PublishResult> PublishAsync(string topic, string payload, QualityOfService qos = QualityOfService.AtMostOnceDelivery);
+
+    Task<PublishResult> PublishAsync(string topic, byte[] payload, QualityOfService qos = QualityOfService.AtMostOnceDelivery);
+
+    Task<PublishResult> PublishAsync(MQTT5PublishMessage message);
 
 }

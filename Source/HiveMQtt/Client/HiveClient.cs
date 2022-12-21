@@ -5,11 +5,10 @@ using System.Collections.Concurrent;
 using System.IO.Pipelines;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading.Tasks;
-
 using HiveMQtt.Client.Options;
 using HiveMQtt.Client.Results;
-
 using HiveMQtt.MQTT5;
 using HiveMQtt.MQTT5.Connect;
 using HiveMQtt.MQTT5.Publish;
@@ -117,18 +116,63 @@ public class HiveClient : IDisposable, IHiveClient
     }
 
     /// <summary>
-    /// Publish a message to the MQTT broker.
+    /// Publish a message to an MQTT topic.
     /// </summary>
-    /// <param name="options">The <seealso cref="PublishOptions"/> for the Publish.</param>
+    /// <param name="message">The <seealso cref="MQTT5PublishMessage"/> for the Publish.</param>
     /// <returns>A <seealso cref="PublishResult"/> representing the result of the publish operation.</returns>
-    public async Task<PublishResult> PublishAsync(byte[] message, PublishOptions options)
+    public async Task<PublishResult> PublishAsync(MQTT5PublishMessage message)
     {
         var packetIdentifier = this.GeneratePacketIdentifier();
-        var packet = new PublishPacket(options, (ushort)packetIdentifier);
+
+        var packet = new PublishPacket(message, (ushort)packetIdentifier);
         _ = await this.writer.WriteAsync(packet.Encode()).ConfigureAwait(false);
+
         // TODO: Get the packet identifier from the PublishAck packet
         // TODO:
         return new PublishResult();
+    }
+
+    /// <summary>
+    /// Publish a message to an MQTT topic.
+    /// <para>
+    /// This is a convenience method that routes to <seealso cref="PublishAsync(MQTT5PublishMessage)"/>.
+    /// </para>
+    /// </summary>
+    /// <param name="topic">The string topic to publish to.</param>
+    /// <param name="payload">The string message to publish.</param>
+    /// <returns>A <seealso cref="PublishResult"/> representing the result of the publish operation.</returns>
+    public async Task<PublishResult> PublishAsync(string topic, string payload, QualityOfService qos = QualityOfService.AtMostOnceDelivery)
+    {
+        var message = new MQTT5PublishMessage
+        {
+            Topic = topic,
+            Payload = Encoding.ASCII.GetBytes(payload),
+            QoS = qos,
+        };
+
+        return await this.PublishAsync(message).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Publish a message to an MQTT topic.
+    /// <para>
+    /// This is a convenience method that routes to <seealso cref="PublishAsync(MQTT5PublishMessage)"/>.
+    /// </para>
+    /// </summary>
+    /// <param name="topic">The string topic to publish to.</param>
+    /// <param name="payload">The UTF-8 encoded array of bytes to publish.</param>
+    /// <returns>A <seealso cref="PublishResult"/> representing the result of the publish operation.</returns>
+    public async Task<PublishResult> PublishAsync(string topic, byte[] payload, QualityOfService qos = QualityOfService.AtMostOnceDelivery)
+    {
+        // Note: Should we validate encoding here?
+        var message = new MQTT5PublishMessage
+        {
+            Topic = topic,
+            Payload = payload,
+            QoS = qos,
+        };
+
+        return await this.PublishAsync(message).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -137,19 +181,19 @@ public class HiveClient : IDisposable, IHiveClient
     /// <param name="options"></param>
     /// <returns></returns>
     /// TODO: Implement the SubscribeResult class
-    public async Task<SubscribeResult> SubscribeAsync(string topic, QoS qos = QoS.AtMostOnce)
+    public async Task<SubscribeResult> SubscribeAsync(string topic, QualityOfService qos = QualityOfService.AtMostOnceDelivery)
     {
-        var options = new SubscribeOptions
-        {
-            TopicFilters = new List<TopicFilter>
-            {
-                new()
-                {
-                    Topic = topic,
-                    QoS = qos,
-                },
-            },
-        };
+        var options = new SubscribeOptions();
+        // {
+        //     TopicFilters = new List<TopicFilter>
+        //     {
+        //         new()
+        //         {
+        //             Topic = topic,
+        //             QoS = qos,
+        //         },
+        //     },
+        // };
 
         return await this.SubscribeAsync(options).ConfigureAwait(false);
     }

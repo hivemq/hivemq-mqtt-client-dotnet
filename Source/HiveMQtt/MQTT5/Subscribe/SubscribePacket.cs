@@ -3,6 +3,8 @@ namespace HiveMQtt.MQTT5.Subscribe;
 using System.Buffers;
 using System.IO;
 
+using HiveMQtt.Client.Options;
+
 /// <summary>
 /// An MQTT Subscribe Control Packet.
 ///
@@ -13,39 +15,24 @@ internal class SubscribePacket : ControlPacket
 {
     private readonly ReadOnlySequence<byte> rawPacketData;
 
-    public SubscribePacket() { }
-
-    public SubscribePacket(ReadOnlySequence<byte> data)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SubscribePacket"/> class
+    /// with the options to be used for the publish.
+    /// </summary>
+    /// <param name="options">The raw packet data off the wire.</param>
+    /// <param name="packetIdentifier">A unique packet identifier for the packet to be created.</param>
+    public SubscribePacket(SubscribeOptions options, ushort packetIdentifier)
     {
-        this.rawPacketData = data;
-        this.Decode();
+        this.PacketIdentifier = packetIdentifier;
+        this.Options = options;
     }
-
-    public override ControlPacketType ControlPacketType => ControlPacketType.Subscribe;
 
     /// <summary>
-    /// Decode the received MQTT Subscribe packet.
+    /// Gets or sets the options for an outgoing Subscribe packet.
     /// </summary>
-    public void Decode()
-    {
-        var reader = new SequenceReader<byte>(this.rawPacketData);
+    public SubscribeOptions Options { get; set; }
 
-        // Skip past the Fixed Header
-        reader.Advance(1);
-
-        if (reader.TryRead(out var remainingLength))
-        {
-            if ((remainingLength + 2) > this.rawPacketData.Length)
-            {
-                // Not enough packet data / partial packet
-                // FIXME: Send back to pipeline to get more data
-            }
-            else
-            {
-                // FIXME: Implement
-            }
-        }
-    }
+    public override ControlPacketType ControlPacketType => ControlPacketType.Subscribe;
 
     /// <summary>
     /// Encode this packet to be sent on the wire.
@@ -59,10 +46,30 @@ internal class SubscribePacket : ControlPacket
             Position = 2,
         };
 
-        stream.WriteByte(0);
-        // FIXME: Implement
-
         // Variable Header - starts at byte 2
+        EncodeTwoByteInteger(stream, this.PacketIdentifier);
+        this.EncodeProperties(stream);
+
+        // Payload
+
+        // Fixed Header
+        stream.Position = 0;
+        var length = stream.Length - 2;
+        var byte1 = (byte)ControlPacketType.Subscribe << 4;
+        byte1 &= 0x2;
+
+        stream.WriteByte((byte)byte1);
+        _ = EncodeVariableByteInteger(stream, (int)length);
         return stream.ToArray();
     }
+
+    /// <summary>
+    /// Gather the flags and properties for a Subscribe packet from <see cref="SubscribeOptions"/>
+    /// as data prepraration for encoding in <see cref="SubscribePacket"/>.
+    /// </summary>
+    internal void GatherSubscribeFlagsAndProperties()
+    {
+        this.Options.ValidateOptions();
+    }
+
 }

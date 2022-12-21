@@ -2,7 +2,7 @@ namespace HiveMQtt.MQTT5.Publish;
 
 using System.Buffers;
 using System.IO;
-using HiveMQtt.Client.Options;
+using HiveMQtt.Client.Message;
 using HiveMQtt.MQTT5.Types;
 
 /// <summary>
@@ -17,14 +17,15 @@ internal class PublishPacket : ControlPacket
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PublishPacket"/> class
-    /// with the options to be used for the publish.
+    /// with the <seealso cref="MQTT5PublishMessage">MQTT5PublishMessage</seealso>
+    /// to be used for the publish.
     /// </summary>
-    /// <param name="options">The raw packet data off the wire.</param>
+    /// <param name="message">The message to publish.</param>
     /// <param name="packetIdentifier">A unique packet identifier for the packet to be created.</param>
-    public PublishPacket(PublishOptions options, ushort packetIdentifier)
+    public PublishPacket(MQTT5PublishMessage message, ushort packetIdentifier)
     {
         this.PacketIdentifier = packetIdentifier;
-        this.Options = options;
+        this.Message = message;
     }
 
     /// <summary>
@@ -34,15 +35,15 @@ internal class PublishPacket : ControlPacket
     /// <param name="data">The raw packet data off the wire.</param>
     public PublishPacket(ReadOnlySequence<byte> data)
     {
-        this.Options = new PublishOptions();
+        this.Message = new MQTT5PublishMessage();
         this.rawPacketData = data;
         this.Decode();
     }
 
     /// <summary>
-    /// Gets or sets the options for an outgoing Publish packet.
+    /// Gets or sets the message for an outgoing Publish packet.
     /// </summary>
-    public PublishOptions Options { get; set; }
+    public MQTT5PublishMessage Message { get; set; }
 
     public override ControlPacketType ControlPacketType => ControlPacketType.Publish;
 
@@ -76,8 +77,9 @@ internal class PublishPacket : ControlPacket
     /// <returns>An array of bytes ready to be sent.</returns>
     public byte[] Encode()
     {
+        var streamSize = this.Message.Payload?.Length ?? 0;
 
-        var stream = new MemoryStream(100)
+        var stream = new MemoryStream(streamSize + 100)
         {
             Position = 2,
         };
@@ -85,69 +87,106 @@ internal class PublishPacket : ControlPacket
         this.GatherPublishFlagsAndProperties();
 
         // Variable Header - starts at byte 2
-
-        // TODO: Validate topic name
-        // TODO: Add support for topic aliases
-        _ = EncodeUTF8String(stream, this.Options.Topic);
-
-        if (this.Options.QoS > QualityOfService.AtMostOnceDelivery)
+        // Topic Name
+        if (this.Message.Topic != null)
         {
-            _ = EncodeTwoByteInteger(stream, this.PacketIdentifier);
+            _ = EncodeUTF8String(stream, this.Message.Topic);
         }
 
+        // Packet Identifier
+        if (this.Message.QoS > QualityOfService.AtMostOnceDelivery)
+        {
+            EncodeTwoByteInteger(stream, this.PacketIdentifier);
+        }
+
+        // Properties
         this.EncodeProperties(stream);
 
-        // Fixed Header - starts at byte 0
+        // Payload
+        if (this.Message.Payload != null)
+        {
+            _ = EncodeBinaryData(stream, this.Message.Payload);
+        }
 
+        // Fixed Header - starts at byte 0
+        stream.Position = 0;
+
+        var byte1 = (byte)ControlPacketType.Publish << 4;
+
+        // DUP Flag
+        if (this.Message.Duplicate is true)
+        {
+            byte1 &= 0x8;
+        }
+
+        // QoS Flag
+        if (this.Message.QoS == QualityOfService.AtLeastOnceDelivery)
+        {
+            byte1 &= 0x2;
+        }
+        else if (this.Message.QoS == QualityOfService.ExactlyOnceDelivery)
+        {
+            byte1 &= 0x4;
+        }
+
+        // Retain Flag
+        if (this.Message.Retained is true)
+        {
+            byte1 &= 0x1;
+        }
+
+        var length = stream.Length - 2;
+        stream.WriteByte((byte)byte1);
+        _ = EncodeVariableByteInteger(stream, (int)length);
 
         return stream.ToArray();
     }
 
     /// <summary>
-    /// Gather the flags and properties for an outgoing Publish packet from <see cref="PublishOptions"/>
+    /// Gather the flags and properties for an outgoing Publish packet from <see cref="MQTT5PublishMessage"/>
     /// as data prepraration for encoding in <see cref="PublishPacket"/>.
     /// </summary>
     internal void GatherPublishFlagsAndProperties()
     {
-        this.Options.ValidateOptions();
+        this.Message.Validate();
 
-        // Properties
-        if (this.Options.PayloadFormatIndicator.HasValue)
+        // Convert the PublishMessage to the MQTT5 Properties
+        if (this.Message.PayloadFormatIndicator.HasValue)
         {
-            this.Properties.PayloadFormatIndicator = (byte)this.Options.PayloadFormatIndicator.Value;
+            this.Properties.PayloadFormatIndicator = (byte)this.Message.PayloadFormatIndicator.Value;
         }
 
-        if (this.Options.MessageExpiryInterval.HasValue)
+        if (this.Message.MessageExpiryInterval.HasValue)
         {
-            this.Properties.MessageExpiryInterval = (uint)this.Options.MessageExpiryInterval.Value;
+            this.Properties.MessageExpiryInterval = (uint)this.Message.MessageExpiryInterval.Value;
         }
 
-        if (this.Options.TopicAlias.HasValue)
+        if (this.Message.TopicAlias.HasValue)
         {
-            this.Properties.TopicAlias = (ushort)this.Options.TopicAlias.Value;
+            this.Properties.TopicAlias = (ushort)this.Message.TopicAlias.Value;
         }
 
-        if (this.Options.ResponseTopic != null)
+        if (this.Message.ResponseTopic != null)
         {
-            this.Properties.ResponseTopic = this.Options.ResponseTopic;
+            this.Properties.ResponseTopic = this.Message.ResponseTopic;
         }
 
-        if (this.Options.CorrelationData != null)
+        if (this.Message.CorrelationData != null)
         {
-            this.Properties.CorrelationData = this.Options.CorrelationData;
+            this.Properties.CorrelationData = this.Message.CorrelationData;
         }
 
-        if (this.Options.UserProperties != null)
+        if (this.Message.UserProperties != null)
         {
-            this.Properties.UserProperties = this.Options.UserProperties;
+            this.Properties.UserProperties = this.Message.UserProperties;
         }
 
         // We never encode SubscriptionIdentifiers for an outgoing Publish packet
-        // this.Options.SubscriptionIdentifiers
+        // this.Message.SubscriptionIdentifiers
 
-        if (this.Options.ContentType != null)
+        if (this.Message.ContentType != null)
         {
-            this.Properties.ContentType = this.Options.ContentType;
+            this.Properties.ContentType = this.Message.ContentType;
         }
     }
 }
