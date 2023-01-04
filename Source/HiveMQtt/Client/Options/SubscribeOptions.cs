@@ -7,7 +7,7 @@ public class SubscribeOptions
 {
     public SubscribeOptions()
     {
-        this.UserProperties = new Hashtable();
+        this.UserProperties = new Dictionary<string, string>();
         this.TopicFilters = new List<TopicFilter>();
     }
 
@@ -19,7 +19,7 @@ public class SubscribeOptions
     /// <summary>
     /// Gets or sets the User Properties for this subscribe.
     /// </summary>
-    public Hashtable UserProperties { get; set; }
+    public Dictionary<string, string> UserProperties { get; set; }
 
     /// <summary>
     /// Gets or sets the Topic Filters for this subscribe.

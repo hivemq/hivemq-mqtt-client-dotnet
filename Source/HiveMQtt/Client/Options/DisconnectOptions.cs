@@ -10,7 +10,7 @@ public class DisconnectOptions
 {
     public DisconnectOptions()
     {
-        this.UserProperties = new Hashtable();
+        this.UserProperties = new Dictionary<string, string>();
 
         // Set the default disconnect reason
         this.ReasonCode = DisconnectReasonCode.NormalDisconnection;
@@ -36,5 +36,5 @@ public class DisconnectOptions
     public string? ReasonString { get; set; }
 
     // FIXME: Add documentation
-    public Hashtable UserProperties { get; set; }
+    public Dictionary<string, string> UserProperties { get; set; }
 }

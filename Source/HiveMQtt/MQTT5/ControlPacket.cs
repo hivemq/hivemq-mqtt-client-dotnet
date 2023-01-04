@@ -2,6 +2,7 @@ namespace HiveMQtt.MQTT5;
 
 using System;
 using System.Buffers;
+using System.Collections;
 using System.IO;
 using System.Text;
 using HiveMQtt.MQTT5.Exceptions;
@@ -365,7 +366,6 @@ public abstract class ControlPacket
     /// <param name="writer">MemoryStream to encode the properties into.</param>
     protected void EncodeProperties(MemoryStream writer)
     {
-
         var propertiesLength = 0;
         var propertyStream = new MemoryStream(100);
 
@@ -462,11 +462,19 @@ public abstract class ControlPacket
             propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.MaximumPacketSize);
             propertiesLength += EncodeFourByteInteger(propertyStream, (uint)this.Properties.MaximumPacketSize);
         }
+        else if (this.Properties.UserProperties.Count > 0)
+        {
+            foreach (var property in this.Properties.UserProperties)
+            {
+                propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.UserProperty);
+                propertiesLength += EncodeUTF8String(propertyStream, (string)property.Key);
+                propertiesLength += EncodeUTF8String(propertyStream, (string)property.Value);
+            }
+        }
 
         _ = EncodeVariableByteInteger(writer, propertiesLength);
 
         _ = propertyStream.Seek(0, SeekOrigin.Begin);
-        // propertyStream.CopyTo(writer, (int)propertyStream.Length);
         propertyStream.CopyTo(writer);
     }
 

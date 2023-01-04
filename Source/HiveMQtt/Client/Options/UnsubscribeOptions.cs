@@ -4,7 +4,7 @@ using System.Collections;
 
 public class UnsubscribeOptions
 {
-    public UnsubscribeOptions() => this.UserProperties = new Hashtable();
+    public UnsubscribeOptions() => this.UserProperties = new Dictionary<string, string>();
 
-    public Hashtable UserProperties { get; set; }
+    public Dictionary<string, string> UserProperties { get; set; }
 }

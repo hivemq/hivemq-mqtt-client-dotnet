@@ -5,11 +5,11 @@ using HiveMQtt.Client.Exceptions;
 
 public class MQTT5PublishMessage
 {
-    public MQTT5PublishMessage() => this.UserProperties = new Hashtable();
+    public MQTT5PublishMessage() => this.UserProperties = new Dictionary<string, string>();
 
     public MQTT5PublishMessage(string topic, QualityOfService? qos)
     {
-        this.UserProperties = new Hashtable();
+        this.UserProperties = new Dictionary<string, string>();
         this.Duplicate = false;
         this.Retained = false;
         this.Topic = topic;
@@ -67,7 +67,7 @@ public class MQTT5PublishMessage
     /// <summary>
     /// Gets or sets the User Properties for this Publish.
     /// </summary>
-    public Hashtable UserProperties { get; set; }
+    public Dictionary<string, string> UserProperties { get; set; }
 
     /// <summary>
     /// Gets or sets the Subscription Identifiers for this Publish.
@@ -149,7 +149,7 @@ public class MQTT5PublishMessage
             throw new HiveMQttClientException("Correlation Data must be less than 65535 bytes.");
         }
 
-        foreach (DictionaryEntry property in this.UserProperties)
+        foreach (var property in this.UserProperties)
         {
             if (property.Key is not string key || key.Length > 65535)
             {

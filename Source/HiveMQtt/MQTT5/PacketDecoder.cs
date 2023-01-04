@@ -45,6 +45,7 @@ internal class PacketDecoder
             (int)ControlPacketType.PingResp => new PingRespPacket(packetData),
             (int)ControlPacketType.Publish => new PublishPacket(packetData),
             (int)ControlPacketType.SubAck => new SubAckPacket(packetData),
+            (int)ControlPacketType.UnsubAck => new UnsubAckPacket(packetData),
             _ => new MalformedPacket(packetData),
         };
 

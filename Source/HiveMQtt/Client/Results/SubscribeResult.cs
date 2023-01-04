@@ -22,7 +22,7 @@ public class SubscribeResult
             var topicFilter = options.TopicFilters[i];
             var subscription = new Subscription(topicFilter)
             {
-                ReasonCode = reasonCode,
+                SubscribeReasonCode = reasonCode,
             };
             this.Subscriptions.Add(subscription);
         }
@@ -44,9 +44,9 @@ public class SubscribeResult
     public List<Subscription> Subscriptions { get; }
 
     /// <summary>
-    /// Gets a HashTable containing the User Properties returned by the MQTT broker.
+    /// Gets a Hashtable containing the User Properties returned by the MQTT broker.
     /// </summary>
-    public Hashtable UserProperties => this.Properties.UserProperties;
+    public Dictionary<string, string> UserProperties => this.Properties.UserProperties;
 
     /// <summary>
     /// Gets the Subscription for the given topic filter.
@@ -59,7 +59,7 @@ public class SubscribeResult
     {
         foreach (var subscription in this.Subscriptions)
         {
-            if (subscription.Topic.Topic == topicFilter)
+            if (subscription.TopicFilter.Topic == topicFilter)
             {
                 return subscription;
             }

@@ -40,6 +40,8 @@ public class HiveClient : IDisposable, IHiveClient
         options ??= new HiveClientOptions();
         this.Options = options;
 
+        this.Subscriptions = new List<Subscription>();
+
         this.sendQueue = new ConcurrentQueue<byte[]>();
         this.receiveQueue = new ConcurrentQueue<ControlPacket>();
 
@@ -49,6 +51,8 @@ public class HiveClient : IDisposable, IHiveClient
     public HiveClientOptions Options { get; set; }
 
     internal MQTT5Properties? ConnectionProperties { get; }
+
+    public List<Subscription> Subscriptions { get; }
 
     public bool IsConnected()
     {
@@ -133,12 +137,13 @@ public class HiveClient : IDisposable, IHiveClient
 
         if (this.socket != null && this.socket.Connected)
         {
-            var x = await this.writer.WriteAsync(packet.Encode()).ConfigureAwait(false);
-
+            var writeResult = await this.writer.WriteAsync(packet.Encode()).ConfigureAwait(false);
+            var flushResult = await this.writer.FlushAsync().ConfigureAwait(false);
         }
         else
         {
             // FIXME: Throw some exception
+            return false;
         }
 
         return true;
@@ -158,7 +163,6 @@ public class HiveClient : IDisposable, IHiveClient
         _ = await this.writer.WriteAsync(packet.Encode()).ConfigureAwait(false);
 
         // TODO: Get the packet identifier from the PublishAck packet
-        // TODO:
         return new PublishResult();
     }
 
@@ -208,9 +212,15 @@ public class HiveClient : IDisposable, IHiveClient
     /// <summary>
     /// Subscribe with a single topic filter on the MQTT broker.
     /// </summary>
-    /// <param name="options"></param>
-    /// <returns></returns>
-    /// TODO: Implement the SubscribeResult class
+    /// <example>
+    /// Usage example:
+    /// <code>
+    /// var result = await client.SubscribeAsync("my/topic", QualityOfService.AtLeastOnceDelivery);
+    /// </code>
+    /// </example>
+    /// <param name="topic">The topic filter to subscribe to.</param>
+    /// <param name="qos">The <seealso cref="QualityOfService">QualityOfService</seealso> level to subscribe with.</param>
+    /// <returns>SubscribeResult reflecting the result of the operation.</returns>
     public async Task<SubscribeResult> SubscribeAsync(string topic, QualityOfService qos = QualityOfService.AtMostOnceDelivery)
     {
         var options = new SubscribeOptions();
@@ -225,6 +235,20 @@ public class HiveClient : IDisposable, IHiveClient
         return await this.SubscribeAsync(options).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Subscribe with SubscribeOptions on the MQTT broker.
+    /// </summary>
+    /// <example>
+    /// Usage example:
+    /// <code>
+    /// var options = new SubscribeOptions();
+    /// options.TopicFilters.Add(new TopicFilter { Topic = "foo", QoS = QualityOfService.AtLeastOnceDelivery });
+    /// options.TopicFilters.Add(new TopicFilter { Topic = "bar", QoS = QualityOfService.AtMostOnceDelivery });
+    /// var result = await client.SubscribeAsync(options);
+    /// </code>
+    /// </example>
+    /// <param name="options">The options for the subscribe request.</param>
+    /// <returns>SubscribeResult reflecting the result of the operation.</returns>
     public async Task<SubscribeResult> SubscribeAsync(SubscribeOptions options)
     {
         var packetIdentifier = this.GeneratePacketIdentifier();
@@ -240,7 +264,63 @@ public class HiveClient : IDisposable, IHiveClient
         // FIXME: Published packets can arrive before the SUBACK.
 
         var subResult = new SubscribeResult(options, subAck);
+
+        // Add the subscriptions to the client
+        this.Subscriptions.AddRange(subResult.Subscriptions);
+
         return subResult;
+    }
+
+    public async Task<UnsubscribeResult> UnsubscribeAsync(string topic)
+    {
+        foreach (var subscription in this.Subscriptions)
+        {
+            if (subscription.TopicFilter.Topic == topic)
+            {
+                return await this.UnsubscribeAsync(subscription).ConfigureAwait(false);
+            }
+        }
+
+        // FIXME: Exception types
+        throw new KeyNotFoundException("No subscription found for topic: " + topic);
+    }
+
+    public async Task<UnsubscribeResult> UnsubscribeAsync(Subscription subscription)
+    {
+        var subscriptions = new List<Subscription> { subscription };
+        return await this.UnsubscribeAsync(subscriptions).ConfigureAwait(false);
+    }
+
+    public async Task<UnsubscribeResult> UnsubscribeAsync(List<Subscription> subscriptions)
+    {
+        var packetIdentifier = this.GeneratePacketIdentifier();
+        var packet = new UnsubscribePacket(subscriptions, (ushort)packetIdentifier);
+
+        var writeResult = await this.writer.WriteAsync(packet.Encode()).ConfigureAwait(false);
+        var flushResult = await this.writer.FlushAsync().ConfigureAwait(false);
+
+        var readResult = await this.reader.ReadAsync().ConfigureAwait(false);
+        var unsubAck = (UnsubAckPacket)PacketDecoder.Decode(readResult.Buffer, out var consumed);
+        this.reader.AdvanceTo(consumed);
+
+        // Prepare the result
+        var unsubResult = new UnsubscribeResult
+        {
+            Subscriptions = packet.Subscriptions,
+        };
+
+        var counter = 0;
+        foreach (var reasonCode in unsubAck.ReasonCodes)
+        {
+            unsubResult.Subscriptions[counter].UnsubscribeReasonCode = reasonCode;
+            if (reasonCode == UnsubAckReasonCode.Success)
+            {
+                // Remove the subscription from the client
+                this.Subscriptions.Remove(unsubResult.Subscriptions[counter]);
+            }
+        }
+
+        return unsubResult;
     }
 
     /// <summary>

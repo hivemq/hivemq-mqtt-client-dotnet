@@ -125,9 +125,9 @@ public class ConnectResult
     public string? ReasonString => this.Properties.ReasonString;
 
     /// <summary>
-    /// Gets a HashTable containing the User Properties returned by the MQTT broker.
+    /// Gets a Hashtable containing the User Properties returned by the MQTT broker.
     /// </summary>
-    public Hashtable UserProperties => this.Properties.UserProperties;
+    public Dictionary<string, string> UserProperties => this.Properties.UserProperties;
 
     /// <summary>
     /// Gets a value indicating whether the Server supports Wildcard Subscriptions.

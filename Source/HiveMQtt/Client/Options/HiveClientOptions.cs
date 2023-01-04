@@ -22,7 +22,7 @@ public class HiveClientOptions
         this.KeepAlive = 60;
         this.SessionExpiryInterval = 300;
         this.CleanStart = true;
-        this.UserProperties = new Hashtable();
+        this.UserProperties = new Dictionary<string, string>();
     }
 
     // Client Identifier to be used in the Client.  Will be set automatically if not specified.
@@ -110,9 +110,9 @@ public class HiveClientOptions
     public bool? RequestProblemInformation { get; set; }
 
     /// <summary>
-    /// Gets or sets a HashTable containing the User Properties returned by the MQTT broker.
+    /// Gets or sets a Dictionary containing the User Properties returned by the MQTT broker.
     /// </summary>
-    public Hashtable UserProperties { get; set; }
+    public Dictionary<string, string> UserProperties { get; set; }
 
     /// <summary>
     /// Gets or sets a UTF-8 Encoded String containing the name of the authentication method used for extended authentication.
@@ -166,7 +166,7 @@ public class HiveClientOptions
             this.ClientTopicAliasMaximum = RangeValidateTwoByteInteger((int)this.ClientTopicAliasMaximum);
         }
 
-        foreach (DictionaryEntry property in this.UserProperties)
+        foreach (var property in this.UserProperties)
         {
             if (property.Key is not string key || key.Length > 65535)
             {

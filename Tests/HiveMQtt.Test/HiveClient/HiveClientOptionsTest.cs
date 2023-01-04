@@ -85,7 +85,7 @@ public class HiveClientOptionsTest
     [Fact]
     public void WithCustomUserProperties()
     {
-        var userProperties = new Hashtable
+        var userProperties = new Dictionary<string, string>
         {
             { "key1", "value1" },
             { "key2", "value2" },

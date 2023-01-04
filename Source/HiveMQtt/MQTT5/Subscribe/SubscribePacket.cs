@@ -1,6 +1,5 @@
 namespace HiveMQtt.MQTT5.Subscribe;
 
-using System.Buffers;
 using System.IO;
 
 using HiveMQtt.Client.Options;
@@ -10,22 +9,25 @@ using HiveMQtt.MQTT5.Types;
 /// An MQTT Subscribe Control Packet.
 ///
 /// See also <seealso href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901205">
-/// Subscribe Control Packet</seealso>
+/// Subscribe Control Packet</seealso>.
 /// </summary>
 internal class SubscribePacket : ControlPacket
 {
-    private readonly ReadOnlySequence<byte> rawPacketData;
-
     /// <summary>
     /// Initializes a new instance of the <see cref="SubscribePacket"/> class
     /// with the options to be used for the publish.
     /// </summary>
     /// <param name="options">The raw packet data off the wire.</param>
     /// <param name="packetIdentifier">A unique packet identifier for the packet to be created.</param>
-    public SubscribePacket(SubscribeOptions options, ushort packetIdentifier)
+    /// <param name="userProperties">User properties to be sent with the packet.</param>
+    public SubscribePacket(SubscribeOptions options, ushort packetIdentifier, Dictionary<string, string>? userProperties = null)
     {
         this.PacketIdentifier = packetIdentifier;
         this.Options = options;
+        if (userProperties != null)
+        {
+            this.Properties.UserProperties = userProperties;
+        }
     }
 
     /// <summary>
@@ -33,6 +35,7 @@ internal class SubscribePacket : ControlPacket
     /// </summary>
     public SubscribeOptions Options { get; set; }
 
+    /// <inheritdoc/>
     public override ControlPacketType ControlPacketType => ControlPacketType.Subscribe;
 
     /// <summary>
@@ -41,7 +44,6 @@ internal class SubscribePacket : ControlPacket
     /// <returns>An array of bytes ready to be sent.</returns>
     public byte[] Encode()
     {
-
         var stream = new MemoryStream(100)
         {
             Position = 2,
@@ -61,6 +63,7 @@ internal class SubscribePacket : ControlPacket
             {
                 optionsByte |= 0x4;
             }
+
             if (tf.RetainAsPublished is true)
             {
                 optionsByte |= 0x8;

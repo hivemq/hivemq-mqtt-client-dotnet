@@ -4,31 +4,25 @@ using System.Buffers;
 using HiveMQtt.Client.Exceptions;
 
 /// <summary>
-/// An MQTT SUBACK Control Packet as defined in:
-/// https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901187.
+/// An MQTT Connect Control Packet as defined in:
+/// https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901074.
 /// </summary>
-internal class SubAckPacket : ControlPacket
+internal class UnsubAckPacket : ControlPacket
 {
-    public SubAckPacket(ReadOnlySequence<byte> packetData)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UnsubAckPacket"/> class.
+    /// </summary>
+    /// <param name="packetData">The raw packet data off the wire.</param>
+    public UnsubAckPacket(ReadOnlySequence<byte> packetData)
     {
-        this.ReasonCodes = new List<SubAckReasonCode>();
+        this.ReasonCodes = new List<UnsubAckReasonCode>();
         this.Decode(packetData);
     }
 
     /// <summary>
-    /// Gets or sets the Session Present flag.
+    /// Gets or sets the list of Reason Codes in this packet.
     /// </summary>
-    public bool SessionPresent { get; set; }
-
-    /// <summary>
-    /// Gets or sets the Ack Flags.
-    /// </summary>
-    public int AckFlags { get; set; }
-
-    /// <summary>
-    /// Gets or sets the list of Reason Codes.
-    /// </summary>
-    public List<SubAckReasonCode> ReasonCodes { get; set; }
+    public List<UnsubAckReasonCode> ReasonCodes { get; set; }
 
     /// <inheritdoc/>
     public override ControlPacketType ControlPacketType => ControlPacketType.SubAck;
@@ -36,6 +30,7 @@ internal class SubAckPacket : ControlPacket
     /// <summary>
     /// Decodes the raw packet data.
     /// </summary>
+    /// <param name="packetData">The raw packet data off the wire.</param>
     public void Decode(ReadOnlySequence<byte> packetData)
     {
         var packetLength = packetData.Length;
@@ -43,9 +38,9 @@ internal class SubAckPacket : ControlPacket
 
         if (reader.TryRead(out var headerByte))
         {
-            if (headerByte != 0x90)
+            if (headerByte != 0xB0)
             {
-                throw new HiveMQttClientException("Invalid SubAck header byte");
+                throw new HiveMQttClientException("Invalid UnsubAck header byte");
             }
         }
 
@@ -62,7 +57,7 @@ internal class SubAckPacket : ControlPacket
         for (var x = 0; x < payloadLength; x++)
         {
             reader.TryRead(out var reasonCode);
-            this.ReasonCodes.Add((SubAckReasonCode)reasonCode);
+            this.ReasonCodes.Add((UnsubAckReasonCode)reasonCode);
         }
     }
 

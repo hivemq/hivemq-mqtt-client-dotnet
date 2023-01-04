@@ -8,7 +8,7 @@ using System.Collections;
 /// </summary>
 internal class MQTT5Properties
 {
-    public MQTT5Properties() => this.UserProperties = new Hashtable();
+    public MQTT5Properties() => this.UserProperties = new Dictionary<string, string>();
 
     public byte? PayloadFormatIndicator { get; set; }
 
@@ -109,9 +109,9 @@ internal class MQTT5Properties
     public bool? RetainAvailable { get; set; }
 
     /// <summary>
-    /// Gets or sets a HashTable containing the User Properties returned by the MQTT broker.
+    /// Gets or sets a Hashtable containing the User Properties returned by the MQTT broker.
     /// </summary>
-    public Hashtable UserProperties { get; set; }
+    public Dictionary<string, string> UserProperties { get; set; }
 
     /// <summary>
     /// Gets or sets a value that indicates the maximum packet size that the MQTT broker is willing
