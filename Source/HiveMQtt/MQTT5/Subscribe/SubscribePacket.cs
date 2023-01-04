@@ -4,6 +4,7 @@ using System.Buffers;
 using System.IO;
 
 using HiveMQtt.Client.Options;
+using HiveMQtt.MQTT5.Types;
 
 /// <summary>
 /// An MQTT Subscribe Control Packet.
@@ -51,12 +52,36 @@ internal class SubscribePacket : ControlPacket
         this.EncodeProperties(stream);
 
         // Payload
+        foreach (var tf in this.Options.TopicFilters)
+        {
+            EncodeUTF8String(stream, tf.Topic);
+
+            var optionsByte = (byte)tf.QoS;
+            if (tf.NoLocal is true)
+            {
+                optionsByte |= 0x4;
+            }
+            if (tf.RetainAsPublished is true)
+            {
+                optionsByte |= 0x8;
+            }
+
+            if (tf.RetainHandling is RetainHandling.SendAtSubscribeIfNewSubscription)
+            {
+                optionsByte |= 0x10;
+            }
+            else if (tf.RetainHandling is RetainHandling.DoNotSendAtSubscribe)
+            {
+                optionsByte |= 0x20;
+            }
+            stream.WriteByte((byte)optionsByte);
+        }
 
         // Fixed Header
         stream.Position = 0;
         var length = stream.Length - 2;
         var byte1 = (byte)ControlPacketType.Subscribe << 4;
-        byte1 &= 0x2;
+        byte1 |= 0x2;
 
         stream.WriteByte((byte)byte1);
         _ = EncodeVariableByteInteger(stream, (int)length);

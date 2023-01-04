@@ -13,7 +13,6 @@ internal class PingRespPacket : ControlPacket
 {
     public PingRespPacket(ReadOnlySequence<byte> data)
     {
-        this.RawPacketData = data;
         this.ReceivedOn = DateTime.UtcNow;
     }
 

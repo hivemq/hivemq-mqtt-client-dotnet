@@ -15,11 +15,6 @@ public abstract class ControlPacket
     public ControlPacket() => this.Properties = new MQTT5Properties();
 
     /// <summary>
-    /// Gets the raw packet data received from or to be sent on the wire.
-    /// </summary>
-    public ReadOnlySequence<byte> RawPacketData { get; internal set; }
-
-    /// <summary>
     /// Gets the timestamp of when this packet was sent.
     /// </summary>
     public DateTime SentOn { get; internal set; }
@@ -181,6 +176,11 @@ public abstract class ControlPacket
         return written;
     }
 
+    protected static int DecodeVariableByteInteger(ref SequenceReader<byte> reader)
+    {
+        return DecodeVariableByteInteger(ref reader, out var lengthInBytes);
+    }
+
     /// <summary>
     /// Decode an MQTT Variable Byte Integer data representation.
     ///
@@ -188,13 +188,14 @@ public abstract class ControlPacket
     /// Data Representation: Variable Byte Integer</seealso>.
     /// </summary>
     /// <param name="reader"><cref>SequenceReader</cref> containing the packet data to be decoded.</param>
+    /// <param name="lengthInBytes">The length of the Variable Byte Integer in bytes.</param>
     /// <returns>The integer value of the Variable Byte Integer.</returns>
-    protected static int DecodeVariableByteInteger(ref SequenceReader<byte> reader)
+    protected static int DecodeVariableByteInteger(ref SequenceReader<byte> reader, out int lengthInBytes)
     {
         var multiplier = 1;
         var value = 0;
         byte encodedByte;
-        var lengthInBytes = 0;
+        lengthInBytes = 0;
 
         do
         {
@@ -465,7 +466,8 @@ public abstract class ControlPacket
         _ = EncodeVariableByteInteger(writer, propertiesLength);
 
         _ = propertyStream.Seek(0, SeekOrigin.Begin);
-        propertyStream.CopyTo(writer, (int)propertyStream.Length);
+        // propertyStream.CopyTo(writer, (int)propertyStream.Length);
+        propertyStream.CopyTo(writer);
     }
 
     /// <summary>

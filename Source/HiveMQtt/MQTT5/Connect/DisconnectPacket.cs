@@ -9,30 +9,28 @@ using System.IO;
 /// </summary>
 internal class DisconnectPacket : ControlPacket
 {
-    private readonly ReadOnlySequence<byte> rawPacketData;
 
     public DisconnectPacket() { }
 
-    public DisconnectPacket(ReadOnlySequence<byte> data)
+    public DisconnectPacket(ReadOnlySequence<byte> packetData)
     {
-        this.rawPacketData = data;
-        this.Decode();
+        this.Decode(packetData);
     }
 
     public override ControlPacketType ControlPacketType => ControlPacketType.Disconnect;
 
     public DisconnectReasonCode DisconnectReasonCode { get; set; }
 
-    public void Decode()
+    public void Decode(ReadOnlySequence<byte> packetData)
     {
-        var reader = new SequenceReader<byte>(this.rawPacketData);
+        var reader = new SequenceReader<byte>(packetData);
 
         // Skip past the Fixed Header
         reader.Advance(1);
 
         if (reader.TryRead(out var remainingLength))
         {
-            if (remainingLength + 2 > this.rawPacketData.Length)
+            if (remainingLength + 2 > packetData.Length)
             {
                 // Not enough packet data / partial packet
                 // FIXME: Send back to pipeline to get more data

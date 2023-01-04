@@ -5,7 +5,11 @@ using HiveMQtt.MQTT5.Types;
 
 public class SubscribeOptions
 {
-    public SubscribeOptions() => this.UserProperties = new Hashtable();
+    public SubscribeOptions()
+    {
+        this.UserProperties = new Hashtable();
+        this.TopicFilters = new List<TopicFilter>();
+    }
 
     /// <summary>
     /// Gets or sets the Subscription Identifier.
@@ -17,6 +21,10 @@ public class SubscribeOptions
     /// </summary>
     public Hashtable UserProperties { get; set; }
 
+    /// <summary>
+    /// Gets or sets the Topic Filters for this subscribe.
+    /// </summary>
+    public List<TopicFilter> TopicFilters { get; set; }
 
     /// <summary>
     /// Validate that the options in this instance are valid.

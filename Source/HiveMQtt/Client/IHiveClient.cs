@@ -30,9 +30,9 @@ public interface IHiveClient : IDisposable
     /// <returns>A boolean indicating on success or failure.</returns>
     Task<bool> DisconnectAsync(DisconnectOptions options);
 
-    Task<SubscribeResult> SubscribeAsync(string topic);
+    // Task<SubscribeResult> SubscribeAsync(string topic);
 
-    Task<UnsubscribeResult> UnsubscribeAsync(string topic);
+    // Task<UnsubscribeResult> UnsubscribeAsync(string topic);
 
     Task<PublishResult> PublishAsync(string topic, string payload, QualityOfService qos = QualityOfService.AtMostOnceDelivery);
 

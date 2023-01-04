@@ -8,28 +8,24 @@ using System.Buffers;
 /// </summary>
 internal class ConnAckPacket : ControlPacket
 {
+    public ConnAckPacket(ReadOnlySequence<byte> packetData)
+    {
+        this.SessionPresent = false;
+        this.Decode(packetData);
+    }
+
     public bool SessionPresent { get; set; }
 
     public int AckFlags { get; set; }
 
     public ConnAckReasonCode ReasonCode { get; set; }
 
-    private readonly ReadOnlySequence<byte> rawPacketData;
-
-    public ConnAckPacket(ReadOnlySequence<byte> data)
-    {
-        this.SessionPresent = false;
-
-        this.rawPacketData = data;
-        this.Decode();
-    }
-
     public override ControlPacketType ControlPacketType => ControlPacketType.ConnAck;
 
-    public void Decode()
+    public void Decode(ReadOnlySequence<byte> packetData)
     {
-        var packetLength = this.rawPacketData.Length;
-        var reader = new SequenceReader<byte>(this.rawPacketData);
+        var packetLength = packetData.Length;
+        var reader = new SequenceReader<byte>(packetData);
 
         // Skip past the Fixed Header
         reader.Advance(2);

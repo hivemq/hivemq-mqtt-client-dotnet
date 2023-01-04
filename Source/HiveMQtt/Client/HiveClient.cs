@@ -77,19 +77,48 @@ public class HiveClient : IDisposable, IHiveClient
         this.writer = PipeWriter.Create(this.stream);
 
         // Construct the MQTT Connect packet
-        var packet = new ConnectPacket(this.Options);
-        var x = await this.writer.WriteAsync(packet.Encode()).ConfigureAwait(false);
+        var connPacket = new ConnectPacket(this.Options);
+        var writeResult = await this.writer.WriteAsync(connPacket.Encode()).ConfigureAwait(false);
+        var flushResult = await this.writer.FlushAsync().ConfigureAwait(false);
 
-        var result = await this.reader.ReadAsync().ConfigureAwait(false);
-        var connAck = (ConnAckPacket)PacketDecoder.Decode(result.Buffer);
+        // FIXME: check writeResult and flushResult - IsCompleted & IsCanceled
 
-        var connectResult = new ConnectResult(connAck.ReasonCode, connAck.SessionPresent, connAck.Properties);
+        // Read the MQTT ConnAck packet
+        SequencePosition consumed;
 
-        // Data massage: This class is used for end users.  Let's prep the data so it's easily understandable.
-        // If the Session Expiry Interval is absent the value in the CONNECT Packet used.
-        connectResult.Properties.SessionExpiryInterval ??= (UInt32)this.Options.SessionExpiryInterval;
+        ReadResult readResult;
+        ControlPacket receivedPacket;
+        while(true)
+        {
+            readResult = await this.reader.ReadAsync().ConfigureAwait(false);
+            receivedPacket = PacketDecoder.Decode(readResult.Buffer, out consumed);
 
-        return connectResult;
+            if (receivedPacket.ControlPacketType == ControlPacketType.ConnAck)
+            {
+                var connAck = (ConnAckPacket)receivedPacket;
+                this.reader.AdvanceTo(consumed);
+
+                var connectResult = new ConnectResult(connAck.ReasonCode, connAck.SessionPresent, connAck.Properties);
+
+                // Data massage: This class is used for end users.  Let's prep the data so it's easily understandable.
+                // If the Session Expiry Interval is absent the value in the CONNECT Packet used.
+                connectResult.Properties.SessionExpiryInterval ??= (UInt32)this.Options.SessionExpiryInterval;
+                return connectResult;
+            }
+            else if (receivedPacket.ControlPacketType == ControlPacketType.Reserved)
+            {
+                if (consumed.Equals(readResult.Buffer.End))
+                {
+                    // FIXME: Define and change to a real exception
+                    throw new InvalidOperationException("Malformed packet");
+                }
+                continue;
+            }
+            else
+            {
+                throw new InvalidOperationException("Unexpected packet");
+            }
+        }
     }
 
     /// <inheritdoc />
@@ -122,8 +151,9 @@ public class HiveClient : IDisposable, IHiveClient
     /// <returns>A <seealso cref="PublishResult"/> representing the result of the publish operation.</returns>
     public async Task<PublishResult> PublishAsync(MQTT5PublishMessage message)
     {
-        var packetIdentifier = this.GeneratePacketIdentifier();
+        message.Validate();
 
+        var packetIdentifier = this.GeneratePacketIdentifier();
         var packet = new PublishPacket(message, (ushort)packetIdentifier);
         _ = await this.writer.WriteAsync(packet.Encode()).ConfigureAwait(false);
 
@@ -176,7 +206,7 @@ public class HiveClient : IDisposable, IHiveClient
     }
 
     /// <summary>
-    /// Subscribe to a topic on the MQTT broker.
+    /// Subscribe with a single topic filter on the MQTT broker.
     /// </summary>
     /// <param name="options"></param>
     /// <returns></returns>
@@ -184,27 +214,33 @@ public class HiveClient : IDisposable, IHiveClient
     public async Task<SubscribeResult> SubscribeAsync(string topic, QualityOfService qos = QualityOfService.AtMostOnceDelivery)
     {
         var options = new SubscribeOptions();
-        // {
-        //     TopicFilters = new List<TopicFilter>
-        //     {
-        //         new()
-        //         {
-        //             Topic = topic,
-        //             QoS = qos,
-        //         },
-        //     },
-        // };
+
+        var tf = new TopicFilter
+        {
+            Topic = topic,
+            QoS = qos,
+        };
+        options.TopicFilters.Add(tf);
 
         return await this.SubscribeAsync(options).ConfigureAwait(false);
     }
 
     public async Task<SubscribeResult> SubscribeAsync(SubscribeOptions options)
     {
-        var packet = new SubscribePacket(options);
+        var packetIdentifier = this.GeneratePacketIdentifier();
+        var packet = new SubscribePacket(options, (ushort)packetIdentifier);
 
-        var x = await this.writer.WriteAsync(packet.Encode()).ConfigureAwait(false);
+        var writeResult = await this.writer.WriteAsync(packet.Encode()).ConfigureAwait(false);
+        var flushResult = await this.writer.FlushAsync().ConfigureAwait(false);
 
-        return new SubscribeResult();
+        var readResult = await this.reader.ReadAsync().ConfigureAwait(false);
+        var subAck = (SubAckPacket)PacketDecoder.Decode(readResult.Buffer, out var consumed);
+        this.reader.AdvanceTo(consumed);
+
+        // FIXME: Published packets can arrive before the SUBACK.
+
+        var subResult = new SubscribeResult(options, subAck);
+        return subResult;
     }
 
     /// <summary>

@@ -2,7 +2,6 @@ namespace HiveMQtt.MQTT5.Publish;
 
 using System.Buffers;
 using System.IO;
-using HiveMQtt.Client.Message;
 using HiveMQtt.MQTT5.Types;
 
 /// <summary>
@@ -13,8 +12,6 @@ using HiveMQtt.MQTT5.Types;
 /// </summary>
 internal class PublishPacket : ControlPacket
 {
-    private readonly ReadOnlySequence<byte> rawPacketData;
-
     /// <summary>
     /// Initializes a new instance of the <see cref="PublishPacket"/> class
     /// with the <seealso cref="MQTT5PublishMessage">MQTT5PublishMessage</seealso>
@@ -32,12 +29,11 @@ internal class PublishPacket : ControlPacket
     /// Initializes a new instance of the <see cref="PublishPacket"/> class
     /// with the raw packet data off the wire.
     /// </summary>
-    /// <param name="data">The raw packet data off the wire.</param>
-    public PublishPacket(ReadOnlySequence<byte> data)
+    /// <param name="packetData">The raw packet data off the wire.</param>
+    public PublishPacket(ReadOnlySequence<byte> packetData)
     {
         this.Message = new MQTT5PublishMessage();
-        this.rawPacketData = data;
-        this.Decode();
+        this.Decode(packetData);
     }
 
     /// <summary>
@@ -50,16 +46,17 @@ internal class PublishPacket : ControlPacket
     /// <summary>
     /// Decode the received MQTT Publish packet.
     /// </summary>
-    public void Decode()
+    /// <param name="packetData">The raw packet data off the wire.</param>
+    public void Decode(ReadOnlySequence<byte> packetData)
     {
-        var reader = new SequenceReader<byte>(this.rawPacketData);
+        var reader = new SequenceReader<byte>(packetData);
 
         // Skip past the Fixed Header
         reader.Advance(1);
 
         if (reader.TryRead(out var remainingLength))
         {
-            if ((remainingLength + 2) > this.rawPacketData.Length)
+            if ((remainingLength + 2) > packetData.Length)
             {
                 // Not enough packet data / partial packet
                 // FIXME: Send back to pipeline to get more data
