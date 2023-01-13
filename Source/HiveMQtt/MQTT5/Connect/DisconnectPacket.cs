@@ -7,15 +7,13 @@ using System.IO;
 /// An MQTT Disconnect Control Packet as defined in:
 /// https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901205.
 /// </summary>
-internal class DisconnectPacket : ControlPacket
+public class DisconnectPacket : ControlPacket
 {
 
-    public DisconnectPacket() { }
-
-    public DisconnectPacket(ReadOnlySequence<byte> packetData)
+    public DisconnectPacket()
     {
-        this.Decode(packetData);
     }
+    public DisconnectPacket(ReadOnlySequence<byte> packetData) => this.Decode(packetData);
 
     public override ControlPacketType ControlPacketType => ControlPacketType.Disconnect;
 

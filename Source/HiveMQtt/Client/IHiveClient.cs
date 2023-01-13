@@ -14,6 +14,15 @@ public interface IHiveClient : IDisposable
 {
     HiveClientOptions Options { get; set; }
 
+    /// <summary>
+    /// Gets or sets the local store for the client.
+    /// <para>
+    /// The LocalStore is a Dictionary(string, string) that can be used
+    /// to store data that is specific to this HiveClient.
+    /// </para>
+    /// </summary>
+    Dictionary<string, string> LocalStore { get; }
+
     bool IsConnected();
 
     /// <summary>

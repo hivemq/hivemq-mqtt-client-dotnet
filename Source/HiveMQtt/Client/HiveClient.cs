@@ -2,15 +2,18 @@ namespace HiveMQtt.Client;
 
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.IO.Pipelines;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
+using HiveMQtt.Client.Events;
 using HiveMQtt.Client.Options;
 using HiveMQtt.Client.Results;
 using HiveMQtt.MQTT5;
 using HiveMQtt.MQTT5.Connect;
+using HiveMQtt.MQTT5.Ping;
 using HiveMQtt.MQTT5.Publish;
 using HiveMQtt.MQTT5.Subscribe;
 using HiveMQtt.MQTT5.Types;
@@ -20,39 +23,38 @@ using HiveMQtt.MQTT5.Types;
 /// Fully MQTT compliant and compatible with all respectable MQTT Brokers because sharing is caring
 /// and MQTT is awesome.
 /// </summary>
-public class HiveClient : IDisposable, IHiveClient
+public partial class HiveClient : IDisposable, IHiveClient
 {
-    private int lastPacketId;
+    private readonly ConcurrentQueue<ControlPacket> sendQueue = new();
+    private readonly ConcurrentQueue<ControlPacket> receiveQueue = new();
 
-    private readonly ConcurrentQueue<byte[]> sendQueue;
-    private readonly ConcurrentQueue<ControlPacket> receiveQueue;
+    private int lastPacketId = 0;
 
     private Socket? socket;
     private NetworkStream? stream;
     private PipeReader? reader;
     private PipeWriter? writer;
 
-    private bool disposed;
+    private Task<bool>? trafficOutflowProcessor;
+
+    private Task<bool>? trafficInflowProcessor;
+
+    private bool disposed = false;
 
     public HiveClient(HiveClientOptions? options = null)
     {
-        this.lastPacketId = 0;
         options ??= new HiveClientOptions();
         this.Options = options;
-
-        this.Subscriptions = new List<Subscription>();
-
-        this.sendQueue = new ConcurrentQueue<byte[]>();
-        this.receiveQueue = new ConcurrentQueue<ControlPacket>();
-
-        this.disposed = false;
     }
+
+    /// <inheritdoc />
+    public Dictionary<string, string> LocalStore { get; } = new();
 
     public HiveClientOptions Options { get; set; }
 
-    internal MQTT5Properties? ConnectionProperties { get; }
+    public List<Subscription> Subscriptions { get; } = new();
 
-    public List<Subscription> Subscriptions { get; }
+    internal MQTT5Properties? ConnectionProperties { get; }
 
     public bool IsConnected()
     {
@@ -68,6 +70,9 @@ public class HiveClient : IDisposable, IHiveClient
     /// <inheritdoc />
     public async Task<ConnectResult> ConnectAsync()
     {
+        // Fire the corresponding event
+        this.BeforeConnectEventLauncher(this.Options);
+
         var socketIsConnected = await this.ConnectSocketAsync().ConfigureAwait(false);
 
         if (!socketIsConnected || this.socket == null)
@@ -76,53 +81,63 @@ public class HiveClient : IDisposable, IHiveClient
             throw new InvalidOperationException("Failed to connect socket");
         }
 
+        // Setup the Pipeline
         this.stream = new NetworkStream(this.socket);
         this.reader = PipeReader.Create(this.stream);
         this.writer = PipeWriter.Create(this.stream);
 
-        // Construct the MQTT Connect packet
+        // Start the traffic processors
+        this.trafficOutflowProcessor = this.TrafficOutflowProcessorAsync();
+        this.trafficInflowProcessor = this.TrafficInflowProcessorAsync();
+
+        var taskCompletionSource = new TaskCompletionSource<ConnAckPacket>();
+
+        EventHandler<ConnAckReceivedEventArgs> eventHandler = (sender, args) =>
+        {
+            taskCompletionSource.SetResult(args.ConnAckPacket);
+        };
+        this.OnConnAckReceived += eventHandler;
+
+        // Construct the MQTT Connect packet and queue to send
         var connPacket = new ConnectPacket(this.Options);
-        var writeResult = await this.writer.WriteAsync(connPacket.Encode()).ConfigureAwait(false);
-        var flushResult = await this.writer.FlushAsync().ConfigureAwait(false);
+        this.sendQueue.Enqueue(connPacket);
+
+        // FIXME: Cancellation token and better timeout value
+        // FIXME: Set a timeout; if the ConnAck is not received within the timeout, throw an exception
+        ConnAckPacket connAck;
+        ConnectResult connectResult;
+        try
+        {
+            connAck = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        }
+        catch (System.TimeoutException ex)
+        {
+            // log.Error(string.Format("Connect timeout.  No response received in time.", ex);
+            throw;
+        }
+        finally
+        {
+            // Remove the event handler
+            this.OnConnAckReceived -= eventHandler;
+        }
 
         // FIXME: check writeResult and flushResult - IsCompleted & IsCanceled
+        connectResult = new ConnectResult(connAck.ReasonCode, connAck.SessionPresent, connAck.Properties);
 
-        // Read the MQTT ConnAck packet
-        SequencePosition consumed;
+        // Data massage: This class is used for end users.  Let's prep the data so it's easily understandable.
+        // If the Session Expiry Interval is absent the value in the CONNECT Packet used.
+        connectResult.Properties.SessionExpiryInterval ??= (UInt32)this.Options.SessionExpiryInterval;
 
-        ReadResult readResult;
-        ControlPacket receivedPacket;
-        while(true)
+        if (connectResult.ReasonCode == ConnAckReasonCode.Success)
         {
-            readResult = await this.reader.ReadAsync().ConfigureAwait(false);
-            receivedPacket = PacketDecoder.Decode(readResult.Buffer, out consumed);
-
-            if (receivedPacket.ControlPacketType == ControlPacketType.ConnAck)
-            {
-                var connAck = (ConnAckPacket)receivedPacket;
-                this.reader.AdvanceTo(consumed);
-
-                var connectResult = new ConnectResult(connAck.ReasonCode, connAck.SessionPresent, connAck.Properties);
-
-                // Data massage: This class is used for end users.  Let's prep the data so it's easily understandable.
-                // If the Session Expiry Interval is absent the value in the CONNECT Packet used.
-                connectResult.Properties.SessionExpiryInterval ??= (UInt32)this.Options.SessionExpiryInterval;
-                return connectResult;
-            }
-            else if (receivedPacket.ControlPacketType == ControlPacketType.Reserved)
-            {
-                if (consumed.Equals(readResult.Buffer.End))
-                {
-                    // FIXME: Define and change to a real exception
-                    throw new InvalidOperationException("Malformed packet");
-                }
-                continue;
-            }
-            else
-            {
-                throw new InvalidOperationException("Unexpected packet");
-            }
+            // Fire the corresponding event
+            this.OnConnectedEventLauncher(connectResult);
         }
+
+        // Fire the corresponding event
+        this.AfterConnectEventLauncher(connectResult);
+
+        return connectResult;
     }
 
     /// <inheritdoc />
@@ -338,6 +353,8 @@ public class HiveClient : IDisposable, IHiveClient
         this.socket = new(ipEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
         await this.socket.ConnectAsync(ipEndPoint).ConfigureAwait(false);
 
+        Console.WriteLine($"Socket connected to {this.socket.RemoteEndPoint}");
+
         return this.socket.Connected;
     }
 
@@ -354,6 +371,7 @@ public class HiveClient : IDisposable, IHiveClient
 
         return Interlocked.Increment(ref this.lastPacketId);
     }
+
 
     /// <summary>
     /// https://learn.microsoft.com/en-us/dotnet/api/system.idisposable?view=net-6.0.

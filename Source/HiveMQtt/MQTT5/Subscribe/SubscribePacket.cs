@@ -77,7 +77,7 @@ internal class SubscribePacket : ControlPacket
             {
                 optionsByte |= 0x20;
             }
-            stream.WriteByte((byte)optionsByte);
+            stream.WriteByte(optionsByte);
         }
 
         // Fixed Header

@@ -1,7 +1,6 @@
 namespace HiveMQtt.Client.Options;
 
 using System;
-using System.Collections;
 using System.Linq;
 
 using HiveMQtt.Client.Exceptions;

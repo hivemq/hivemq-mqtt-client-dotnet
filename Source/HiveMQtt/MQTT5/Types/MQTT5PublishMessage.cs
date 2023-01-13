@@ -1,6 +1,5 @@
 namespace HiveMQtt.MQTT5.Types;
 
-using System.Collections;
 using HiveMQtt.Client.Exceptions;
 
 public class MQTT5PublishMessage

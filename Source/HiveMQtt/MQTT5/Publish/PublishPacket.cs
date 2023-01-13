@@ -141,7 +141,7 @@ internal class PublishPacket : ControlPacket
 
     /// <summary>
     /// Gather the flags and properties for an outgoing Publish packet from <see cref="MQTT5PublishMessage"/>
-    /// as data prepraration for encoding in <see cref="PublishPacket"/>.
+    /// as data preparation for encoding in <see cref="PublishPacket"/>.
     /// </summary>
     internal void GatherPublishFlagsAndProperties()
     {

@@ -8,7 +8,7 @@ using System.IO;
 /// See also <seealso href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901195">
 /// PingReq Control Packet</seealso>.
 /// </summary>
-internal class PingReqPacket : ControlPacket
+public class PingReqPacket : ControlPacket
 {
     public override ControlPacketType ControlPacketType => ControlPacketType.PingResp;
 

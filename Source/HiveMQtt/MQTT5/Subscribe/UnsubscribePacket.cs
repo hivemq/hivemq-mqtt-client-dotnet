@@ -2,7 +2,6 @@ namespace HiveMQtt.MQTT5.Subscribe;
 
 using System.IO;
 
-using System.Collections;
 using HiveMQtt.MQTT5.Types;
 
 /// <summary>

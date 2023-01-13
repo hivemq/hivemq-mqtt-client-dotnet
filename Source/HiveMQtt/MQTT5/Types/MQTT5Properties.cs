@@ -109,7 +109,7 @@ internal class MQTT5Properties
     public bool? RetainAvailable { get; set; }
 
     /// <summary>
-    /// Gets or sets a Hashtable containing the User Properties returned by the MQTT broker.
+    /// Gets or sets a Dictionary containing the User Properties returned by the MQTT broker.
     /// </summary>
     public Dictionary<string, string> UserProperties { get; set; }
 

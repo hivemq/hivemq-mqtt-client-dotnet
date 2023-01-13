@@ -2,7 +2,6 @@ namespace HiveMQtt.Test.HiveClient;
 
 using System.Threading.Tasks;
 using HiveMQtt.Client;
-using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.Connect;
 using Xunit;
 
@@ -19,12 +18,12 @@ public class HiveClientPublishTest
         var result = await client.PublishAsync("data/topic", msg).ConfigureAwait(false);
 
         // TODO: Add a way to check if the message was received on the topic
-
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
     }
 
-    public async Task MostBasicPublishAsyncWithQoS0()
+    [Fact]
+    public async Task MostBasicPublishWithQoS0Async()
     {
         var client = new HiveClient();
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
@@ -34,11 +33,9 @@ public class HiveClientPublishTest
         var result = await client.PublishAsync("data/topic", msg, MQTT5.Types.QualityOfService.AtMostOnceDelivery).ConfigureAwait(false);
 
         // TODO: Add a way to check if the message was received on the topic
-
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
     }
-
 
     [Fact]
     public async Task PublishWithOptionsAsync()
@@ -51,7 +48,6 @@ public class HiveClientPublishTest
         var result = await client.PublishAsync("data/topic", msg).ConfigureAwait(false);
 
         // TODO: Add a way to check if the message was received on the topic
-
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
     }

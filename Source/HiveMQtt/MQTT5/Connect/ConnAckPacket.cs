@@ -6,7 +6,7 @@ using System.Buffers;
 /// An MQTT Connect Control Packet as defined in:
 /// https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901074.
 /// </summary>
-internal class ConnAckPacket : ControlPacket
+public class ConnAckPacket : ControlPacket
 {
     public ConnAckPacket(ReadOnlySequence<byte> packetData)
     {

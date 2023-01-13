@@ -125,7 +125,7 @@ public class ConnectResult
     public string? ReasonString => this.Properties.ReasonString;
 
     /// <summary>
-    /// Gets a Hashtable containing the User Properties returned by the MQTT broker.
+    /// Gets a Dictionary containing the User Properties returned by the MQTT broker.
     /// </summary>
     public Dictionary<string, string> UserProperties => this.Properties.UserProperties;
 

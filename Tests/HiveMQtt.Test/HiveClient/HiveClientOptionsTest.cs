@@ -1,6 +1,5 @@
 namespace HiveMQtt.Test.HiveClient;
 
-using System.Collections;
 using HiveMQtt.Client.Options;
 using Xunit;
 

@@ -1,6 +1,5 @@
 namespace HiveMQtt.Client.Results;
 
-using System.Collections;
 using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.Subscribe;
 using HiveMQtt.MQTT5.Types;
@@ -44,7 +43,7 @@ public class SubscribeResult
     public List<Subscription> Subscriptions { get; }
 
     /// <summary>
-    /// Gets a Hashtable containing the User Properties returned by the MQTT broker.
+    /// Gets a Dictionary containing the User Properties returned by the MQTT broker.
     /// </summary>
     public Dictionary<string, string> UserProperties => this.Properties.UserProperties;
 

@@ -1,6 +1,5 @@
 namespace HiveMQtt.Client.Options;
 
-using System.Collections;
 using HiveMQtt.MQTT5.Connect;
 
 /// <summary>
