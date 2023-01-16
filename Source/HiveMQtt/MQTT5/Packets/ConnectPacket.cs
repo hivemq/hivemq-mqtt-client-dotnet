@@ -1,4 +1,4 @@
-namespace HiveMQtt.MQTT5.Connect;
+namespace HiveMQtt.MQTT5.Packets;
 
 using System.IO;
 using System.Text;

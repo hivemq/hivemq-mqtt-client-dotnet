@@ -1,7 +1,6 @@
 namespace HiveMQtt.Client.Results;
 
-using System.Collections;
-using HiveMQtt.MQTT5.Connect;
+using HiveMQtt.MQTT5.ReasonCodes;
 using HiveMQtt.MQTT5.Types;
 
 /// <summary>

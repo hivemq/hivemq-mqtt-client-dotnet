@@ -1,4 +1,4 @@
-namespace HiveMQtt.MQTT5;
+namespace HiveMQtt.MQTT5.Packets;
 
 /// <summary>
 /// Part of a Control Packet.  Used when not all of the data has yet arrived

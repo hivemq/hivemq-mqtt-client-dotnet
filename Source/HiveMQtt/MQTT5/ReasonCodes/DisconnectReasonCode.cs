@@ -1,4 +1,4 @@
-namespace HiveMQtt.MQTT5.Connect;
+namespace HiveMQtt.MQTT5.ReasonCodes;
 
 /// <summary>
 /// MQTT v5.0 Disconnect Reason Codes as defined in:

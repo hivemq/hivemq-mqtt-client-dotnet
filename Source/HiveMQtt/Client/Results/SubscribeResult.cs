@@ -1,7 +1,8 @@
 namespace HiveMQtt.Client.Results;
 
 using HiveMQtt.Client.Options;
-using HiveMQtt.MQTT5.Subscribe;
+using HiveMQtt.MQTT5.Packets;
+using HiveMQtt.MQTT5.ReasonCodes;
 using HiveMQtt.MQTT5.Types;
 
 /// <summary>

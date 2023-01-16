@@ -1,4 +1,4 @@
-namespace HiveMQtt.MQTT5.Connect;
+namespace HiveMQtt.MQTT5.ReasonCodes;
 
 /// <summary>
 /// MQTT v5.0 CONNACK Reason Codes as defined in:

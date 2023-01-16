@@ -3,7 +3,7 @@ namespace HiveMQtt.Test.HiveClient;
 using System.Threading.Tasks;
 using HiveMQtt.Client;
 using HiveMQtt.Client.Options;
-using HiveMQtt.MQTT5.Connect;
+using HiveMQtt.MQTT5.ReasonCodes;
 using Xunit;
 
 public class HiveClientConnectOptionsTest

@@ -1,6 +1,7 @@
-namespace HiveMQtt.MQTT5.Subscribe;
+namespace HiveMQtt.MQTT5.Packets;
 
 using System.Buffers;
+using HiveMQtt.MQTT5.ReasonCodes;
 using HiveMQtt.Client.Exceptions;
 
 /// <summary>

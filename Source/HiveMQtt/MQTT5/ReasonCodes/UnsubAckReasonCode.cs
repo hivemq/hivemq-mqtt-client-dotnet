@@ -1,4 +1,4 @@
-namespace HiveMQtt.MQTT5.Subscribe;
+namespace HiveMQtt.MQTT5.ReasonCodes;
 
 /// <summary>
 /// MQTT v5.0 UNSUBACK Reason Codes as defined in:

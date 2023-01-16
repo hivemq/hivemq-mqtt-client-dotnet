@@ -32,7 +32,7 @@ public class HiveClientTest
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 
         Assert.NotNull(connectResult);
-        Assert.True(connectResult.ReasonCode == MQTT5.Connect.ConnAckReasonCode.Success);
+        Assert.True(connectResult.ReasonCode == MQTT5.ReasonCodes.ConnAckReasonCode.Success);
 
         var result = await client.DisconnectAsync().ConfigureAwait(false);
 

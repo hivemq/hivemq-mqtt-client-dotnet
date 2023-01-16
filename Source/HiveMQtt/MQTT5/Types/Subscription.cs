@@ -1,6 +1,7 @@
 namespace HiveMQtt.MQTT5.Types;
 
-using HiveMQtt.MQTT5.Subscribe;
+using HiveMQtt.MQTT5.ReasonCodes;
+using HiveMQtt.MQTT5.Packets;
 
 public class Subscription
 {

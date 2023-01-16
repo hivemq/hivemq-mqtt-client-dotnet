@@ -1,5 +1,6 @@
-namespace HiveMQtt.MQTT5.Connect;
+namespace HiveMQtt.MQTT5.Packets;
 
+using HiveMQtt.MQTT5.ReasonCodes;
 using System.Buffers;
 using System.IO;
 

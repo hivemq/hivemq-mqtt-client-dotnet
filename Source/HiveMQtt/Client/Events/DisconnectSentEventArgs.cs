@@ -1,6 +1,6 @@
 namespace HiveMQtt.Client.Events;
 
-using HiveMQtt.MQTT5.Connect;
+using HiveMQtt.MQTT5.Packets;
 
 public class DisconnectSentEventArgs : EventArgs
 {

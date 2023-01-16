@@ -4,8 +4,7 @@ using System;
 using HiveMQtt.Client.Events;
 using HiveMQtt.Client.Options;
 using HiveMQtt.Client.Results;
-using HiveMQtt.MQTT5.Connect;
-using HiveMQtt.MQTT5.Ping;
+using HiveMQtt.MQTT5.Packets;
 
 /// <inheritdoc />
 public partial class HiveClient : IDisposable, IHiveClient

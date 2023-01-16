@@ -1,6 +1,7 @@
 namespace HiveMQtt.Client.Options;
 
-using HiveMQtt.MQTT5.Connect;
+using HiveMQtt.MQTT5.Packets;
+using HiveMQtt.MQTT5.ReasonCodes;
 
 /// <summary>
 /// The options class for a Disconnect call.

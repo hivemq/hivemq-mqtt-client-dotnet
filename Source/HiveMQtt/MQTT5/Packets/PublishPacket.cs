@@ -1,4 +1,4 @@
-namespace HiveMQtt.MQTT5.Publish;
+namespace HiveMQtt.MQTT5.Packets;
 
 using System.Buffers;
 using System.IO;

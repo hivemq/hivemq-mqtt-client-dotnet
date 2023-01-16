@@ -1,10 +1,7 @@
 namespace HiveMQtt.MQTT5;
 
 using System.Buffers;
-using HiveMQtt.MQTT5.Connect;
-using HiveMQtt.MQTT5.Ping;
-using HiveMQtt.MQTT5.Publish;
-using HiveMQtt.MQTT5.Subscribe;
+using HiveMQtt.MQTT5.Packets;
 
 /// <summary>
 /// An MQTT Connect Control Packet as defined in:

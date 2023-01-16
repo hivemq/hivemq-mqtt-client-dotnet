@@ -1,4 +1,4 @@
-namespace HiveMQtt.MQTT5.Ping;
+namespace HiveMQtt.MQTT5.Packets;
 
 using System;
 using System.Buffers;

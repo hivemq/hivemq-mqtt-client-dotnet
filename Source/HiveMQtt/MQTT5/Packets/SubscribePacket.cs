@@ -1,4 +1,4 @@
-namespace HiveMQtt.MQTT5.Subscribe;
+namespace HiveMQtt.MQTT5.Packets;
 
 using System.IO;
 

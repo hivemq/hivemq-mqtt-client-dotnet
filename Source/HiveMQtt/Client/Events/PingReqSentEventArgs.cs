@@ -1,6 +1,6 @@
 namespace HiveMQtt.Client.Events;
 
-using HiveMQtt.MQTT5.Ping;
+using HiveMQtt.MQTT5.Packets;
 
 public class PingReqSentEventArgs : EventArgs
 {
