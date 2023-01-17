@@ -3,7 +3,7 @@
   <PropertyGroup Label="Build">
     <TargetFramework>net6.0</TargetFramework>
     <AssemblyName>HiveMQtt</AssemblyName>
-    <ReleaseVersion>0.2.0</ReleaseVersion>
+    <ReleaseVersion>0.1.1</ReleaseVersion>
     <Description>HiveMQ MQTT Client that is a MQTT 5.0 compatible C# client library.</Description>
   </PropertyGroup>
 
@@ -22,6 +22,9 @@
     <None Remove="Connect\" />
     <None Remove="MQTT5\" />
     <None Remove="System.IO.Pipelines" />
+    <None Remove="Microsoft.Extensions.Logging.Abstractions" />
+    <None Remove="NLog" />
+    <None Remove="NLog.config" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Connect\" />
@@ -29,10 +32,17 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="System.IO.Pipelines" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
+    <PackageReference Include="NLog" Version="5.1.1" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="HiveMQtt.Test" PublicKey="fc5550082a9c642c" />
   </ItemGroup>
   <ItemGroup>
 </ItemGroup>
+  <ItemGroup>
+    <Content Include="NLog.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 </Project>

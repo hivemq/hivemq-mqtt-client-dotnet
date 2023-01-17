@@ -1,6 +1,7 @@
 namespace HiveMQtt.Client;
 
 using System;
+using System.Diagnostics;
 using HiveMQtt.Client.Events;
 using HiveMQtt.Client.Options;
 using HiveMQtt.Client.Results;
@@ -21,18 +22,8 @@ public partial class HiveClient : IDisposable, IHiveClient
     protected virtual void BeforeConnectEventLauncher(HiveClientOptions options)
     {
         var eventArgs = new BeforeConnectEventArgs(options);
+        Trace.WriteLine("BeforeConnectEventLauncher");
         this.BeforeConnect?.Invoke(this, eventArgs);
-    }
-
-    /// <summary>
-    /// Event that is fired when the client connects to the broker.
-    /// </summary>
-    public event EventHandler<ConnectedEventArgs> OnConnected = new EventHandler<ConnectedEventArgs>((client, e) => { });
-
-    protected virtual void OnConnectedEventLauncher(ConnectResult connectResult)
-    {
-        var eventArgs = new ConnectedEventArgs(connectResult);
-        this.OnConnected?.Invoke(this, eventArgs);
     }
 
     /// <summary>
@@ -43,7 +34,32 @@ public partial class HiveClient : IDisposable, IHiveClient
     protected virtual void AfterConnectEventLauncher(ConnectResult results)
     {
         var eventArgs = new AfterConnectEventArgs(results);
+        Trace.WriteLine("AfterConnectEventLauncher");
         this.AfterConnect?.Invoke(this, eventArgs);
+    }
+
+    /// <summary>
+    /// Event that is fired before the client sends a subscribe request.
+    /// </summary>
+    public event EventHandler<BeforeSubscribeEventArgs> BeforeSubscribe = new EventHandler<BeforeSubscribeEventArgs>((client, e) => { });
+
+    protected virtual void BeforeSubscribeEventLauncher(SubscribeOptions options)
+    {
+        var eventArgs = new BeforeSubscribeEventArgs(options);
+        Trace.WriteLine("BeforeSubscribeEventLauncher");
+        this.BeforeSubscribe?.Invoke(this, eventArgs);
+    }
+
+    /// <summary>
+    /// Event that is fired after the client sends a subscribe request.
+    /// </summary>
+    public event EventHandler<AfterSubscribeEventArgs> AfterSubscribe = new EventHandler<AfterSubscribeEventArgs>((client, e) => { });
+
+    protected virtual void AfterSubscribeEventLauncher(SubscribeResult results)
+    {
+        var eventArgs = new AfterSubscribeEventArgs(results);
+        Trace.WriteLine("AfterSubscribeEventLauncher");
+        this.AfterSubscribe?.Invoke(this, eventArgs);
     }
 
     /* ========================================================================================= */
@@ -58,6 +74,7 @@ public partial class HiveClient : IDisposable, IHiveClient
     protected virtual void OnConnectSentEventLauncher(ConnectPacket packet)
     {
         var eventArgs = new ConnectSentEventArgs(packet);
+        Trace.WriteLine("ConnectSentEventLauncher");
         this.OnConnectSent?.Invoke(this, eventArgs);
     }
 
@@ -69,6 +86,7 @@ public partial class HiveClient : IDisposable, IHiveClient
     protected virtual void OnConnAckReceivedEventLauncher(ConnAckPacket packet)
     {
         var eventArgs = new ConnAckReceivedEventArgs(packet);
+        Trace.WriteLine("ConnAckReceivedEventLauncher");
         this.OnConnAckReceived?.Invoke(this, eventArgs);
     }
 
@@ -80,6 +98,7 @@ public partial class HiveClient : IDisposable, IHiveClient
     protected virtual void OnDisconnectSentEventLauncher(DisconnectPacket packet)
     {
         var eventArgs = new DisconnectSentEventArgs(packet);
+        Trace.WriteLine("DisconnectSentEventLauncher");
         this.OnDisconnectSent?.Invoke(this, eventArgs);
     }
 
@@ -91,6 +110,7 @@ public partial class HiveClient : IDisposable, IHiveClient
     protected virtual void OnDisconnectReceivedEventLauncher(DisconnectPacket packet)
     {
         var eventArgs = new DisconnectReceivedEventArgs(packet);
+        Trace.WriteLine("DisconnectReceivedEventLauncher");
         this.OnDisconnectReceived?.Invoke(this, eventArgs);
     }
 
@@ -102,6 +122,7 @@ public partial class HiveClient : IDisposable, IHiveClient
     protected virtual void OnPingReqSentEventLauncher(PingReqPacket packet)
     {
         var eventArgs = new PingReqSentEventArgs(packet);
+        Trace.WriteLine("PingReqSentEventLauncher");
         this.OnPingReqSent?.Invoke(this, eventArgs);
     }
 
@@ -113,8 +134,32 @@ public partial class HiveClient : IDisposable, IHiveClient
     protected virtual void OnPingRespReceivedEventLauncher(PingRespPacket packet)
     {
         var eventArgs = new PingRespReceivedEventArgs(packet);
+        Trace.WriteLine("PingRespReceivedEventLauncher");
         this.OnPingRespReceived?.Invoke(this, eventArgs);
     }
 
+    /// <summary>
+    /// Event that is fired after the client send a SubAck packet from the broker.
+    /// </summary>
+    public event EventHandler<SubscribeSentEventArgs> OnSubscribeSent = new EventHandler<SubscribeSentEventArgs>((client, e) => { });
+
+    protected virtual void OnSubscribeSentEventLauncher(SubscribePacket packet)
+    {
+        var eventArgs = new SubscribeSentEventArgs(packet);
+        Trace.WriteLine("SubscribeSentEventLauncher");
+        this.OnSubscribeSent?.Invoke(this, eventArgs);
+    }
+
+    /// <summary>
+    /// Event that is fired after the client send a SubAck packet from the broker.
+    /// </summary>
+    public event EventHandler<SubAckReceivedEventArgs> OnSubAckReceived = new EventHandler<SubAckReceivedEventArgs>((client, e) => { });
+
+    protected virtual void OnSubAckReceivedEventLauncher(SubAckPacket packet)
+    {
+        var eventArgs = new SubAckReceivedEventArgs(packet);
+        Trace.WriteLine("SubAckReceivedEventLauncher");
+        this.OnSubAckReceived?.Invoke(this, eventArgs);
+    }
 
 }

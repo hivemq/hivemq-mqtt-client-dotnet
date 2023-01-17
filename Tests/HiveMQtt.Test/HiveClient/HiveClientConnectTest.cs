@@ -34,7 +34,6 @@ public class HiveClientConnectTest
 
         // Client Events
         client.BeforeConnect += BeforeConnectHandler;
-        client.OnConnected += OnConnectedHandler;
         client.AfterConnect += AfterConnectHandler;
 
         // Packet Events
@@ -49,7 +48,6 @@ public class HiveClientConnectTest
 
         // Assert that all Events were called
         Assert.True(client.LocalStore.ContainsKey("BeforeConnectHandlerCalled"));
-        Assert.True(client.LocalStore.ContainsKey("OnConnectedHandlerCalled"));
         Assert.True(client.LocalStore.ContainsKey("AfterConnectHandlerCalled"));
 
         Assert.True(client.LocalStore.ContainsKey("OnConnectSentHandlerCalled"));
@@ -57,7 +55,6 @@ public class HiveClientConnectTest
 
         // Remove event handlers
         client.BeforeConnect -= BeforeConnectHandler;
-        client.OnConnected -= OnConnectedHandler;
         client.AfterConnect -= AfterConnectHandler;
 
         client.OnConnectSent -= OnConnectSentHandler;
@@ -74,18 +71,6 @@ public class HiveClientConnectTest
         }
 
         Assert.NotNull(eventArgs.Options);
-    }
-
-    private static void OnConnectedHandler(object? sender, ConnectedEventArgs eventArgs)
-    {
-        Assert.NotNull(sender);
-        if (sender is not null)
-        {
-            var client = (HiveClient)sender;
-            client.LocalStore.Add("OnConnectedHandlerCalled", "true");
-        }
-
-        Assert.NotNull(eventArgs.ConnectResult);
     }
 
     private static void OnConnectSentHandler(object? sender, ConnectSentEventArgs eventArgs)

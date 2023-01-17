@@ -1,14 +1,14 @@
 namespace HiveMQtt.MQTT5.Packets;
 
 using System.Buffers;
-using HiveMQtt.MQTT5.ReasonCodes;
 using HiveMQtt.Client.Exceptions;
+using HiveMQtt.MQTT5.ReasonCodes;
 
 /// <summary>
 /// An MQTT SUBACK Control Packet as defined in:
 /// https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901187.
 /// </summary>
-internal class SubAckPacket : ControlPacket
+public class SubAckPacket : ControlPacket
 {
     public SubAckPacket(ReadOnlySequence<byte> packetData)
     {

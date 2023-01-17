@@ -62,11 +62,10 @@ public partial class HiveClient : IDisposable, IHiveClient
                         case DisconnectPacket disconnectPacket:
                             this.OnDisconnectSentEventLauncher(disconnectPacket);
                             break;
-
-                        // case SubscribePacket subscribePacket:
-                        //     writeResult = await this.writer.WriteAsync(subscribePacket.Encode()).ConfigureAwait(false);
-                        //     this.OnSubscribeSentEventLauncher(subscribePacket);
-                        //     break;
+                        case SubscribePacket subscribePacket:
+                            writeResult = await this.writer.WriteAsync(subscribePacket.Encode()).ConfigureAwait(false);
+                            this.OnSubscribeSentEventLauncher(subscribePacket);
+                            break;
 
                         // case PublishPacket publishPacket:
                         //     writeResult = await this.writer.WriteAsync(publishPacket.Encode()).ConfigureAwait(false);
@@ -122,12 +121,12 @@ public partial class HiveClient : IDisposable, IHiveClient
                     case PingRespPacket pingRespPacket:
                         this.OnPingRespReceivedEventLauncher(pingRespPacket);
                         break;
+                    case SubAckPacket subAckPacket:
+                        this.OnSubAckReceivedEventLauncher(subAckPacket);
+                        break;
 
                     // case PublishPacket publishPacket:
                     //     this.OnPublishReceivedEventLauncher(publishPacket);
-                    //     break;
-                    // case SubAckPacket subAckPacket:
-                    //     this.OnSubAckReceivedEventLauncher(subAckPacket);
                     //     break;
                     // case UnsubAckPacket unsubAckPacket:
                     //     this.OnUnsubAckReceivedEventLauncher(unsubAckPacket);

@@ -11,7 +11,7 @@ using HiveMQtt.MQTT5.Types;
 /// See also <seealso href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901205">
 /// Subscribe Control Packet</seealso>.
 /// </summary>
-internal class SubscribePacket : ControlPacket
+public class SubscribePacket : ControlPacket
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="SubscribePacket"/> class

@@ -1,14 +1,10 @@
 namespace HiveMQtt.MQTT5.Types;
 
 using HiveMQtt.MQTT5.ReasonCodes;
-using HiveMQtt.MQTT5.Packets;
 
 public class Subscription
 {
-    public Subscription(TopicFilter topicFilter)
-    {
-        this.TopicFilter = topicFilter;
-    }
+    public Subscription(TopicFilter topicFilter) => this.TopicFilter = topicFilter;
 
     /// <summary>
     /// Gets the topic filter for the subscription.

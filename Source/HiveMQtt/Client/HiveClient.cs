@@ -2,6 +2,7 @@ namespace HiveMQtt.Client;
 
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.IO.Pipelines;
 using System.Net;
 using System.Net.Sockets;
@@ -16,6 +17,8 @@ using HiveMQtt.MQTT5.Packets;
 using HiveMQtt.MQTT5.ReasonCodes;
 using HiveMQtt.MQTT5.Types;
 
+using Microsoft.Extensions.Logging;
+
 /// <summary>
 /// The excellent, superb and slightly wonderful HiveMQ MQTT Client.
 /// Fully MQTT compliant and compatible with all respectable MQTT Brokers because sharing is caring
@@ -23,6 +26,13 @@ using HiveMQtt.MQTT5.Types;
 /// </summary>
 public partial class HiveClient : IDisposable, IHiveClient
 {
+    private ILogger<HiveClient> _logger;
+
+    public void AttachLogger(ILogger<HiveClient> logger)
+    {
+        _logger = logger;
+    }
+
     private readonly ConcurrentQueue<ControlPacket> sendQueue = new();
     private readonly ConcurrentQueue<ControlPacket> receiveQueue = new();
 
@@ -41,6 +51,8 @@ public partial class HiveClient : IDisposable, IHiveClient
 
     public HiveClient(HiveClientOptions? options = null)
     {
+        Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
+        Trace.AutoFlush = true;
         options ??= new HiveClientOptions();
         this.Options = options;
     }
@@ -101,7 +113,6 @@ public partial class HiveClient : IDisposable, IHiveClient
         this.sendQueue.Enqueue(connPacket);
 
         // FIXME: Cancellation token and better timeout value
-        // FIXME: Set a timeout; if the ConnAck is not received within the timeout, throw an exception
         ConnAckPacket connAck;
         ConnectResult connectResult;
         try
@@ -125,12 +136,6 @@ public partial class HiveClient : IDisposable, IHiveClient
         // Data massage: This class is used for end users.  Let's prep the data so it's easily understandable.
         // If the Session Expiry Interval is absent the value in the CONNECT Packet used.
         connectResult.Properties.SessionExpiryInterval ??= (UInt32)this.Options.SessionExpiryInterval;
-
-        if (connectResult.ReasonCode == ConnAckReasonCode.Success)
-        {
-            // Fire the corresponding event
-            this.OnConnectedEventLauncher(connectResult);
-        }
 
         // Fire the corresponding event
         this.AfterConnectEventLauncher(connectResult);
@@ -264,24 +269,53 @@ public partial class HiveClient : IDisposable, IHiveClient
     /// <returns>SubscribeResult reflecting the result of the operation.</returns>
     public async Task<SubscribeResult> SubscribeAsync(SubscribeOptions options)
     {
+        // Fire the corresponding event
+        this.BeforeSubscribeEventLauncher(options);
+
         var packetIdentifier = this.GeneratePacketIdentifier();
-        var packet = new SubscribePacket(options, (ushort)packetIdentifier);
+        var subscribePacket = new SubscribePacket(options, (ushort)packetIdentifier);
 
-        var writeResult = await this.writer.WriteAsync(packet.Encode()).ConfigureAwait(false);
-        var flushResult = await this.writer.FlushAsync().ConfigureAwait(false);
+        var taskCompletionSource = new TaskCompletionSource<SubAckPacket>();
 
-        var readResult = await this.reader.ReadAsync().ConfigureAwait(false);
-        var subAck = (SubAckPacket)PacketDecoder.Decode(readResult.Buffer, out var consumed);
-        this.reader.AdvanceTo(consumed);
+        // FIXME: We should only ever have one subscribe in flight at any time (for now)
 
-        // FIXME: Published packets can arrive before the SUBACK.
+        EventHandler<SubAckReceivedEventArgs> eventHandler = (sender, args) =>
+        {
+            taskCompletionSource.SetResult(args.SubAckPacket);
+        };
+        this.OnSubAckReceived += eventHandler;
 
-        var subResult = new SubscribeResult(options, subAck);
+        // Construct the MQTT Connect packet and queue to send
+        this.sendQueue.Enqueue(subscribePacket);
+
+        // FIXME: Cancellation token and better timeout value
+        SubAckPacket subAck;
+        SubscribeResult subscribeResult;
+        try
+        {
+            subAck = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            // FIXME: Validate that the packet identifier matches
+        }
+        catch (System.TimeoutException ex)
+        {
+            // log.Error(string.Format("Connect timeout.  No response received in time.", ex);
+            throw;
+        }
+        finally
+        {
+            // Remove the event handler
+            this.OnSubAckReceived -= eventHandler;
+        }
+
+        subscribeResult = new SubscribeResult(options, subAck);
 
         // Add the subscriptions to the client
-        this.Subscriptions.AddRange(subResult.Subscriptions);
+        this.Subscriptions.AddRange(subscribeResult.Subscriptions);
 
-        return subResult;
+        // Fire the corresponding event
+        this.AfterSubscribeEventLauncher(subscribeResult);
+
+        return subscribeResult;
     }
 
     public async Task<UnsubscribeResult> UnsubscribeAsync(string topic)

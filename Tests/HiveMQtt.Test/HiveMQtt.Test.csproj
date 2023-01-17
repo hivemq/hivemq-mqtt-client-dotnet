@@ -9,4 +9,12 @@
     <ProjectReference Include="..\..\Source\HiveMQtt\HiveMQtt.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove="NLog" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="NLog.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
