@@ -1,6 +1,8 @@
 namespace HiveMQtt.MQTT5.Types;
 
+using System.Text;
 using HiveMQtt.Client.Exceptions;
+using HiveMQtt.MQTT5.Packets;
 
 public class MQTT5PublishMessage
 {
@@ -16,6 +18,23 @@ public class MQTT5PublishMessage
         {
             this.QoS = qos;
         }
+    }
+
+    public MQTT5PublishMessage(PublishPacket publishPacket)
+    {
+        this.UserProperties = new Dictionary<string, string>();
+        this.Duplicate = publishPacket.Duplicate;
+        this.Retained = publishPacket.Retained;
+        this.Topic = Encoding.UTF8.GetString(publishPacket.Topic);
+        this.QoS = publishPacket.QualityOfService;
+        this.PayloadFormatIndicator = publishPacket.PayloadFormatIndicator;
+        this.MessageExpiryInterval = publishPacket.MessageExpiryInterval;
+        this.TopicAlias = publishPacket.TopicAlias;
+        this.ResponseTopic = publishPacket.ResponseTopic;
+        this.CorrelationData = publishPacket.CorrelationData;
+        this.UserProperties = publishPacket.UserProperties;
+        this.SubscriptionIdentifiers = publishPacket.SubscriptionIdentifiers;
+        this.Payload = publishPacket.Payload;
     }
 
     /// <summary>
@@ -90,6 +109,34 @@ public class MQTT5PublishMessage
     ///  Gets or sets the UTF-8 encoded payload of this Publish.
     /// </summary>
     public byte[]? Payload { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Payload as a string.
+    /// </summary>
+    public string PayloadAsString
+    {
+        get
+        {
+            if (this.Payload is null)
+            {
+                return "";
+            }
+
+            return Encoding.UTF8.GetString(this.Payload);
+        }
+
+        set
+        {
+            if (value is null)
+            {
+                this.Payload = null;
+            }
+            else
+            {
+                this.Payload = Encoding.UTF8.GetBytes(value);
+            }
+        }
+    }
 
     /// <summary>
     /// Gets or sets a value indicating whether this publish should be retained by the MQTT broker.

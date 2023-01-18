@@ -10,7 +10,7 @@ using HiveMQtt.MQTT5.Types;
 /// See also <seealso href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901205">
 /// Publish Control Packet</seealso>.
 /// </summary>
-internal class PublishPacket : ControlPacket
+public class PublishPacket : ControlPacket
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="PublishPacket"/> class
@@ -56,15 +56,6 @@ internal class PublishPacket : ControlPacket
 
         if (reader.TryRead(out var remainingLength))
         {
-            if ((remainingLength + 2) > packetData.Length)
-            {
-                // Not enough packet data / partial packet
-                // FIXME: Send back to pipeline to get more data
-            }
-            else
-            {
-                // FIXME: Implement
-            }
         }
     }
 

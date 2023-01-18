@@ -14,10 +14,9 @@ public class HiveClientPublishTest
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
-        var msg = new string(/*lang=json,strict*/ "{\"interferance\": \"1029384\"}");
+        var msg = new string(/*lang=json,strict*/ "{\"interference\": \"1029384\"}");
         var result = await client.PublishAsync("data/topic", msg).ConfigureAwait(false);
 
-        // TODO: Add a way to check if the message was received on the topic
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
     }
@@ -29,10 +28,9 @@ public class HiveClientPublishTest
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
-        var msg = new string(/*lang=json,strict*/ "{\"interferance\": \"1029384\"}");
+        var msg = new string(/*lang=json,strict*/ "{\"interference\": \"1029384\"}");
         var result = await client.PublishAsync("data/topic", msg, MQTT5.Types.QualityOfService.AtMostOnceDelivery).ConfigureAwait(false);
 
-        // TODO: Add a way to check if the message was received on the topic
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
     }
@@ -44,10 +42,9 @@ public class HiveClientPublishTest
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
-        var msg = new string(/*lang=json,strict*/ "{\"interferance\": \"1029384\"}");
+        var msg = new string(/*lang=json,strict*/ "{\"interference\": \"1029384\"}");
         var result = await client.PublishAsync("data/topic", msg).ConfigureAwait(false);
 
-        // TODO: Add a way to check if the message was received on the topic
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
     }

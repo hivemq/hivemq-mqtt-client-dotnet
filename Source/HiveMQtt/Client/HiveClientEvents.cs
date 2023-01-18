@@ -6,6 +6,7 @@ using HiveMQtt.Client.Events;
 using HiveMQtt.Client.Options;
 using HiveMQtt.Client.Results;
 using HiveMQtt.MQTT5.Packets;
+using HiveMQtt.MQTT5.Types;
 
 /// <inheritdoc />
 public partial class HiveClient : IDisposable, IHiveClient
@@ -60,6 +61,19 @@ public partial class HiveClient : IDisposable, IHiveClient
         var eventArgs = new AfterSubscribeEventArgs(results);
         Trace.WriteLine("AfterSubscribeEventLauncher");
         this.AfterSubscribe?.Invoke(this, eventArgs);
+    }
+
+    /// <summary>
+    /// Event that is fired when a message is received from the broker.
+    /// </summary>
+    public event EventHandler<OnMessageReceivedEventArgs> OnMessageReceived = new EventHandler<OnMessageReceivedEventArgs>((client, e) => { });
+
+    protected virtual void OnMessageReceivedEventLauncher(PublishPacket packet)
+    {
+        var message = new MQTT5PublishMessage(packet);
+        var eventArgs = new OnMessageReceivedEventArgs(message);
+        Trace.WriteLine("OnMessageReceivedEventLauncher");
+        this.OnMessageReceived?.Invoke(this, eventArgs);
     }
 
     /* ========================================================================================= */

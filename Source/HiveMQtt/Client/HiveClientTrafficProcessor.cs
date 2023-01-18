@@ -124,10 +124,10 @@ public partial class HiveClient : IDisposable, IHiveClient
                     case SubAckPacket subAckPacket:
                         this.OnSubAckReceivedEventLauncher(subAckPacket);
                         break;
+                    case PublishPacket publishPacket:
+                        this.OnMessageReceivedEventLauncher(publishPacket);
+                        break;
 
-                    // case PublishPacket publishPacket:
-                    //     this.OnPublishReceivedEventLauncher(publishPacket);
-                    //     break;
                     // case UnsubAckPacket unsubAckPacket:
                     //     this.OnUnsubAckReceivedEventLauncher(unsubAckPacket);
                     //     break;
