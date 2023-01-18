@@ -44,7 +44,7 @@ public class HiveClientConnectTest
         Assert.NotNull(client);
 
         // Wait for event handlers to finish
-        await Task.Delay(100);
+        await Task.Delay(100).ConfigureAwait(false);
 
         // Assert that all Events were called
         Assert.True(client.LocalStore.ContainsKey("BeforeConnectHandlerCalled"));

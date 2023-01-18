@@ -54,7 +54,10 @@ public class SubAckPacket : ControlPacket
         var packetIdentifier = DecodeTwoByteInteger(ref reader);
 
         var propertyLength = DecodeVariableByteInteger(ref reader, out var lengthOfPropertyLength);
-        _ = this.DecodeProperties(ref reader, propertyLength);
+        if (propertyLength > 0)
+        {
+            this.DecodeProperties(ref reader, propertyLength);
+        }
 
         // Payload
         var payloadLength = remainingLength - lengthOfPropertyLength - propertyLength - 2;

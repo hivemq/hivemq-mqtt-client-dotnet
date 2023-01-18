@@ -11,7 +11,7 @@ using Xunit;
 public class HiveClientSubscribeTest
 {
     [Fact]
-    public async Task MostBasicSubscribe()
+    public async Task MostBasicSubscribeAsync()
     {
         var subClient = new HiveClient();
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
@@ -27,7 +27,7 @@ public class HiveClientSubscribeTest
     }
 
     [Fact]
-    public async Task SubscribeQoS1()
+    public async Task SubscribeQoS1Async()
     {
         var subClient = new HiveClient();
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
@@ -43,13 +43,13 @@ public class HiveClientSubscribeTest
     }
 
     [Fact]
-    public async Task SubscribeQoS2()
+    public async Task SubscribeQoS2Async()
     {
         var subClient = new HiveClient();
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
-        var subResult = await subClient.SubscribeAsync("data/topic", MQTT5.Types.QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
+        var subResult = await subClient.SubscribeAsync("data/topic", MQTT5.Types.QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
 
         Assert.NotEmpty(subResult.Subscriptions);
         Assert.Equal(SubAckReasonCode.GrantedQoS2, subResult.Subscriptions[0].SubscribeReasonCode);
@@ -76,7 +76,7 @@ public class HiveClientSubscribeTest
         var subscribeResult = client.SubscribeAsync("data/topic").ConfigureAwait(false);
 
         // Wait for event handlers to finish
-        await Task.Delay(100);
+        await Task.Delay(100).ConfigureAwait(false);
 
         // Assert that all Events were called
         Assert.True(client.LocalStore.ContainsKey("BeforeSubscribeHandlerCalled"));
@@ -137,6 +137,7 @@ public class HiveClientSubscribeTest
             var client = (HiveClient)sender;
             client.LocalStore.Add("AfterSubscribeHandlerCalled", "true");
         }
+
         Assert.NotNull(eventArgs.SubscribeResult);
     }
 }

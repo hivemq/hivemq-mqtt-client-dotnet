@@ -490,6 +490,11 @@ public abstract class ControlPacket
     /// <returns>A boolean representing the success or failure of the decoding process.</returns>
     protected bool DecodeProperties(ref SequenceReader<byte> reader, int length)
     {
+        if (length == 0)
+        {
+            return true;
+        }
+
         var readerStart = reader.Consumed;
 
         do
