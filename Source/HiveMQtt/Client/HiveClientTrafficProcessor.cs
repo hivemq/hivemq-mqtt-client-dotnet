@@ -127,22 +127,21 @@ public partial class HiveClient : IDisposable, IHiveClient
                     case PublishPacket publishPacket:
                         this.OnMessageReceivedEventLauncher(publishPacket);
                         break;
-
-                    // case UnsubAckPacket unsubAckPacket:
-                    //     this.OnUnsubAckReceivedEventLauncher(unsubAckPacket);
-                    //     break;
-                    // case PubAckPacket pubAckPacket:
-                    //     this.OnPubAckReceivedEventLauncher(pubAckPacket);
-                    //     break;
-                    // case PubRecPacket pubRecPacket:
-                    //     this.OnPubRecReceivedEventLauncher(pubRecPacket);
-                    //     break;
-                    // case PubRelPacket pubRelPacket:
-                    //     this.OnPubRelReceivedEventLauncher(pubRelPacket);
-                    //     break;
-                    // case PubCompPacket pubCompPacket:
-                    //     this.OnPubCompReceivedEventLauncher(pubCompPacket);
-                    //     break;
+                    case UnsubAckPacket unsubAckPacket:
+                        this.OnUnsubAckReceivedEventLauncher(unsubAckPacket);
+                        break;
+                    case PubAckPacket pubAckPacket:
+                        this.OnPubAckReceivedEventLauncher(pubAckPacket);
+                        break;
+                    case PubRecPacket pubRecPacket:
+                        this.OnPubRecReceivedEventLauncher(pubRecPacket);
+                        break;
+                    case PubRelPacket pubRelPacket:
+                        this.OnPubRelReceivedEventLauncher(pubRelPacket);
+                        break;
+                    case PubCompPacket pubCompPacket:
+                        this.OnPubCompReceivedEventLauncher(pubCompPacket);
+                        break;
                     default:
                         Console.WriteLine($"Unknown packet received: {packet}");
                         break;

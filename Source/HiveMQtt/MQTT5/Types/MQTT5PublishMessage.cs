@@ -6,35 +6,23 @@ using HiveMQtt.MQTT5.Packets;
 
 public class MQTT5PublishMessage
 {
-    public MQTT5PublishMessage() => this.UserProperties = new Dictionary<string, string>();
+    public MQTT5PublishMessage()
+    {
+        this.UserProperties = new Dictionary<string, string>();
+        this.SubscriptionIdentifiers = new List<int>();
+    }
 
     public MQTT5PublishMessage(string topic, QualityOfService? qos)
     {
         this.UserProperties = new Dictionary<string, string>();
+        this.SubscriptionIdentifiers = new List<int>();
         this.Duplicate = false;
-        this.Retained = false;
+        this.Retain = false;
         this.Topic = topic;
         if (qos.HasValue)
         {
             this.QoS = qos;
         }
-    }
-
-    public MQTT5PublishMessage(PublishPacket publishPacket)
-    {
-        this.UserProperties = new Dictionary<string, string>();
-        this.Duplicate = publishPacket.Duplicate;
-        this.Retained = publishPacket.Retained;
-        this.Topic = Encoding.UTF8.GetString(publishPacket.Topic);
-        this.QoS = publishPacket.QualityOfService;
-        this.PayloadFormatIndicator = publishPacket.PayloadFormatIndicator;
-        this.MessageExpiryInterval = publishPacket.MessageExpiryInterval;
-        this.TopicAlias = publishPacket.TopicAlias;
-        this.ResponseTopic = publishPacket.ResponseTopic;
-        this.CorrelationData = publishPacket.CorrelationData;
-        this.UserProperties = publishPacket.UserProperties;
-        this.SubscriptionIdentifiers = publishPacket.SubscriptionIdentifiers;
-        this.Payload = publishPacket.Payload;
     }
 
     /// <summary>
@@ -98,7 +86,7 @@ public class MQTT5PublishMessage
     /// Subscription Identifier has a value of 0.
     /// </para>
     /// </summary>
-    public int[]? SubscriptionIdentifiers { get; set; }
+    public List<int> SubscriptionIdentifiers { get; set; }
 
     /// <summary>
     /// Gets or sets a UTF-8 Encoded String describing the content of the Application Message.
@@ -119,7 +107,7 @@ public class MQTT5PublishMessage
         {
             if (this.Payload is null)
             {
-                return "";
+                return string.Empty;
             }
 
             return Encoding.UTF8.GetString(this.Payload);
@@ -150,7 +138,7 @@ public class MQTT5PublishMessage
     /// See <seealso href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901104">Retain</seealso>.
     /// </para>
     /// </summary>
-    public bool Retained { get; set; }
+    public bool Retain { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether this packet is a retransmission.

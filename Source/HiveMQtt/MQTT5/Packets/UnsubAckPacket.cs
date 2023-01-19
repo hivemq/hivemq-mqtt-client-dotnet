@@ -8,7 +8,7 @@ using HiveMQtt.Client.Exceptions;
 /// An MQTT Connect Control Packet as defined in:
 /// https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901074.
 /// </summary>
-internal class UnsubAckPacket : ControlPacket
+public class UnsubAckPacket : ControlPacket
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="UnsubAckPacket"/> class.

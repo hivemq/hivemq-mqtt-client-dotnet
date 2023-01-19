@@ -20,7 +20,7 @@ internal class MQTT5Properties
 
     public byte[]? CorrelationData { get; set; }
 
-    public uint? SubscriptionIdentifier { get; set; }
+    public int? SubscriptionIdentifier { get; set; }
 
     /// <summary>
     /// Gets or sets a value that represents the session expiration duration in use by the MQTT broker.

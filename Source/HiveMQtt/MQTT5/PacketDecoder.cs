@@ -20,6 +20,7 @@ internal class PacketDecoder
         }
 
         // Byte 1: Control Packet Type
+        // FIXME: ToArray?
         var x = buffer.ToArray();
         var controlPacketType = x[0] >> 4;
 
@@ -41,6 +42,7 @@ internal class PacketDecoder
             (int)ControlPacketType.Disconnect => new DisconnectPacket(packetData),
             (int)ControlPacketType.PingResp => new PingRespPacket(packetData),
             (int)ControlPacketType.Publish => new PublishPacket(packetData),
+            (int)ControlPacketType.PubAck => new PubAckPacket(packetData),
             (int)ControlPacketType.SubAck => new SubAckPacket(packetData),
             (int)ControlPacketType.UnsubAck => new UnsubAckPacket(packetData),
             _ => new MalformedPacket(packetData),

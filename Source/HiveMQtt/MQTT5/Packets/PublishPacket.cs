@@ -51,11 +51,112 @@ public class PublishPacket : ControlPacket
     {
         var reader = new SequenceReader<byte>(packetData);
 
-        // Skip past the Fixed Header
-        reader.Advance(1);
-
-        if (reader.TryRead(out var remainingLength))
+        if (reader.TryRead(out var fixedHeader))
         {
+            // Dup Flag
+            this.Message.Duplicate = (fixedHeader & 0x8) == 0x8;
+
+            // QoS Flag
+            if ((fixedHeader & 0x6) == 0x2)
+            {
+                this.Message.QoS = QualityOfService.AtLeastOnceDelivery;
+            }
+            else if ((fixedHeader & 0x6) == 0x4)
+            {
+                this.Message.QoS = QualityOfService.ExactlyOnceDelivery;
+            }
+            else
+            {
+                this.Message.QoS = QualityOfService.AtMostOnceDelivery;
+            }
+
+            // Retain Flag
+            this.Message.Retain = (fixedHeader & 0x1) == 0x1;
+        }
+
+        // Remaining Length
+        reader.TryRead(out var remainingLength);
+
+        var variableHeaderStart = reader.Consumed;
+
+        // Variable Header
+        // Topic Name
+        this.Message.Topic = DecodeUTF8String(ref reader);
+
+        // Packet Identifer
+        ushort? packetIdentifier = null;
+        if (this.Message.QoS != QualityOfService.AtMostOnceDelivery)
+        {
+            packetIdentifier = DecodeTwoByteInteger(ref reader);
+            if (packetIdentifier != null)
+            {
+                this.PacketIdentifier = (ushort)packetIdentifier;
+            }
+            else
+            {
+                // FIXME: throw exception
+                this.PacketIdentifier = 0;
+            }
+        }
+
+        // Properties
+        var propertyLength = DecodeVariableByteInteger(ref reader, out var lengthOfPropertyLength);
+        if (propertyLength > 0)
+        {
+            this.DecodeProperties(ref reader, propertyLength);
+            if (this.Properties.PayloadFormatIndicator == (byte)MQTT5PayloadFormatIndicator.UTF8Encoded)
+            {
+                this.Message.PayloadFormatIndicator = MQTT5PayloadFormatIndicator.UTF8Encoded;
+            }
+            else
+            {
+                this.Message.PayloadFormatIndicator = MQTT5PayloadFormatIndicator.Unspecified;
+            }
+
+            if (this.Properties.MessageExpiryInterval != null)
+            {
+                this.Message.MessageExpiryInterval = (int)this.Properties.MessageExpiryInterval;
+            }
+
+            if (this.Properties.TopicAlias != null)
+            {
+                this.Message.TopicAlias = (ushort)this.Properties.TopicAlias;
+            }
+
+            if (this.Properties.ResponseTopic != null)
+            {
+                this.Message.ResponseTopic = this.Properties.ResponseTopic;
+            }
+
+            if (this.Properties.CorrelationData != null)
+            {
+                this.Message.CorrelationData = this.Properties.CorrelationData;
+            }
+
+            this.Message.UserProperties = this.Properties.UserProperties;
+
+            if (this.Properties.SubscriptionIdentifier != null)
+            {
+                this.Message.SubscriptionIdentifiers.Add((int)this.Properties.SubscriptionIdentifier);
+            }
+
+            if (this.Properties.ContentType != null)
+            {
+                this.Message.ContentType = this.Properties.ContentType;
+            }
+        } // End properties
+
+        var variableHeaderLength = reader.Consumed - variableHeaderStart;
+        var payloadLength = remainingLength - variableHeaderLength;
+
+        // Payload
+        this.Message.Payload = new byte[payloadLength];
+        for(var i = 0; i < payloadLength; i++)
+        {
+            if (reader.TryRead(out var b))
+            {
+                this.Message.Payload.Append(b);
+            }
         }
     }
 
@@ -118,7 +219,7 @@ public class PublishPacket : ControlPacket
         }
 
         // Retain Flag
-        if (this.Message.Retained is true)
+        if (this.Message.Retain is true)
         {
             byte1 &= 0x1;
         }

@@ -519,7 +519,7 @@ public abstract class ControlPacket
                     this.Properties.CorrelationData = DecodeBinaryData(ref reader);
                     break;
                 case MQTT5PropertyType.SubscriptionIdentifier:
-                    this.Properties.SubscriptionIdentifier = (UInt32)DecodeVariableByteInteger(ref reader);
+                    this.Properties.SubscriptionIdentifier = (Int32)DecodeVariableByteInteger(ref reader);
                     break;
                 case MQTT5PropertyType.SessionExpiryInterval:
                     this.Properties.SessionExpiryInterval = DecodeFourByteInteger(ref reader);
