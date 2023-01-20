@@ -2,16 +2,25 @@
   <img src="https://www.hivemq.com/img/svg/hivemq-mqtt-client.svg" width="500">
 </p>
 
-# HiveMQ MQTT Client for .NET
-
 <div align="center">
+
+# The Spectacular MQTT Client for .NET
 
 [![Semantic Versions](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--versions-e10079.svg)](https://github.com/hivemq/hivemq-mqtt-client-dotnet/releases)
 [![License](https://img.shields.io/github/license/hivemq/hivemq-mqtt-client-dotnet)](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/LICENSE)
 
-HiveMQ MQTT Client is an MQTT 5.0 and MQTT 3.1.1 compatible and feature-rich high-performance .NET client library with different API flavours and backpressure support.
+This .NET MQTT client was put together with love from the HiveMQ team but is still in BETA.  We'd appreciate any feedback you have.  Happy MQTT adventures!
 
 </div>
+
+* **Easy-to-Install**: Available as a Nuget package.
+* **Opensource**: No blackbox code.  Only trusted, tested and reviewed opensource code.
+* **Easy to Use**: Smart defaults, excellent interfaces and intelligent automation makes implementing a breeze.
+* **MQTT v5.0 compatible**: Backported versions 3.1.1 & 3.0 coming soon!
+* **Globally Compatible**: Built to be a fully compliant client compatible with all reputable MQTT brokers.
+* **Actively Maintained**: Built by the MQTT professionals that built HiveMQ (and do this for a living).
+* **Extensively Documented**: What good is it without excellent documentation?
+* **Supported**: Contact us anytime in [this repository](https://github.com/hivemq/hivemq-mqtt-client-dotnet/issues), in the [community forum](https://community.hivemq.com) or [through support](https://www.hivemq.com/support/).
 
 ## Install
 
@@ -19,32 +28,61 @@ HiveMQ MQTT Client is an MQTT 5.0 and MQTT 3.1.1 compatible and feature-rich hig
 
 ## Quickstart
 
+### Simple Connect
+
+```c#
+using HiveMQtt.Client;
+
+// Connect
+var client = new HiveClient();
+var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 ```
-           ______________________
-          /\  ________  ________ \
-         /  \ \______/\ \______/\ \
-        / /\ \ \  / /\ \ \  / /\ \ \
-       / / /\ \ \/ / /\ \ \/ / /\ \ \
-      / / /__\ \ \/_/__\_\ \/_/__\_\ \
-     / /_/____\ \  ________  ________ \
-    /  \ \____/  \ \______/\ \______/\ \
-   / /\ \ \  / /\ \ \  / /\ \ \  / /\ \ \
-  / / /\ \ \/ / /\ \ \/ / /\ \ \/ / /\ \ \
- / / /__\ \/ / /__\ \ \/_/__\_\ \/_/__\_\ \
-/ /_/___ \  /_/____\ \_____________________\
-\ \ \____/  \ \____/ / _______   _______   /
- \ \ \  / /\ \ \  / / /\ \  / / /\ \  / / /
-  \ \ \/ / /\ \ \/ / /\ \ \/ / /\ \ \/ / /
-   \ \/ / /__\ \/ / /__\_\/ / /__\_\/ / /
-    \  /_/____\  / /______\/ /______\/ /
-     \ \ \____/ / ________  ________  /
-      \ \ \  / / /\ \  / / /\ \  / / /
-       \ \ \/ / /\ \ \/ / /\ \ \/ / /
-        \ \/ / /__\_\/ / /__\_\/ / /
-         \  / /______\/ /______\/ /
-          \/_____________________/BvG
+
+#### With Options
+
+```c#
+var options = new HiveClientOptions();
+options.Host = 'candy.x39.eu.hivemq.cloud';
+options.Port = 8883;
+
+var client = new HiveClient(options);
+var connectResult = await client.ConnectAsync().ConfigureAwait(false);
+```
+
+### Subscribing
+
+```c#
+using HiveMQtt.Client;
+
+// Connect
+var client = new HiveClient();
+var connectResult = await client.ConnectAsync().ConfigureAwait(false);
+
+// Message Handler
+client.OnMessageReceived += (sender, args) =>
+{
+    Console.WriteLine("Message Received: {}", args.PublishMessage.PayloadAsString)
+};
+
+// Subscribe
+var subResult = await client.SubscribeAsync("critical/message").ConfigureAwait(false);
+
+// ???
+
+// Profit
+```
+
+### Simple Publishing
+
+```c#
+await client.PublishAsync(
+                "core/graph",    // Topic to publish to
+                "{'2023': '👍'}" // Message to publish
+                ).ConfigureAwait(false);
 
 ```
+
+
 
 ## 🛡 License
 

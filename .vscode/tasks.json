@@ -7,7 +7,7 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/hivemqtt/Tests/hivemqtt.Test/hivemqtt.Test.csproj",
+                "${workspaceFolder}/Tests/HiveMQtt.Test/HiveMQtt.Test.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
@@ -19,7 +19,7 @@
             "type": "process",
             "args": [
                 "publish",
-                "${workspaceFolder}/hivemqtt/Tests/hivemqtt.Test/hivemqtt.Test.csproj",
+                "${workspaceFolder}/Tests/HiveMQtt.Test/HiveMQtt.Test.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
@@ -33,7 +33,7 @@
                 "watch",
                 "run",
                 "--project",
-                "${workspaceFolder}/hivemqtt/Tests/hivemqtt.Test/hivemqtt.Test.csproj"
+                "${workspaceFolder}/Tests/HiveMQtt.Test/HiveMQtt.Test.csproj"
             ],
             "problemMatcher": "$msCompile"
         }
