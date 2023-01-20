@@ -22,6 +22,8 @@ This .NET MQTT client was put together with love from the HiveMQ team but is sti
 * **Extensively Documented**: What good is it without excellent documentation?
 * **Supported**: Contact us anytime in [this repository](https://github.com/hivemq/hivemq-mqtt-client-dotnet/issues), in the [community forum](https://community.hivemq.com) or [through support](https://www.hivemq.com/support/).
 
+_Do you have a success story with this client?  [Let us know]().  We'd love to feature your story in a blog post or video and you'll get some sweet HiveMQ swag (and publicity) along the way._
+
 ## Install
 
 ... via NuGet
