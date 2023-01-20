@@ -8,13 +8,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Source", "Source", "{719809
 		Source\Directory.Build.props = Source\Directory.Build.props
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HiveMQtt", "Source\hivemqtt\HiveMQtt.csproj", "{651E017C-85D6-44E5-A116-1F9081AA1092}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HiveMQtt", "Source\HiveMQtt\HiveMQtt.csproj", "{651E017C-85D6-44E5-A116-1F9081AA1092}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F20E2797-D1E3-4321-91BB-FAE54954D2A0}"
 	ProjectSection(SolutionItems) = preProject
-		editorconfig = editorconfig
-		gitattributes = gitattributes
-		gitignore = gitignore
+		.editorconfig = .editorconfig
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
 		build.cake = build.cake
 		Directory.Build.props = Directory.Build.props
 		Directory.Build.targets = Directory.Build.targets
@@ -38,7 +38,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{7EDFA103-DB69-4C88-9DE4-97ADBF8253A1}"
 	ProjectSection(SolutionItems) = preProject
-		LICENSE.md = LICENSE.md
+		LICENSE = LICENSE
 		README.md = README.md
 	EndProjectSection
 EndProject
@@ -62,7 +62,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{E1B24F25
 		Tests\Directory.Build.props = Tests\Directory.Build.props
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test", "Tests\hivemqtt.Test\hivemqtt.Test.csproj", "{69FC84C1-751E-45C7-A70F-166812466ED8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HiveMQtt.Test", "Tests\HiveMQtt.Test\HiveMQtt.Test.csproj", "{69FC84C1-751E-45C7-A70F-166812466ED8}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Images", "Images", "{26F71F5B-2940-4FB0-9681-A76060CBCEF9}"
 	ProjectSection(SolutionItems) = preProject
@@ -103,5 +103,6 @@ Global
 	GlobalSection(MonoDevelopProperties) = preSolution
 		Policies = $0
 		$0.StandardHeader = $1
+		version = 0.1.1
 	EndGlobalSection
 EndGlobal
