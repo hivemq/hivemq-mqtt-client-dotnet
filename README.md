@@ -9,7 +9,9 @@
 [![Semantic Versions](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--versions-e10079.svg)](https://github.com/hivemq/hivemq-mqtt-client-dotnet/releases)
 [![License](https://img.shields.io/github/license/hivemq/hivemq-mqtt-client-dotnet)](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/LICENSE)
 
-This .NET MQTT client was put together with love from the HiveMQ team but is still in BETA.  We'd appreciate any feedback you have.  Happy MQTT adventures!
+This .NET MQTT client was put together with love from the HiveMQ team but is still in BETA.  As such some things may not work completely until it matures and although unlikely, APIs may change slightly before version 1.0.
+
+We'd appreciate any feedback you have.  Happy MQTT adventures!
 
 </div>
 
