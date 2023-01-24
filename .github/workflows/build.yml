@@ -32,7 +32,7 @@ jobs:
           - 1883:1883
           - 8080:8080
         options: >-
-          --health-cmd "curl -f http://localhost:8080/"
+          --health-cmd "curl -f http://hivemq:8080/"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
