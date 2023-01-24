@@ -27,7 +27,7 @@ jobs:
 
     services:
       hivemq:
-        image: hivemq/hivemq:4
+        image: hivemq/hivemq-ce:latest
         ports:
           - 1883:1883
           - 8080:8080
