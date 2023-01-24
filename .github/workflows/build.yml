@@ -24,6 +24,20 @@ jobs:
   build:
     name: Build-${{matrix.os}}
     runs-on: ${{matrix.os}}
+
+    services:
+      hivemq:
+        image: hivemq/hivemq:4
+        ports:
+          - 1883:1883
+          - 8080:8080
+        options: >-
+          --health-cmd "curl -f http://localhost:8080/"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+          --health-start-period 30s
+
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
@@ -53,44 +67,44 @@ jobs:
           name: ${{matrix.os}}
           path: "./Artefacts"
 
-  push-github-packages:
-    name: "Push GitHub Packages"
-    needs: build
-    if: github.ref == 'refs/heads/main' || github.event_name == 'release'
-    environment:
-      name: "GitHub Packages"
-      url: https://github.com/Username/Project/packages
-    permissions:
-      packages: write
-    runs-on: windows-latest
-    steps:
-      - name: "Download Artefact"
-        uses: actions/download-artifact@v3.0.2
-        with:
-          name: "windows-latest"
-      - name: "Dotnet NuGet Add Source"
-        run: dotnet nuget add source https://nuget.pkg.github.com/Username/index.json --name GitHub --username Username --password ${{secrets.GITHUB_TOKEN}}
-        shell: pwsh
-      - name: "Dotnet NuGet Push"
-        run: dotnet nuget push .\*.nupkg --api-key ${{ github.token }} --source GitHub --skip-duplicate
-        shell: pwsh
+  # push-github-packages:
+  #   name: "Push GitHub Packages"
+  #   needs: build
+  #   if: github.ref == 'refs/heads/main' || github.event_name == 'release'
+  #   environment:
+  #     name: "GitHub Packages"
+  #     url: https://github.com/Username/Project/packages
+  #   permissions:
+  #     packages: write
+  #   runs-on: windows-latest
+  #   steps:
+  #     - name: "Download Artefact"
+  #       uses: actions/download-artifact@v3.0.1
+  #       with:
+  #         name: "windows-latest"
+  #     - name: "Dotnet NuGet Add Source"
+  #       run: dotnet nuget add source https://nuget.pkg.github.com/Username/index.json --name GitHub --username Username --password ${{secrets.GITHUB_TOKEN}}
+  #       shell: pwsh
+  #     - name: "Dotnet NuGet Push"
+  #       run: dotnet nuget push .\*.nupkg --api-key ${{ github.token }} --source GitHub --skip-duplicate
+  #       shell: pwsh
 
-  push-nuget:
-    name: "Push NuGet Packages"
-    needs: build
-    if: github.event_name == 'release'
-    environment:
-      name: "NuGet"
-      url: https://www.nuget.org/packages/HiveMQtt
-    runs-on: windows-latest
-    steps:
-      - name: "Download Artefact"
-        uses: actions/download-artifact@v3.0.2
-        with:
-          name: "windows-latest"
-      - name: "Dotnet NuGet Push"
-        run: |
-          Get-ChildItem .\ -Filter *.nupkg |
-          Where-Object { !$_.Name.Contains('preview') } |
-          ForEach-Object { dotnet nuget push $_ --source https://api.nuget.org/v3/index.json --skip-duplicate --api-key ${{secrets.NUGET_API_KEY}} }
-        shell: pwsh
+  # push-nuget:
+  #   name: "Push NuGet Packages"
+  #   needs: build
+  #   if: github.event_name == 'release'
+  #   environment:
+  #     name: "NuGet"
+  #     url: https://www.nuget.org/packages/HiveMQtt
+  #   runs-on: windows-latest
+  #   steps:
+  #     - name: "Download Artefact"
+  #       uses: actions/download-artifact@v3.0.1
+  #       with:
+  #         name: "windows-latest"
+  #     - name: "Dotnet NuGet Push"
+  #       run: |
+  #         Get-ChildItem .\ -Filter *.nupkg |
+  #         Where-Object { !$_.Name.Contains('preview') } |
+  #         ForEach-Object { dotnet nuget push $_ --source https://api.nuget.org/v3/index.json --skip-duplicate --api-key ${{secrets.NUGET_API_KEY}} }
+  #       shell: pwsh
