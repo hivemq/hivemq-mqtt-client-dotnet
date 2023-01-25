@@ -31,12 +31,7 @@ jobs:
         ports:
           - 1883:1883
           - 8080:8080
-        options: >-
-          --health-cmd "curl -f http://hivemq:8080/"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-          --health-start-period 30s
+        options: --health-cmd "curl -f http://hivemq:8080/" --health-interval 10s --health-timeout 10s --health-retries 5 --health-start-period 30s
 
     strategy:
       matrix:
