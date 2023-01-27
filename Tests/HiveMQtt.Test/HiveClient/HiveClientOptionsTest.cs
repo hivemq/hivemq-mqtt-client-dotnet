@@ -50,6 +50,7 @@ public class HiveClientOptionsTest
         Assert.Equal(0, options.ClientReceiveMaximum);
 
         options.ClientReceiveMaximum = int.MaxValue;
+        options.ValidateOptions();
         Assert.Equal(UInt16.MaxValue, options.ClientReceiveMaximum);
     }
 
@@ -58,12 +59,13 @@ public class HiveClientOptionsTest
     {
         var options = new HiveClientOptions
         {
-            ClientReceiveMaximum = -300,
+            ClientMaximumPacketSize = -300,
         };
         options.ValidateOptions();
         Assert.Equal(0, options.ClientMaximumPacketSize);
 
         options.ClientMaximumPacketSize = long.MaxValue;
+        options.ValidateOptions();
         Assert.Equal(UInt32.MaxValue, options.ClientMaximumPacketSize);
     }
 
@@ -77,7 +79,8 @@ public class HiveClientOptionsTest
         options.ValidateOptions();
         Assert.Equal(0, options.ClientTopicAliasMaximum);
 
-        options.ClientMaximumPacketSize = int.MaxValue;
+        options.ClientTopicAliasMaximum = UInt16.MaxValue;
+        options.ValidateOptions();
         Assert.Equal(UInt16.MaxValue, options.ClientTopicAliasMaximum);
     }
 

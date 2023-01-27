@@ -10,7 +10,7 @@ using HiveMQtt.MQTT5.Types;
 /// See also <seealso href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901179">
 /// Unsubscribe Control Packet</seealso>.
 /// </summary>
-internal class UnsubscribePacket : ControlPacket
+public class UnsubscribePacket : ControlPacket
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="UnsubscribePacket"/> class

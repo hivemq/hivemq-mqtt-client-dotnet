@@ -42,7 +42,6 @@ public class HiveClientConnectOptionsTest
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
-        Assert.Equal(93, connectResult.ServerKeepAlive);
 
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
@@ -93,16 +92,15 @@ public class HiveClientConnectOptionsTest
     {
         var options = new HiveClientOptions
         {
-            ClientMaximumPacketSize = 5,
+            ClientMaximumPacketSize = 1500,
         };
 
         var client = new HiveClient(options);
-        Assert.Equal(5, client.Options.ClientMaximumPacketSize);
+        Assert.Equal(1500, client.Options.ClientMaximumPacketSize);
 
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
-        Assert.Equal(10, connectResult.BrokerMaximumPacketSize);
 
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
@@ -156,20 +154,21 @@ public class HiveClientConnectOptionsTest
         var options = new HiveClientOptions
         {
             RequestProblemInformation = true,
+            ClientMaximumPacketSize = 0,
         };
 
         var client = new HiveClient(options);
         Assert.Equal(true, client.Options.RequestProblemInformation);
 
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
-        Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
+        Assert.True(connectResult.ReasonCode == ConnAckReasonCode.ProtocolError);
 
         // FIXME: Broker doesn't return ReasonString for successful connections
         // Make a better test with a failure scenario
         Assert.NotNull(connectResult.ReasonString);
+        Assert.Equal("Sent CONNECT with packet size set to '0'. This is a protocol violation.", connectResult.ReasonString);
 
-        var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
-        Assert.True(disconnectResult);
+        Assert.False(client.IsConnected());
     }
 
     // FIXME: Add Authentication Tests

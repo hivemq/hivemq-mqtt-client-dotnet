@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using HiveMQtt.Client.Events;
+using HiveMQtt.Client.Internal;
 using HiveMQtt.Client.Options;
 using HiveMQtt.Client.Results;
 using HiveMQtt.MQTT5;
@@ -47,6 +48,8 @@ public partial class HiveClient : IDisposable, IHiveClient
 
     private Task<bool>? trafficInflowProcessor;
 
+    internal ConnectState connectState = ConnectState.Disconnected;
+
     private bool disposed = false;
 
     public HiveClient(HiveClientOptions? options = null)
@@ -68,18 +71,14 @@ public partial class HiveClient : IDisposable, IHiveClient
 
     public bool IsConnected()
     {
-        // FIXME: Add MQTT connection state check
-        if ((this.socket is not null) && this.socket.Connected)
-        {
-            return true;
-        }
-
-        return false;
+        return this.connectState == ConnectState.Connected;
     }
 
     /// <inheritdoc />
     public async Task<ConnectResult> ConnectAsync()
     {
+        this.connectState = ConnectState.Connecting;
+
         // Fire the corresponding event
         this.BeforeConnectEventLauncher(this.Options);
 
@@ -102,7 +101,7 @@ public partial class HiveClient : IDisposable, IHiveClient
 
         var taskCompletionSource = new TaskCompletionSource<ConnAckPacket>();
 
-        EventHandler<ConnAckReceivedEventArgs> eventHandler = (sender, args) =>
+        EventHandler<OnConnAckReceivedEventArgs> eventHandler = (sender, args) =>
         {
             taskCompletionSource.SetResult(args.ConnAckPacket);
         };
@@ -130,7 +129,15 @@ public partial class HiveClient : IDisposable, IHiveClient
             this.OnConnAckReceived -= eventHandler;
         }
 
-        // FIXME: check writeResult and flushResult - IsCompleted & IsCanceled
+        if (connAck.ReasonCode == ConnAckReasonCode.Success)
+        {
+            this.connectState = ConnectState.Connected;
+        }
+        else
+        {
+            this.connectState = ConnectState.Disconnected;
+        }
+
         connectResult = new ConnectResult(connAck.ReasonCode, connAck.SessionPresent, connAck.Properties);
 
         // Data massage: This class is used for end users.  Let's prep the data so it's easily understandable.
@@ -146,23 +153,42 @@ public partial class HiveClient : IDisposable, IHiveClient
     /// <inheritdoc />
     public async Task<bool> DisconnectAsync(DisconnectOptions? options = null)
     {
+        if (this.connectState != ConnectState.Connected)
+        {
+            // log.Error("Disconnect failed.  Client is not connected.");
+            return false;
+        }
+
         options ??= new DisconnectOptions();
 
-        var packet = new DisconnectPacket
+        var disconnectPacket = new DisconnectPacket
         {
             DisconnectReasonCode = options.ReasonCode,
         };
 
-        if (this.socket != null && this.socket.Connected)
-        {
-            var writeResult = await this.writer.WriteAsync(packet.Encode()).ConfigureAwait(false);
-            var flushResult = await this.writer.FlushAsync().ConfigureAwait(false);
-        }
-        else
-        {
-            // FIXME: Throw some exception
-            return false;
-        }
+        this.sendQueue.Enqueue(disconnectPacket);
+
+        // Once this is set, no more incoming packets or outgoing will be accepted
+        this.connectState = ConnectState.Disconnecting;
+
+        await Task.Delay(1000).ConfigureAwait(false);
+
+        // Shutdown the traffic processors
+        this.trafficOutflowProcessor = null;
+        this.trafficInflowProcessor = null;
+
+        // Shutdown the pipeline
+        this.reader = null;
+        this.writer = null;
+
+        // Shutdown the socket
+        this.socket?.Shutdown(SocketShutdown.Both);
+        this.socket?.Close();
+
+        this.connectState = ConnectState.Disconnected;
+
+        this.sendQueue.Clear();
+        this.receiveQueue.Clear();
 
         return true;
     }
@@ -279,7 +305,7 @@ public partial class HiveClient : IDisposable, IHiveClient
 
         // FIXME: We should only ever have one subscribe in flight at any time (for now)
 
-        EventHandler<SubAckReceivedEventArgs> eventHandler = (sender, args) =>
+        EventHandler<OnSubAckReceivedEventArgs> eventHandler = (sender, args) =>
         {
             taskCompletionSource.SetResult(args.SubAckPacket);
         };
@@ -340,34 +366,58 @@ public partial class HiveClient : IDisposable, IHiveClient
 
     public async Task<UnsubscribeResult> UnsubscribeAsync(List<Subscription> subscriptions)
     {
+        // Fire the corresponding event
+        this.BeforeUnsubscribeEventLauncher(subscriptions);
+
         var packetIdentifier = this.GeneratePacketIdentifier();
-        var packet = new UnsubscribePacket(subscriptions, (ushort)packetIdentifier);
+        var unsubscribePacket = new UnsubscribePacket(subscriptions, (ushort)packetIdentifier);
 
-        var writeResult = await this.writer.WriteAsync(packet.Encode()).ConfigureAwait(false);
-        var flushResult = await this.writer.FlushAsync().ConfigureAwait(false);
+        var taskCompletionSource = new TaskCompletionSource<UnsubAckPacket>();
+        EventHandler<OnUnsubAckReceivedEventArgs> eventHandler = (sender, args) =>
+        {
+            taskCompletionSource.SetResult(args.UnsubAckPacket);
+        };
+        this.OnUnsubAckReceived += eventHandler;
 
-        var readResult = await this.reader.ReadAsync().ConfigureAwait(false);
-        var unsubAck = (UnsubAckPacket)PacketDecoder.Decode(readResult.Buffer, out var consumed);
-        this.reader.AdvanceTo(consumed);
+        this.sendQueue.Enqueue(unsubscribePacket);
+
+        // FIXME: Cancellation token and better timeout value
+        UnsubAckPacket unsubAck;
+        UnsubscribeResult unsubscribeResult;
+        try
+        {
+            unsubAck = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            // FIXME: Validate that the packet identifier matches
+        }
+        catch (System.TimeoutException ex)
+        {
+            // log.Error(string.Format("Connect timeout.  No response received in time.", ex);
+            throw;
+        }
+        finally
+        {
+            // Remove the event handler
+            this.OnUnsubAckReceived -= eventHandler;
+        }
 
         // Prepare the result
-        var unsubResult = new UnsubscribeResult
+        unsubscribeResult = new UnsubscribeResult
         {
-            Subscriptions = packet.Subscriptions,
+            Subscriptions = unsubscribePacket.Subscriptions,
         };
 
         var counter = 0;
         foreach (var reasonCode in unsubAck.ReasonCodes)
         {
-            unsubResult.Subscriptions[counter].UnsubscribeReasonCode = reasonCode;
+            unsubscribeResult.Subscriptions[counter].UnsubscribeReasonCode = reasonCode;
             if (reasonCode == UnsubAckReasonCode.Success)
             {
                 // Remove the subscription from the client
-                this.Subscriptions.Remove(unsubResult.Subscriptions[counter]);
+                this.Subscriptions.Remove(unsubscribeResult.Subscriptions[counter]);
             }
         }
 
-        return unsubResult;
+        return unsubscribeResult;
     }
 
     /// <summary>
@@ -403,7 +453,6 @@ public partial class HiveClient : IDisposable, IHiveClient
 
         return Interlocked.Increment(ref this.lastPacketId);
     }
-
 
     /// <summary>
     /// https://learn.microsoft.com/en-us/dotnet/api/system.idisposable?view=net-6.0.

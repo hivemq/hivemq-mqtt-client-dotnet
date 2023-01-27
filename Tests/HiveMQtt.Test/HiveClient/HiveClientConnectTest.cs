@@ -9,6 +9,7 @@ using Xunit;
 
 public class HiveClientConnectTest
 {
+    /// TODO: Add out of order tests: connect when connected, disconnect when not connected, etc.
     [Fact]
     public async Task Basic_Connect_And_Disconnect_Async()
     {
@@ -25,6 +26,7 @@ public class HiveClientConnectTest
 
         var disconnectResult = await client.DisconnectAsync(disconnectOptions).ConfigureAwait(false);
         Assert.True(disconnectResult);
+        Assert.False(client.IsConnected());
     }
 
     [Fact]
@@ -73,7 +75,7 @@ public class HiveClientConnectTest
         Assert.NotNull(eventArgs.Options);
     }
 
-    private static void OnConnectSentHandler(object? sender, ConnectSentEventArgs eventArgs)
+    private static void OnConnectSentHandler(object? sender, OnConnectSentEventArgs eventArgs)
     {
         Assert.NotNull(sender);
         if (sender is not null)
@@ -85,7 +87,7 @@ public class HiveClientConnectTest
         Assert.NotNull(eventArgs.ConnectPacket);
     }
 
-    private static void OnConnAckReceivedHandler(object? sender, ConnAckReceivedEventArgs eventArgs)
+    private static void OnConnAckReceivedHandler(object? sender, OnConnAckReceivedEventArgs eventArgs)
     {
         Assert.NotNull(sender);
         if (sender is not null)

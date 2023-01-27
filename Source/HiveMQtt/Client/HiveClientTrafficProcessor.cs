@@ -2,18 +2,11 @@ namespace HiveMQtt.Client;
 
 using System;
 using System.Diagnostics;
-using System.Collections.Concurrent;
 using System.IO.Pipelines;
-using System.Net;
-using System.Net.Sockets;
-using System.Text;
 using System.Threading.Tasks;
-using HiveMQtt.Client.Events;
-using HiveMQtt.Client.Options;
-using HiveMQtt.Client.Results;
+using HiveMQtt.Client.Internal;
 using HiveMQtt.MQTT5;
 using HiveMQtt.MQTT5.Packets;
-using HiveMQtt.MQTT5.Types;
 
 /// <inheritdoc />
 public partial class HiveClient : IDisposable, IHiveClient
@@ -29,7 +22,7 @@ public partial class HiveClient : IDisposable, IHiveClient
             var keepAlivePeriod = this.Options.KeepAlive / 2;
             stopWatch.Start();
 
-            while (this.IsConnected())
+            while (this.connectState != ConnectState.Disconnected)
             {
                 var elapsed = stopWatch.Elapsed;
 
@@ -44,8 +37,15 @@ public partial class HiveClient : IDisposable, IHiveClient
 
                 if (this.sendQueue.IsEmpty)
                 {
-                    await Task.Delay(100).ConfigureAwait(false);
-                    continue;
+                    if (this.connectState == ConnectState.Disconnecting)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        await Task.Delay(100).ConfigureAwait(false);
+                        continue;
+                    }
                 }
 
                 if (this.sendQueue.TryDequeue(out var packet))
@@ -60,13 +60,17 @@ public partial class HiveClient : IDisposable, IHiveClient
                             this.OnConnectSentEventLauncher(connectPacket);
                             break;
                         case DisconnectPacket disconnectPacket:
+                            writeResult = await this.writer.WriteAsync(disconnectPacket.Encode()).ConfigureAwait(false);
                             this.OnDisconnectSentEventLauncher(disconnectPacket);
                             break;
                         case SubscribePacket subscribePacket:
                             writeResult = await this.writer.WriteAsync(subscribePacket.Encode()).ConfigureAwait(false);
                             this.OnSubscribeSentEventLauncher(subscribePacket);
                             break;
-
+                        case UnsubscribePacket unsubscribePacket:
+                            writeResult = await this.writer.WriteAsync(unsubscribePacket.Encode()).ConfigureAwait(false);
+                            this.OnUnsubscribeSentEventLauncher(unsubscribePacket);
+                            break;
                         // case PublishPacket publishPacket:
                         //     writeResult = await this.writer.WriteAsync(publishPacket.Encode()).ConfigureAwait(false);
                         //     this.OnPublishSentEventLauncher(publishPacket);
@@ -93,7 +97,7 @@ public partial class HiveClient : IDisposable, IHiveClient
     {
         return Task.Run(async () =>
         {
-            while (this.IsConnected())
+            while (this.connectState == ConnectState.Connecting || this.connectState == ConnectState.Connected)
             {
                 var readResult = await this.reader.ReadAsync().ConfigureAwait(false);
                 var packet = PacketDecoder.Decode(readResult.Buffer, out var consumed);

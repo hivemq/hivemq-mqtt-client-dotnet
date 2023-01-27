@@ -83,7 +83,10 @@ public class HiveClientOptions
 
     /// <summary>
     /// Gets or sets a value that indicates the maximum packet size that the MQTT client is willing
-    /// accept.
+    /// accept.  If not set, no limit is imposed beyond the protocol maximum (4.294.967.295).
+    /// <para>
+    /// The valid range of values are 1..4_294_967_295 equivalent to a 32-bit unsigned integer.
+    /// </para>
     /// </summary>
     public long? ClientMaximumPacketSize { get; set; }
 
