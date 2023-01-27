@@ -4,7 +4,7 @@ using HiveMQtt.Client.Options;
 
 public class BeforeSubscribeEventArgs : EventArgs
 {
-    public BeforeSubscribeEventArgs(SubscribeOptions options) => this.SubscribeOptions = options;
+    public BeforeSubscribeEventArgs(SubscribeOptions options) => this.Options = options;
 
-    public SubscribeOptions SubscribeOptions { get; set; }
+    public SubscribeOptions Options { get; set; }
 }

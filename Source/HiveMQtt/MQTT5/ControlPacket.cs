@@ -159,20 +159,33 @@ public abstract class ControlPacket
     /// <returns>The number of bytes written into the stream.</returns>
     protected static short EncodeVariableByteInteger(MemoryStream stream, int number)
     {
+        if (number is < 0 or > 268435455)
+        {
+            throw new MQTTProtocolException("Value out of range for a variable byte integer: {value}");
+        }
+
+        if (number <= 0x7F)
+        {
+            stream.WriteByte((byte)number);
+            return 1;
+        }
+
         short written = 0;
+        var value = number;
         do
         {
-            var digit = number % 0x80;
-            number /= 0x80;
-            if (number > 0)
+            var encodedByte = value % 0x80;
+            value /= 0x80;
+            if (value > 0)
             {
-                number |= 0x80;
+                encodedByte |= 0x80;
             }
 
-            stream.WriteByte((byte)digit);
+            stream.WriteByte((byte)encodedByte);
             written++;
         }
-        while (number > 0);
+        while (value > 0);
+
         return written;
     }
 
@@ -374,94 +387,112 @@ public abstract class ControlPacket
             propertyStream.WriteByte((byte)this.Properties.PayloadFormatIndicator);
             propertiesLength++;
         }
-        else if (this.Properties.MessageExpiryInterval != null)
+
+        if (this.Properties.MessageExpiryInterval != null)
         {
             propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.MessageExpiryInterval);
             propertiesLength += EncodeFourByteInteger(propertyStream, (uint)this.Properties.MessageExpiryInterval);
         }
-        else if (this.Properties.ContentType != null)
+
+        if (this.Properties.ContentType != null)
         {
             propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.ContentType);
             propertiesLength += EncodeUTF8String(propertyStream, this.Properties.ContentType);
         }
-        else if (this.Properties.ResponseTopic != null)
+
+        if (this.Properties.ResponseTopic != null)
         {
             propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.ResponseTopic);
             propertiesLength += EncodeUTF8String(propertyStream, this.Properties.ResponseTopic);
         }
-        else if (this.Properties.CorrelationData != null)
+
+        if (this.Properties.CorrelationData != null)
         {
             propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.CorrelationData);
             propertiesLength += EncodeBinaryData(propertyStream, this.Properties.CorrelationData);
         }
-        else if (this.Properties.SubscriptionIdentifier != null)
+
+        if (this.Properties.SubscriptionIdentifier != null)
         {
             propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.SubscriptionIdentifier);
             propertiesLength += EncodeVariableByteInteger(propertyStream, (int)this.Properties.SubscriptionIdentifier);
         }
-        else if (this.Properties.SessionExpiryInterval != null)
+
+        if (this.Properties.SessionExpiryInterval != null)
         {
             propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.SessionExpiryInterval);
             propertiesLength += EncodeFourByteInteger(propertyStream, (uint)this.Properties.SessionExpiryInterval);
         }
-        else if (this.Properties.AuthenticationMethod != null)
+
+        if (this.Properties.AuthenticationMethod != null)
         {
             propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.AuthenticationMethod);
             propertiesLength += EncodeUTF8String(propertyStream, this.Properties.AuthenticationMethod);
         }
-        else if (this.Properties.AuthenticationData != null)
+
+        if (this.Properties.AuthenticationData != null)
         {
             propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.AuthenticationData);
             propertiesLength += EncodeBinaryData(propertyStream, this.Properties.AuthenticationData);
         }
-        else if (this.Properties.RequestProblemInformation != null)
+
+        if (this.Properties.RequestProblemInformation != null)
         {
             propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.RequestProblemInformation);
             propertyStream.WriteByte((byte)this.Properties.RequestProblemInformation);
             propertiesLength++;
         }
-        else if (this.Properties.WillDelayInterval != null)
+
+        if (this.Properties.WillDelayInterval != null)
         {
             propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.WillDelayInterval);
             propertiesLength += EncodeFourByteInteger(propertyStream, (uint)this.Properties.WillDelayInterval);
         }
-        else if (this.Properties.RequestResponseInformation != null)
+
+        if (this.Properties.RequestResponseInformation != null)
         {
             propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.RequestResponseInformation);
             propertyStream.WriteByte((byte)this.Properties.RequestResponseInformation);
             propertiesLength++;
         }
-        else if (this.Properties.ServerReference != null)
+
+        if (this.Properties.ServerReference != null)
         {
             propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.ServerReference);
             propertiesLength += EncodeUTF8String(propertyStream, this.Properties.ServerReference);
         }
-        else if (this.Properties.ReasonString != null)
+
+        if (this.Properties.ReasonString != null)
         {
             propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.ReasonString);
             propertiesLength += EncodeUTF8String(propertyStream, this.Properties.ReasonString);
         }
-        else if (this.Properties.ReceiveMaximum != null)
+
+        if (this.Properties.ReceiveMaximum != null)
         {
             propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.ReceiveMaximum);
             propertiesLength += EncodeTwoByteInteger(propertyStream, (int)this.Properties.ReceiveMaximum);
         }
-        else if (this.Properties.TopicAliasMaximum != null)
+
+        if (this.Properties.TopicAliasMaximum != null)
         {
             propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.TopicAliasMaximum);
             propertiesLength += EncodeTwoByteInteger(propertyStream, (int)this.Properties.TopicAliasMaximum);
         }
-        else if (this.Properties.TopicAlias != null)
+
+        if (this.Properties.TopicAlias != null)
         {
             propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.TopicAlias);
             propertiesLength += EncodeTwoByteInteger(propertyStream, (int)this.Properties.TopicAlias);
         }
-        else if (this.Properties.MaximumPacketSize != null)
+
+        if (this.Properties.MaximumPacketSize != null)
         {
             propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.MaximumPacketSize);
             propertiesLength += EncodeFourByteInteger(propertyStream, (uint)this.Properties.MaximumPacketSize);
         }
-        else if (this.Properties.UserProperties.Count > 0)
+
+        if (this.Properties.UserProperties.Count > 0)
         {
             foreach (var property in this.Properties.UserProperties)
             {

@@ -3,6 +3,7 @@ namespace HiveMQtt.Test.HiveClient;
 using System.Threading.Tasks;
 using HiveMQtt.Client;
 using HiveMQtt.Client.Events;
+using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.ReasonCodes;
 using Xunit;
 
@@ -72,11 +73,12 @@ public class HiveClientSubscribeTest
         client.OnSubAckReceived += OnSubAckReceivedHandler;
 
         var result = await client.ConnectAsync().ConfigureAwait(false);
+        Assert.Equal(ConnAckReasonCode.Success, result.ReasonCode);
 
         var subscribeResult = client.SubscribeAsync("data/topic").ConfigureAwait(false);
 
         // Wait for event handlers to finish
-        await Task.Delay(100).ConfigureAwait(false);
+        await Task.Delay(1000).ConfigureAwait(false);
 
         // Assert that all Events were called
         Assert.True(client.LocalStore.ContainsKey("BeforeSubscribeHandlerCalled"));
@@ -102,10 +104,10 @@ public class HiveClientSubscribeTest
             client.LocalStore.Add("BeforeSubscribeHandlerCalled", "true");
         }
 
-        Assert.NotNull(eventArgs.SubscribeOptions);
+        Assert.NotNull(eventArgs.Options);
     }
 
-    private static void OnSubscribeSentHandler(object? sender, SubscribeSentEventArgs eventArgs)
+    private static void OnSubscribeSentHandler(object? sender, OnSubscribeSentEventArgs eventArgs)
     {
         Assert.NotNull(sender);
         if (sender is not null)
@@ -117,7 +119,7 @@ public class HiveClientSubscribeTest
         Assert.NotNull(eventArgs.SubscribePacket);
     }
 
-    private static void OnSubAckReceivedHandler(object? sender, SubAckReceivedEventArgs eventArgs)
+    private static void OnSubAckReceivedHandler(object? sender, OnSubAckReceivedEventArgs eventArgs)
     {
         Assert.NotNull(sender);
         if (sender is not null)

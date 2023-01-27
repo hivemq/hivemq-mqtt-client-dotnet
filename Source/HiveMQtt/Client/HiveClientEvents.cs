@@ -1,3 +1,5 @@
+#undef TRACE
+
 namespace HiveMQtt.Client;
 
 using System;
@@ -64,6 +66,30 @@ public partial class HiveClient : IDisposable, IHiveClient
     }
 
     /// <summary>
+    /// Event that is fired before the client sends a subscribe request.
+    /// </summary>
+    public event EventHandler<BeforeUnsubscribeEventArgs> BeforeUnsubscribe = new EventHandler<BeforeUnsubscribeEventArgs>((client, e) => { });
+
+    protected virtual void BeforeUnsubscribeEventLauncher(List<Subscription> subscriptions)
+    {
+        var eventArgs = new BeforeUnsubscribeEventArgs(subscriptions);
+        Trace.WriteLine("BeforeUnsubscribeEventLauncher");
+        this.BeforeUnsubscribe?.Invoke(this, eventArgs);
+    }
+
+    /// <summary>
+    /// Event that is fired after the client sends a subscribe request.
+    /// </summary>
+    public event EventHandler<AfterUnsubscribeEventArgs> AfterUnsubscribe = new EventHandler<AfterUnsubscribeEventArgs>((client, e) => { });
+
+    protected virtual void AfterUnsubscribeEventLauncher(UnsubscribeResult results)
+    {
+        var eventArgs = new AfterUnsubscribeEventArgs(results);
+        Trace.WriteLine("AfterUnsubscribeEventLauncher");
+        this.AfterUnsubscribe?.Invoke(this, eventArgs);
+    }
+
+    /// <summary>
     /// Event that is fired when a message is received from the broker.
     /// </summary>
     public event EventHandler<OnMessageReceivedEventArgs> OnMessageReceived = new EventHandler<OnMessageReceivedEventArgs>((client, e) => { });
@@ -82,167 +108,179 @@ public partial class HiveClient : IDisposable, IHiveClient
     /// <summary>
     /// Event that is fired after the client sends a CONNECT packet to the broker.
     /// </summary>
-    public event EventHandler<ConnectSentEventArgs> OnConnectSent = new EventHandler<ConnectSentEventArgs>((client, e) => { });
+    public event EventHandler<OnConnectSentEventArgs> OnConnectSent = new EventHandler<OnConnectSentEventArgs>((client, e) => { });
 
     protected virtual void OnConnectSentEventLauncher(ConnectPacket packet)
     {
-        var eventArgs = new ConnectSentEventArgs(packet);
-        Trace.WriteLine("ConnectSentEventLauncher");
+        var eventArgs = new OnConnectSentEventArgs(packet);
+        Trace.WriteLine("OnConnectSentEventLauncher");
         this.OnConnectSent?.Invoke(this, eventArgs);
     }
 
     /// <summary>
     /// Event that is fired after the client receives a CONNACK packet from the broker.
     /// </summary>
-    public event EventHandler<ConnAckReceivedEventArgs> OnConnAckReceived = new EventHandler<ConnAckReceivedEventArgs>((client, e) => { });
+    public event EventHandler<OnConnAckReceivedEventArgs> OnConnAckReceived = new EventHandler<OnConnAckReceivedEventArgs>((client, e) => { });
 
     protected virtual void OnConnAckReceivedEventLauncher(ConnAckPacket packet)
     {
-        var eventArgs = new ConnAckReceivedEventArgs(packet);
-        Trace.WriteLine("ConnAckReceivedEventLauncher");
+        var eventArgs = new OnConnAckReceivedEventArgs(packet);
+        Trace.WriteLine("OnConnAckReceivedEventLauncher");
         this.OnConnAckReceived?.Invoke(this, eventArgs);
     }
 
     /// <summary>
     /// Event that is fired after the client send a Disconnect packet from the broker.
     /// </summary>
-    public event EventHandler<DisconnectSentEventArgs> OnDisconnectSent = new EventHandler<DisconnectSentEventArgs>((client, e) => { });
+    public event EventHandler<OnDisconnectSentEventArgs> OnDisconnectSent = new EventHandler<OnDisconnectSentEventArgs>((client, e) => { });
 
     protected virtual void OnDisconnectSentEventLauncher(DisconnectPacket packet)
     {
-        var eventArgs = new DisconnectSentEventArgs(packet);
-        Trace.WriteLine("DisconnectSentEventLauncher");
+        var eventArgs = new OnDisconnectSentEventArgs(packet);
+        Trace.WriteLine("OnDisconnectSentEventLauncher");
         this.OnDisconnectSent?.Invoke(this, eventArgs);
     }
 
     /// <summary>
     /// Event that is fired after the client receives a Disconnect packet from the broker.
     /// </summary>
-    public event EventHandler<DisconnectReceivedEventArgs> OnDisconnectReceived = new EventHandler<DisconnectReceivedEventArgs>((client, e) => { });
+    public event EventHandler<OnDisconnectReceivedEventArgs> OnDisconnectReceived = new EventHandler<OnDisconnectReceivedEventArgs>((client, e) => { });
 
     protected virtual void OnDisconnectReceivedEventLauncher(DisconnectPacket packet)
     {
-        var eventArgs = new DisconnectReceivedEventArgs(packet);
-        Trace.WriteLine("DisconnectReceivedEventLauncher");
+        var eventArgs = new OnDisconnectReceivedEventArgs(packet);
+        Trace.WriteLine("OnDisconnectReceivedEventLauncher");
         this.OnDisconnectReceived?.Invoke(this, eventArgs);
     }
 
     /// <summary>
     /// Event that is fired after the client send a PingReq packet from the broker.
     /// </summary>
-    public event EventHandler<PingReqSentEventArgs> OnPingReqSent = new EventHandler<PingReqSentEventArgs>((client, e) => { });
+    public event EventHandler<OnPingReqSentEventArgs> OnPingReqSent = new EventHandler<OnPingReqSentEventArgs>((client, e) => { });
 
     protected virtual void OnPingReqSentEventLauncher(PingReqPacket packet)
     {
-        var eventArgs = new PingReqSentEventArgs(packet);
-        Trace.WriteLine("PingReqSentEventLauncher");
+        var eventArgs = new OnPingReqSentEventArgs(packet);
+        Trace.WriteLine("OnPingReqSentEventLauncher");
         this.OnPingReqSent?.Invoke(this, eventArgs);
     }
 
     /// <summary>
     /// Event that is fired after the client send a PingReq packet from the broker.
     /// </summary>
-    public event EventHandler<PingRespReceivedEventArgs> OnPingRespReceived = new EventHandler<PingRespReceivedEventArgs>((client, e) => { });
+    public event EventHandler<OnPingRespReceivedEventArgs> OnPingRespReceived = new EventHandler<OnPingRespReceivedEventArgs>((client, e) => { });
 
     protected virtual void OnPingRespReceivedEventLauncher(PingRespPacket packet)
     {
-        var eventArgs = new PingRespReceivedEventArgs(packet);
-        Trace.WriteLine("PingRespReceivedEventLauncher");
+        var eventArgs = new OnPingRespReceivedEventArgs(packet);
+        Trace.WriteLine("OnPingRespReceivedEventLauncher");
         this.OnPingRespReceived?.Invoke(this, eventArgs);
     }
 
     /// <summary>
     /// Event that is fired after the client sends a Subscribe packet to the broker.
     /// </summary>
-    public event EventHandler<SubscribeSentEventArgs> OnSubscribeSent = new EventHandler<SubscribeSentEventArgs>((client, e) => { });
+    public event EventHandler<OnSubscribeSentEventArgs> OnSubscribeSent = new EventHandler<OnSubscribeSentEventArgs>((client, e) => { });
 
     protected virtual void OnSubscribeSentEventLauncher(SubscribePacket packet)
     {
-        var eventArgs = new SubscribeSentEventArgs(packet);
-        Trace.WriteLine("SubscribeSentEventLauncher");
+        var eventArgs = new OnSubscribeSentEventArgs(packet);
+        Trace.WriteLine("OnSubscribeSentEventLauncher");
         this.OnSubscribeSent?.Invoke(this, eventArgs);
     }
 
     /// <summary>
     /// Event that is fired after the client receives a SubAck packet from the broker.
     /// </summary>
-    public event EventHandler<SubAckReceivedEventArgs> OnSubAckReceived = new EventHandler<SubAckReceivedEventArgs>((client, e) => { });
+    public event EventHandler<OnSubAckReceivedEventArgs> OnSubAckReceived = new EventHandler<OnSubAckReceivedEventArgs>((client, e) => { });
 
     protected virtual void OnSubAckReceivedEventLauncher(SubAckPacket packet)
     {
-        var eventArgs = new SubAckReceivedEventArgs(packet);
-        Trace.WriteLine("SubAckReceivedEventLauncher");
+        var eventArgs = new OnSubAckReceivedEventArgs(packet);
+        Trace.WriteLine("OnSubAckReceivedEventLauncher");
         this.OnSubAckReceived?.Invoke(this, eventArgs);
+    }
+
+    /// <summary>
+    /// Event that is fired after the client sends a Unsubscribe packet to the broker.
+    /// </summary>
+    public event EventHandler<OnUnsubscribeSentEventArgs> OnUnsubscribeSent = new EventHandler<OnUnsubscribeSentEventArgs>((client, e) => { });
+
+    protected virtual void OnUnsubscribeSentEventLauncher(UnsubscribePacket packet)
+    {
+        var eventArgs = new OnUnsubscribeSentEventArgs(packet);
+        Trace.WriteLine("OnUnsubscribeSentEventLauncher");
+        this.OnUnsubscribeSent?.Invoke(this, eventArgs);
     }
 
     /// <summary>
     /// Event that is fired after the client receives a UnsubAck packet from the broker.
     /// </summary>
-    public event EventHandler<UnsubAckReceivedEventArgs> OnUnsubAckReceived = new EventHandler<UnsubAckReceivedEventArgs>((client, e) => { });
+    public event EventHandler<OnUnsubAckReceivedEventArgs> OnUnsubAckReceived = new EventHandler<OnUnsubAckReceivedEventArgs>((client, e) => { });
 
     protected virtual void OnUnsubAckReceivedEventLauncher(UnsubAckPacket packet)
     {
-        var eventArgs = new UnsubAckReceivedEventArgs(packet);
-        Trace.WriteLine("UnsubAckReceivedEventLauncher");
+        var eventArgs = new OnUnsubAckReceivedEventArgs(packet);
+        Trace.WriteLine("OnUnsubAckReceivedEventLauncher");
         this.OnUnsubAckReceived?.Invoke(this, eventArgs);
     }
 
     /// <summary>
     /// Event that is fired after the client receives a Publish packet from the broker.
     /// </summary>
-    public event EventHandler<PublishReceivedEventArgs> OnPublishReceived = new EventHandler<PublishReceivedEventArgs>((client, e) => { });
+    public event EventHandler<OnPublishReceivedEventArgs> OnPublishReceived = new EventHandler<OnPublishReceivedEventArgs>((client, e) => { });
 
     protected virtual void OnPublishReceivedEventLauncher(PublishPacket packet)
     {
-        var eventArgs = new PublishReceivedEventArgs(packet);
-        Trace.WriteLine("PublishReceivedEventLauncher");
+        var eventArgs = new OnPublishReceivedEventArgs(packet);
+        Trace.WriteLine("OnPublishReceivedEventLauncher");
         this.OnPublishReceived?.Invoke(this, eventArgs);
     }
 
     /// <summary>
     /// Event that is fired after the client receives a PubAck packet from the broker.
     /// </summary>
-    public event EventHandler<PubAckReceivedEventArgs> OnPubAckReceived = new EventHandler<PubAckReceivedEventArgs>((client, e) => { });
+    public event EventHandler<OnPubAckReceivedEventArgs> OnPubAckReceived = new EventHandler<OnPubAckReceivedEventArgs>((client, e) => { });
 
     protected virtual void OnPubAckReceivedEventLauncher(PubAckPacket packet)
     {
-        var eventArgs = new PubAckReceivedEventArgs(packet);
-        Trace.WriteLine("PubAckReceivedEventLauncher");
+        var eventArgs = new OnPubAckReceivedEventArgs(packet);
+        Trace.WriteLine("OnPubAckReceivedEventLauncher");
         this.OnPubAckReceived?.Invoke(this, eventArgs);
     }
 
     /// <summary>
     /// Event that is fired after the client receives a PubRec packet from the broker.
     /// </summary>
-    public event EventHandler<PubRecReceivedEventArgs> OnPubRecReceived = new EventHandler<PubRecReceivedEventArgs>((client, e) => { });
+    public event EventHandler<OnPubRecReceivedEventArgs> OnPubRecReceived = new EventHandler<OnPubRecReceivedEventArgs>((client, e) => { });
 
     protected virtual void OnPubRecReceivedEventLauncher(PubRecPacket packet)
     {
-        var eventArgs = new PubRecReceivedEventArgs(packet);
-        Trace.WriteLine("PubRecReceivedEventLauncher");
+        var eventArgs = new OnPubRecReceivedEventArgs(packet);
+        Trace.WriteLine("OnPubRecReceivedEventLauncher");
         this.OnPubRecReceived?.Invoke(this, eventArgs);
     }
 
     /// <summary>
     /// Event that is fired after the client received a PubRel packet from the broker.
     /// </summary>
-    public event EventHandler<PubRelReceivedEventArgs> OnPubRelReceived = new EventHandler<PubRelReceivedEventArgs>((client, e) => { });
+    public event EventHandler<OnPubRelReceivedEventArgs> OnPubRelReceived = new EventHandler<OnPubRelReceivedEventArgs>((client, e) => { });
 
     protected virtual void OnPubRelReceivedEventLauncher(PubRelPacket packet)
     {
-        var eventArgs = new PubRelReceivedEventArgs(packet);
-        Trace.WriteLine("PubRelReceivedEventLauncher");
+        var eventArgs = new OnPubRelReceivedEventArgs(packet);
+        Trace.WriteLine("OnPubRelReceivedEventLauncher");
         this.OnPubRelReceived?.Invoke(this, eventArgs);
     }
 
     /// <summary>
     /// Event that is fired after the client receives a PubComp packet from the broker.
     /// </summary>
-    public event EventHandler<PubCompReceivedEventArgs> OnPubCompReceived = new EventHandler<PubCompReceivedEventArgs>((client, e) => { });
+    public event EventHandler<OnPubCompReceivedEventArgs> OnPubCompReceived = new EventHandler<OnPubCompReceivedEventArgs>((client, e) => { });
 
     protected virtual void OnPubCompReceivedEventLauncher(PubCompPacket packet)
     {
-        var eventArgs = new PubCompReceivedEventArgs(packet);
+        var eventArgs = new OnPubCompReceivedEventArgs(packet);
         Trace.WriteLine("PubCompReceivedEventLauncher");
         this.OnPubCompReceived?.Invoke(this, eventArgs);
     }
