@@ -417,6 +417,9 @@ public partial class HiveClient : IDisposable, IHiveClient
             }
         }
 
+        // Fire the corresponding event
+        this.AfterUnsubscribeEventLauncher(unsubscribeResult);
+
         return unsubscribeResult;
     }
 

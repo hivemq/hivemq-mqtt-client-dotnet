@@ -47,6 +47,12 @@ public class HiveClientUnsubscribeTest
         var result = await client.ConnectAsync().ConfigureAwait(false);
         Assert.Equal(ConnAckReasonCode.Success, result.ReasonCode);
 
+        var subResult = await client.SubscribeAsync("data/topic").ConfigureAwait(false);
+
+        Assert.NotEmpty(subResult.Subscriptions);
+        Assert.True(client.Subscriptions.Count == 1);
+        Assert.Equal(SubAckReasonCode.GrantedQoS0, subResult.Subscriptions[0].SubscribeReasonCode);
+
         var subscribeResult = client.UnsubscribeAsync("data/topic").ConfigureAwait(false);
 
         // Wait for event handlers to finish
@@ -57,7 +63,7 @@ public class HiveClientUnsubscribeTest
         Assert.True(client.LocalStore.ContainsKey("AfterUnsubscribeHandlerCalled"));
 
         Assert.True(client.LocalStore.ContainsKey("OnUnsubscribeSentHandlerCalled"));
-        Assert.True(client.LocalStore.ContainsKey("OnSubAckReceivedHandlerCalled"));
+        Assert.True(client.LocalStore.ContainsKey("OnUnsubAckReceivedHandlerCalled"));
 
         // Remove event handlers
         client.BeforeUnsubscribe -= BeforeUnsubscribeHandler;
