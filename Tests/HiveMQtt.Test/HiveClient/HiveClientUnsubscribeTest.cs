@@ -3,7 +3,9 @@ namespace HiveMQtt.Test.HiveClient;
 using System.Threading.Tasks;
 using HiveMQtt.Client;
 using HiveMQtt.Client.Events;
+using HiveMQtt.Client.Exceptions;
 using HiveMQtt.MQTT5.ReasonCodes;
+using HiveMQtt.MQTT5.Types;
 using Xunit;
 
 public class HiveClientUnsubscribeTest
@@ -25,6 +27,47 @@ public class HiveClientUnsubscribeTest
 
         Assert.NotEmpty(unsubResult.Subscriptions);
         Assert.Equal(UnsubAckReasonCode.Success, unsubResult.Subscriptions[0].UnsubscribeReasonCode);
+        Assert.True(subClient.Subscriptions.Count == 0);
+
+        var disconnectResult = await subClient.DisconnectAsync().ConfigureAwait(false);
+        Assert.True(disconnectResult);
+    }
+
+    [Fact]
+    public async Task InvalidUnsubscribeStringAsync()
+    {
+        var subClient = new HiveClient();
+        var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
+        Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
+
+        // Unsubscribe from a non-existing subscription should throw an exception
+        await Assert.ThrowsAsync<HiveMQttClientException>(() =>
+            {
+                return subClient.UnsubscribeAsync("data/topic");
+            }).ConfigureAwait(false);
+
+        Assert.True(subClient.Subscriptions.Count == 0);
+
+        var disconnectResult = await subClient.DisconnectAsync().ConfigureAwait(false);
+        Assert.True(disconnectResult);
+    }
+
+    [Fact]
+    public async Task InvalidUnsubscribeSubscriptionAsync()
+    {
+        var subClient = new HiveClient();
+        var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
+        Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
+
+        var topicFilter = new TopicFilter("data/topic", QualityOfService.ExactlyOnceDelivery);
+        var subscription = new Subscription(topicFilter);
+
+        // Unsubscribe from a non-existing subscription should throw an exception
+        await Assert.ThrowsAsync<HiveMQttClientException>(() =>
+            {
+                return subClient.UnsubscribeAsync(subscription);
+            }).ConfigureAwait(false);
+
         Assert.True(subClient.Subscriptions.Count == 0);
 
         var disconnectResult = await subClient.DisconnectAsync().ConfigureAwait(false);

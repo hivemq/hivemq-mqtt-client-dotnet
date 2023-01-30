@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using HiveMQtt.Client.Events;
+using HiveMQtt.Client.Exceptions;
 using HiveMQtt.Client.Internal;
 using HiveMQtt.Client.Options;
 using HiveMQtt.Client.Results;
@@ -269,11 +270,7 @@ public partial class HiveClient : IDisposable, IHiveClient
     {
         var options = new SubscribeOptions();
 
-        var tf = new TopicFilter
-        {
-            Topic = topic,
-            QoS = qos,
-        };
+        var tf = new TopicFilter(topic, qos);
         options.TopicFilters.Add(tf);
 
         return await this.SubscribeAsync(options).ConfigureAwait(false);
@@ -344,6 +341,12 @@ public partial class HiveClient : IDisposable, IHiveClient
         return subscribeResult;
     }
 
+    /// <summary>
+    /// Unsubscribe from a single topic filter on the MQTT broker.
+    /// </summary>
+    /// <exception cref="HiveMQttClientException">Thrown if no subscription is found for the topic.</exception>
+    /// <param name="topic">The topic filter to unsubscribe from.</param>
+    /// <returns>UnsubscribeResult reflecting the result of the operation.</returns>
     public async Task<UnsubscribeResult> UnsubscribeAsync(string topic)
     {
         foreach (var subscription in this.Subscriptions)
@@ -354,16 +357,32 @@ public partial class HiveClient : IDisposable, IHiveClient
             }
         }
 
-        // FIXME: Exception types
-        throw new KeyNotFoundException("No subscription found for topic: " + topic);
+        throw new HiveMQttClientException("No subscription found for topic: " + topic);
     }
 
+    /// <summary>
+    /// Unsubscribe from a single topic filter on the MQTT broker.
+    /// </summary>
+    /// <exception cref="HiveMQttClientException">Thrown if no subscription is found for the topic.</exception>
+    /// <param name="subscription">The subscription from client.Subscriptions to unsubscribe from.</param>
+    /// <returns>UnsubscribeResult reflecting the result of the operation.</returns>
     public async Task<UnsubscribeResult> UnsubscribeAsync(Subscription subscription)
     {
+        if (!this.Subscriptions.Contains(subscription))
+        {
+            throw new HiveMQttClientException("No such subscription found.  Make sure to take individual subscription from client.Subscriptions.");
+        }
+
         var subscriptions = new List<Subscription> { subscription };
         return await this.UnsubscribeAsync(subscriptions).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Unsubscribe from a single topic filter on the MQTT broker.
+    /// </summary>
+    /// <exception cref="HiveMQttClientException">Thrown if no subscription is found for the topic.</exception>
+    /// <param name="topic">The topic filter to unsubscribe from.</param>
+    /// <returns>UnsubscribeResult reflecting the result of the operation.</returns>
     public async Task<UnsubscribeResult> UnsubscribeAsync(List<Subscription> subscriptions)
     {
         // Fire the corresponding event
