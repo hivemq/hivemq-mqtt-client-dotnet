@@ -35,9 +35,6 @@ public partial class HiveClient : IDisposable, IHiveClient
         _logger = logger;
     }
 
-    private readonly ConcurrentQueue<ControlPacket> sendQueue = new();
-    private readonly ConcurrentQueue<ControlPacket> receiveQueue = new();
-
     private int lastPacketId = 0;
 
     private Socket? socket;
@@ -204,11 +201,54 @@ public partial class HiveClient : IDisposable, IHiveClient
         message.Validate();
 
         var packetIdentifier = this.GeneratePacketIdentifier();
-        var packet = new PublishPacket(message, (ushort)packetIdentifier);
-        _ = await this.writer.WriteAsync(packet.Encode()).ConfigureAwait(false);
+        var publishPacket = new PublishPacket(message, (ushort)packetIdentifier);
 
-        // TODO: Get the packet identifier from the PublishAck packet
-        return new PublishResult();
+        // QoS 0: Fast Service
+        if (message.QoS == QualityOfService.AtMostOnceDelivery)
+        {
+            this.sendQueue.Enqueue(publishPacket);
+            return new PublishResult(publishPacket.Message);
+        }
+        else if (message.QoS == QualityOfService.AtLeastOnceDelivery)
+        {
+            // QoS 1: Acknowledged Delivery
+            var taskCompletionSource = new TaskCompletionSource<PubAckPacket>();
+
+            EventHandler<OnPublishQoS1CompleteEventArgs> eventHandler = (sender, args) =>
+            {
+                taskCompletionSource.SetResult(args.PubAckPacket);
+            };
+            publishPacket.OnPublishQoS1Complete += eventHandler;
+
+            // Construct the MQTT Connect packet and queue to send
+            this.sendQueue.Enqueue(publishPacket);
+
+            var pubAckPacket = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+            publishPacket.OnPublishQoS1Complete -= eventHandler;
+            return new PublishResult(publishPacket.Message, pubAckPacket);
+        }
+        else if (message.QoS == QualityOfService.ExactlyOnceDelivery)
+        {
+            // QoS 2: Assured Delivery
+            var taskCompletionSource = new TaskCompletionSource<PubRecPacket>();
+
+            EventHandler<OnPublishQoS2CompleteEventArgs> eventHandler = (sender, args) =>
+            {
+                taskCompletionSource.SetResult(args.PubRecPacket);
+            };
+            publishPacket.OnPublishQoS2Complete += eventHandler;
+
+            // Construct the MQTT Connect packet and queue to send
+            this.sendQueue.Enqueue(publishPacket);
+
+            var pubRecPacket = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+            publishPacket.OnPublishQoS2Complete -= eventHandler;
+            return new PublishResult(publishPacket.Message, pubRecPacket);
+
+        }
+        throw new HiveMQttClientException("Invalid QoS value.");
     }
 
     /// <summary>

@@ -238,6 +238,18 @@ public partial class HiveClient : IDisposable, IHiveClient
     }
 
     /// <summary>
+    /// Event that is fired after the client sends a Publish packet to the broker.
+    /// </summary>
+    public event EventHandler<OnPublishSentEventArgs> OnPublishSent = new EventHandler<OnPublishSentEventArgs>((client, e) => { });
+
+    protected virtual void OnPublishSentEventLauncher(PublishPacket packet)
+    {
+        var eventArgs = new OnPublishSentEventArgs(packet);
+        Trace.WriteLine("OnPublishSentEventLauncher");
+        this.OnPublishSent?.Invoke(this, eventArgs);
+    }
+
+    /// <summary>
     /// Event that is fired after the client receives a PubAck packet from the broker.
     /// </summary>
     public event EventHandler<OnPubAckReceivedEventArgs> OnPubAckReceived = new EventHandler<OnPubAckReceivedEventArgs>((client, e) => { });
@@ -247,6 +259,18 @@ public partial class HiveClient : IDisposable, IHiveClient
         var eventArgs = new OnPubAckReceivedEventArgs(packet);
         Trace.WriteLine("OnPubAckReceivedEventLauncher");
         this.OnPubAckReceived?.Invoke(this, eventArgs);
+    }
+
+    /// <summary>
+    /// Event that is fired after the client sends a PubAck packet from the broker.
+    /// </summary>
+    public event EventHandler<OnPubAckSentEventArgs> OnPubAckSent = new EventHandler<OnPubAckSentEventArgs>((client, e) => { });
+
+    protected virtual void OnPubAckSentEventLauncher(PubAckPacket packet)
+    {
+        var eventArgs = new OnPubAckSentEventArgs(packet);
+        Trace.WriteLine("OnPubAckSentEventLauncher");
+        this.OnPubAckSent?.Invoke(this, eventArgs);
     }
 
     /// <summary>
@@ -262,6 +286,18 @@ public partial class HiveClient : IDisposable, IHiveClient
     }
 
     /// <summary>
+    /// Event that is fired after the client sends a PubRec packet to the broker.
+    /// </summary>
+    public event EventHandler<OnPubRecSentEventArgs> OnPubRecSent = new EventHandler<OnPubRecSentEventArgs>((client, e) => { });
+
+    protected virtual void OnPubRecSentEventLauncher(PubRecPacket packet)
+    {
+        var eventArgs = new OnPubRecSentEventArgs(packet);
+        Trace.WriteLine("OnPubRecSentEventLauncher");
+        this.OnPubRecSent?.Invoke(this, eventArgs);
+    }
+
+    /// <summary>
     /// Event that is fired after the client received a PubRel packet from the broker.
     /// </summary>
     public event EventHandler<OnPubRelReceivedEventArgs> OnPubRelReceived = new EventHandler<OnPubRelReceivedEventArgs>((client, e) => { });
@@ -274,6 +310,18 @@ public partial class HiveClient : IDisposable, IHiveClient
     }
 
     /// <summary>
+    /// Event that is fired after the client sent a PubRel packet to the broker.
+    /// </summary>
+    public event EventHandler<OnPubRelSentEventArgs> OnPubRelSent = new EventHandler<OnPubRelSentEventArgs>((client, e) => { });
+
+    protected virtual void OnPubRelSentEventLauncher(PubRelPacket packet)
+    {
+        var eventArgs = new OnPubRelSentEventArgs(packet);
+        Trace.WriteLine("OnPubRelSentEventLauncher");
+        this.OnPubRelSent?.Invoke(this, eventArgs);
+    }
+
+    /// <summary>
     /// Event that is fired after the client receives a PubComp packet from the broker.
     /// </summary>
     public event EventHandler<OnPubCompReceivedEventArgs> OnPubCompReceived = new EventHandler<OnPubCompReceivedEventArgs>((client, e) => { });
@@ -283,5 +331,17 @@ public partial class HiveClient : IDisposable, IHiveClient
         var eventArgs = new OnPubCompReceivedEventArgs(packet);
         Trace.WriteLine("PubCompReceivedEventLauncher");
         this.OnPubCompReceived?.Invoke(this, eventArgs);
+    }
+
+    /// <summary>
+    /// Event that is fired after the client sends a PubComp packet to the broker.
+    /// </summary>
+    public event EventHandler<OnPubCompSentEventArgs> OnPubCompSent = new EventHandler<OnPubCompSentEventArgs>((client, e) => { });
+
+    protected virtual void OnPubCompSentEventLauncher(PubCompPacket packet)
+    {
+        var eventArgs = new OnPubCompSentEventArgs(packet);
+        Trace.WriteLine("PubCompSentEventLauncher");
+        this.OnPubCompSent?.Invoke(this, eventArgs);
     }
 }
