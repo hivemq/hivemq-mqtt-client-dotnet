@@ -34,6 +34,8 @@ public partial class HiveClient : IDisposable, IHiveClient
             var keepAlivePeriod = this.Options.KeepAlive / 2;
             stopWatch.Start();
 
+            Trace.WriteLine("TrafficOutflowProcessor Starting...");
+
             while (this.connectState != ConnectState.Disconnected)
             {
                 var elapsed = stopWatch.Elapsed;
@@ -69,23 +71,27 @@ public partial class HiveClient : IDisposable, IHiveClient
                     {
                         // FIXME: Only one connect, subscribe or unsubscribe packet can be sent at a time.
                         case ConnectPacket connectPacket:
+                            Trace.WriteLine("--> ConnectPacket");
                             writeResult = await this.writer.WriteAsync(connectPacket.Encode()).ConfigureAwait(false);
                             this.OnConnectSentEventLauncher(connectPacket);
                             break;
                         case DisconnectPacket disconnectPacket:
+                            Trace.WriteLine("--> DisconnectPacket");
                             writeResult = await this.writer.WriteAsync(disconnectPacket.Encode()).ConfigureAwait(false);
                             this.OnDisconnectSentEventLauncher(disconnectPacket);
                             break;
                         case SubscribePacket subscribePacket:
+                            Trace.WriteLine("--> SubscribePacket");
                             writeResult = await this.writer.WriteAsync(subscribePacket.Encode()).ConfigureAwait(false);
                             this.OnSubscribeSentEventLauncher(subscribePacket);
                             break;
                         case UnsubscribePacket unsubscribePacket:
+                            Trace.WriteLine("--> UnsubscribePacket");
                             writeResult = await this.writer.WriteAsync(unsubscribePacket.Encode()).ConfigureAwait(false);
                             this.OnUnsubscribeSentEventLauncher(unsubscribePacket);
                             break;
                         case PublishPacket publishPacket:
-                            writeResult = await this.writer.WriteAsync(publishPacket.Encode()).ConfigureAwait(false);
+                            Trace.WriteLine("--> PublishPacket");
                             if (publishPacket.Message.QoS is MQTT5.Types.QualityOfService.AtLeastOnceDelivery ||
                                 publishPacket.Message.QoS is MQTT5.Types.QualityOfService.ExactlyOnceDelivery)
                             {
@@ -95,30 +101,35 @@ public partial class HiveClient : IDisposable, IHiveClient
                                     throw new HiveMQttClientException("Duplicate packet ID detected.");
                                 }
                             }
+                            writeResult = await this.writer.WriteAsync(publishPacket.Encode()).ConfigureAwait(false);
 
                             this.OnPublishSentEventLauncher(publishPacket);
                             break;
                         case PubAckPacket pubAckPacket:
                             // This is in response to a received Publish packet.  Communication chain management
                             // was done in the receiver code.  Just send the response.
+                            Trace.WriteLine("--> PubAckPacket");
                             writeResult = await this.writer.WriteAsync(pubAckPacket.Encode()).ConfigureAwait(false);
                             this.OnPubAckSentEventLauncher(pubAckPacket);
                             break;
                         case PubRecPacket pubRecPacket:
                             // This is in response to a received Publish packet.  Communication chain management
                             // was done in the receiver code.  Just send the response.
+                            Trace.WriteLine("--> PubRecPacket");
                             writeResult = await this.writer.WriteAsync(pubRecPacket.Encode()).ConfigureAwait(false);
                             this.OnPubRecSentEventLauncher(pubRecPacket);
                             break;
                         case PubRelPacket pubRelPacket:
                             // This is in response to a received PubRec packet.  Communication chain management
                             // was done in the receiver code.  Just send the response.
+                            Trace.WriteLine("--> PubRelPacket");
                             writeResult = await this.writer.WriteAsync(pubRelPacket.Encode()).ConfigureAwait(false);
                             this.OnPubRelSentEventLauncher(pubRelPacket);
                             break;
                         case PubCompPacket pubCompPacket:
                             // This is in response to a received PubRel packet.  Communication chain management
                             // was done in the receiver code.  Just send the response.
+                            Trace.WriteLine("--> PubCompPacket");
                             writeResult = await this.writer.WriteAsync(pubCompPacket.Encode()).ConfigureAwait(false);
                             this.OnPubCompSentEventLauncher(pubCompPacket);
                             break;
@@ -128,16 +139,15 @@ public partial class HiveClient : IDisposable, IHiveClient
                         //     break;
 
                         default:
+                            Trace.WriteLine("--> Unknown packet type");
                             throw new NotImplementedException();
                     }
 
-                    var flushResult = await this.writer.FlushAsync().ConfigureAwait(false);
                     stopWatch.Restart();
-
-                    // FIXME: Handle flushResult.IsCanceled and flushResult.IsCompleted
                 }
 
             } // while
+            Trace.WriteLine("TrafficOutflowProcessor Exiting...");
             return true;
         });
     }
@@ -149,10 +159,43 @@ public partial class HiveClient : IDisposable, IHiveClient
     {
         return Task.Run(async () =>
         {
+            Trace.WriteLine("TrafficInflowProcessor Starting...");
             while (this.connectState == ConnectState.Connecting || this.connectState == ConnectState.Connected)
             {
+                Trace.WriteLine("TrafficInflowProcessor Reading...");
                 var readResult = await this.reader.ReadAsync().ConfigureAwait(false);
-                var packet = PacketDecoder.Decode(readResult.Buffer, out var consumed);
+
+                // TODO: Handle socket closure
+                // if (readResult.IsCanceled)
+                // {
+                //     Trace.WriteLine("TrafficInflowProcessor Read Canceled");
+                //     break;
+                // }
+
+                // if (readResult.IsCompleted)
+                // {
+                //     Trace.WriteLine("TrafficInflowProcessor Read Completed");
+                //     break;
+                // }
+
+                if (readResult.Buffer.IsEmpty)
+                {
+                    Trace.WriteLine("TrafficInflowProcessor Read Buffer Empty");
+                    continue;
+                }
+
+                ControlPacket packet;
+                SequencePosition consumed;
+                try
+                {
+                    // Decode the packet
+                    packet = PacketDecoder.Decode(readResult.Buffer, out consumed);
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine($"TrafficInflowProcessor Decoding Exception: {ex.Message}");
+                    throw;
+                }
 
                 if (packet is PartialPacket)
                 {
@@ -160,7 +203,7 @@ public partial class HiveClient : IDisposable, IHiveClient
                 }
                 else if (packet is MalformedPacket)
                 {
-                    // FIXME: Handle malformed packets
+                    Trace.WriteLine("TrafficInflowProcessor Malformed Packet Detected !!! Skipping...");
                     this.reader.AdvanceTo(consumed);
                     continue;
                 }
@@ -171,19 +214,24 @@ public partial class HiveClient : IDisposable, IHiveClient
                 switch (packet)
                 {
                     case ConnAckPacket connAckPacket:
+                        Trace.WriteLine("<-- ConnAck");
                         this.OnConnAckReceivedEventLauncher(connAckPacket);
                         this.receiveQueue.Enqueue(connAckPacket);
                         break;
                     case PingRespPacket pingRespPacket:
+                        Trace.WriteLine("<-- PingResp");
                         this.OnPingRespReceivedEventLauncher(pingRespPacket);
                         break;
                     case SubAckPacket subAckPacket:
+                        Trace.WriteLine("<-- SubAck");
                         this.OnSubAckReceivedEventLauncher(subAckPacket);
                         break;
                     case UnsubAckPacket unsubAckPacket:
+                        Trace.WriteLine("<-- UnsubAck");
                         this.OnUnsubAckReceivedEventLauncher(unsubAckPacket);
                         break;
                     case PublishPacket publishPacket:
+                        Trace.WriteLine("<-- Publish");
                         if (publishPacket.Message.QoS is MQTT5.Types.QualityOfService.AtLeastOnceDelivery)
                         {
                             // We've received a QoS 1 publish.  Send a PubAck.
@@ -206,7 +254,7 @@ public partial class HiveClient : IDisposable, IHiveClient
                         this.OnMessageReceivedEventLauncher(publishPacket);
                         break;
                     case PubAckPacket pubAckPacket:
-                        this.OnPubAckReceivedEventLauncher(pubAckPacket);
+                        Trace.WriteLine("<-- PubAck");
                         if (this.transactionQueue.Remove(pubAckPacket.PacketIdentifier, out var publishQoS1Chain))
                         {
                             var publishPacket = (PublishPacket)publishQoS1Chain.First();
@@ -217,9 +265,11 @@ public partial class HiveClient : IDisposable, IHiveClient
                         {
                             throw new HiveMQttClientException("Received PubAck with an unknown packet identifier: ¯\\_(ツ)_/¯");
                         }
+                        this.OnPubAckReceivedEventLauncher(pubAckPacket);
 
                         break;
                     case PubRecPacket pubRecPacket:
+                        Trace.WriteLine("<-- PubRec");
                         this.OnPubRecReceivedEventLauncher(pubRecPacket);
                         PubRelPacket pubRelResponsePacket;
                         if (this.transactionQueue.TryGetValue(pubRecPacket.PacketIdentifier, out var publishQoS2Chain))
@@ -245,6 +295,7 @@ public partial class HiveClient : IDisposable, IHiveClient
 
                         break;
                     case PubRelPacket pubRelPacket:
+                        Trace.WriteLine("<-- PubRel");
                         PubCompPacket pubCompResponsePacket;
                         if (this.transactionQueue.TryGetValue(pubRelPacket.PacketIdentifier, out var pubRelQoS2Chain))
                         {
@@ -259,6 +310,7 @@ public partial class HiveClient : IDisposable, IHiveClient
                         this.OnPubRelReceivedEventLauncher(pubRelPacket);
                         break;
                     case PubCompPacket pubCompPacket:
+                        Trace.WriteLine("<-- PubComp");
                         if (this.transactionQueue.Remove(pubCompPacket.PacketIdentifier, out var pubcompQoS2Chain))
                         {
 
@@ -271,10 +323,13 @@ public partial class HiveClient : IDisposable, IHiveClient
 
                         break;
                     default:
+                        Trace.WriteLine("<-- Unknown");
                         Console.WriteLine($"Unknown packet received: {packet}");
                         break;
                 } // switch (packet)
             } // while
+
+            Trace.WriteLine("TrafficInflowProcessor Exiting...");
 
             return true;
         });

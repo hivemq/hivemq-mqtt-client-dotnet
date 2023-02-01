@@ -231,23 +231,23 @@ public class PublishPacket : ControlPacket
         // DUP Flag
         if (this.Message.Duplicate is true)
         {
-            byte1 &= 0x8;
+            byte1 |= 0x8;
         }
 
         // QoS Flag
         if (this.Message.QoS == QualityOfService.AtLeastOnceDelivery)
         {
-            byte1 &= 0x2;
+            byte1 |= 0x2;
         }
         else if (this.Message.QoS == QualityOfService.ExactlyOnceDelivery)
         {
-            byte1 &= 0x4;
+            byte1 |= 0x4;
         }
 
         // Retain Flag
         if (this.Message.Retain is true)
         {
-            byte1 &= 0x1;
+            byte1 |= 0x1;
         }
 
         var length = stream.Length - 2;

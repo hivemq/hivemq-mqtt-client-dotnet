@@ -1,4 +1,4 @@
-#undef TRACE
+// #undef TRACE
 
 namespace HiveMQtt.Client;
 

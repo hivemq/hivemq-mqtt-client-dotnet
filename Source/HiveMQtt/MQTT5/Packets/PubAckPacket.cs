@@ -63,9 +63,11 @@ public class PubAckPacket : ControlPacket
         // Skip past the Fixed Header
         reader.Advance(2);
 
-        if (reader.TryRead(out var ackFlags))
+        var packetIdentifier = DecodeTwoByteInteger(ref reader);
+        if (packetIdentifier != null)
         {
-            this.SessionPresent = (ackFlags & 0x1) == 0x1;
+            // FIXME: validate packet identifier value (e.g. not zero)
+            this.PacketIdentifier = packetIdentifier.Value;
         }
 
         if (reader.TryRead(out var reasonCode))
@@ -75,6 +77,8 @@ public class PubAckPacket : ControlPacket
 
         var propertyLength = DecodeVariableByteInteger(ref reader);
         _ = this.DecodeProperties(ref reader, propertyLength);
+
+        // TODO: Handle malformed packets, decoding errors
     }
 
 }

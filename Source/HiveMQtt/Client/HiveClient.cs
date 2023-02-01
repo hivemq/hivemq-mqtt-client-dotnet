@@ -164,12 +164,31 @@ public partial class HiveClient : IDisposable, IHiveClient
             DisconnectReasonCode = options.ReasonCode,
         };
 
-        this.sendQueue.Enqueue(disconnectPacket);
-
         // Once this is set, no more incoming packets or outgoing will be accepted
         this.connectState = ConnectState.Disconnecting;
 
-        await Task.Delay(1000).ConfigureAwait(false);
+        var taskCompletionSource = new TaskCompletionSource<DisconnectPacket>();
+        EventHandler<OnDisconnectSentEventArgs> eventHandler = (sender, args) =>
+        {
+            taskCompletionSource.SetResult(args.DisconnectPacket);
+        };
+        this.OnDisconnectSent += eventHandler;
+
+        this.sendQueue.Enqueue(disconnectPacket);
+
+        try
+        {
+            disconnectPacket = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        }
+        catch (System.TimeoutException ex)
+        {
+            // Does it matter?  We're disconnecting anyway.
+        }
+        finally
+        {
+            // Remove the event handler
+            this.OnDisconnectSent -= eventHandler;
+        }
 
         // Shutdown the traffic processors
         this.trafficOutflowProcessor = null;
