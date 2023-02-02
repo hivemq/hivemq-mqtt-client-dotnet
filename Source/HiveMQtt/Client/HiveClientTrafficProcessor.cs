@@ -4,6 +4,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO.Pipelines;
+using System.Threading;
 using System.Threading.Tasks;
 using HiveMQtt.Client.Exceptions;
 using HiveMQtt.Client.Internal;
@@ -32,13 +33,15 @@ public partial class HiveClient : IDisposable, IHiveClient
         {
             var stopWatch = new Stopwatch();
             var keepAlivePeriod = this.Options.KeepAlive / 2;
+            TimeSpan elapsed;
+
             stopWatch.Start();
 
-            Trace.WriteLine("TrafficOutflowProcessor Starting...");
+            Trace.WriteLine($"{Thread.CurrentThread.ManagedThreadId}: TrafficOutflowProcessor Starting...{this.connectState}");
 
             while (this.connectState != ConnectState.Disconnected)
             {
-                var elapsed = stopWatch.Elapsed;
+                elapsed = stopWatch.Elapsed;
 
                 if (elapsed > TimeSpan.FromSeconds(keepAlivePeriod))
                 {
@@ -147,7 +150,8 @@ public partial class HiveClient : IDisposable, IHiveClient
                 }
 
             } // while
-            Trace.WriteLine("TrafficOutflowProcessor Exiting...");
+
+            Trace.WriteLine($"{Thread.CurrentThread.ManagedThreadId}: TrafficOutflowProcessor Exiting...{this.connectState}");
             return true;
         });
     }
@@ -159,24 +163,25 @@ public partial class HiveClient : IDisposable, IHiveClient
     {
         return Task.Run(async () =>
         {
-            Trace.WriteLine("TrafficInflowProcessor Starting...");
+            Trace.WriteLine($"{Thread.CurrentThread.ManagedThreadId}: TrafficInflowProcessor Starting...{this.connectState}");
+
+            ReadResult readResult;
+
             while (this.connectState == ConnectState.Connecting || this.connectState == ConnectState.Connected)
             {
-                Trace.WriteLine("TrafficInflowProcessor Reading...");
-                var readResult = await this.reader.ReadAsync().ConfigureAwait(false);
+                readResult = await this.reader.ReadAsync().ConfigureAwait(false);
 
-                // TODO: Handle socket closure
-                // if (readResult.IsCanceled)
-                // {
-                //     Trace.WriteLine("TrafficInflowProcessor Read Canceled");
-                //     break;
-                // }
+                if (readResult.IsCanceled)
+                {
+                    Trace.WriteLine("TrafficInflowProcessor Read Canceled");
+                    break;
+                }
 
-                // if (readResult.IsCompleted)
-                // {
-                //     Trace.WriteLine("TrafficInflowProcessor Read Completed");
-                //     break;
-                // }
+                if (readResult.IsCompleted)
+                {
+                    Trace.WriteLine("TrafficInflowProcessor IsCompleted: end of the stream");
+                    break;
+                }
 
                 if (readResult.Buffer.IsEmpty)
                 {
@@ -329,7 +334,7 @@ public partial class HiveClient : IDisposable, IHiveClient
                 } // switch (packet)
             } // while
 
-            Trace.WriteLine("TrafficInflowProcessor Exiting...");
+            Trace.WriteLine($"{Thread.CurrentThread.ManagedThreadId}: TrafficInflowProcessor Exiting...{this.connectState}");
 
             return true;
         });

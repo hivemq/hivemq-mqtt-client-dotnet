@@ -1,7 +1,6 @@
 namespace HiveMQtt.Client;
 
 using System;
-using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO.Pipelines;
 using System.Net;
@@ -14,7 +13,6 @@ using HiveMQtt.Client.Exceptions;
 using HiveMQtt.Client.Internal;
 using HiveMQtt.Client.Options;
 using HiveMQtt.Client.Results;
-using HiveMQtt.MQTT5;
 using HiveMQtt.MQTT5.Packets;
 using HiveMQtt.MQTT5.ReasonCodes;
 using HiveMQtt.MQTT5.Types;
@@ -52,8 +50,9 @@ public partial class HiveClient : IDisposable, IHiveClient
 
     public HiveClient(HiveClientOptions? options = null)
     {
-        Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
-        Trace.AutoFlush = true;
+        // Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
+        // Trace.AutoFlush = true;
+
         options ??= new HiveClientOptions();
         this.Options = options;
     }
