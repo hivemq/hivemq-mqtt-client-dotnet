@@ -181,7 +181,7 @@ public class PublishPacket : ControlPacket
         {
             if (reader.TryRead(out var b))
             {
-                this.Message.Payload.Append(b);
+                this.Message.Payload[i] = b;
             }
         }
     }
@@ -220,7 +220,10 @@ public class PublishPacket : ControlPacket
         // Payload
         if (this.Message.Payload != null)
         {
-            _ = EncodeBinaryData(stream, this.Message.Payload);
+            for(var i = 0; i < this.Message.Payload?.Length; i++)
+            {
+                stream.WriteByte(this.Message.Payload[i]);
+            }
         }
 
         // Fixed Header - starts at byte 0

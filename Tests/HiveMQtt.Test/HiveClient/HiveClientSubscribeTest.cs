@@ -7,8 +7,6 @@ using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.ReasonCodes;
 using Xunit;
 
-// public event EventHandler<MqttApplicationMessageReceivedEventArgs> ApplicationMessageReceived;
-
 public class HiveClientSubscribeTest
 {
     [Fact]
