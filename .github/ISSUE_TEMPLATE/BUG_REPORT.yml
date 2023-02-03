@@ -15,9 +15,9 @@ body:
       label: "Steps to reproduce"
       description: "A link to some code to reproduce the bug can speed up a fix. Alternatively, show steps to reproduce the behaviour."
       placeholder: |
-        1. Go to '...'
-        2. Click on '....'
-        3. Scroll down to '....'
+        1. Connect to broker '...'
+        2. Send 74 million and 1 messages '....'
+        3. Reconnect 17 times '....'
         4. See error
     validations:
       required: true
