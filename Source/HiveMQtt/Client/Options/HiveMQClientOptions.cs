@@ -8,12 +8,12 @@ using HiveMQtt.Client.Exceptions;
 /// <summary>
 /// A class to manage the MQTT options available in the Client.
 /// </summary>
-public class HiveClientOptions
+public class HiveMQClientOptions
 {
     // The set of valid characters that a client identifier can consist of
     private readonly string clientIdCharset = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-    public HiveClientOptions()
+    public HiveMQClientOptions()
     {
         this.GenerateClientID();
         this.Host = "127.0.0.1";

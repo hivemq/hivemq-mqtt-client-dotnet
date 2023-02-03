@@ -13,7 +13,7 @@ using HiveMQtt.MQTT5.Packets;
 using HiveMQtt.MQTT5.ReasonCodes;
 
 /// <inheritdoc />
-public partial class HiveClient : IDisposable, IHiveClient
+public partial class HiveMQClient : IDisposable, IHiveMQClient
 {
     // The outgoing packet queue.  Packets queued to be sent.
     private readonly ConcurrentQueue<ControlPacket> sendQueue = new();

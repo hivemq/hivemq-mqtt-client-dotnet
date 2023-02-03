@@ -1,4 +1,4 @@
-namespace HiveMQtt.Test.HiveClient;
+namespace HiveMQtt.Test.HiveMQClient;
 
 using System.Threading.Tasks;
 using HiveMQtt.Client;
@@ -6,12 +6,12 @@ using HiveMQtt.MQTT5.ReasonCodes;
 using HiveMQtt.MQTT5.Types;
 using Xunit;
 
-public class HiveClientPubSubTest
+public class HiveMQClientPubSubTest
 {
     [Fact]
     public async Task MostBasicPubSubAsync()
     {
-        var client = new HiveClient();
+        var client = new HiveMQClient();
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -24,7 +24,7 @@ public class HiveClientPubSubTest
             // Disconnect after receiving the message
             if (sender != null)
             {
-                var client = (HiveClient)sender;
+                var client = (HiveMQClient)sender;
 
                 var disconnect = Task.Run(async () =>
                 {
@@ -47,7 +47,7 @@ public class HiveClientPubSubTest
     [Fact]
     public async Task QoS1PubSubAsync()
     {
-        var client = new HiveClient();
+        var client = new HiveMQClient();
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -61,7 +61,7 @@ public class HiveClientPubSubTest
             // Disconnect after receiving the message
             if (sender != null)
             {
-                var client = (HiveClient)sender;
+                var client = (HiveMQClient)sender;
 
                 var disconnect = Task.Run(async () =>
                 {
@@ -88,7 +88,7 @@ public class HiveClientPubSubTest
     [Fact]
     public async Task QoS2PubSubAsync()
     {
-        var client = new HiveClient();
+        var client = new HiveMQClient();
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -103,7 +103,7 @@ public class HiveClientPubSubTest
             // Disconnect after receiving the message
             if (sender != null)
             {
-                var client = (HiveClient)sender;
+                var client = (HiveMQClient)sender;
 
                 var disconnect = Task.Run(async () =>
                 {

@@ -1,4 +1,4 @@
-namespace HiveMQtt.Test.HiveClient;
+namespace HiveMQtt.Test.HiveMQClient;
 
 using System.Threading.Tasks;
 using HiveMQtt.Client;
@@ -8,12 +8,12 @@ using HiveMQtt.MQTT5.ReasonCodes;
 using HiveMQtt.MQTT5.Types;
 using Xunit;
 
-public class HiveClientUnsubscribeTest
+public class HiveMQClientUnsubscribeTest
 {
     [Fact]
     public async Task MostBasicUnsubscribeAsync()
     {
-        var subClient = new HiveClient();
+        var subClient = new HiveMQClient();
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -36,7 +36,7 @@ public class HiveClientUnsubscribeTest
     [Fact]
     public async Task InvalidUnsubscribeStringAsync()
     {
-        var subClient = new HiveClient();
+        var subClient = new HiveMQClient();
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -55,7 +55,7 @@ public class HiveClientUnsubscribeTest
     [Fact]
     public async Task InvalidUnsubscribeSubscriptionAsync()
     {
-        var subClient = new HiveClient();
+        var subClient = new HiveMQClient();
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -77,7 +77,7 @@ public class HiveClientUnsubscribeTest
     [Fact]
     public async Task Test_Unsubscribe_Events_Async()
     {
-        var client = new HiveClient();
+        var client = new HiveMQClient();
 
         // Client Events
         client.BeforeUnsubscribe += BeforeUnsubscribeHandler;
@@ -121,7 +121,7 @@ public class HiveClientUnsubscribeTest
         Assert.NotNull(sender);
         if (sender is not null)
         {
-            var client = (HiveClient)sender;
+            var client = (HiveMQClient)sender;
             client.LocalStore.Add("BeforeUnsubscribeHandlerCalled", "true");
         }
 
@@ -133,7 +133,7 @@ public class HiveClientUnsubscribeTest
         Assert.NotNull(sender);
         if (sender is not null)
         {
-            var client = (HiveClient)sender;
+            var client = (HiveMQClient)sender;
             client.LocalStore.Add("OnUnsubscribeSentHandlerCalled", "true");
         }
 
@@ -145,7 +145,7 @@ public class HiveClientUnsubscribeTest
         Assert.NotNull(sender);
         if (sender is not null)
         {
-            var client = (HiveClient)sender;
+            var client = (HiveMQClient)sender;
             client.LocalStore.Add("OnUnsubAckReceivedHandlerCalled", "true");
         }
 
@@ -157,7 +157,7 @@ public class HiveClientUnsubscribeTest
         Assert.NotNull(sender);
         if (sender is not null)
         {
-            var client = (HiveClient)sender;
+            var client = (HiveMQClient)sender;
             client.LocalStore.Add("AfterUnsubscribeHandlerCalled", "true");
         }
 
