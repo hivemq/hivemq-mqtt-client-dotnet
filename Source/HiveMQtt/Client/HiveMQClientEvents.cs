@@ -18,7 +18,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Event that is fired before the client connects to the broker.
     /// </summary>
-    public event EventHandler<BeforeConnectEventArgs> BeforeConnect = new EventHandler<BeforeConnectEventArgs>((client, e) => { });
+    public event EventHandler<BeforeConnectEventArgs> BeforeConnect = new((client, e) => { });
 
     protected virtual void BeforeConnectEventLauncher(HiveMQClientOptions options)
     {
@@ -30,7 +30,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Event that is fired after the client connects to the broker.
     /// </summary>
-    public event EventHandler<AfterConnectEventArgs> AfterConnect = new EventHandler<AfterConnectEventArgs>((client, e) => { });
+    public event EventHandler<AfterConnectEventArgs> AfterConnect = new((client, e) => { });
 
     protected virtual void AfterConnectEventLauncher(ConnectResult results)
     {
@@ -42,7 +42,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Event that is fired before the client sends a subscribe request.
     /// </summary>
-    public event EventHandler<BeforeSubscribeEventArgs> BeforeSubscribe = new EventHandler<BeforeSubscribeEventArgs>((client, e) => { });
+    public event EventHandler<BeforeSubscribeEventArgs> BeforeSubscribe = new((client, e) => { });
 
     protected virtual void BeforeSubscribeEventLauncher(SubscribeOptions options)
     {
@@ -54,7 +54,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Event that is fired after the client sends a subscribe request.
     /// </summary>
-    public event EventHandler<AfterSubscribeEventArgs> AfterSubscribe = new EventHandler<AfterSubscribeEventArgs>((client, e) => { });
+    public event EventHandler<AfterSubscribeEventArgs> AfterSubscribe = new((client, e) => { });
 
     protected virtual void AfterSubscribeEventLauncher(SubscribeResult results)
     {
@@ -66,7 +66,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Event that is fired before the client sends a subscribe request.
     /// </summary>
-    public event EventHandler<BeforeUnsubscribeEventArgs> BeforeUnsubscribe = new EventHandler<BeforeUnsubscribeEventArgs>((client, e) => { });
+    public event EventHandler<BeforeUnsubscribeEventArgs> BeforeUnsubscribe = new((client, e) => { });
 
     protected virtual void BeforeUnsubscribeEventLauncher(List<Subscription> subscriptions)
     {
@@ -78,7 +78,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Event that is fired after the client sends a subscribe request.
     /// </summary>
-    public event EventHandler<AfterUnsubscribeEventArgs> AfterUnsubscribe = new EventHandler<AfterUnsubscribeEventArgs>((client, e) => { });
+    public event EventHandler<AfterUnsubscribeEventArgs> AfterUnsubscribe = new((client, e) => { });
 
     protected virtual void AfterUnsubscribeEventLauncher(UnsubscribeResult results)
     {
@@ -90,7 +90,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Event that is fired when a message is received from the broker.
     /// </summary>
-    public event EventHandler<OnMessageReceivedEventArgs> OnMessageReceived = new EventHandler<OnMessageReceivedEventArgs>((client, e) => { });
+    public event EventHandler<OnMessageReceivedEventArgs> OnMessageReceived = new((client, e) => { });
 
     protected virtual void OnMessageReceivedEventLauncher(PublishPacket packet)
     {
@@ -100,13 +100,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     }
 
     /* ========================================================================================= */
-    // Packet Level Events
+    /* Packet Level Events                                                                       */
     /* ========================================================================================= */
 
     /// <summary>
     /// Event that is fired after the client sends a CONNECT packet to the broker.
     /// </summary>
-    public event EventHandler<OnConnectSentEventArgs> OnConnectSent = new EventHandler<OnConnectSentEventArgs>((client, e) => { });
+    public event EventHandler<OnConnectSentEventArgs> OnConnectSent = new((client, e) => { });
 
     protected virtual void OnConnectSentEventLauncher(ConnectPacket packet)
     {
@@ -118,7 +118,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Event that is fired after the client receives a CONNACK packet from the broker.
     /// </summary>
-    public event EventHandler<OnConnAckReceivedEventArgs> OnConnAckReceived = new EventHandler<OnConnAckReceivedEventArgs>((client, e) => { });
+    public event EventHandler<OnConnAckReceivedEventArgs> OnConnAckReceived = new((client, e) => { });
 
     protected virtual void OnConnAckReceivedEventLauncher(ConnAckPacket packet)
     {
@@ -130,7 +130,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Event that is fired after the client send a Disconnect packet from the broker.
     /// </summary>
-    public event EventHandler<OnDisconnectSentEventArgs> OnDisconnectSent = new EventHandler<OnDisconnectSentEventArgs>((client, e) => { });
+    public event EventHandler<OnDisconnectSentEventArgs> OnDisconnectSent = new((client, e) => { });
 
     protected virtual void OnDisconnectSentEventLauncher(DisconnectPacket packet)
     {
@@ -142,7 +142,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Event that is fired after the client receives a Disconnect packet from the broker.
     /// </summary>
-    public event EventHandler<OnDisconnectReceivedEventArgs> OnDisconnectReceived = new EventHandler<OnDisconnectReceivedEventArgs>((client, e) => { });
+    public event EventHandler<OnDisconnectReceivedEventArgs> OnDisconnectReceived = new((client, e) => { });
 
     protected virtual void OnDisconnectReceivedEventLauncher(DisconnectPacket packet)
     {
@@ -154,7 +154,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Event that is fired after the client send a PingReq packet from the broker.
     /// </summary>
-    public event EventHandler<OnPingReqSentEventArgs> OnPingReqSent = new EventHandler<OnPingReqSentEventArgs>((client, e) => { });
+    public event EventHandler<OnPingReqSentEventArgs> OnPingReqSent = new((client, e) => { });
 
     protected virtual void OnPingReqSentEventLauncher(PingReqPacket packet)
     {
@@ -166,7 +166,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Event that is fired after the client send a PingReq packet from the broker.
     /// </summary>
-    public event EventHandler<OnPingRespReceivedEventArgs> OnPingRespReceived = new EventHandler<OnPingRespReceivedEventArgs>((client, e) => { });
+    public event EventHandler<OnPingRespReceivedEventArgs> OnPingRespReceived = new((client, e) => { });
 
     protected virtual void OnPingRespReceivedEventLauncher(PingRespPacket packet)
     {
@@ -178,7 +178,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Event that is fired after the client sends a Subscribe packet to the broker.
     /// </summary>
-    public event EventHandler<OnSubscribeSentEventArgs> OnSubscribeSent = new EventHandler<OnSubscribeSentEventArgs>((client, e) => { });
+    public event EventHandler<OnSubscribeSentEventArgs> OnSubscribeSent = new((client, e) => { });
 
     protected virtual void OnSubscribeSentEventLauncher(SubscribePacket packet)
     {
@@ -190,7 +190,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Event that is fired after the client receives a SubAck packet from the broker.
     /// </summary>
-    public event EventHandler<OnSubAckReceivedEventArgs> OnSubAckReceived = new EventHandler<OnSubAckReceivedEventArgs>((client, e) => { });
+    public event EventHandler<OnSubAckReceivedEventArgs> OnSubAckReceived = new((client, e) => { });
 
     protected virtual void OnSubAckReceivedEventLauncher(SubAckPacket packet)
     {
@@ -202,7 +202,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Event that is fired after the client sends a Unsubscribe packet to the broker.
     /// </summary>
-    public event EventHandler<OnUnsubscribeSentEventArgs> OnUnsubscribeSent = new EventHandler<OnUnsubscribeSentEventArgs>((client, e) => { });
+    public event EventHandler<OnUnsubscribeSentEventArgs> OnUnsubscribeSent = new((client, e) => { });
 
     protected virtual void OnUnsubscribeSentEventLauncher(UnsubscribePacket packet)
     {
@@ -214,7 +214,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Event that is fired after the client receives a UnsubAck packet from the broker.
     /// </summary>
-    public event EventHandler<OnUnsubAckReceivedEventArgs> OnUnsubAckReceived = new EventHandler<OnUnsubAckReceivedEventArgs>((client, e) => { });
+    public event EventHandler<OnUnsubAckReceivedEventArgs> OnUnsubAckReceived = new((client, e) => { });
 
     protected virtual void OnUnsubAckReceivedEventLauncher(UnsubAckPacket packet)
     {
@@ -226,7 +226,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Event that is fired after the client receives a Publish packet from the broker.
     /// </summary>
-    public event EventHandler<OnPublishReceivedEventArgs> OnPublishReceived = new EventHandler<OnPublishReceivedEventArgs>((client, e) => { });
+    public event EventHandler<OnPublishReceivedEventArgs> OnPublishReceived = new((client, e) => { });
 
     protected virtual void OnPublishReceivedEventLauncher(PublishPacket packet)
     {
@@ -238,7 +238,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Event that is fired after the client sends a Publish packet to the broker.
     /// </summary>
-    public event EventHandler<OnPublishSentEventArgs> OnPublishSent = new EventHandler<OnPublishSentEventArgs>((client, e) => { });
+    public event EventHandler<OnPublishSentEventArgs> OnPublishSent = new((client, e) => { });
 
     protected virtual void OnPublishSentEventLauncher(PublishPacket packet)
     {
@@ -250,7 +250,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Event that is fired after the client receives a PubAck packet from the broker.
     /// </summary>
-    public event EventHandler<OnPubAckReceivedEventArgs> OnPubAckReceived = new EventHandler<OnPubAckReceivedEventArgs>((client, e) => { });
+    public event EventHandler<OnPubAckReceivedEventArgs> OnPubAckReceived = new((client, e) => { });
 
     protected virtual void OnPubAckReceivedEventLauncher(PubAckPacket packet)
     {
@@ -262,7 +262,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Event that is fired after the client sends a PubAck packet from the broker.
     /// </summary>
-    public event EventHandler<OnPubAckSentEventArgs> OnPubAckSent = new EventHandler<OnPubAckSentEventArgs>((client, e) => { });
+    public event EventHandler<OnPubAckSentEventArgs> OnPubAckSent = new((client, e) => { });
 
     protected virtual void OnPubAckSentEventLauncher(PubAckPacket packet)
     {
@@ -274,7 +274,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Event that is fired after the client receives a PubRec packet from the broker.
     /// </summary>
-    public event EventHandler<OnPubRecReceivedEventArgs> OnPubRecReceived = new EventHandler<OnPubRecReceivedEventArgs>((client, e) => { });
+    public event EventHandler<OnPubRecReceivedEventArgs> OnPubRecReceived = new((client, e) => { });
 
     protected virtual void OnPubRecReceivedEventLauncher(PubRecPacket packet)
     {
@@ -286,7 +286,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Event that is fired after the client sends a PubRec packet to the broker.
     /// </summary>
-    public event EventHandler<OnPubRecSentEventArgs> OnPubRecSent = new EventHandler<OnPubRecSentEventArgs>((client, e) => { });
+    public event EventHandler<OnPubRecSentEventArgs> OnPubRecSent = new((client, e) => { });
 
     protected virtual void OnPubRecSentEventLauncher(PubRecPacket packet)
     {
@@ -298,7 +298,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Event that is fired after the client received a PubRel packet from the broker.
     /// </summary>
-    public event EventHandler<OnPubRelReceivedEventArgs> OnPubRelReceived = new EventHandler<OnPubRelReceivedEventArgs>((client, e) => { });
+    public event EventHandler<OnPubRelReceivedEventArgs> OnPubRelReceived = new((client, e) => { });
 
     protected virtual void OnPubRelReceivedEventLauncher(PubRelPacket packet)
     {
@@ -310,7 +310,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Event that is fired after the client sent a PubRel packet to the broker.
     /// </summary>
-    public event EventHandler<OnPubRelSentEventArgs> OnPubRelSent = new EventHandler<OnPubRelSentEventArgs>((client, e) => { });
+    public event EventHandler<OnPubRelSentEventArgs> OnPubRelSent = new((client, e) => { });
 
     protected virtual void OnPubRelSentEventLauncher(PubRelPacket packet)
     {
@@ -322,7 +322,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Event that is fired after the client receives a PubComp packet from the broker.
     /// </summary>
-    public event EventHandler<OnPubCompReceivedEventArgs> OnPubCompReceived = new EventHandler<OnPubCompReceivedEventArgs>((client, e) => { });
+    public event EventHandler<OnPubCompReceivedEventArgs> OnPubCompReceived = new((client, e) => { });
 
     protected virtual void OnPubCompReceivedEventLauncher(PubCompPacket packet)
     {
@@ -334,7 +334,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Event that is fired after the client sends a PubComp packet to the broker.
     /// </summary>
-    public event EventHandler<OnPubCompSentEventArgs> OnPubCompSent = new EventHandler<OnPubCompSentEventArgs>((client, e) => { });
+    public event EventHandler<OnPubCompSentEventArgs> OnPubCompSent = new((client, e) => { });
 
     protected virtual void OnPubCompSentEventLauncher(PubCompPacket packet)
     {
