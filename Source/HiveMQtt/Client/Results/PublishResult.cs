@@ -1,9 +1,71 @@
 namespace HiveMQtt.Client.Results;
 
+using HiveMQtt.MQTT5.Packets;
+using HiveMQtt.MQTT5.ReasonCodes;
+using HiveMQtt.MQTT5.Types;
+
 /// <summary>
 /// Results of the Publish operation.
 /// </summary>
 public class PublishResult
 {
-    // TODO: Implement this class
+    /// <summary>
+    /// The on the wire PubAck packet received in response to a QoS 1 publish.
+    /// </summary>
+    private readonly PubAckPacket? pubAckPacket;
+
+    /// <summary>
+    /// Gets the on the wire PubRec packet received in response to a QoS 2 publish.
+    /// </summary>
+    private readonly PubRecPacket? pubRecPacket;
+
+    public PublishResult(MQTT5PublishMessage message) => this.Message = message;
+
+    public PublishResult(MQTT5PublishMessage message, PubAckPacket pubAckPacket)
+    {
+        this.Message = message;
+        this.pubAckPacket = pubAckPacket;
+    }
+
+    public PublishResult(MQTT5PublishMessage message, PubRecPacket pubRecPacket)
+    {
+        this.Message = message;
+        this.pubRecPacket = pubRecPacket;
+    }
+
+    /// <summary>
+    /// Gets the reason code of the PubAck packet for QoS 1 publishes.
+    /// </summary>
+    public PubAckReasonCode? QoS1ReasonCode => this.pubAckPacket?.ReasonCode;
+
+    /// <summary>
+    /// Gets the reason code of the PubRec packet for QoS 2 publishes.
+    /// </summary>
+    public PubRecReasonCode? QoS2ReasonCode => this.pubRecPacket?.ReasonCode;
+
+    /// <summary>
+    /// Gets the message that was published.
+    /// </summary>
+    public MQTT5PublishMessage Message { get; }
+
+    /// <summary>
+    /// For Quality of Service levels 1 and 2, there will be a reason code in response to the publish. These
+    /// reason codes are stored in QoS2ReasonCode and QoS1ReasonCode.  For Quality of Service level 0,
+    /// there will be no reason code.
+    /// </summary>
+    /// <returns>The reason code integer value for QoS 1 and 2 publishes, or 0 for QoS 0 publishes.</returns>
+    public int ReasonCode()
+    {
+        if (this.pubAckPacket != null)
+        {
+            return (int)this.pubAckPacket.ReasonCode;
+        }
+
+        if (this.pubRecPacket != null)
+        {
+            return (int)this.pubRecPacket.ReasonCode;
+        }
+
+        return 0;
+    }
 }

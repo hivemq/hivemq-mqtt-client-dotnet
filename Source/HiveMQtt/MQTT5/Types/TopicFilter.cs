@@ -4,6 +4,12 @@ using HiveMQtt.Client.Exceptions;
 
 public class TopicFilter
 {
+    public TopicFilter(string topic, QualityOfService qos)
+    {
+        this.Topic = topic;
+        this.QoS = qos;
+    }
+
     /// <summary>
     /// Gets or sets the topic for this filter.
     /// <para>
