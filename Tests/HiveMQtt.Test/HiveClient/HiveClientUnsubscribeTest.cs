@@ -3,7 +3,9 @@ namespace HiveMQtt.Test.HiveClient;
 using System.Threading.Tasks;
 using HiveMQtt.Client;
 using HiveMQtt.Client.Events;
+using HiveMQtt.Client.Exceptions;
 using HiveMQtt.MQTT5.ReasonCodes;
+using HiveMQtt.MQTT5.Types;
 using Xunit;
 
 public class HiveClientUnsubscribeTest
@@ -15,16 +17,57 @@ public class HiveClientUnsubscribeTest
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
-        var subResult = await subClient.SubscribeAsync("data/topic").ConfigureAwait(false);
+        var subResult = await subClient.SubscribeAsync("tests/MostBasicUnsubscribeAsync").ConfigureAwait(false);
 
         Assert.NotEmpty(subResult.Subscriptions);
         Assert.True(subClient.Subscriptions.Count == 1);
         Assert.Equal(SubAckReasonCode.GrantedQoS0, subResult.Subscriptions[0].SubscribeReasonCode);
 
-        var unsubResult = await subClient.UnsubscribeAsync("data/topic").ConfigureAwait(false);
+        var unsubResult = await subClient.UnsubscribeAsync("tests/MostBasicUnsubscribeAsync").ConfigureAwait(false);
 
         Assert.NotEmpty(unsubResult.Subscriptions);
         Assert.Equal(UnsubAckReasonCode.Success, unsubResult.Subscriptions[0].UnsubscribeReasonCode);
+        Assert.True(subClient.Subscriptions.Count == 0);
+
+        var disconnectResult = await subClient.DisconnectAsync().ConfigureAwait(false);
+        Assert.True(disconnectResult);
+    }
+
+    [Fact]
+    public async Task InvalidUnsubscribeStringAsync()
+    {
+        var subClient = new HiveClient();
+        var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
+        Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
+
+        // Unsubscribe from a non-existing subscription should throw an exception
+        await Assert.ThrowsAsync<HiveMQttClientException>(() =>
+            {
+                return subClient.UnsubscribeAsync("tests/InvalidUnsubscribeStringAsync");
+            }).ConfigureAwait(false);
+
+        Assert.True(subClient.Subscriptions.Count == 0);
+
+        var disconnectResult = await subClient.DisconnectAsync().ConfigureAwait(false);
+        Assert.True(disconnectResult);
+    }
+
+    [Fact]
+    public async Task InvalidUnsubscribeSubscriptionAsync()
+    {
+        var subClient = new HiveClient();
+        var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
+        Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
+
+        var topicFilter = new TopicFilter("tests/InvalidUnsubscribeStringAsync", QualityOfService.ExactlyOnceDelivery);
+        var subscription = new Subscription(topicFilter);
+
+        // Unsubscribe from a non-existing subscription should throw an exception
+        await Assert.ThrowsAsync<HiveMQttClientException>(() =>
+            {
+                return subClient.UnsubscribeAsync(subscription);
+            }).ConfigureAwait(false);
+
         Assert.True(subClient.Subscriptions.Count == 0);
 
         var disconnectResult = await subClient.DisconnectAsync().ConfigureAwait(false);
@@ -47,7 +90,13 @@ public class HiveClientUnsubscribeTest
         var result = await client.ConnectAsync().ConfigureAwait(false);
         Assert.Equal(ConnAckReasonCode.Success, result.ReasonCode);
 
-        var subscribeResult = client.UnsubscribeAsync("data/topic").ConfigureAwait(false);
+        var subResult = await client.SubscribeAsync("tests/Test_Unsubscribe_Events_Async").ConfigureAwait(false);
+
+        Assert.NotEmpty(subResult.Subscriptions);
+        Assert.True(client.Subscriptions.Count == 1);
+        Assert.Equal(SubAckReasonCode.GrantedQoS0, subResult.Subscriptions[0].SubscribeReasonCode);
+
+        var subscribeResult = client.UnsubscribeAsync("tests/Test_Unsubscribe_Events_Async").ConfigureAwait(false);
 
         // Wait for event handlers to finish
         await Task.Delay(1000).ConfigureAwait(false);
@@ -57,7 +106,7 @@ public class HiveClientUnsubscribeTest
         Assert.True(client.LocalStore.ContainsKey("AfterUnsubscribeHandlerCalled"));
 
         Assert.True(client.LocalStore.ContainsKey("OnUnsubscribeSentHandlerCalled"));
-        Assert.True(client.LocalStore.ContainsKey("OnSubAckReceivedHandlerCalled"));
+        Assert.True(client.LocalStore.ContainsKey("OnUnsubAckReceivedHandlerCalled"));
 
         // Remove event handlers
         client.BeforeUnsubscribe -= BeforeUnsubscribeHandler;

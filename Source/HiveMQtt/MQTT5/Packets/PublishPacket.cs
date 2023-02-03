@@ -1,7 +1,9 @@
 namespace HiveMQtt.MQTT5.Packets;
 
 using System.Buffers;
+using System.Diagnostics;
 using System.IO;
+using HiveMQtt.Client.Events;
 using HiveMQtt.MQTT5.Types;
 
 /// <summary>
@@ -19,9 +21,9 @@ public class PublishPacket : ControlPacket
     /// </summary>
     /// <param name="message">The message to publish.</param>
     /// <param name="packetIdentifier">A unique packet identifier for the packet to be created.</param>
-    public PublishPacket(MQTT5PublishMessage message, ushort packetIdentifier)
+    public PublishPacket(MQTT5PublishMessage message, int packetIdentifier)
     {
-        this.PacketIdentifier = packetIdentifier;
+        this.PacketIdentifier = (ushort)packetIdentifier;
         this.Message = message;
     }
 
@@ -42,6 +44,30 @@ public class PublishPacket : ControlPacket
     public MQTT5PublishMessage Message { get; set; }
 
     public override ControlPacketType ControlPacketType => ControlPacketType.Publish;
+
+    /// <summary>
+    /// Valid for outgoing Publish messages QoS 1.  An event that is fired after the the QoS 1 publish transaction is complete.
+    /// </summary>
+    public event EventHandler<OnPublishQoS1CompleteEventArgs> OnPublishQoS1Complete = new EventHandler<OnPublishQoS1CompleteEventArgs>((client, e) => { });
+
+    internal virtual void OnPublishQoS1CompleteEventLauncher(PubAckPacket packet)
+    {
+        var eventArgs = new OnPublishQoS1CompleteEventArgs(packet);
+        Trace.WriteLine("OnPublishQoS1CompleteEventLauncher");
+        this.OnPublishQoS1Complete?.Invoke(this, eventArgs);
+    }
+
+    /// <summary>
+    /// Valid for outgoing Publish messages QoS 2.  An event that is fired after the the QoS 2 PubRec is received.
+    /// </summary>
+    public event EventHandler<OnPublishQoS2CompleteEventArgs> OnPublishQoS2Complete = new EventHandler<OnPublishQoS2CompleteEventArgs>((client, e) => { });
+
+    internal virtual void OnPublishQoS2CompleteEventLauncher(PubRecPacket packet)
+    {
+        var eventArgs = new OnPublishQoS2CompleteEventArgs(packet);
+        Trace.WriteLine("OnPublishQoS2CompleteEventLauncher");
+        this.OnPublishQoS2Complete?.Invoke(this, eventArgs);
+    }
 
     /// <summary>
     /// Decode the received MQTT Publish packet.
@@ -155,7 +181,7 @@ public class PublishPacket : ControlPacket
         {
             if (reader.TryRead(out var b))
             {
-                this.Message.Payload.Append(b);
+                this.Message.Payload[i] = b;
             }
         }
     }
@@ -194,7 +220,10 @@ public class PublishPacket : ControlPacket
         // Payload
         if (this.Message.Payload != null)
         {
-            _ = EncodeBinaryData(stream, this.Message.Payload);
+            for(var i = 0; i < this.Message.Payload?.Length; i++)
+            {
+                stream.WriteByte(this.Message.Payload[i]);
+            }
         }
 
         // Fixed Header - starts at byte 0
@@ -205,23 +234,23 @@ public class PublishPacket : ControlPacket
         // DUP Flag
         if (this.Message.Duplicate is true)
         {
-            byte1 &= 0x8;
+            byte1 |= 0x8;
         }
 
         // QoS Flag
         if (this.Message.QoS == QualityOfService.AtLeastOnceDelivery)
         {
-            byte1 &= 0x2;
+            byte1 |= 0x2;
         }
         else if (this.Message.QoS == QualityOfService.ExactlyOnceDelivery)
         {
-            byte1 &= 0x4;
+            byte1 |= 0x4;
         }
 
         // Retain Flag
         if (this.Message.Retain is true)
         {
-            byte1 &= 0x1;
+            byte1 |= 0x1;
         }
 
         var length = stream.Length - 2;
