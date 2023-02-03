@@ -1,10 +1,6 @@
 namespace HiveMQtt.Client;
 
 using System;
-using System.Diagnostics;
-using System.IO.Pipelines;
-using System.Net;
-using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -17,8 +13,6 @@ using HiveMQtt.MQTT5.Packets;
 using HiveMQtt.MQTT5.ReasonCodes;
 using HiveMQtt.MQTT5.Types;
 
-using Microsoft.Extensions.Logging;
-
 /// <summary>
 /// The excellent, superb and slightly wonderful HiveMQ MQTT Client.
 /// Fully MQTT compliant and compatible with all respectable MQTT Brokers because sharing is caring
@@ -26,33 +20,12 @@ using Microsoft.Extensions.Logging;
 /// </summary>
 public partial class HiveMQClient : IDisposable, IHiveMQClient
 {
-    private ILogger<HiveMQClient> _logger;
-
-    public void AttachLogger(ILogger<HiveMQClient> logger)
-    {
-        _logger = logger;
-    }
-
-    private int lastPacketId = 0;
-
-    private Socket? socket;
-    private NetworkStream? stream;
-    private PipeReader? reader;
-    private PipeWriter? writer;
-
-    private Task<bool>? trafficOutflowProcessor;
-
-    private Task<bool>? trafficInflowProcessor;
-
-    internal ConnectState connectState = ConnectState.Disconnected;
-
-    private bool disposed = false;
+    private ConnectState connectState = ConnectState.Disconnected;
 
     public HiveMQClient(HiveMQClientOptions? options = null)
     {
         // Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
         // Trace.AutoFlush = true;
-
         options ??= new HiveMQClientOptions();
         this.Options = options;
     }
@@ -66,10 +39,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
     internal MQTT5Properties? ConnectionProperties { get; }
 
-    public bool IsConnected()
-    {
-        return this.connectState == ConnectState.Connected;
-    }
+    public bool IsConnected() => this.connectState == ConnectState.Connected;
 
     /// <inheritdoc />
     public async Task<ConnectResult> ConnectAsync()
@@ -80,21 +50,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         this.BeforeConnectEventLauncher(this.Options);
 
         var socketIsConnected = await this.ConnectSocketAsync().ConfigureAwait(false);
-
-        if (!socketIsConnected || this.socket == null)
-        {
-            // FIXME: Use a real exception
-            throw new InvalidOperationException("Failed to connect socket");
-        }
-
-        // Setup the Pipeline
-        this.stream = new NetworkStream(this.socket);
-        this.reader = PipeReader.Create(this.stream);
-        this.writer = PipeWriter.Create(this.stream);
-
-        // Start the traffic processors
-        this.trafficOutflowProcessor = this.TrafficOutflowProcessorAsync();
-        this.trafficInflowProcessor = this.TrafficInflowProcessorAsync();
 
         var taskCompletionSource = new TaskCompletionSource<ConnAckPacket>();
 
@@ -189,20 +144,12 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             this.OnDisconnectSent -= eventHandler;
         }
 
-        // Shutdown the traffic processors
-        this.trafficOutflowProcessor = null;
-        this.trafficInflowProcessor = null;
-
-        // Shutdown the pipeline
-        this.reader = null;
-        this.writer = null;
-
-        // Shutdown the socket
-        this.socket?.Shutdown(SocketShutdown.Both);
-        this.socket?.Close();
-
         this.connectState = ConnectState.Disconnected;
 
+        // Close the socket
+        this.CloseSocket();
+
+        // Clear the queues
         this.sendQueue.Clear();
         this.receiveQueue.Clear();
 
@@ -264,8 +211,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
             publishPacket.OnPublishQoS2Complete -= eventHandler;
             return new PublishResult(publishPacket.Message, pubRecPacket);
-
         }
+
         throw new HiveMQttClientException("Invalid QoS value.");
     }
 
@@ -277,6 +224,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     /// <param name="topic">The string topic to publish to.</param>
     /// <param name="payload">The string message to publish.</param>
+    /// <param name="qos">The <seealso cref="QualityOfService"/> to use for the publish.</param>
     /// <returns>A <seealso cref="PublishResult"/> representing the result of the publish operation.</returns>
     public async Task<PublishResult> PublishAsync(string topic, string payload, QualityOfService qos = QualityOfService.AtMostOnceDelivery)
     {
@@ -298,6 +246,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     /// <param name="topic">The string topic to publish to.</param>
     /// <param name="payload">The UTF-8 encoded array of bytes to publish.</param>
+    /// <param name="qos">The <seealso cref="QualityOfService"/> to use for the publish.</param>
     /// <returns>A <seealso cref="PublishResult"/> representing the result of the publish operation.</returns>
     public async Task<PublishResult> PublishAsync(string topic, byte[] payload, QualityOfService qos = QualityOfService.AtMostOnceDelivery)
     {
@@ -359,7 +308,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         var taskCompletionSource = new TaskCompletionSource<SubAckPacket>();
 
         // FIXME: We should only ever have one subscribe in flight at any time (for now)
-
         EventHandler<OnSubAckReceivedEventArgs> eventHandler = (sender, args) =>
         {
             taskCompletionSource.SetResult(args.SubAckPacket);
@@ -375,6 +323,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         try
         {
             subAck = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
             // FIXME: Validate that the packet identifier matches
         }
         catch (System.TimeoutException ex)
@@ -439,7 +388,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// Unsubscribe from a single topic filter on the MQTT broker.
     /// </summary>
     /// <exception cref="HiveMQttClientException">Thrown if no subscription is found for the topic.</exception>
-    /// <param name="topic">The topic filter to unsubscribe from.</param>
+    /// <param name="subscriptions">The subscriptions from client.Subscriptions to unsubscribe from.</param>
     /// <returns>UnsubscribeResult reflecting the result of the operation.</returns>
     public async Task<UnsubscribeResult> UnsubscribeAsync(List<Subscription> subscriptions)
     {
@@ -464,6 +413,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         try
         {
             unsubAck = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
             // FIXME: Validate that the packet identifier matches
         }
         catch (System.TimeoutException ex)
@@ -498,90 +448,5 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         this.AfterUnsubscribeEventLauncher(unsubscribeResult);
 
         return unsubscribeResult;
-    }
-
-    /// <summary>
-    /// Make a TCP connection to a remote broker.
-    /// </summary>
-    /// <returns>A boolean representing the success or failure of the operation.</returns>
-    internal async Task<bool> ConnectSocketAsync()
-    {
-        Console.WriteLine($"Connecting socket... {this.Options.Host}:{this.Options.Port}");
-
-        var ipHostInfo = await Dns.GetHostEntryAsync(this.Options.Host).ConfigureAwait(false);
-        var ipAddress = ipHostInfo.AddressList[1];
-        IPEndPoint ipEndPoint = new(ipAddress, this.Options.Port);
-
-        this.socket = new(ipEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-        await this.socket.ConnectAsync(ipEndPoint).ConfigureAwait(false);
-
-        Console.WriteLine($"Socket connected to {this.socket.RemoteEndPoint}");
-
-        return this.socket.Connected;
-    }
-
-    /// <summary>
-    /// Generate a packet identifier.
-    /// </summary>
-    /// <returns>A valid packet identifier.</returns>
-    protected int GeneratePacketIdentifier()
-    {
-        if (this.lastPacketId == ushort.MaxValue)
-        {
-            this.lastPacketId = 0;
-        }
-
-        return Interlocked.Increment(ref this.lastPacketId);
-    }
-
-    /// <summary>
-    /// https://learn.microsoft.com/en-us/dotnet/api/system.idisposable?view=net-6.0.
-    /// </summary>
-    public void Dispose()
-    {
-        this.Dispose(disposing: true);
-        /*
-          This object will be cleaned up by the Dispose method.
-          Therefore, you should call GC.SuppressFinalize to
-          take this object off the finalization queue
-          and prevent finalization code for this object
-          from executing a second time.
-        */
-        GC.SuppressFinalize(this);
-    }
-
-    /// <summary>
-    /// https://learn.microsoft.com/en-us/dotnet/api/system.idisposable?view=net-6.0
-    /// Dispose(bool disposing) executes in two distinct scenarios.
-    /// If disposing equals true, the method has been called directly
-    /// or indirectly by a user's code. Managed and unmanaged resources
-    /// can be disposed.
-    /// If disposing equals false, the method has been called by the
-    /// runtime from inside the finalizer and you should not reference
-    /// other objects. Only unmanaged resources can be disposed.
-    /// </summary>
-    /// <param name="disposing">fixme.</param>
-    protected virtual void Dispose(bool disposing)
-    {
-        // Check to see if Dispose has already been called.
-        if (!this.disposed)
-        {
-            // If disposing equals true, dispose all managed
-            // and unmanaged resources.
-            if (disposing)
-            {
-                // Dispose managed resources.
-                { }
-            }
-
-            // Call the appropriate methods to clean up
-            // unmanaged resources here.
-            // If disposing is false,
-            // only the following code is executed.
-            { }
-
-            // Note disposing has been done.
-            this.disposed = true;
-        }
     }
 }
