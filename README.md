@@ -38,18 +38,18 @@ _Do you have a success story with this client?  [Let us know]().  We'd love to f
 using HiveMQtt.Client;
 
 // Connect
-var client = new HiveClient();
+var client = new HiveMQClient();
 var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 ```
 
 #### With Options
 
 ```c#
-var options = new HiveClientOptions();
+var options = new HiveMQClientOptions();
 options.Host = 'candy.x39.eu.hivemq.cloud';
 options.Port = 8883;
 
-var client = new HiveClient(options);
+var client = new HiveMQClient(options);
 var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 ```
 
@@ -59,7 +59,7 @@ var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 using HiveMQtt.Client;
 
 // Connect
-var client = new HiveClient();
+var client = new HiveMQClient();
 var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 
 // Message Handler
@@ -90,7 +90,7 @@ await client.PublishAsync(
 
 | Event         | EventArgs Class          | Event Arguments      |
 | ------------- | ------------------------ | -------------------- |
-| BeforeConnect | `BeforeConnectEventArgs` | `HiveClientOptions`  |
+| BeforeConnect | `BeforeConnectEventArgs` | `HiveMQClientOptions`  |
 | AfterConnect  | `AfterConnectEventArgs` | `ConnectResult` |
 | BeforeSubscribe | `BeforeSubscribeEventArgs` | `SubscribeOptions`  |
 | AfterSubscribe  | `AfterSubscribeEventArgs` |  `SubscribeResult` |

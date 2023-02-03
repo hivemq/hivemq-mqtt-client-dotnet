@@ -1,4 +1,4 @@
-namespace HiveMQtt.Test.HiveClient;
+namespace HiveMQtt.Test.HiveMQClient;
 
 using System.Threading.Tasks;
 using HiveMQtt.Client;
@@ -7,13 +7,13 @@ using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.ReasonCodes;
 using Xunit;
 
-public class HiveClientConnectTest
+public class HiveMQClientConnectTest
 {
     /// TODO: Add out of order tests: connect when connected, disconnect when not connected, etc.
     [Fact]
     public async Task Basic_Connect_And_Disconnect_Async()
     {
-        var client = new HiveClient();
+        var client = new HiveMQClient();
         Assert.NotNull(client);
 
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
@@ -32,7 +32,7 @@ public class HiveClientConnectTest
     [Fact]
     public async Task Test_Connect_Events_Async()
     {
-        var client = new HiveClient();
+        var client = new HiveMQClient();
 
         // Client Events
         client.BeforeConnect += BeforeConnectHandler;
@@ -68,7 +68,7 @@ public class HiveClientConnectTest
         Assert.NotNull(sender);
         if (sender is not null)
         {
-            var client = (HiveClient)sender;
+            var client = (HiveMQClient)sender;
             client.LocalStore.Add("BeforeConnectHandlerCalled", "true");
         }
 
@@ -80,7 +80,7 @@ public class HiveClientConnectTest
         Assert.NotNull(sender);
         if (sender is not null)
         {
-            var client = (HiveClient)sender;
+            var client = (HiveMQClient)sender;
             client.LocalStore.Add("OnConnectSentHandlerCalled", "true");
         }
 
@@ -92,7 +92,7 @@ public class HiveClientConnectTest
         Assert.NotNull(sender);
         if (sender is not null)
         {
-            var client = (HiveClient)sender;
+            var client = (HiveMQClient)sender;
             client.LocalStore.Add("OnConnAckReceivedHandlerCalled", "true");
         }
 
@@ -104,7 +104,7 @@ public class HiveClientConnectTest
         Assert.NotNull(sender);
         if (sender is not null)
         {
-            var client = (HiveClient)sender;
+            var client = (HiveMQClient)sender;
             client.LocalStore.Add("AfterConnectHandlerCalled", "true");
         }
         Assert.NotNull(eventArgs.ConnectResult);

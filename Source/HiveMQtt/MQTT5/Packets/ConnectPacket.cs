@@ -11,11 +11,11 @@ using HiveMQtt.MQTT5.Types;
 /// </summary>
 public class ConnectPacket : ControlPacket
 {
-    private readonly HiveClientOptions clientOptions;
+    private readonly HiveMQClientOptions clientOptions;
 
     private byte flags;
 
-    public ConnectPacket(HiveClientOptions clientOptions) => this.clientOptions = clientOptions;
+    public ConnectPacket(HiveMQClientOptions clientOptions) => this.clientOptions = clientOptions;
 
     public override ControlPacketType ControlPacketType => ControlPacketType.Connect;
 

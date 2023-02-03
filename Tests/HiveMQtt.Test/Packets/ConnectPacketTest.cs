@@ -9,7 +9,7 @@ public class ConnectPacketTest
     [Fact]
     public void Encoding()
     {
-        var options = new HiveClientOptions();
+        var options = new HiveMQClientOptions();
         Assert.NotNull(options);
 
         var packet = new ConnectPacket(options);

@@ -1,4 +1,4 @@
-namespace HiveMQtt.Test.HiveClient;
+namespace HiveMQtt.Test.HiveMQClient;
 
 using System.Threading.Tasks;
 using HiveMQtt.Client;
@@ -6,12 +6,12 @@ using HiveMQtt.Client.ReasonCodes;
 using HiveMQtt.MQTT5.ReasonCodes;
 using Xunit;
 
-public class HiveClientPublishTest
+public class HiveMQClientPublishTest
 {
     [Fact]
     public async Task MostBasicPublishAsync()
     {
-        var client = new HiveClient();
+        var client = new HiveMQClient();
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -25,7 +25,7 @@ public class HiveClientPublishTest
     [Fact]
     public async Task MostBasicPublishWithQoS0Async()
     {
-        var client = new HiveClient();
+        var client = new HiveMQClient();
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -39,7 +39,7 @@ public class HiveClientPublishTest
     [Fact]
     public async Task MostBasicPublishWithQoS1Async()
     {
-        var client = new HiveClient();
+        var client = new HiveMQClient();
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -54,7 +54,7 @@ public class HiveClientPublishTest
     [Fact]
     public async Task MostBasicPublishWithQoS2Async()
     {
-        var client = new HiveClient();
+        var client = new HiveMQClient();
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -69,7 +69,7 @@ public class HiveClientPublishTest
     [Fact]
     public async Task PublishWithOptionsAsync()
     {
-        var client = new HiveClient();
+        var client = new HiveMQClient();
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
