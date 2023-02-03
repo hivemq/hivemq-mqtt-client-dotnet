@@ -16,7 +16,7 @@ public class HiveClientSubscribeTest
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
-        var subResult = await subClient.SubscribeAsync("data/topic").ConfigureAwait(false);
+        var subResult = await subClient.SubscribeAsync("tests/MostBasicSubscribeAsync").ConfigureAwait(false);
 
         Assert.NotEmpty(subResult.Subscriptions);
         Assert.Equal(SubAckReasonCode.GrantedQoS0, subResult.Subscriptions[0].SubscribeReasonCode);
@@ -32,7 +32,7 @@ public class HiveClientSubscribeTest
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
-        var subResult = await subClient.SubscribeAsync("data/topic", MQTT5.Types.QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
+        var subResult = await subClient.SubscribeAsync("tests/SubscribeQoS1Async", MQTT5.Types.QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
 
         Assert.NotEmpty(subResult.Subscriptions);
         Assert.Equal(SubAckReasonCode.GrantedQoS1, subResult.Subscriptions[0].SubscribeReasonCode);
@@ -48,7 +48,7 @@ public class HiveClientSubscribeTest
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
-        var subResult = await subClient.SubscribeAsync("data/topic", MQTT5.Types.QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
+        var subResult = await subClient.SubscribeAsync("tests/SubscribeQoS2Async", MQTT5.Types.QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
 
         Assert.NotEmpty(subResult.Subscriptions);
         Assert.Equal(SubAckReasonCode.GrantedQoS2, subResult.Subscriptions[0].SubscribeReasonCode);
@@ -73,7 +73,7 @@ public class HiveClientSubscribeTest
         var result = await client.ConnectAsync().ConfigureAwait(false);
         Assert.Equal(ConnAckReasonCode.Success, result.ReasonCode);
 
-        var subscribeResult = client.SubscribeAsync("data/topic").ConfigureAwait(false);
+        var subscribeResult = client.SubscribeAsync("tests/Test_Subscribe_Events_Async").ConfigureAwait(false);
 
         // Wait for event handlers to finish
         await Task.Delay(1000).ConfigureAwait(false);

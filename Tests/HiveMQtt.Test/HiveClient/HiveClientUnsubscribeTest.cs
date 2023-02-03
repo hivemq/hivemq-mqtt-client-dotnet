@@ -17,13 +17,13 @@ public class HiveClientUnsubscribeTest
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
-        var subResult = await subClient.SubscribeAsync("data/topic").ConfigureAwait(false);
+        var subResult = await subClient.SubscribeAsync("tests/MostBasicUnsubscribeAsync").ConfigureAwait(false);
 
         Assert.NotEmpty(subResult.Subscriptions);
         Assert.True(subClient.Subscriptions.Count == 1);
         Assert.Equal(SubAckReasonCode.GrantedQoS0, subResult.Subscriptions[0].SubscribeReasonCode);
 
-        var unsubResult = await subClient.UnsubscribeAsync("data/topic").ConfigureAwait(false);
+        var unsubResult = await subClient.UnsubscribeAsync("tests/MostBasicUnsubscribeAsync").ConfigureAwait(false);
 
         Assert.NotEmpty(unsubResult.Subscriptions);
         Assert.Equal(UnsubAckReasonCode.Success, unsubResult.Subscriptions[0].UnsubscribeReasonCode);
@@ -43,7 +43,7 @@ public class HiveClientUnsubscribeTest
         // Unsubscribe from a non-existing subscription should throw an exception
         await Assert.ThrowsAsync<HiveMQttClientException>(() =>
             {
-                return subClient.UnsubscribeAsync("data/topic");
+                return subClient.UnsubscribeAsync("tests/InvalidUnsubscribeStringAsync");
             }).ConfigureAwait(false);
 
         Assert.True(subClient.Subscriptions.Count == 0);
@@ -59,7 +59,7 @@ public class HiveClientUnsubscribeTest
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
-        var topicFilter = new TopicFilter("data/topic", QualityOfService.ExactlyOnceDelivery);
+        var topicFilter = new TopicFilter("tests/InvalidUnsubscribeStringAsync", QualityOfService.ExactlyOnceDelivery);
         var subscription = new Subscription(topicFilter);
 
         // Unsubscribe from a non-existing subscription should throw an exception
@@ -90,13 +90,13 @@ public class HiveClientUnsubscribeTest
         var result = await client.ConnectAsync().ConfigureAwait(false);
         Assert.Equal(ConnAckReasonCode.Success, result.ReasonCode);
 
-        var subResult = await client.SubscribeAsync("data/topic").ConfigureAwait(false);
+        var subResult = await client.SubscribeAsync("tests/Test_Unsubscribe_Events_Async").ConfigureAwait(false);
 
         Assert.NotEmpty(subResult.Subscriptions);
         Assert.True(client.Subscriptions.Count == 1);
         Assert.Equal(SubAckReasonCode.GrantedQoS0, subResult.Subscriptions[0].SubscribeReasonCode);
 
-        var subscribeResult = client.UnsubscribeAsync("data/topic").ConfigureAwait(false);
+        var subscribeResult = client.UnsubscribeAsync("tests/Test_Unsubscribe_Events_Async").ConfigureAwait(false);
 
         // Wait for event handlers to finish
         await Task.Delay(1000).ConfigureAwait(false);

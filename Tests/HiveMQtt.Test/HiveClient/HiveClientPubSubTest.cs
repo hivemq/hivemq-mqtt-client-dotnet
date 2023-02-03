@@ -18,7 +18,7 @@ public class HiveClientPubSubTest
         // Set the event handler for the message received event
         client.OnMessageReceived += (sender, args) =>
         {
-            Assert.Equal("data/topic", args.PublishMessage.Topic);
+            Assert.Equal("tests/MostBasicPubSubAsync", args.PublishMessage.Topic);
             Assert.Equal("{\"interference\": \"1029384\"}", args.PublishMessage.PayloadAsString);
 
             // Disconnect after receiving the message
@@ -36,10 +36,10 @@ public class HiveClientPubSubTest
             }
         };
 
-        var subResult = await client.SubscribeAsync("data/topic").ConfigureAwait(false);
+        var subResult = await client.SubscribeAsync("tests/MostBasicPubSubAsync").ConfigureAwait(false);
 
         var msg = new string(/*lang=json,strict*/ "{\"interference\": \"1029384\"}");
-        var result = await client.PublishAsync("data/topic", msg).ConfigureAwait(false);
+        var result = await client.PublishAsync("tests/MostBasicPubSubAsync", msg).ConfigureAwait(false);
 
         await Task.Delay(1000).ConfigureAwait(false);
     }
@@ -55,7 +55,7 @@ public class HiveClientPubSubTest
         client.OnMessageReceived += (sender, args) =>
         {
             Assert.Equal(QualityOfService.AtLeastOnceDelivery, args.PublishMessage.QoS);
-            Assert.Equal("data/topic", args.PublishMessage.Topic);
+            Assert.Equal("tests/QoS1PubSubAsync", args.PublishMessage.Topic);
             Assert.Equal("{\"interference\": \"1029384\"}", args.PublishMessage.PayloadAsString);
 
             // Disconnect after receiving the message
@@ -74,13 +74,13 @@ public class HiveClientPubSubTest
         };
 
         // Subscribe with QoS1
-        var subResult = await client.SubscribeAsync("data/topic", QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
+        var subResult = await client.SubscribeAsync("tests/QoS1PubSubAsync", QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
         Assert.NotEmpty(subResult.Subscriptions);
         Assert.Equal(SubAckReasonCode.GrantedQoS1, subResult.Subscriptions[0].SubscribeReasonCode);
 
         // Publish a QoS1 message
         var msg = new string(/*lang=json,strict*/ "{\"interference\": \"1029384\"}");
-        var result = await client.PublishAsync("data/topic", msg, QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
+        var result = await client.PublishAsync("tests/QoS1PubSubAsync", msg, QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
 
         await Task.Delay(1000).ConfigureAwait(false);
     }
@@ -96,7 +96,7 @@ public class HiveClientPubSubTest
         client.OnMessageReceived += (sender, args) =>
         {
             Assert.Equal(QualityOfService.ExactlyOnceDelivery, args.PublishMessage.QoS);
-            Assert.Equal("data/topic", args.PublishMessage.Topic);
+            Assert.Equal("tests/QoS1PubSubAsync", args.PublishMessage.Topic);
             // FIXME: Payload garbled
             Assert.Equal("{\"interference\": \"1029384\"}", args.PublishMessage.PayloadAsString);
 
@@ -116,13 +116,13 @@ public class HiveClientPubSubTest
         };
 
         // Subscribe with QoS1
-        var subResult = await client.SubscribeAsync("data/topic", QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
+        var subResult = await client.SubscribeAsync("tests/QoS1PubSubAsync", QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
         Assert.NotEmpty(subResult.Subscriptions);
         Assert.Equal(SubAckReasonCode.GrantedQoS2, subResult.Subscriptions[0].SubscribeReasonCode);
 
         // Publish a QoS1 message
         var msg = new string(/*lang=json,strict*/ "{\"interference\": \"1029384\"}");
-        var result = await client.PublishAsync("data/topic", msg, QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
+        var result = await client.PublishAsync("tests/QoS1PubSubAsync", msg, QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
 
         await Task.Delay(1000).ConfigureAwait(false);
     }
