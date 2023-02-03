@@ -10,15 +10,15 @@ using HiveMQtt.MQTT5.Types;
 /// <summary>
 /// Some interface.
 /// </summary>
-public interface IHiveClient : IDisposable
+public interface IHiveMQClient : IDisposable
 {
-    HiveClientOptions Options { get; set; }
+    HiveMQClientOptions Options { get; set; }
 
     /// <summary>
     /// Gets or sets the local store for the client.
     /// <para>
     /// The LocalStore is a Dictionary(string, string) that can be used
-    /// to store data that is specific to this HiveClient.
+    /// to store data that is specific to this HiveMQClient.
     /// </para>
     /// </summary>
     Dictionary<string, string> LocalStore { get; }
@@ -26,7 +26,7 @@ public interface IHiveClient : IDisposable
     bool IsConnected();
 
     /// <summary>
-    /// Asynchronously makes a TCP connection to the remote specified in HiveClientOptions and then
+    /// Asynchronously makes a TCP connection to the remote specified in HiveMQClientOptions and then
     /// proceeds to make an MQTT Connect request.
     /// </summary>
     /// <returns>A ConnectResult class respresenting the result of the MQTT connect call.</returns>

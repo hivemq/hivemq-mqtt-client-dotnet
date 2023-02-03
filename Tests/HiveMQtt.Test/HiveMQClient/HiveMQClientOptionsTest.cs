@@ -1,14 +1,14 @@
-namespace HiveMQtt.Test.HiveClient;
+namespace HiveMQtt.Test.HiveMQClient;
 
 using HiveMQtt.Client.Options;
 using Xunit;
 
-public class HiveClientOptionsTest
+public class HiveMQClientOptionsTest
 {
     [Fact]
     public void WithBadKeepAlive()
     {
-        var options = new HiveClientOptions
+        var options = new HiveMQClientOptions
         {
             KeepAlive = -300,
         };
@@ -25,7 +25,7 @@ public class HiveClientOptionsTest
     [Fact]
     public void WithBadSessionExpiryInterval()
     {
-        var options = new HiveClientOptions
+        var options = new HiveMQClientOptions
         {
             SessionExpiryInterval = -300,
         };
@@ -42,7 +42,7 @@ public class HiveClientOptionsTest
     [Fact]
     public void WithBadClientReceiveMaximum()
     {
-        var options = new HiveClientOptions
+        var options = new HiveMQClientOptions
         {
             ClientReceiveMaximum = -300,
         };
@@ -57,7 +57,7 @@ public class HiveClientOptionsTest
     [Fact]
     public void WithBadClientMaximumPacketSize()
     {
-        var options = new HiveClientOptions
+        var options = new HiveMQClientOptions
         {
             ClientMaximumPacketSize = -300,
         };
@@ -72,7 +72,7 @@ public class HiveClientOptionsTest
     [Fact]
     public void WithBadClientTopicAliasMaximum()
     {
-        var options = new HiveClientOptions
+        var options = new HiveMQClientOptions
         {
             ClientTopicAliasMaximum = -300,
         };
@@ -93,7 +93,7 @@ public class HiveClientOptionsTest
             { "key2", "value2" },
         };
 
-        var options = new HiveClientOptions
+        var options = new HiveMQClientOptions
         {
             UserProperties = userProperties,
         };
@@ -109,7 +109,7 @@ public class HiveClientOptionsTest
     [Fact]
     public void WithNullifiedClientID()
     {
-        var options = new HiveClientOptions
+        var options = new HiveMQClientOptions
         {
             ClientId = null,
         };

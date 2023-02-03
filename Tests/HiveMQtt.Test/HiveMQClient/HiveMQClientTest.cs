@@ -1,15 +1,15 @@
-namespace HiveMQtt.Test.HiveClient;
+namespace HiveMQtt.Test.HiveMQClient;
 
 using HiveMQtt.Client;
 using Xunit;
 
-public class HiveClientTest
+public class HiveMQClientTest
 {
     [Fact]
     public void Client_Initializes_With_Defaults()
     {
-        // var clientOptions = new HiveClientOptions();
-        var client = new HiveClient();
+        // var clientOptions = new HiveMQClientOptions();
+        var client = new HiveMQClient();
 
         Assert.NotNull(client.Options.ClientId);
         Assert.True(client.Options.ClientId.Length < 24);
@@ -28,7 +28,7 @@ public class HiveClientTest
     [Fact]
     public async Task Client_Has_Default_Connect_Async()
     {
-        var client = new HiveClient();
+        var client = new HiveMQClient();
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 
         Assert.NotNull(connectResult);

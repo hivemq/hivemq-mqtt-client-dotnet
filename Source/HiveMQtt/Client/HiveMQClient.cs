@@ -24,11 +24,11 @@ using Microsoft.Extensions.Logging;
 /// Fully MQTT compliant and compatible with all respectable MQTT Brokers because sharing is caring
 /// and MQTT is awesome.
 /// </summary>
-public partial class HiveClient : IDisposable, IHiveClient
+public partial class HiveMQClient : IDisposable, IHiveMQClient
 {
-    private ILogger<HiveClient> _logger;
+    private ILogger<HiveMQClient> _logger;
 
-    public void AttachLogger(ILogger<HiveClient> logger)
+    public void AttachLogger(ILogger<HiveMQClient> logger)
     {
         _logger = logger;
     }
@@ -48,19 +48,19 @@ public partial class HiveClient : IDisposable, IHiveClient
 
     private bool disposed = false;
 
-    public HiveClient(HiveClientOptions? options = null)
+    public HiveMQClient(HiveMQClientOptions? options = null)
     {
         // Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
         // Trace.AutoFlush = true;
 
-        options ??= new HiveClientOptions();
+        options ??= new HiveMQClientOptions();
         this.Options = options;
     }
 
     /// <inheritdoc />
     public Dictionary<string, string> LocalStore { get; } = new();
 
-    public HiveClientOptions Options { get; set; }
+    public HiveMQClientOptions Options { get; set; }
 
     public List<Subscription> Subscriptions { get; } = new();
 

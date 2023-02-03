@@ -9,7 +9,7 @@ using HiveMQtt.MQTT5.Packets;
 using HiveMQtt.MQTT5.Types;
 
 /// <inheritdoc />
-public partial class HiveClient : IDisposable, IHiveClient
+public partial class HiveMQClient : IDisposable, IHiveMQClient
 {
     /* ========================================================================================= */
     // MQTT Client Events
@@ -20,7 +20,7 @@ public partial class HiveClient : IDisposable, IHiveClient
     /// </summary>
     public event EventHandler<BeforeConnectEventArgs> BeforeConnect = new EventHandler<BeforeConnectEventArgs>((client, e) => { });
 
-    protected virtual void BeforeConnectEventLauncher(HiveClientOptions options)
+    protected virtual void BeforeConnectEventLauncher(HiveMQClientOptions options)
     {
         var eventArgs = new BeforeConnectEventArgs(options);
         Trace.WriteLine("BeforeConnectEventLauncher");
