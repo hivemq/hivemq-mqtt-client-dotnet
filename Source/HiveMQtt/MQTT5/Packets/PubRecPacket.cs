@@ -9,14 +9,43 @@ using HiveMQtt.MQTT5.ReasonCodes;
 /// </summary>
 public class PubRecPacket : ControlPacket
 {
-    public PubRecPacket(ReadOnlySequence<byte> packetData)
+    public PubRecPacket(ushort packetIdentifier, PubRecReasonCode reasonCode)
     {
-        this.Decode(packetData);
+        this.PacketIdentifier = packetIdentifier;
+        this.ReasonCode = reasonCode;
     }
+
+    public PubRecPacket(ReadOnlySequence<byte> packetData) => this.Decode(packetData);
 
     public PubRecReasonCode ReasonCode { get; set; }
 
     public override ControlPacketType ControlPacketType => ControlPacketType.PubRec;
+
+    /// <summary>
+    /// Encode this packet to be sent on the wire.
+    /// </summary>
+    /// <returns>An array of bytes ready to be sent.</returns>
+    public byte[] Encode()
+    {
+        var stream = new MemoryStream(100)
+        {
+            Position = 2,
+        };
+
+        // Variable Header - starts at byte 2
+        ControlPacket.EncodeTwoByteInteger(stream, this.PacketIdentifier);
+        stream.WriteByte((byte)this.ReasonCode);
+        this.EncodeProperties(stream);
+
+        var length = stream.Length - 2;
+
+        // Fixed Header - Add to the beginning of the stream
+        stream.Position = 0;
+        stream.WriteByte(((byte)ControlPacketType.PubRec) << 4);
+        _ = EncodeVariableByteInteger(stream, (int)length);
+
+        return stream.ToArray();
+    }
 
     public void Decode(ReadOnlySequence<byte> packetData)
     {

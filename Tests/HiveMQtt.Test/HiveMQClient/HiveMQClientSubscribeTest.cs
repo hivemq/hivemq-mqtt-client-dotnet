@@ -1,4 +1,4 @@
-namespace HiveMQtt.Test.HiveClient;
+namespace HiveMQtt.Test.HiveMQClient;
 
 using System.Threading.Tasks;
 using HiveMQtt.Client;
@@ -7,18 +7,16 @@ using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.ReasonCodes;
 using Xunit;
 
-// public event EventHandler<MqttApplicationMessageReceivedEventArgs> ApplicationMessageReceived;
-
-public class HiveClientSubscribeTest
+public class HiveMQClientSubscribeTest
 {
     [Fact]
     public async Task MostBasicSubscribeAsync()
     {
-        var subClient = new HiveClient();
+        var subClient = new HiveMQClient();
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
-        var subResult = await subClient.SubscribeAsync("data/topic").ConfigureAwait(false);
+        var subResult = await subClient.SubscribeAsync("tests/MostBasicSubscribeAsync").ConfigureAwait(false);
 
         Assert.NotEmpty(subResult.Subscriptions);
         Assert.Equal(SubAckReasonCode.GrantedQoS0, subResult.Subscriptions[0].SubscribeReasonCode);
@@ -30,11 +28,11 @@ public class HiveClientSubscribeTest
     [Fact]
     public async Task SubscribeQoS1Async()
     {
-        var subClient = new HiveClient();
+        var subClient = new HiveMQClient();
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
-        var subResult = await subClient.SubscribeAsync("data/topic", MQTT5.Types.QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
+        var subResult = await subClient.SubscribeAsync("tests/SubscribeQoS1Async", MQTT5.Types.QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
 
         Assert.NotEmpty(subResult.Subscriptions);
         Assert.Equal(SubAckReasonCode.GrantedQoS1, subResult.Subscriptions[0].SubscribeReasonCode);
@@ -46,11 +44,11 @@ public class HiveClientSubscribeTest
     [Fact]
     public async Task SubscribeQoS2Async()
     {
-        var subClient = new HiveClient();
+        var subClient = new HiveMQClient();
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
-        var subResult = await subClient.SubscribeAsync("data/topic", MQTT5.Types.QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
+        var subResult = await subClient.SubscribeAsync("tests/SubscribeQoS2Async", MQTT5.Types.QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
 
         Assert.NotEmpty(subResult.Subscriptions);
         Assert.Equal(SubAckReasonCode.GrantedQoS2, subResult.Subscriptions[0].SubscribeReasonCode);
@@ -62,7 +60,7 @@ public class HiveClientSubscribeTest
     [Fact]
     public async Task Test_Subscribe_Events_Async()
     {
-        var client = new HiveClient();
+        var client = new HiveMQClient();
 
         // Client Events
         client.BeforeSubscribe += BeforeSubscribeHandler;
@@ -75,7 +73,7 @@ public class HiveClientSubscribeTest
         var result = await client.ConnectAsync().ConfigureAwait(false);
         Assert.Equal(ConnAckReasonCode.Success, result.ReasonCode);
 
-        var subscribeResult = client.SubscribeAsync("data/topic").ConfigureAwait(false);
+        var subscribeResult = client.SubscribeAsync("tests/Test_Subscribe_Events_Async").ConfigureAwait(false);
 
         // Wait for event handlers to finish
         await Task.Delay(1000).ConfigureAwait(false);
@@ -100,7 +98,7 @@ public class HiveClientSubscribeTest
         Assert.NotNull(sender);
         if (sender is not null)
         {
-            var client = (HiveClient)sender;
+            var client = (HiveMQClient)sender;
             client.LocalStore.Add("BeforeSubscribeHandlerCalled", "true");
         }
 
@@ -112,7 +110,7 @@ public class HiveClientSubscribeTest
         Assert.NotNull(sender);
         if (sender is not null)
         {
-            var client = (HiveClient)sender;
+            var client = (HiveMQClient)sender;
             client.LocalStore.Add("OnSubscribeSentHandlerCalled", "true");
         }
 
@@ -124,7 +122,7 @@ public class HiveClientSubscribeTest
         Assert.NotNull(sender);
         if (sender is not null)
         {
-            var client = (HiveClient)sender;
+            var client = (HiveMQClient)sender;
             client.LocalStore.Add("OnSubAckReceivedHandlerCalled", "true");
         }
 
@@ -136,7 +134,7 @@ public class HiveClientSubscribeTest
         Assert.NotNull(sender);
         if (sender is not null)
         {
-            var client = (HiveClient)sender;
+            var client = (HiveMQClient)sender;
             client.LocalStore.Add("AfterSubscribeHandlerCalled", "true");
         }
 

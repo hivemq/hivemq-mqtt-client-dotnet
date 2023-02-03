@@ -38,18 +38,18 @@ _Do you have a success story with this client?  [Let us know]().  We'd love to f
 using HiveMQtt.Client;
 
 // Connect
-var client = new HiveClient();
+var client = new HiveMQClient();
 var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 ```
 
 #### With Options
 
 ```c#
-var options = new HiveClientOptions();
+var options = new HiveMQClientOptions();
 options.Host = 'candy.x39.eu.hivemq.cloud';
 options.Port = 8883;
 
-var client = new HiveClient(options);
+var client = new HiveMQClient(options);
 var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 ```
 
@@ -59,7 +59,7 @@ var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 using HiveMQtt.Client;
 
 // Connect
-var client = new HiveClient();
+var client = new HiveMQClient();
 var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 
 // Message Handler
@@ -86,7 +86,43 @@ await client.PublishAsync(
 
 ```
 
+### General Events
 
+| Event         | EventArgs Class          | Event Arguments      |
+| ------------- | ------------------------ | -------------------- |
+| BeforeConnect | `BeforeConnectEventArgs` | `HiveMQClientOptions`  |
+| AfterConnect  | `AfterConnectEventArgs` | `ConnectResult` |
+| BeforeSubscribe | `BeforeSubscribeEventArgs` | `SubscribeOptions`  |
+| AfterSubscribe  | `AfterSubscribeEventArgs` |  `SubscribeResult` |
+| BeforeUnsubscribe | `BeforeUnsubscribeEventArgs` | `UnsubscribeOptions`  |
+| AfterUnsubscribe  | `AfterUnsubscribeEventArgs` |  `UnsubscribeResult` |
+| OnMessageReceived | `OnMessageReceivedEventArgs` |  `MQTT5PublishMessage` |
+
+#### Packet Level Events
+
+| Event         | EventArgs Class          | Event Arguments      |
+| ------------- | ------------------------ | -------------------- |
+| OnConnectSent        | `OnConnectSentEventArgs`     |  `ConnectPacket` |
+| OnConnAckReceived    | `OnConnAckReceivedEventArgs` |  `ConnAckPacket` |
+| OnConnectSent        | `OnConnectSentEventArgs`     |  `ConnectPacket` |
+| OnDisconnectReceived | `OnDisconnectReceivedEventArgs` |  `DisconnectPacket` |
+| OnDisconnectSent     | `OnDisconnectSentEventArgs`  |  `DisconnectPacket` |
+| OnPingReqSent        | `OnPingReqSentEventArgs`     |  `PingReqPacket` |
+| OnPingRespReceived   | `OnPingRespReceivedEventArgs` |  `PingRespPacket` |
+| OnPublishSent        | `OnPublishSentEventArgs`     |  `PublishPacket` |
+| OnPublishReceived    | `OnPublishReceivedEventArgs` |  `PublishPacket` |
+| OnPubAckSent         | `OnPubAckSentEventArgs`      |  `PubAckPacket` |
+| OnPubAckReceived     | `OnPubAckReceivedEventArgs` |  `PubAckPacket` |
+| OnPubRecSent         | `OnPubRecSentEventArgs`     |  `PubRecPacket` |
+| OnPubRecReceived     | `OnPubRecReceivedEventArgs` |  `PubRecPacket` |
+| OnPubRelSent         | `OnPubRelSentEventArgs`     |  `PubRelPacket` |
+| OnPubRelReceived     | `OnPubRelReceivedEventArgs` |  `PubRelPacket` |
+| OnPubCompSent        | `OnPubCompSentEventArgs`    |  `PubCompPacket` |
+| OnPubCompReceived    | `OnPubCompReceivedEventArgs` |  `PubCompPacket` |
+| OnSubscribeSent      | `OnSubscribeSentEventArgs`    |  `SubscribePacket` |
+| OnSubAckSent         | `OnSubAckSentEventArgs`    |  `SubAckPacket` |
+| OnUnsubscribeSent    | `OnUnsubscribeSentEventArgs`    |  `UnsubscribePacket` |
+| OnUnsubAckSent       | `OnUnsubAckSentEventArgs`    |  `UnsubAckPacket` |
 
 ## 🛡 License
 
