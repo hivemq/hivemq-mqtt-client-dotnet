@@ -1,7 +1,6 @@
 namespace HiveMQtt.Client;
 
 using System;
-using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO.Pipelines;
 using System.Net;
@@ -10,10 +9,10 @@ using System.Text;
 using System.Threading.Tasks;
 
 using HiveMQtt.Client.Events;
+using HiveMQtt.Client.Exceptions;
 using HiveMQtt.Client.Internal;
 using HiveMQtt.Client.Options;
 using HiveMQtt.Client.Results;
-using HiveMQtt.MQTT5;
 using HiveMQtt.MQTT5.Packets;
 using HiveMQtt.MQTT5.ReasonCodes;
 using HiveMQtt.MQTT5.Types;
@@ -25,17 +24,14 @@ using Microsoft.Extensions.Logging;
 /// Fully MQTT compliant and compatible with all respectable MQTT Brokers because sharing is caring
 /// and MQTT is awesome.
 /// </summary>
-public partial class HiveClient : IDisposable, IHiveClient
+public partial class HiveMQClient : IDisposable, IHiveMQClient
 {
-    private ILogger<HiveClient> _logger;
+    private ILogger<HiveMQClient> _logger;
 
-    public void AttachLogger(ILogger<HiveClient> logger)
+    public void AttachLogger(ILogger<HiveMQClient> logger)
     {
         _logger = logger;
     }
-
-    private readonly ConcurrentQueue<ControlPacket> sendQueue = new();
-    private readonly ConcurrentQueue<ControlPacket> receiveQueue = new();
 
     private int lastPacketId = 0;
 
@@ -52,18 +48,19 @@ public partial class HiveClient : IDisposable, IHiveClient
 
     private bool disposed = false;
 
-    public HiveClient(HiveClientOptions? options = null)
+    public HiveMQClient(HiveMQClientOptions? options = null)
     {
-        Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
-        Trace.AutoFlush = true;
-        options ??= new HiveClientOptions();
+        // Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
+        // Trace.AutoFlush = true;
+
+        options ??= new HiveMQClientOptions();
         this.Options = options;
     }
 
     /// <inheritdoc />
     public Dictionary<string, string> LocalStore { get; } = new();
 
-    public HiveClientOptions Options { get; set; }
+    public HiveMQClientOptions Options { get; set; }
 
     public List<Subscription> Subscriptions { get; } = new();
 
@@ -166,12 +163,31 @@ public partial class HiveClient : IDisposable, IHiveClient
             DisconnectReasonCode = options.ReasonCode,
         };
 
-        this.sendQueue.Enqueue(disconnectPacket);
-
         // Once this is set, no more incoming packets or outgoing will be accepted
         this.connectState = ConnectState.Disconnecting;
 
-        await Task.Delay(1000).ConfigureAwait(false);
+        var taskCompletionSource = new TaskCompletionSource<DisconnectPacket>();
+        EventHandler<OnDisconnectSentEventArgs> eventHandler = (sender, args) =>
+        {
+            taskCompletionSource.SetResult(args.DisconnectPacket);
+        };
+        this.OnDisconnectSent += eventHandler;
+
+        this.sendQueue.Enqueue(disconnectPacket);
+
+        try
+        {
+            disconnectPacket = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        }
+        catch (System.TimeoutException ex)
+        {
+            // Does it matter?  We're disconnecting anyway.
+        }
+        finally
+        {
+            // Remove the event handler
+            this.OnDisconnectSent -= eventHandler;
+        }
 
         // Shutdown the traffic processors
         this.trafficOutflowProcessor = null;
@@ -203,11 +219,54 @@ public partial class HiveClient : IDisposable, IHiveClient
         message.Validate();
 
         var packetIdentifier = this.GeneratePacketIdentifier();
-        var packet = new PublishPacket(message, (ushort)packetIdentifier);
-        _ = await this.writer.WriteAsync(packet.Encode()).ConfigureAwait(false);
+        var publishPacket = new PublishPacket(message, (ushort)packetIdentifier);
 
-        // TODO: Get the packet identifier from the PublishAck packet
-        return new PublishResult();
+        // QoS 0: Fast Service
+        if (message.QoS == QualityOfService.AtMostOnceDelivery)
+        {
+            this.sendQueue.Enqueue(publishPacket);
+            return new PublishResult(publishPacket.Message);
+        }
+        else if (message.QoS == QualityOfService.AtLeastOnceDelivery)
+        {
+            // QoS 1: Acknowledged Delivery
+            var taskCompletionSource = new TaskCompletionSource<PubAckPacket>();
+
+            EventHandler<OnPublishQoS1CompleteEventArgs> eventHandler = (sender, args) =>
+            {
+                taskCompletionSource.SetResult(args.PubAckPacket);
+            };
+            publishPacket.OnPublishQoS1Complete += eventHandler;
+
+            // Construct the MQTT Connect packet and queue to send
+            this.sendQueue.Enqueue(publishPacket);
+
+            var pubAckPacket = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+            publishPacket.OnPublishQoS1Complete -= eventHandler;
+            return new PublishResult(publishPacket.Message, pubAckPacket);
+        }
+        else if (message.QoS == QualityOfService.ExactlyOnceDelivery)
+        {
+            // QoS 2: Assured Delivery
+            var taskCompletionSource = new TaskCompletionSource<PubRecPacket>();
+
+            EventHandler<OnPublishQoS2CompleteEventArgs> eventHandler = (sender, args) =>
+            {
+                taskCompletionSource.SetResult(args.PubRecPacket);
+            };
+            publishPacket.OnPublishQoS2Complete += eventHandler;
+
+            // Construct the MQTT Connect packet and queue to send
+            this.sendQueue.Enqueue(publishPacket);
+
+            var pubRecPacket = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+            publishPacket.OnPublishQoS2Complete -= eventHandler;
+            return new PublishResult(publishPacket.Message, pubRecPacket);
+
+        }
+        throw new HiveMQttClientException("Invalid QoS value.");
     }
 
     /// <summary>
@@ -269,11 +328,7 @@ public partial class HiveClient : IDisposable, IHiveClient
     {
         var options = new SubscribeOptions();
 
-        var tf = new TopicFilter
-        {
-            Topic = topic,
-            QoS = qos,
-        };
+        var tf = new TopicFilter(topic, qos);
         options.TopicFilters.Add(tf);
 
         return await this.SubscribeAsync(options).ConfigureAwait(false);
@@ -344,6 +399,12 @@ public partial class HiveClient : IDisposable, IHiveClient
         return subscribeResult;
     }
 
+    /// <summary>
+    /// Unsubscribe from a single topic filter on the MQTT broker.
+    /// </summary>
+    /// <exception cref="HiveMQttClientException">Thrown if no subscription is found for the topic.</exception>
+    /// <param name="topic">The topic filter to unsubscribe from.</param>
+    /// <returns>UnsubscribeResult reflecting the result of the operation.</returns>
     public async Task<UnsubscribeResult> UnsubscribeAsync(string topic)
     {
         foreach (var subscription in this.Subscriptions)
@@ -354,16 +415,32 @@ public partial class HiveClient : IDisposable, IHiveClient
             }
         }
 
-        // FIXME: Exception types
-        throw new KeyNotFoundException("No subscription found for topic: " + topic);
+        throw new HiveMQttClientException("No subscription found for topic: " + topic);
     }
 
+    /// <summary>
+    /// Unsubscribe from a single topic filter on the MQTT broker.
+    /// </summary>
+    /// <exception cref="HiveMQttClientException">Thrown if no subscription is found for the topic.</exception>
+    /// <param name="subscription">The subscription from client.Subscriptions to unsubscribe from.</param>
+    /// <returns>UnsubscribeResult reflecting the result of the operation.</returns>
     public async Task<UnsubscribeResult> UnsubscribeAsync(Subscription subscription)
     {
+        if (!this.Subscriptions.Contains(subscription))
+        {
+            throw new HiveMQttClientException("No such subscription found.  Make sure to take individual subscription from client.Subscriptions.");
+        }
+
         var subscriptions = new List<Subscription> { subscription };
         return await this.UnsubscribeAsync(subscriptions).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Unsubscribe from a single topic filter on the MQTT broker.
+    /// </summary>
+    /// <exception cref="HiveMQttClientException">Thrown if no subscription is found for the topic.</exception>
+    /// <param name="topic">The topic filter to unsubscribe from.</param>
+    /// <returns>UnsubscribeResult reflecting the result of the operation.</returns>
     public async Task<UnsubscribeResult> UnsubscribeAsync(List<Subscription> subscriptions)
     {
         // Fire the corresponding event
@@ -416,6 +493,9 @@ public partial class HiveClient : IDisposable, IHiveClient
                 this.Subscriptions.Remove(unsubscribeResult.Subscriptions[counter]);
             }
         }
+
+        // Fire the corresponding event
+        this.AfterUnsubscribeEventLauncher(unsubscribeResult);
 
         return unsubscribeResult;
     }

@@ -15,6 +15,6 @@ public enum PubRelReasonCode
     /// The Packet Identifier is not known. This is not an error during recovery, but at other times
     /// indicates a mismatch between the Session State on the Client and Server.
     /// </summary>
-    PacketIdentifierNotFound = 0x92
+    PacketIdentifierNotFound = 0x92,
 
 }
