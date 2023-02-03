@@ -5,7 +5,11 @@ namespace HiveMQtt.Client.Options;
 /// </summary>
 public class ConnectOptions
 {
-    public ConnectOptions() { }
+    public ConnectOptions()
+    {
+        this.CleanStart = true;
+        this.KeepAlive = 60;
+    }
 
     public bool CleanStart { get; set; }
 

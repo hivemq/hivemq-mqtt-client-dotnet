@@ -24,6 +24,10 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     // Transactional packets indexed by packet identifer
     private readonly ConcurrentDictionary<int, List<ControlPacket>> transactionQueue = new();
 
+    private Task<bool>? trafficOutflowProcessor;
+
+    private Task<bool>? trafficInflowProcessor;
+
     /// <summary>
     /// Asynchronous background task that handles the outgoing traffic of packets queued in the sendQueue.
     /// </summary>
@@ -37,7 +41,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
             stopWatch.Start();
 
-            Trace.WriteLine($"{Thread.CurrentThread.ManagedThreadId}: TrafficOutflowProcessor Starting...{this.connectState}");
+            Trace.WriteLine($"{Environment.CurrentManagedThreadId}: TrafficOutflowProcessor Starting...{this.connectState}");
 
             while (this.connectState != ConnectState.Disconnected)
             {
@@ -69,7 +73,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     FlushResult writeResult;
                     // FIXME: Handle writeResult.IsCanceled and writeResult.IsCompleted
-
                     switch (packet)
                     {
                         // FIXME: Only one connect, subscribe or unsubscribe packet can be sent at a time.
@@ -104,6 +107,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                                     throw new HiveMQttClientException("Duplicate packet ID detected.");
                                 }
                             }
+
                             writeResult = await this.writer.WriteAsync(publishPacket.Encode()).ConfigureAwait(false);
 
                             this.OnPublishSentEventLauncher(publishPacket);
@@ -136,10 +140,11 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                             writeResult = await this.writer.WriteAsync(pubCompPacket.Encode()).ConfigureAwait(false);
                             this.OnPubCompSentEventLauncher(pubCompPacket);
                             break;
-                        // case AuthPacket authPacket:
-                        //     writeResult = await this.writer.WriteAsync(authPacket.Encode()).ConfigureAwait(false);
-                        //     this.OnAuthSentEventLauncher(authPacket);
-                        //     break;
+                        /* case AuthPacket authPacket:
+                        /*     writeResult = await this.writer.WriteAsync(authPacket.Encode()).ConfigureAwait(false);
+                        /*     this.OnAuthSentEventLauncher(authPacket);
+                        /*     break;
+                        */
 
                         default:
                             Trace.WriteLine("--> Unknown packet type");
@@ -151,7 +156,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
             } // while
 
-            Trace.WriteLine($"{Thread.CurrentThread.ManagedThreadId}: TrafficOutflowProcessor Exiting...{this.connectState}");
+            Trace.WriteLine($"{Environment.CurrentManagedThreadId}: TrafficOutflowProcessor Exiting...{this.connectState}");
             return true;
         });
     }
@@ -163,7 +168,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         return Task.Run(async () =>
         {
-            Trace.WriteLine($"{Thread.CurrentThread.ManagedThreadId}: TrafficInflowProcessor Starting...{this.connectState}");
+            Trace.WriteLine($"{Environment.CurrentManagedThreadId}: TrafficInflowProcessor Starting...{this.connectState}");
 
             ReadResult readResult;
 
@@ -256,6 +261,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                             }
                             this.sendQueue.Enqueue(pubRecResponse);
                         }
+
                         this.OnMessageReceivedEventLauncher(publishPacket);
                         break;
                     case PubAckPacket pubAckPacket:
@@ -263,6 +269,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                         if (this.transactionQueue.Remove(pubAckPacket.PacketIdentifier, out var publishQoS1Chain))
                         {
                             var publishPacket = (PublishPacket)publishQoS1Chain.First();
+
                             // Trigger the packet specific event
                             publishPacket.OnPublishQoS1CompleteEventLauncher(pubAckPacket);
                         }
@@ -270,6 +277,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                         {
                             throw new HiveMQttClientException("Received PubAck with an unknown packet identifier: ¯\\_(ツ)_/¯");
                         }
+
                         this.OnPubAckReceivedEventLauncher(pubAckPacket);
 
                         break;
@@ -304,26 +312,25 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                         PubCompPacket pubCompResponsePacket;
                         if (this.transactionQueue.TryGetValue(pubRelPacket.PacketIdentifier, out var pubRelQoS2Chain))
                         {
+                            // Send a PUBCOMP
+                            pubCompResponsePacket = new PubCompPacket(pubRelPacket.PacketIdentifier, PubCompReasonCode.Success);
                         }
                         else
                         {
                             // Send a PUBCOMP with PacketIdentifierNotFound
                             pubCompResponsePacket = new PubCompPacket(pubRelPacket.PacketIdentifier, PubCompReasonCode.PacketIdentifierNotFound);
-                            this.sendQueue.Enqueue(pubCompResponsePacket);
                         }
 
+                        this.sendQueue.Enqueue(pubCompResponsePacket);
                         this.OnPubRelReceivedEventLauncher(pubRelPacket);
                         break;
                     case PubCompPacket pubCompPacket:
                         Trace.WriteLine("<-- PubComp");
-                        if (this.transactionQueue.Remove(pubCompPacket.PacketIdentifier, out var pubcompQoS2Chain))
-                        {
-
-                        }
-                        else
+                        if (!this.transactionQueue.Remove(pubCompPacket.PacketIdentifier, out var pubcompQoS2Chain))
                         {
                             throw new HiveMQttClientException("Received PubComp with an unknown packet identifier: ¯\\_(ツ)_/¯");
                         }
+
                         this.OnPubCompReceivedEventLauncher(pubCompPacket);
 
                         break;
@@ -334,7 +341,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 } // switch (packet)
             } // while
 
-            Trace.WriteLine($"{Thread.CurrentThread.ManagedThreadId}: TrafficInflowProcessor Exiting...{this.connectState}");
+            Trace.WriteLine($"{Environment.CurrentManagedThreadId}: TrafficInflowProcessor Exiting...{this.connectState}");
 
             return true;
         });

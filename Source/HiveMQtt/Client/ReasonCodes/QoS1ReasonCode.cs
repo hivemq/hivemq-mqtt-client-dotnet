@@ -1,6 +1,7 @@
 namespace HiveMQtt.Client.ReasonCodes;
 
 using HiveMQtt.MQTT5.ReasonCodes;
+using HiveMQtt.Client.Results;
 
 /// <summary>
 /// Reason codes for QoS 1 publishes.
