@@ -24,7 +24,13 @@ Steps to reproduce the behavior:
 
 ### Environment
 
-Where are you running/using this client?  Please specify execution environment such as device, operating system and development environment.
+Where are you running/using this client?
+
+What version of this client are you using?
+
+Operating System?
+
+Hardware or Device?
 
 ### Screenshots
 
