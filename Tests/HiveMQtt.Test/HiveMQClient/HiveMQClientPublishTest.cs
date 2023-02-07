@@ -45,7 +45,8 @@ public class HiveMQClientPublishTest
 
         var msg = new string(/*lang=json,strict*/ "{\"interference\": \"1029384\"}");
         var result = await client.PublishAsync("tests/MostBasicPublishWithQoS1Async", msg, MQTT5.Types.QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
-        Assert.Equal((int)QoS1ReasonCode.NoMatchingSubscribers, (int)result.QoS1ReasonCode);
+        Assert.NotNull(result.QoS1ReasonCode);
+        Assert.Equal(PubAckReasonCode.NoMatchingSubscribers, result?.QoS1ReasonCode);
 
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
@@ -60,7 +61,8 @@ public class HiveMQClientPublishTest
 
         var msg = new string(/*lang=json,strict*/ "{\"interference\": \"1029384\"}");
         var result = await client.PublishAsync("tests/MostBasicPublishWithQoS2Async", msg, MQTT5.Types.QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
-        Assert.Equal((int)QoS2ReasonCode.NoMatchingSubscribers, (int)result.QoS2ReasonCode);
+        Assert.NotNull(result.QoS2ReasonCode);
+        Assert.Equal(PubRecReasonCode.NoMatchingSubscribers, result?.QoS2ReasonCode);
 
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);

@@ -74,7 +74,7 @@ public class ControlPacketTest : ControlPacket
 
         // Empty String
         stream = new MemoryStream(2);
-        stringCandidate = "";
+        stringCandidate = string.Empty;
         EncodeUTF8String(stream, stringCandidate);
         buffer = stream.ToArray();
 
