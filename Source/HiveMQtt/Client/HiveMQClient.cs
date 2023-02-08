@@ -33,12 +33,16 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <inheritdoc />
     public Dictionary<string, string> LocalStore { get; } = new();
 
+    /// <inheritdoc />
     public HiveMQClientOptions Options { get; set; }
 
+    /// <inheritdoc />
     public List<Subscription> Subscriptions { get; } = new();
 
+    /// <inheritdoc />
     internal MQTT5Properties? ConnectionProperties { get; }
 
+    /// <inheritdoc />
     public bool IsConnected() => this.connectState == ConnectState.Connected;
 
     /// <inheritdoc />
@@ -156,11 +160,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         return true;
     }
 
-    /// <summary>
-    /// Publish a message to an MQTT topic.
-    /// </summary>
-    /// <param name="message">The <seealso cref="MQTT5PublishMessage"/> for the Publish.</param>
-    /// <returns>A <seealso cref="PublishResult"/> representing the result of the publish operation.</returns>
+    /// <inheritdoc />
     public async Task<PublishResult> PublishAsync(MQTT5PublishMessage message)
     {
         message.Validate();
@@ -216,16 +216,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         throw new HiveMQttClientException("Invalid QoS value.");
     }
 
-    /// <summary>
-    /// Publish a message to an MQTT topic.
-    /// <para>
-    /// This is a convenience method that routes to <seealso cref="PublishAsync(MQTT5PublishMessage)"/>.
-    /// </para>
-    /// </summary>
-    /// <param name="topic">The string topic to publish to.</param>
-    /// <param name="payload">The string message to publish.</param>
-    /// <param name="qos">The <seealso cref="QualityOfService"/> to use for the publish.</param>
-    /// <returns>A <seealso cref="PublishResult"/> representing the result of the publish operation.</returns>
+    /// <inheritdoc />
     public async Task<PublishResult> PublishAsync(string topic, string payload, QualityOfService qos = QualityOfService.AtMostOnceDelivery)
     {
         var message = new MQTT5PublishMessage
@@ -238,16 +229,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         return await this.PublishAsync(message).ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// Publish a message to an MQTT topic.
-    /// <para>
-    /// This is a convenience method that routes to <seealso cref="PublishAsync(MQTT5PublishMessage)"/>.
-    /// </para>
-    /// </summary>
-    /// <param name="topic">The string topic to publish to.</param>
-    /// <param name="payload">The UTF-8 encoded array of bytes to publish.</param>
-    /// <param name="qos">The <seealso cref="QualityOfService"/> to use for the publish.</param>
-    /// <returns>A <seealso cref="PublishResult"/> representing the result of the publish operation.</returns>
+    /// <inheritdoc />
     public async Task<PublishResult> PublishAsync(string topic, byte[] payload, QualityOfService qos = QualityOfService.AtMostOnceDelivery)
     {
         // Note: Should we validate encoding here?
@@ -261,18 +243,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         return await this.PublishAsync(message).ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// Subscribe with a single topic filter on the MQTT broker.
-    /// </summary>
-    /// <example>
-    /// Usage example:
-    /// <code>
-    /// var result = await client.SubscribeAsync("my/topic", QualityOfService.AtLeastOnceDelivery);
-    /// </code>
-    /// </example>
-    /// <param name="topic">The topic filter to subscribe to.</param>
-    /// <param name="qos">The <seealso cref="QualityOfService">QualityOfService</seealso> level to subscribe with.</param>
-    /// <returns>SubscribeResult reflecting the result of the operation.</returns>
+    /// <inheritdoc />
     public async Task<SubscribeResult> SubscribeAsync(string topic, QualityOfService qos = QualityOfService.AtMostOnceDelivery)
     {
         var options = new SubscribeOptions();
@@ -283,20 +254,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         return await this.SubscribeAsync(options).ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// Subscribe with SubscribeOptions on the MQTT broker.
-    /// </summary>
-    /// <example>
-    /// Usage example:
-    /// <code>
-    /// var options = new SubscribeOptions();
-    /// options.TopicFilters.Add(new TopicFilter { Topic = "foo", QoS = QualityOfService.AtLeastOnceDelivery });
-    /// options.TopicFilters.Add(new TopicFilter { Topic = "bar", QoS = QualityOfService.AtMostOnceDelivery });
-    /// var result = await client.SubscribeAsync(options);
-    /// </code>
-    /// </example>
-    /// <param name="options">The options for the subscribe request.</param>
-    /// <returns>SubscribeResult reflecting the result of the operation.</returns>
+    /// <inheritdoc />
     public async Task<SubscribeResult> SubscribeAsync(SubscribeOptions options)
     {
         // Fire the corresponding event
@@ -348,12 +306,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         return subscribeResult;
     }
 
-    /// <summary>
-    /// Unsubscribe from a single topic filter on the MQTT broker.
-    /// </summary>
-    /// <exception cref="HiveMQttClientException">Thrown if no subscription is found for the topic.</exception>
-    /// <param name="topic">The topic filter to unsubscribe from.</param>
-    /// <returns>UnsubscribeResult reflecting the result of the operation.</returns>
+    /// <inheritdoc />
     public async Task<UnsubscribeResult> UnsubscribeAsync(string topic)
     {
         foreach (var subscription in this.Subscriptions)
@@ -367,12 +320,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         throw new HiveMQttClientException("No subscription found for topic: " + topic);
     }
 
-    /// <summary>
-    /// Unsubscribe from a single topic filter on the MQTT broker.
-    /// </summary>
-    /// <exception cref="HiveMQttClientException">Thrown if no subscription is found for the topic.</exception>
-    /// <param name="subscription">The subscription from client.Subscriptions to unsubscribe from.</param>
-    /// <returns>UnsubscribeResult reflecting the result of the operation.</returns>
+    /// <inheritdoc />
     public async Task<UnsubscribeResult> UnsubscribeAsync(Subscription subscription)
     {
         if (!this.Subscriptions.Contains(subscription))
@@ -384,12 +332,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         return await this.UnsubscribeAsync(subscriptions).ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// Unsubscribe from a single topic filter on the MQTT broker.
-    /// </summary>
-    /// <exception cref="HiveMQttClientException">Thrown if no subscription is found for the topic.</exception>
-    /// <param name="subscriptions">The subscriptions from client.Subscriptions to unsubscribe from.</param>
-    /// <returns>UnsubscribeResult reflecting the result of the operation.</returns>
+    /// <inheritdoc />
     public async Task<UnsubscribeResult> UnsubscribeAsync(List<Subscription> subscriptions)
     {
         // Fire the corresponding event

@@ -1,5 +1,6 @@
 namespace HiveMQtt.Client.ReasonCodes;
 
+using HiveMQtt.Client.Results;
 using HiveMQtt.MQTT5.ReasonCodes;
 
 /// <summary>
