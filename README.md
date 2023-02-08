@@ -53,7 +53,7 @@ var client = new HiveMQClient(options);
 var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 ```
 
-### Subscribing
+### Basic Subscribe & Publish
 
 ```c#
 using HiveMQtt.Client;
@@ -69,11 +69,13 @@ client.OnMessageReceived += (sender, args) =>
 };
 
 // Subscribe
-var subResult = await client.SubscribeAsync("critical/message").ConfigureAwait(false);
+await client.SubscribeAsync("instrument/x9284/boston").ConfigureAwait(false);
 
-// ???
+await client.PublishAsync(
+                "core/dynamic_graph/entity/227489", // Topic to publish to
+                "{'2023': '👍'}"                    // Message to publish
+                ).ConfigureAwait(false);
 
-// Profit
 ```
 
 #### Subscribe to Multiple Topics At Once With Varying QoS Levels
@@ -93,16 +95,7 @@ var result = await client.SubscribeAsync(options);
 // `result.Subscriptions[0].ReasonCode`
 ```
 
-### Simple Publishing
-
-```c#
-await client.PublishAsync(
-                "core/graph",    // Topic to publish to
-                "{'2023': '👍'}" // Message to publish
-                ).ConfigureAwait(false);
-
-```
-
+For more examples that you can easily copy/paste, see our [Examples](./Examples/).
 
 ### General Events
 
