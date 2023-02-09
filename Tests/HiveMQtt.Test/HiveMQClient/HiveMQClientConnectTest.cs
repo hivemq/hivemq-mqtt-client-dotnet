@@ -83,16 +83,26 @@ public class HiveMQClientConnectTest
         // Client Events
         client.BeforeConnect += BeforeConnectHandler;
         client.AfterConnect += AfterConnectHandler;
+        client.BeforeDisconnect += BeforeDisconnectHandler;
+        client.AfterDisconnect += AfterDisconnectHandler;
 
         // Packet Events
         client.OnConnectSent += OnConnectSentHandler;
         client.OnConnAckReceived += OnConnAckReceivedHandler;
 
+        // Set up TaskCompletionSource to wait for event handlers to finish
+        var taskCompletionSource = new TaskCompletionSource<bool>();
+        client.OnDisconnectSent += (sender, args) =>
+        {
+            taskCompletionSource.SetResult(true);
+        };
+
+        // Connect and Disconnect
         var result = await client.ConnectAsync().ConfigureAwait(false);
-        Assert.NotNull(client);
+        await client.DisconnectAsync().ConfigureAwait(false);
 
         // Wait for event handlers to finish
-        await Task.Delay(100).ConfigureAwait(false);
+        await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
 
         // Assert that all Events were called
         Assert.True(client.LocalStore.ContainsKey("BeforeConnectHandlerCalled"));
@@ -155,5 +165,51 @@ public class HiveMQClientConnectTest
         }
 
         Assert.NotNull(eventArgs.ConnectResult);
+    }
+
+    private static void BeforeDisconnectHandler(object? sender, BeforeDisconnectEventArgs eventArgs)
+    {
+        Assert.NotNull(sender);
+        if (sender is not null)
+        {
+            var client = (HiveMQClient)sender;
+            client.LocalStore.Add("BeforeDisconnectHandlerCalled", "true");
+        }
+
+        Assert.NotNull(eventArgs.Options);
+    }
+
+    private static void AfterDisconnectHandler(object? sender, AfterDisconnectEventArgs eventArgs)
+    {
+        Assert.NotNull(sender);
+        if (sender is not null)
+        {
+            var client = (HiveMQClient)sender;
+            client.LocalStore.Add("AfterDisconnectHandlerCalled", "true");
+        }
+    }
+
+    private static void OnDisconnectSentHandler(object? sender, OnDisconnectSentEventArgs eventArgs)
+    {
+        Assert.NotNull(sender);
+        if (sender is not null)
+        {
+            var client = (HiveMQClient)sender;
+            client.LocalStore.Add("OnDisconnectSentHandlerCalled", "true");
+        }
+
+        Assert.NotNull(eventArgs.DisconnectPacket);
+    }
+
+    private static void OnDisconnectReceivedHandler(object? sender, OnDisconnectReceivedEventArgs eventArgs)
+    {
+        Assert.NotNull(sender);
+        if (sender is not null)
+        {
+            var client = (HiveMQClient)sender;
+            client.LocalStore.Add("OnDisconnectReceivedHandlerCalled", "true");
+        }
+
+        Assert.NotNull(eventArgs.DisconnectPacket);
     }
 }

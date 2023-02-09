@@ -55,6 +55,30 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     }
 
     /// <summary>
+    /// Event that is fired before the client connects to the broker.
+    /// </summary>
+    public event EventHandler<BeforeDisconnectEventArgs> BeforeDisconnect = new((client, e) => { });
+
+    protected virtual void BeforeDisconnectEventLauncher(HiveMQClientOptions options)
+    {
+        var eventArgs = new BeforeDisconnectEventArgs(options);
+        Trace.WriteLine("BeforeDisconnectEventLauncher");
+        this.BeforeDisconnect?.Invoke(this, eventArgs);
+    }
+
+    /// <summary>
+    /// Event that is fired after the client connects to the broker.
+    /// </summary>
+    public event EventHandler<AfterDisconnectEventArgs> AfterDisconnect = new((client, e) => { });
+
+    protected virtual void AfterDisconnectEventLauncher(bool result)
+    {
+        var eventArgs = new AfterDisconnectEventArgs(result);
+        Trace.WriteLine("AfterDisconnectEventLauncher");
+        this.AfterDisconnect?.Invoke(this, eventArgs);
+    }
+
+    /// <summary>
     /// Event that is fired before the client sends a subscribe request.
     /// </summary>
     public event EventHandler<BeforeSubscribeEventArgs> BeforeSubscribe = new((client, e) => { });
