@@ -17,6 +17,7 @@ namespace HiveMQtt.MQTT5.Packets;
 
 using System.Buffers;
 using HiveMQtt.MQTT5.ReasonCodes;
+using HiveMQtt.MQTT5.Exceptions;
 
 /// <summary>
 /// An MQTT PUBACK Control Packet as defined in:
@@ -79,10 +80,13 @@ public class PubAckPacket : ControlPacket
         reader.Advance(2);
 
         var packetIdentifier = DecodeTwoByteInteger(ref reader);
-        if (packetIdentifier != null)
+        if (packetIdentifier != null && (packetIdentifier.Value > 0 && packetIdentifier.Value <= ushort.MaxValue))
         {
-            // FIXME: validate packet identifier value (e.g. not zero)
             this.PacketIdentifier = packetIdentifier.Value;
+        }
+        else
+        {
+            throw new MQTTProtocolException("Invalid packet identifier");
         }
 
         if (reader.TryRead(out var reasonCode))
@@ -92,7 +96,5 @@ public class PubAckPacket : ControlPacket
 
         var propertyLength = DecodeVariableByteInteger(ref reader);
         _ = this.DecodeProperties(ref reader, propertyLength);
-
-        // TODO: Handle malformed packets, decoding errors
     }
 }

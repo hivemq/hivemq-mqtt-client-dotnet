@@ -32,9 +32,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     // The outgoing packet queue.  Packets queued to be sent.
     private readonly ConcurrentQueue<ControlPacket> sendQueue = new();
 
-    // The incoming packets queue.  Packets to be processed.
-    private readonly ConcurrentQueue<ControlPacket> receiveQueue = new();
-
     // Transactional packets indexed by packet identifer
     private readonly ConcurrentDictionary<int, List<ControlPacket>> transactionQueue = new();
 
@@ -239,7 +236,10 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     case ConnAckPacket connAckPacket:
                         Trace.WriteLine("<-- ConnAck");
                         this.OnConnAckReceivedEventLauncher(connAckPacket);
-                        this.receiveQueue.Enqueue(connAckPacket);
+                        break;
+                    case DisconnectPacket disconnectPacket:
+                        Trace.WriteLine("<-- Disconnect");
+                        this.OnDisconnectReceivedEventLauncher(disconnectPacket);
                         break;
                     case PingRespPacket pingRespPacket:
                         Trace.WriteLine("<-- PingResp");

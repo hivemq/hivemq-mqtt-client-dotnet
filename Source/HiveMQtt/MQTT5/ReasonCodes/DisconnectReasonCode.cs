@@ -52,6 +52,36 @@ public enum DisconnectReasonCode
     ImplementationSpecificError = 0x83,
 
     /// <summary>
+    /// The request is not authorized.
+    /// </summary>
+    NotAuthorized = 0x87,
+
+    /// <summary>
+    /// The Server is busy and cannot continue processing requests from this Client.
+    /// </summary>
+    ServerBusy = 0x89,
+
+    /// <summary>
+    /// The Server is shutting down.
+    /// </summary>
+    ServerShuttingDown = 0x8A,
+
+    /// <summary>
+    /// The Connection is closed because no packet has been received for 1.5 times the Keep Alive time.
+    /// </summary>
+    KeepAliveTimeout = 0x8D,
+
+    /// <summary>
+    /// Another Connection using the same ClientID has connected causing this Connection to be closed.
+    /// </summary>
+    SessionTakenOver = 0x8E,
+
+    /// <summary>
+    /// Another Connection using the same ClientID has connected causing this Connection to be closed.
+    /// </summary>
+    TopicFilterInvalid = 0x8F,
+
+    /// <summary>
     /// The Topic Name is correctly formed, but is not accepted by this Client or Server.
     /// </summary>
     TopicNameInvalid = 0x90,
@@ -90,4 +120,49 @@ public enum DisconnectReasonCode
     /// The payload format does not match the one specified by the Payload Format Indicator.
     /// </summary>
     PayloadFormatInvalid = 0x99,
+
+    /// <summary>
+    /// The Server has does not support retained messages.
+    /// </summary>
+    RetainNotSupported = 0x9A,
+
+    /// <summary>
+    /// The Client specified a QoS greater than the QoS specified in a Maximum QoS in the CONNACK.
+    /// </summary>
+    QoSNotSupported = 0x9B,
+
+    /// <summary>
+    /// The Client should temporarily change its Server.
+    /// </summary>
+    UseAnotherServer = 0x9C,
+
+    /// <summary>
+    /// The Server is moved and the Client should permanently change its server location.
+    /// </summary>
+    ServerMoved = 0x9D,
+
+    /// <summary>
+    /// The Server does not support shared subscriptions.
+    /// </summary>
+    SharedSubscriptionsNotSupported = 0x9E,
+
+    /// <summary>
+    /// This connection is closed because the connection rate is too high.
+    /// </summary>
+    ConnectionRateExceeded = 0x9F,
+
+    /// <summary>
+    /// The maximum connection time authorized for this connection has been exceeded.
+    /// </summary>
+    MaximumConnectTime = 0xA0,
+
+    /// <summary>
+    /// The Server does not support Subscription Identifiers; the subscription is not accepted.
+    /// </summary>
+    SubscriptionIdentifiersNotSupported = 0xA1,
+
+    /// <summary>
+    /// The Server does not support Wildcard Subscriptions; the subscription is not accepted.
+    /// </summary>
+    WildcardSubscriptionsNotSupported = 0xA2,
 }

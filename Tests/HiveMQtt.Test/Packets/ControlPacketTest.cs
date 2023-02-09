@@ -165,7 +165,4 @@ public class ControlPacketTest : ControlPacket
         Assert.NotNull(decodedInteger);
         Assert.Equal(UInt32.MaxValue, decodedInteger);
     }
-
-
-
 }

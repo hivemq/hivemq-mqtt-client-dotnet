@@ -126,7 +126,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         if (this.connectState != ConnectState.Connected)
         {
-            // log.Error("Disconnect failed.  Client is not connected.");
             return false;
         }
 
@@ -168,10 +167,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         // Close the socket
         this.CloseSocket();
 
-        // Clear the queues
+        // Clear the send queue
         this.sendQueue.Clear();
-        this.receiveQueue.Clear();
-
         return true;
     }
 
