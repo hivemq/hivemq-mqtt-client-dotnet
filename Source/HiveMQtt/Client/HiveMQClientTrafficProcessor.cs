@@ -65,7 +65,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     // Send PingReq
                     var writeResult = await this.writer.WriteAsync(PingReqPacket.Encode()).ConfigureAwait(false);
-                    var flushResult = await this.writer.FlushAsync().ConfigureAwait(false);
                     this.OnPingReqSentEventLauncher(new PingReqPacket());
                     stopWatch.Restart();
                 }
