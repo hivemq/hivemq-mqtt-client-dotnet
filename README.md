@@ -89,11 +89,13 @@ options.TopicFilters.Add(new TopicFilter { Topic = "foo/boston", QoS = QualityOf
 options.TopicFilters.Add(new TopicFilter { Topic = "bar/landshut", QoS = QualityOfService.AtMostOnceDelivery });
 
 var result = await client.SubscribeAsync(options);
-
-// `result.Subscriptions` contains the list of subscriptions (2)
-// each `Subscription` has a resulting `ReasonCode` that represents the Subscribe result
-// `result.Subscriptions[0].ReasonCode`
 ```
+
+
+* `result.Subscriptions` contains the list of subscriptions made with this call
+* `client.Subscriptions` is updated with complete list of subscriptions made up to this point
+* each `Subscription` object has a resulting `ReasonCode` that represents the Subscribe result in `result.Subscriptions[0].ReasonCode`
+
 
 For more examples that you can easily copy/paste, see our [Examples](./Examples/).
 
