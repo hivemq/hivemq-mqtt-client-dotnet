@@ -3,9 +3,13 @@
         "Unsub"
     ],
     "cSpell.words": [
+        "CONNACK",
+        "PUBACK",
         "PUBCOMP",
         "PUBREC",
         "PUBREL",
+        "SUBACK",
+        "UNSUBACK",
         "Xunit"
     ]
 }

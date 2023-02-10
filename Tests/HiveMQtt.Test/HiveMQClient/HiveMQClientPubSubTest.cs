@@ -97,7 +97,6 @@ public class HiveMQClientPubSubTest
         {
             Assert.Equal(QualityOfService.ExactlyOnceDelivery, args.PublishMessage.QoS);
             Assert.Equal("tests/QoS1PubSubAsync", args.PublishMessage.Topic);
-            // FIXME: Payload garbled
             Assert.Equal("{\"interference\": \"1029384\"}", args.PublishMessage.PayloadAsString);
 
             // Disconnect after receiving the message

@@ -1,7 +1,23 @@
+/*
+ * Copyright 2022-present HiveMQ and the HiveMQ Community
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 namespace HiveMQtt.MQTT5.Packets;
 
 using System.Buffers;
 using HiveMQtt.MQTT5.ReasonCodes;
+using HiveMQtt.MQTT5.Exceptions;
 
 /// <summary>
 /// An MQTT PUBACK Control Packet as defined in:
@@ -64,10 +80,13 @@ public class PubAckPacket : ControlPacket
         reader.Advance(2);
 
         var packetIdentifier = DecodeTwoByteInteger(ref reader);
-        if (packetIdentifier != null)
+        if (packetIdentifier != null && (packetIdentifier.Value > 0 && packetIdentifier.Value <= ushort.MaxValue))
         {
-            // FIXME: validate packet identifier value (e.g. not zero)
             this.PacketIdentifier = packetIdentifier.Value;
+        }
+        else
+        {
+            throw new MQTTProtocolException("Invalid packet identifier");
         }
 
         if (reader.TryRead(out var reasonCode))
@@ -77,8 +96,5 @@ public class PubAckPacket : ControlPacket
 
         var propertyLength = DecodeVariableByteInteger(ref reader);
         _ = this.DecodeProperties(ref reader, propertyLength);
-
-        // TODO: Handle malformed packets, decoding errors
     }
-
 }

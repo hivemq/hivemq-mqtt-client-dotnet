@@ -1,8 +1,23 @@
+/*
+ * Copyright 2022-present HiveMQ and the HiveMQ Community
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 namespace HiveMQtt.MQTT5.Packets;
 
-using HiveMQtt.MQTT5.ReasonCodes;
 using System.Buffers;
 using System.IO;
+using HiveMQtt.MQTT5.ReasonCodes;
 
 /// <summary>
 /// An MQTT Disconnect Control Packet as defined in:
@@ -10,15 +25,41 @@ using System.IO;
 /// </summary>
 public class DisconnectPacket : ControlPacket
 {
-
     public DisconnectPacket()
     {
     }
+
     public DisconnectPacket(ReadOnlySequence<byte> packetData) => this.Decode(packetData);
 
     public override ControlPacketType ControlPacketType => ControlPacketType.Disconnect;
 
     public DisconnectReasonCode DisconnectReasonCode { get; set; }
+
+    /// <summary>
+    /// Encode this packet to be sent on the wire.
+    /// </summary>
+    /// <returns>An array of bytes ready to be sent.</returns>
+    public static byte[] Encode()
+    {
+        var stream = new MemoryStream(100)
+        {
+            Position = 2,
+        };
+
+        // Variable Header - starts at byte 2
+        stream.WriteByte((int)DisconnectReasonCode.NormalDisconnection);
+
+        // Disconnect has no payload
+
+        // Fixed Header - Add to the beginning of the stream
+        var remainingLength = stream.Length - 2;
+
+        stream.Position = 0;
+        stream.WriteByte((byte)ControlPacketType.Disconnect << 4);
+        EncodeVariableByteInteger(stream, (int)remainingLength);
+
+        return stream.ToArray();
+    }
 
     public void Decode(ReadOnlySequence<byte> packetData)
     {
@@ -53,32 +94,5 @@ public class DisconnectPacket : ControlPacket
                 }
             }
         }
-    }
-
-    /// <summary>
-    /// Encode this packet to be sent on the wire.
-    /// </summary>
-    /// <returns>An array of bytes ready to be sent.</returns>
-    public byte[] Encode()
-    {
-
-        var stream = new MemoryStream(100)
-        {
-            Position = 2,
-        };
-
-        // Variable Header - starts at byte 2
-        stream.WriteByte((int)DisconnectReasonCode.NormalDisconnection);
-
-        // Disconnect has no payload
-
-        // Fixed Header - Add to the beginning of the stream
-        var remainingLength = stream.Length - 2;
-
-        stream.Position = 0;
-        stream.WriteByte((byte)ControlPacketType.Disconnect << 4);
-        EncodeVariableByteInteger(stream, (int)remainingLength);
-
-        return stream.ToArray();
     }
 }

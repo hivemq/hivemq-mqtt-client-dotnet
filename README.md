@@ -53,7 +53,7 @@ var client = new HiveMQClient(options);
 var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 ```
 
-### Subscribing
+### Basic Subscribe & Publish
 
 ```c#
 using HiveMQtt.Client;
@@ -69,11 +69,13 @@ client.OnMessageReceived += (sender, args) =>
 };
 
 // Subscribe
-var subResult = await client.SubscribeAsync("critical/message").ConfigureAwait(false);
+await client.SubscribeAsync("instrument/x9284/boston").ConfigureAwait(false);
 
-// ???
+await client.PublishAsync(
+                "core/dynamic_graph/entity/227489", // Topic to publish to
+                "{'2023': '👍'}"                    // Message to publish
+                ).ConfigureAwait(false);
 
-// Profit
 ```
 
 #### Subscribe to Multiple Topics At Once With Varying QoS Levels
@@ -87,22 +89,15 @@ options.TopicFilters.Add(new TopicFilter { Topic = "foo/boston", QoS = QualityOf
 options.TopicFilters.Add(new TopicFilter { Topic = "bar/landshut", QoS = QualityOfService.AtMostOnceDelivery });
 
 var result = await client.SubscribeAsync(options);
-
-// `result.Subscriptions` contains the list of subscriptions (2)
-// each `Subscription` has a resulting `ReasonCode` that represents the Subscribe result
-// `result.Subscriptions[0].ReasonCode`
 ```
 
-### Simple Publishing
 
-```c#
-await client.PublishAsync(
-                "core/graph",    // Topic to publish to
-                "{'2023': '👍'}" // Message to publish
-                ).ConfigureAwait(false);
+* `result.Subscriptions` contains the list of subscriptions made with this call
+* `client.Subscriptions` is updated with complete list of subscriptions made up to this point
+* each `Subscription` object has a resulting `ReasonCode` that represents the Subscribe result in `result.Subscriptions[0].ReasonCode`
 
-```
 
+For more examples that you can easily copy/paste, see our [Examples](./Examples/).
 
 ### General Events
 

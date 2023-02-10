@@ -15,11 +15,11 @@
  */
 namespace HiveMQtt.Client.Events;
 
-using HiveMQtt.MQTT5.Packets;
+using HiveMQtt.Client.Results;
 
-public class OnConnectSentEventArgs : EventArgs
+public class AfterDisconnectEventArgs : EventArgs
 {
-    public OnConnectSentEventArgs(ConnectPacket connectPacket) => this.ConnectPacket = connectPacket;
+    public AfterDisconnectEventArgs(bool result) => this.DisconnectResult = result;
 
-    public ConnectPacket ConnectPacket { get; set; }
+    public bool DisconnectResult { get; set; }
 }
