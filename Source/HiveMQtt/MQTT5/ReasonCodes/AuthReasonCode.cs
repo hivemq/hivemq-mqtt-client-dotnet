@@ -29,7 +29,7 @@ public enum AuthReasonCode
     /// <summary>
     /// Continue the authentication with another step.
     /// </summary>
-    ContinueAuthenticaton = 0x18,
+    ContinueAuthentication = 0x18,
 
     /// <summary>
     /// Initiate a re-authentication.

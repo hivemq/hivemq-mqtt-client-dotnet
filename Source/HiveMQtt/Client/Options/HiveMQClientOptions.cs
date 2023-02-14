@@ -37,6 +37,7 @@ public class HiveMQClientOptions
         this.SessionExpiryInterval = 300;
         this.CleanStart = true;
         this.UserProperties = new Dictionary<string, string>();
+        this.UseTLS = false;
     }
 
     // Client Identifier to be used in the Client.  Will be set automatically if not specified.
@@ -141,6 +142,11 @@ public class HiveMQClientOptions
     /// Gets or sets an array of bytes containing the authentication data used for extended authentication.
     /// </summary>
     public byte[]? AuthenticationData { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the MQTT client should use TLS.
+    /// </summary>
+    public bool UseTLS { get; set; }
 
     /// <summary>
     /// Generate a semi-random client identifier to be used in <c>Client</c> connections.

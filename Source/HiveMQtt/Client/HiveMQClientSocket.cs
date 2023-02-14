@@ -17,13 +17,17 @@ namespace HiveMQtt.Client;
 
 using System.IO.Pipelines;
 using System.Net;
+using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Cryptography.X509Certificates;
+
+using HiveMQtt.Client.Exceptions;
 
 /// <inheritdoc />
 public partial class HiveMQClient : IDisposable, IHiveMQClient
 {
     private Socket? socket;
-    private NetworkStream? stream;
+    private Stream? stream;
     private PipeReader? reader;
     private PipeWriter? writer;
 
@@ -45,12 +49,18 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         if (!socketConnected || this.socket == null)
         {
-            // FIXME: Use a real exception
-            throw new InvalidOperationException("Failed to connect socket");
+            throw new HiveMQttClientException("Failed to connect socket");
+        }
+
+        // Setup the stream
+        this.stream = new NetworkStream(this.socket);
+        if (this.Options.UseTLS)
+        {
+            this.stream = new SslStream(this.stream, false, HiveMQClient.ValidateServerCertificate, null);
+            await ((SslStream)this.stream).AuthenticateAsClientAsync(this.Options.Host).ConfigureAwait(false);
         }
 
         // Setup the Pipeline
-        this.stream = new NetworkStream(this.socket);
         this.reader = PipeReader.Create(this.stream);
         this.writer = PipeWriter.Create(this.stream);
 
@@ -77,5 +87,22 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         this.socket?.Close();
 
         return true;
+    }
+
+    internal static bool ValidateServerCertificate(
+        object sender,
+        X509Certificate certificate,
+        X509Chain chain,
+        SslPolicyErrors sslPolicyErrors)
+    {
+        if (sslPolicyErrors == SslPolicyErrors.None)
+        {
+            return true;
+        }
+
+        Console.WriteLine("Certificate error: {0}", sslPolicyErrors);
+
+        // Do not allow this client to communicate with unauthenticated servers.
+        return false;
     }
 }

@@ -24,7 +24,7 @@ using HiveMQtt.Client.Results;
 using HiveMQtt.MQTT5.Types;
 
 /// <summary>
-/// Some interface.
+/// The HiveMQClient interface.
 /// </summary>
 public interface IHiveMQClient : IDisposable
 {
