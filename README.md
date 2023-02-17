@@ -6,8 +6,9 @@
 
 # The Spectacular (BETA) MQTT Client for .NET
 
-[![Semantic Versions](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--versions-e10079.svg)](https://github.com/hivemq/hivemq-mqtt-client-dotnet/releases)
-[![License](https://img.shields.io/github/license/hivemq/hivemq-mqtt-client-dotnet)](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/LICENSE)
+[![GitHub Release](https://img.shields.io/github/v/release/hivemq/hivemq-mqtt-client-dotnet?style=for-the-badge)](https://github.com/hivemq/hivemq-mqtt-client-dotnet/releases)
+[![GitHub Workflow Status (branch)](https://img.shields.io/github/actions/workflow/status/hivemq/hivemq-mqtt-client-dotnet/.github/workflows/check.yml?branch=main&style=for-the-badge)](https://github.com/hivemq/hivemq-mqtt-client-dotnet/actions/workflows/check.yml?query=branch%3Amain)
+[![License](https://img.shields.io/github/license/hivemq/hivemq-mqtt-client-dotnet?style=for-the-badge)](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/LICENSE)
 
 _This .NET MQTT client was put together with love from the HiveMQ team but is still in BETA.  As such some things may not work completely until it matures and although unlikely, APIs may change slightly before version 1.0._
 
