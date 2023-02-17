@@ -74,7 +74,6 @@ public class PubCompPacket : ControlPacket
         var packetIdentifier = DecodeTwoByteInteger(ref reader);
         if (packetIdentifier != null)
         {
-            // FIXME: validate packet identifier value (e.g. not zero)
             this.PacketIdentifier = packetIdentifier.Value;
         }
 

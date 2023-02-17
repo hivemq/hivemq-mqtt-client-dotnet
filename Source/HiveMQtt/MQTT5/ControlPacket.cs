@@ -371,8 +371,7 @@ public abstract class ControlPacket
             }
             else
             {
-                // FIXME: Raise Protocol Error
-                // Or log something
+                throw new MQTTProtocolException($"Invalid boolean value. {byteValue} is not a valid boolean value.");
             }
         }
 
