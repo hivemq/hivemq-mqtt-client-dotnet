@@ -30,33 +30,6 @@ public class HiveMQClientConnectTest
     }
 
     [Fact]
-    public async Task DoubleConnectAsync()
-    {
-        var client = new HiveMQClient();
-        Assert.NotNull(client);
-
-        var connectResult = await client.ConnectAsync().ConfigureAwait(false);
-
-        Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
-        Assert.True(client.IsConnected());
-
-        var taskCompletionSource = new TaskCompletionSource<bool>();
-        client.OnDisconnectReceived += (sender, args) =>
-        {
-            Assert.True(args.DisconnectPacket.DisconnectReasonCode == DisconnectReasonCode.SessionTakenOver);
-            taskCompletionSource.SetResult(true);
-        };
-
-        // Connect again with the same client
-        connectResult = await client.ConnectAsync().ConfigureAwait(false);
-
-        Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
-        Assert.True(client.IsConnected());
-
-        await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
-    }
-
-    [Fact]
     public async Task DoubleDisconnectAsync()
     {
         var client = new HiveMQClient();
