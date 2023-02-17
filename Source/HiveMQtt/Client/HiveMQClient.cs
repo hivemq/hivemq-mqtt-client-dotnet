@@ -29,9 +29,7 @@ using HiveMQtt.MQTT5.ReasonCodes;
 using HiveMQtt.MQTT5.Types;
 
 /// <summary>
-/// The excellent, superb and slightly wonderful HiveMQ MQTT Client.
-/// Fully MQTT compliant and compatible with all respectable MQTT Brokers because sharing is caring
-/// and MQTT is awesome.
+/// The excellent, superb and slightly wonderful HiveMQ C# MQTT Client.
 /// </summary>
 public partial class HiveMQClient : IDisposable, IHiveMQClient
 {

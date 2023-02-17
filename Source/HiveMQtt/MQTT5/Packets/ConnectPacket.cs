@@ -58,6 +58,15 @@ public class ConnectPacket : ControlPacket
 
         // Payload
         _ = EncodeUTF8String(stream, this.clientOptions.ClientId);
+        if (this.clientOptions.UserName != null)
+        {
+            _ = EncodeUTF8String(stream, this.clientOptions.UserName);
+        }
+
+        if (this.clientOptions.Password != null)
+        {
+            _ = EncodeUTF8String(stream, this.clientOptions.Password);
+        }
 
         var length = stream.Length - 2;
 
