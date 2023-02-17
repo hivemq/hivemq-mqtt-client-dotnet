@@ -28,6 +28,16 @@ We'd appreciate any feedback you have.  Happy MQTT adventures!
 
 _Do you have a success story with this client?  [Let us know]().  We'd love to feature your story in a blog post or video and you'll get some sweet HiveMQ swag (and publicity) along the way._
 
+## What is this?
+
+MQTT is an [open standard protocol](https://mqtt.org) for publishing and consuming messages from IoT devices all the way up to mainframes.  It's binary, massively performant and easy to use.
+
+This client library is used to publish and consume messages over MQTT.  So you can get a the temperature from a remote sensor, send a control message to a factory robot, tunnel MQTT messages to a Twitter account or anything else you can imagine.
+
+This is the client library that speaks with an MQTT broker that delivers messages to their final destination.  
+
+Need a broker? Sign up for a free broker at [HiveMQ Cloud](https://www.hivemq.com/mqtt-cloud-broker/) and be up and running in a couple minutes.  Connect up to 100 devices - no credit card required.
+
 ## Install
 
 ... via NuGet
