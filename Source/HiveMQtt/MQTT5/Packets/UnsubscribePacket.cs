@@ -58,29 +58,29 @@ public class UnsubscribePacket : ControlPacket
     /// <returns>An array of bytes ready to be sent.</returns>
     public byte[] Encode()
     {
-        var stream = new MemoryStream(100)
+        using(var stream = new MemoryStream())
         {
-            Position = 2,
+            stream.Position = 2;
+
+            // Variable Header - starts at byte 2
+            EncodeTwoByteInteger(stream, this.PacketIdentifier);
+            this.EncodeProperties(stream);
+
+            // Payload
+            foreach (var subscription in this.Subscriptions)
+            {
+                EncodeUTF8String(stream, subscription.TopicFilter.Topic);
+            }
+
+            // Fixed Header
+            stream.Position = 0;
+            var length = stream.Length - 2;
+            var byte1 = (byte)ControlPacketType.Unsubscribe << 4;
+            byte1 |= 0x2;
+
+            stream.WriteByte((byte)byte1);
+            _ = EncodeVariableByteInteger(stream, (int)length);
+            return stream.ToArray();
         };
-
-        // Variable Header - starts at byte 2
-        EncodeTwoByteInteger(stream, this.PacketIdentifier);
-        this.EncodeProperties(stream);
-
-        // Payload
-        foreach (var subscription in this.Subscriptions)
-        {
-            EncodeUTF8String(stream, subscription.TopicFilter.Topic);
-        }
-
-        // Fixed Header
-        stream.Position = 0;
-        var length = stream.Length - 2;
-        var byte1 = (byte)ControlPacketType.Unsubscribe << 4;
-        byte1 |= 0x2;
-
-        stream.WriteByte((byte)byte1);
-        _ = EncodeVariableByteInteger(stream, (int)length);
-        return stream.ToArray();
     }
 }

@@ -41,24 +41,24 @@ public class DisconnectPacket : ControlPacket
     /// <returns>An array of bytes ready to be sent.</returns>
     public static byte[] Encode()
     {
-        var stream = new MemoryStream(100)
+        using(var stream = new MemoryStream(8))
         {
-            Position = 2,
+            stream.Position = 2;
+
+            // Variable Header - starts at byte 2
+            stream.WriteByte((int)DisconnectReasonCode.NormalDisconnection);
+
+            // Disconnect has no payload
+
+            // Fixed Header - Add to the beginning of the stream
+            var remainingLength = stream.Length - 2;
+
+            stream.Position = 0;
+            stream.WriteByte((byte)ControlPacketType.Disconnect << 4);
+            EncodeVariableByteInteger(stream, (int)remainingLength);
+
+            return stream.ToArray();
         };
-
-        // Variable Header - starts at byte 2
-        stream.WriteByte((int)DisconnectReasonCode.NormalDisconnection);
-
-        // Disconnect has no payload
-
-        // Fixed Header - Add to the beginning of the stream
-        var remainingLength = stream.Length - 2;
-
-        stream.Position = 0;
-        stream.WriteByte((byte)ControlPacketType.Disconnect << 4);
-        EncodeVariableByteInteger(stream, (int)remainingLength);
-
-        return stream.ToArray();
     }
 
     public void Decode(ReadOnlySequence<byte> packetData)

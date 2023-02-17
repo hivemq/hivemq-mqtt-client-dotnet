@@ -391,7 +391,13 @@ public abstract class ControlPacket
     protected void EncodeProperties(MemoryStream writer)
     {
         var propertiesLength = 0;
-        var propertyStream = new MemoryStream(100);
+
+        if (writer.Length > int.MaxValue)
+        {
+            throw new ArgumentOutOfRangeException("writer", "The writer stream is too large to encode.");
+        }
+
+        var propertyStream = new MemoryStream((int)writer.Length);
 
         if (this.Properties.PayloadFormatIndicator != null)
         {
