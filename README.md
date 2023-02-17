@@ -1,5 +1,6 @@
 <p align="center">
   <img src="https://www.hivemq.com/img/svg/hivemq-mqtt-client.svg" width="500">
+  <img src="./Images/csharp-logo.png" height="124">
 </p>
 
 <div align="center">
