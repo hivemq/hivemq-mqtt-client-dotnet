@@ -51,24 +51,24 @@ public class PubAckPacket : ControlPacket
     /// <returns>An array of bytes ready to be sent.</returns>
     public byte[] Encode()
     {
-        var stream = new MemoryStream(100)
+        using(var stream = new MemoryStream())
         {
-            Position = 2,
+            stream.Position = 2;
+
+            // Variable Header - starts at byte 2
+            ControlPacket.EncodeTwoByteInteger(stream, this.PacketIdentifier);
+            stream.WriteByte((byte)this.ReasonCode);
+            this.EncodeProperties(stream);
+
+            var length = stream.Length - 2;
+
+            // Fixed Header - Add to the beginning of the stream
+            stream.Position = 0;
+            stream.WriteByte(((byte)ControlPacketType.PubAck) << 4);
+            _ = EncodeVariableByteInteger(stream, (int)length);
+
+            return stream.ToArray();
         };
-
-        // Variable Header - starts at byte 2
-        ControlPacket.EncodeTwoByteInteger(stream, this.PacketIdentifier);
-        stream.WriteByte((byte)this.ReasonCode);
-        this.EncodeProperties(stream);
-
-        var length = stream.Length - 2;
-
-        // Fixed Header - Add to the beginning of the stream
-        stream.Position = 0;
-        stream.WriteByte(((byte)ControlPacketType.PubAck) << 4);
-        _ = EncodeVariableByteInteger(stream, (int)length);
-
-        return stream.ToArray();
     }
 
     public void Decode(ReadOnlySequence<byte> packetData)

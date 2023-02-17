@@ -209,70 +209,70 @@ public class PublishPacket : ControlPacket
     {
         var streamSize = this.Message.Payload?.Length ?? 0;
 
-        var stream = new MemoryStream(streamSize + 100)
+        using(var stream = new MemoryStream(streamSize))
         {
-            Position = 2,
-        };
+            stream.Position = 2;
 
-        this.GatherPublishFlagsAndProperties();
+            this.GatherPublishFlagsAndProperties();
 
-        // Variable Header - starts at byte 2
-        // Topic Name
-        if (this.Message.Topic != null)
-        {
-            _ = EncodeUTF8String(stream, this.Message.Topic);
-        }
-
-        // Packet Identifier
-        if (this.Message.QoS > QualityOfService.AtMostOnceDelivery)
-        {
-            EncodeTwoByteInteger(stream, this.PacketIdentifier);
-        }
-
-        // Properties
-        this.EncodeProperties(stream);
-
-        // Payload
-        if (this.Message.Payload != null)
-        {
-            for(var i = 0; i < this.Message.Payload?.Length; i++)
+            // Variable Header - starts at byte 2
+            // Topic Name
+            if (this.Message.Topic != null)
             {
-                stream.WriteByte(this.Message.Payload[i]);
+                _ = EncodeUTF8String(stream, this.Message.Topic);
             }
-        }
 
-        // Fixed Header - starts at byte 0
-        stream.Position = 0;
+            // Packet Identifier
+            if (this.Message.QoS > QualityOfService.AtMostOnceDelivery)
+            {
+                EncodeTwoByteInteger(stream, this.PacketIdentifier);
+            }
 
-        var byte1 = (byte)ControlPacketType.Publish << 4;
+            // Properties
+            this.EncodeProperties(stream);
 
-        // DUP Flag
-        if (this.Message.Duplicate is true)
-        {
-            byte1 |= 0x8;
-        }
+            // Payload
+            if (this.Message.Payload != null)
+            {
+                for(var i = 0; i < this.Message.Payload?.Length; i++)
+                {
+                    stream.WriteByte(this.Message.Payload[i]);
+                }
+            }
 
-        // QoS Flag
-        if (this.Message.QoS == QualityOfService.AtLeastOnceDelivery)
-        {
-            byte1 |= 0x2;
-        }
-        else if (this.Message.QoS == QualityOfService.ExactlyOnceDelivery)
-        {
-            byte1 |= 0x4;
-        }
+            // Fixed Header - starts at byte 0
+            stream.Position = 0;
 
-        // Retain Flag
-        if (this.Message.Retain is true)
-        {
-            byte1 |= 0x1;
-        }
+            var byte1 = (byte)ControlPacketType.Publish << 4;
 
-        var length = stream.Length - 2;
-        stream.WriteByte((byte)byte1);
-        _ = EncodeVariableByteInteger(stream, (int)length);
+            // DUP Flag
+            if (this.Message.Duplicate is true)
+            {
+                byte1 |= 0x8;
+            }
 
-        return stream.ToArray();
+            // QoS Flag
+            if (this.Message.QoS == QualityOfService.AtLeastOnceDelivery)
+            {
+                byte1 |= 0x2;
+            }
+            else if (this.Message.QoS == QualityOfService.ExactlyOnceDelivery)
+            {
+                byte1 |= 0x4;
+            }
+
+            // Retain Flag
+            if (this.Message.Retain is true)
+            {
+                byte1 |= 0x1;
+            }
+
+            var length = stream.Length - 2;
+            stream.WriteByte((byte)byte1);
+            _ = EncodeVariableByteInteger(stream, (int)length);
+
+            return stream.ToArray();
+        };
     }
 
     /// <summary>

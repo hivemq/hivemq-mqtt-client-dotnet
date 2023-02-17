@@ -42,31 +42,40 @@ public class ConnectPacket : ControlPacket
     {
         this.GatherConnectFlagsAndProperties();
 
-        var stream = new MemoryStream(100)
+        using(var stream = new MemoryStream())
         {
-            Position = 2,
+            stream.Position = 2;
+
+            // Variable Header - starts at byte 2
+            stream.WriteByte(0);
+            stream.WriteByte(4);
+            stream.Write(Encoding.UTF8.GetBytes("MQTT"));
+            stream.WriteByte(0x5); // Protocol Version
+            stream.WriteByte(this.flags); // Connect Flags
+            _ = EncodeTwoByteInteger(stream, this.clientOptions.KeepAlive);
+            this.EncodeProperties(stream);
+
+            // Payload
+            _ = EncodeUTF8String(stream, this.clientOptions.ClientId);
+            if (this.clientOptions.UserName != null)
+            {
+                _ = EncodeUTF8String(stream, this.clientOptions.UserName);
+            }
+
+            if (this.clientOptions.Password != null)
+            {
+                _ = EncodeUTF8String(stream, this.clientOptions.Password);
+            }
+
+            var length = stream.Length - 2;
+
+            // Fixed Header - Add to the beginning of the stream
+            stream.Position = 0;
+            stream.WriteByte(((byte)ControlPacketType.Connect) << 4);
+            _ = EncodeVariableByteInteger(stream, (int)length);
+
+            return stream.ToArray();
         };
-
-        // Variable Header - starts at byte 2
-        stream.WriteByte(0);
-        stream.WriteByte(4);
-        stream.Write(Encoding.UTF8.GetBytes("MQTT"));
-        stream.WriteByte(0x5); // Protocol Version
-        stream.WriteByte(this.flags); // Connect Flags
-        _ = EncodeTwoByteInteger(stream, this.clientOptions.KeepAlive);
-        this.EncodeProperties(stream);
-
-        // Payload
-        _ = EncodeUTF8String(stream, this.clientOptions.ClientId);
-
-        var length = stream.Length - 2;
-
-        // Fixed Header - Add to the beginning of the stream
-        stream.Position = 0;
-        stream.WriteByte(((byte)ControlPacketType.Connect) << 4);
-        _ = EncodeVariableByteInteger(stream, (int)length);
-
-        return stream.ToArray();
     }
 
     internal void GatherConnectFlagsAndProperties()
