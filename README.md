@@ -10,7 +10,7 @@
 [![GitHub Workflow Status (branch)](https://img.shields.io/github/actions/workflow/status/hivemq/hivemq-mqtt-client-dotnet/.github/workflows/check.yml?branch=main&style=for-the-badge)](https://github.com/hivemq/hivemq-mqtt-client-dotnet/actions/workflows/check.yml?query=branch%3Amain)
 [![License](https://img.shields.io/github/license/hivemq/hivemq-mqtt-client-dotnet?style=for-the-badge)](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/LICENSE)
 
-_This .NET MQTT client was put together with love from the HiveMQ team but is still in BETA.  As such some things may not work completely until it matures and although unlikely, APIs may change slightly before version 1.0._
+_This .NET MQTT client was put together with love from the HiveMQ team but is still in DEVELOPMENT.  As such some things may not work completely until it matures and although unlikely, APIs may change slightly before version 1.0._
 
 We'd appreciate any feedback you have.  Happy MQTT adventures!
 
