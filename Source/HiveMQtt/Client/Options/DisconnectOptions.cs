@@ -49,6 +49,8 @@ public class DisconnectOptions
     /// </summary>
     public string? ReasonString { get; set; }
 
-    // FIXME: Add documentation
+    /// <summary>
+    /// Gets of sets the user properties for the disconnection.
+    /// </summary>
     public Dictionary<string, string> UserProperties { get; set; }
 }

@@ -36,9 +36,10 @@ internal class PacketDecoder
                 return new PartialPacket();
             }
 
-            // Byte 1: Control Packet Type
-            // FIXME: ToArray?
+            // It's a waste to allocate a SequenceReader here for two bytes.
             var x = buffer.ToArray();
+
+            // Byte 1: Control Packet Type
             var controlPacketType = x[0] >> 4;
 
             // Byte 2: Remaining Length of the Variable Header

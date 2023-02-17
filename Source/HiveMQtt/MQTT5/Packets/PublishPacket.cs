@@ -135,8 +135,7 @@ public class PublishPacket : ControlPacket
             }
             else
             {
-                // FIXME: throw exception
-                this.PacketIdentifier = 0;
+                throw new IOException("Packet Identifier for incoming Publish is null when QoS > 0");
             }
         }
 
