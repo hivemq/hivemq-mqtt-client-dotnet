@@ -6,17 +6,15 @@
 # https://docs.github.com/en/free-pro-team@latest/github/finding-security-vulnerabilities-and-errors-in-your-code/about-code-scanning
 name: "CodeQL"
 
-# Disabled until opensource
-# https://github.com/github/codeql-action#license
-# on:
-#   push:
-#     branches: [main]
-#   pull_request:
-#     # The branches below must be a subset of the branches above
-#     branches: [main]
-#   schedule:
-#     - cron: "0 8 * * 4"
-#   workflow_dispatch:
+on:
+  push:
+    branches: [main]
+  pull_request:
+    # The branches below must be a subset of the branches above
+    branches: [main]
+  # schedule:
+  #   - cron: "0 8 * * 4"
+  # workflow_dispatch:
 
 jobs:
   analyze:
