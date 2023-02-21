@@ -34,7 +34,13 @@ Need a broker? Sign up for a free broker at [HiveMQ Cloud](https://www.hivemq.co
 
 ## Install
 
-... via NuGet
+This package is [available on NuGet.org](https://www.nuget.org/packages/HiveMQtt/) and can be installed with:
+
+```sh
+dotnet add package HiveMQtt
+```
+
+See the [HiveMQtt NuGet page](https://www.nuget.org/packages/HiveMQtt/) for more installation options.
 
 ## Quickstart
 
