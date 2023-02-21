@@ -1,5 +1,5 @@
-![](./Images/hivemq-mqtt-client.png)
-![](./Images/csharp-logo.png)
+![](https://i.imgur.com/YmafvGk.png)
+![](https://i.imgur.com/Tnl78V6.png)
 
 # The Spectacular (BETA) C# MQTT Client for .NET
 
