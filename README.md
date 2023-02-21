@@ -1,9 +1,5 @@
-<p align="center">
-  <img src="https://www.hivemq.com/img/svg/hivemq-mqtt-client.svg" width="500">
-  <img src="./Images/csharp-logo.png" height="124">
-</p>
-
-<div align="center">
+![](./Images/hivemq-mqtt-client.png)
+![](./Images/csharp-logo.png)
 
 # The Spectacular (BETA) C# MQTT Client for .NET
 
@@ -14,8 +10,6 @@
 _This .NET MQTT client was put together with love from the HiveMQ team but is still in DEVELOPMENT.  As such some things may not work completely until it matures and although unlikely, APIs may change slightly before version 1.0._
 
 We'd appreciate any feedback you have.  Happy MQTT adventures!
-
-</div>
 
 * **Easy-to-Install**: Available as a Nuget package.
 * **Opensource**: No blackbox code.  Only trusted, tested and reviewed opensource code.
@@ -40,7 +34,13 @@ Need a broker? Sign up for a free broker at [HiveMQ Cloud](https://www.hivemq.co
 
 ## Install
 
-... via NuGet
+This package is [available on NuGet.org](https://www.nuget.org/packages/HiveMQtt/) and can be installed with:
+
+```sh
+dotnet add package HiveMQtt
+```
+
+See the [HiveMQtt NuGet page](https://www.nuget.org/packages/HiveMQtt/) for more installation options.
 
 ## Quickstart
 
