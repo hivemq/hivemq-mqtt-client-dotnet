@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 25.0.1704.5
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HiveMQtt", "HiveMQtt.csproj", "{7A86FFD4-6CD2-419C-B8E8-53437CDB1E8B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7A86FFD4-6CD2-419C-B8E8-53437CDB1E8B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A86FFD4-6CD2-419C-B8E8-53437CDB1E8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A86FFD4-6CD2-419C-B8E8-53437CDB1E8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A86FFD4-6CD2-419C-B8E8-53437CDB1E8B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D8250CF7-F883-4013-ACC2-98259E17E6F9}
+	EndGlobalSection
+EndGlobal
