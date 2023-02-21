@@ -7,6 +7,10 @@
     <Description>HiveMQ MQTT Client that is a MQTT 5.0 compatible C# client library.</Description>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+  </PropertyGroup>
+
   <PropertyGroup Label="Package">
     <Product>HiveMQtt: A Universal MQTT Client</Product>
     <Description>HiveMQ MQTT Client that is a MQTT 5.0 compatible C# client library.</Description>
