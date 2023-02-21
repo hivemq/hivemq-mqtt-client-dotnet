@@ -3,7 +3,7 @@
   <PropertyGroup Label="Build">
     <TargetFramework>net6.0</TargetFramework>
     <AssemblyName>HiveMQtt</AssemblyName>
-    <ReleaseVersion>0.1.1</ReleaseVersion>
+    <ReleaseVersion>0.1.0</ReleaseVersion>
     <Description>HiveMQ MQTT Client that is a MQTT 5.0 compatible C# client library.</Description>
   </PropertyGroup>
 
