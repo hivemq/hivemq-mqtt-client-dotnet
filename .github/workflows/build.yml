@@ -53,7 +53,7 @@ jobs:
       - name: "Install .NET Core SDK"
         uses: actions/setup-dotnet@v3.0.3
         with:
-          dotnet-version: '7.0.2'
+          dotnet-version: '7.0.200'
       - name: "Dotnet Tool Restore"
         run: dotnet tool restore
         shell: pwsh
