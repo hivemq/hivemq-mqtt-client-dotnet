@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 namespace HiveMQtt.Client;
 
 using System;
@@ -37,8 +39,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
     public HiveMQClient(HiveMQClientOptions? options = null)
     {
-        // Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
-        // Trace.AutoFlush = true;
         options ??= new HiveMQClientOptions();
         this.Options = options;
     }

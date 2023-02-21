@@ -32,7 +32,10 @@ public class HiveMQClientConnectTest
     [Fact]
     public async Task DoubleConnectAsync()
     {
-        var client = new HiveMQClient();
+        var options = new HiveMQClientOptions();
+        options.ClientId = "DoubleConnectTest";
+
+        var client = new HiveMQClient(options);
         Assert.NotNull(client);
 
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
@@ -53,7 +56,14 @@ public class HiveMQClientConnectTest
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
         Assert.True(client.IsConnected());
 
-        await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        try
+        {
+            await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        }
+        catch (Exception)
+        {
+            Assert.True(false, "OnDisconnectReceived was not called");
+        }
     }
 
     [Fact]

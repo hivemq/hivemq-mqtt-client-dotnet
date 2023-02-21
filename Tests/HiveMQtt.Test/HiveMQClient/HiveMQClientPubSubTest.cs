@@ -12,6 +12,7 @@ public class HiveMQClientPubSubTest
     public async Task MostBasicPubSubAsync()
     {
         var client = new HiveMQClient();
+        var taskCompletionSource = new TaskCompletionSource<bool>();
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -34,20 +35,20 @@ public class HiveMQClientPubSubTest
                 });
                 Assert.True(disconnect.Result);
             }
+            taskCompletionSource.SetResult(true);
         };
 
         var subResult = await client.SubscribeAsync("tests/MostBasicPubSubAsync").ConfigureAwait(false);
-
         var msg = new string(/*lang=json,strict*/ "{\"interference\": \"1029384\"}");
         var result = await client.PublishAsync("tests/MostBasicPubSubAsync", msg).ConfigureAwait(false);
-
-        await Task.Delay(1000).ConfigureAwait(false);
+        await taskCompletionSource.Task.ConfigureAwait(false);
     }
 
     [Fact]
     public async Task QoS1PubSubAsync()
     {
         var client = new HiveMQClient();
+        var taskCompletionSource = new TaskCompletionSource<bool>();
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -71,6 +72,7 @@ public class HiveMQClientPubSubTest
                 });
                 Assert.True(disconnect.Result);
             }
+            taskCompletionSource.SetResult(true);
         };
 
         // Subscribe with QoS1
@@ -81,14 +83,14 @@ public class HiveMQClientPubSubTest
         // Publish a QoS1 message
         var msg = new string(/*lang=json,strict*/ "{\"interference\": \"1029384\"}");
         var result = await client.PublishAsync("tests/QoS1PubSubAsync", msg, QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
-
-        await Task.Delay(1000).ConfigureAwait(false);
+        await taskCompletionSource.Task.ConfigureAwait(false);
     }
 
     [Fact]
     public async Task QoS2PubSubAsync()
     {
         var client = new HiveMQClient();
+        var taskCompletionSource = new TaskCompletionSource<bool>();
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -99,19 +101,19 @@ public class HiveMQClientPubSubTest
             Assert.Equal("tests/QoS1PubSubAsync", args.PublishMessage.Topic);
             Assert.Equal("{\"interference\": \"1029384\"}", args.PublishMessage.PayloadAsString);
 
-            // Disconnect after receiving the message
-            if (sender != null)
-            {
-                var client = (HiveMQClient)sender;
+            Assert.NotNull(sender);
 
-                var disconnect = Task.Run(async () =>
-                {
-                    var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
-                    Assert.True(disconnectResult);
-                    return disconnectResult;
-                });
-                Assert.True(disconnect.Result);
-            }
+            // Disconnect after receiving the message
+            var client = (HiveMQClient)sender;
+
+            var disconnect = Task.Run(async () =>
+            {
+                var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
+                Assert.True(disconnectResult);
+                return disconnectResult;
+            });
+            Assert.True(disconnect.Result);
+            taskCompletionSource.SetResult(true);
         };
 
         // Subscribe with QoS1
@@ -122,7 +124,6 @@ public class HiveMQClientPubSubTest
         // Publish a QoS1 message
         var msg = new string(/*lang=json,strict*/ "{\"interference\": \"1029384\"}");
         var result = await client.PublishAsync("tests/QoS1PubSubAsync", msg, QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
-
-        await Task.Delay(1000).ConfigureAwait(false);
+        await taskCompletionSource.Task.ConfigureAwait(false);
     }
 }

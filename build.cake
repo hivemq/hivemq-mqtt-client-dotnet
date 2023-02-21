@@ -3,13 +3,13 @@ var configuration =
     HasArgument("Configuration") ? Argument<string>("Configuration") :
     EnvironmentVariable("Configuration", "Release");
 
-var artefactsDirectory = Directory("./Artefacts");
+var artifactsDirectory = Directory("./Artifacts");
 
 Task("Clean")
-    .Description("Cleans the artefacts, bin and obj directories.")
+    .Description("Cleans the artifacts, bin and obj directories.")
     .Does(() =>
     {
-        CleanDirectory(artefactsDirectory);
+        CleanDirectory(artifactsDirectory);
         DeleteDirectories(GetDirectories("**/bin"), new DeleteDirectorySettings() { Force = true, Recursive = true });
         DeleteDirectories(GetDirectories("**/obj"), new DeleteDirectorySettings() { Force = true, Recursive = true });
     });
@@ -37,7 +37,7 @@ Task("Build")
     });
 
 Task("Test")
-    .Description("Runs unit tests and outputs test results to the artefacts directory.")
+    .Description("Runs unit tests and outputs test results to the artifacts directory.")
     .DoesForEach(
         GetFiles("./Tests/**/*.csproj"),
         project =>
@@ -56,12 +56,12 @@ Task("Test")
                     },
                     NoBuild = true,
                     NoRestore = true,
-                    ResultsDirectory = artefactsDirectory,
+                    ResultsDirectory = artifactsDirectory,
                 });
         });
 
 Task("Pack")
-    .Description("Creates NuGet packages and outputs them to the artefacts directory.")
+    .Description("Creates NuGet packages and outputs them to the artifacts directory.")
     .Does(() =>
     {
         DotNetPack(
@@ -76,7 +76,7 @@ Task("Pack")
                 },
                 NoBuild = true,
                 NoRestore = true,
-                OutputDirectory = artefactsDirectory,
+                OutputDirectory = artifactsDirectory,
             });
     });
 

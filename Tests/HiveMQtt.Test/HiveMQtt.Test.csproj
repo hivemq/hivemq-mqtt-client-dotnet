@@ -5,6 +5,10 @@
     <ReleaseVersion>0.1.1</ReleaseVersion>
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DefineConstants>DEBUG;NET;NET6_0;NETCOREAPP</DefineConstants>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
   <ItemGroup Label="Project References">
     <ProjectReference Include="..\..\Source\HiveMQtt\HiveMQtt.csproj" />
   </ItemGroup>
