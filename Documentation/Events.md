@@ -1,8 +1,8 @@
 # Events
 
-This client has built in events to allow users to hook into any part of the client.
+This client has a large number of built in events to allow users to hook into any part of the client.
 
-This can be used to modify behavior, monitor activity or extend functionality.
+These events can be used to modify behavior, monitor activity or extend functionality.
 
 ## Examples
 

@@ -15,7 +15,7 @@ We'd appreciate any feedback you have.  Happy MQTT adventures!
 * **Opensource**: No blackbox code.  Only trusted, tested and reviewed opensource code.
 * **Easy to Use**: Smart defaults, excellent interfaces and intelligent automation makes implementing a breeze.
 * **MQTT v5.0 compatible**: Backported versions 3.1.1 & 3.0 coming soon!
-* **Extensive Event System**: Hook into all parts of the client down to the packet level with [built in events](./Documentation/Events.md).
+* **Extensive Event System**: Hook into all parts of the client down to the packet level with [built in events](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Documentation/Events.md).
 * **Globally Compatible**: Built to be a fully compliant client compatible with all reputable MQTT brokers.
 * **Actively Maintained**: Built by the MQTT professionals that built HiveMQ (and do this for a living).
 * **Extensively Documented**: What good is it without excellent documentation?
@@ -98,7 +98,7 @@ await client.PublishAsync(
                 ).ConfigureAwait(false);
 ```
 
-For more examples that you can easily copy/paste, see our [Examples](./Examples/).
+For more examples that you can easily copy/paste, see our [Examples](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Documentation/Examples.md).
 
 ## Other MQTT Clients
 
