@@ -41,6 +41,18 @@ Need a broker? Sign up for a free broker at [HiveMQ Cloud](https://www.hivemq.co
 * HiveMQ [Public Broker](http://www.mqtt-dashboard.com)
 * HiveMQ [Support](https://www.hivemq.com/support/)
 
+## Need an MQTT Broker?
+
+This client communicates with an MQTT broker to publish and consume messages.  It's built to be compatible with all major MQTT brokers but if you need a broker now run the HiveMQ Community Edition:
+
+```bash
+docker run --name hivemq-ce -d -p 1883:1883 hivemq/hivemq-ce
+```
+
+This will run the HiveMQ Community Edition broker on localhost port 1883.
+
+If you need advanced features, checkout our [premium editions](https://www.hivemq.com/hivemq/editions/) or alternatively [HiveMQ Cloud](https://www.hivemq.com/mqtt-cloud-broker/) which is free to connect up to 100 devices (no credit card required).
+
 ## Install
 
 This package is [available on NuGet.org](https://www.nuget.org/packages/HiveMQtt/) and can be installed with:
