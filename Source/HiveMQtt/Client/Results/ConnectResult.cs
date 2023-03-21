@@ -23,6 +23,8 @@ using HiveMQtt.MQTT5.Types;
 /// </summary>
 public class ConnectResult
 {
+    // FIXME: Add ToString() method
+
     // Results of the connect operation.
     internal ConnectResult(ConnAckReasonCode reasonCode, bool sessionPresent, MQTT5Properties properties)
     {
