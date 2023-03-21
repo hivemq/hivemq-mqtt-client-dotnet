@@ -174,6 +174,14 @@ public class HiveMQClientOptions
         this.KeepAlive = RangeValidateTwoByteInteger(this.KeepAlive);
         this.SessionExpiryInterval = RangeValidateFourByteInteger(this.SessionExpiryInterval);
 
+        // IANA registered ports for MQTT are 1883 (plain) and 8883 (secure).
+        // https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml?search=mqtt
+        // If for any reason you want to disable TLS when using port 8883, use a BeforeConnect event handler.
+        if (this.Port == 8883)
+        {
+            this.UseTLS = true;
+        }
+
         if (this.ClientReceiveMaximum != null)
         {
             this.ClientReceiveMaximum = RangeValidateTwoByteInteger((int)this.ClientReceiveMaximum);
