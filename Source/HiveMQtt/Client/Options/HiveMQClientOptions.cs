@@ -33,6 +33,7 @@ public class HiveMQClientOptions
         this.GenerateClientID();
         this.Host = "127.0.0.1";
         this.Port = 1883;
+        this.PreferIPv6 = false;
         this.KeepAlive = 60;
         this.SessionExpiryInterval = 300;
         this.CleanStart = true;
