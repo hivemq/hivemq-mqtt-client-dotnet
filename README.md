@@ -112,6 +112,8 @@ await client.PublishAsync(
 
 For more examples that you can easily copy/paste, see our [Examples](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Documentation/Examples.md).
 
+There is even an https://github.com/hivemq/hivemq-mqtt-client-dotnet/tree/main/Examples/HiveMQtt-CLI to demonstrate usage of the package.
+
 ## Other MQTT Clients
 
 * [Java](https://github.com/hivemq/hivemq-mqtt-client)
