@@ -37,9 +37,46 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <returns>A boolean representing the success or failure of the operation.</returns>
     internal async Task<bool> ConnectSocketAsync()
     {
-        // Console.WriteLine($"Connecting socket... {this.Options.Host}:{this.Options.Port}");
+        IPAddress? ipAddress = null;
         var ipHostInfo = await Dns.GetHostEntryAsync(this.Options.Host).ConfigureAwait(false);
-        var ipAddress = ipHostInfo.AddressList[1];
+
+        if (ipHostInfo.AddressList.Length == 0)
+        {
+            throw new HiveMQttClientException("Failed to resolve host");
+        }
+
+        // DNS Address resolution logic.  If DNS returns multiple records, how do we handle?
+        // If we have a single record, we can use that.
+        // If we have multiple records, we can use the first one with respect to the PreferIPv6 option.
+        if (ipHostInfo.AddressList.Length == 1)
+        {
+            ipAddress = ipHostInfo.AddressList[0];
+        }
+        else
+        {
+            // Loop through each to find a preferred address
+            foreach (var address in ipHostInfo.AddressList)
+            {
+                if (this.Options.PreferIPv6 && address.AddressFamily == AddressFamily.InterNetworkV6)
+                {
+                    ipAddress = address;
+                    break;
+                }
+                if (address.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    ipAddress = address;
+                    break;
+                }
+            }
+        }
+
+        if (ipAddress == null)
+        {
+            // We have multiple address returned, but none of them match the PreferIPv6 option.
+            // Use the first one whatever it is.
+            ipAddress = ipHostInfo.AddressList[0];
+        }
+
         IPEndPoint ipEndPoint = new(ipAddress, this.Options.Port);
 
         this.socket = new(ipEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);

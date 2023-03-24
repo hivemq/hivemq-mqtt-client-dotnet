@@ -5,6 +5,8 @@ VisualStudioVersion = 25.0.1704.5
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HiveMQtt", "HiveMQtt.csproj", "{7A86FFD4-6CD2-419C-B8E8-53437CDB1E8B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HiveMQtt-CLI", "..\..\Examples\HiveMQtt-CLI\HiveMQtt-CLI\HiveMQtt-CLI.csproj", "{B7404198-178C-43C5-9136-4BF25D23EC7E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{7A86FFD4-6CD2-419C-B8E8-53437CDB1E8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7A86FFD4-6CD2-419C-B8E8-53437CDB1E8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7A86FFD4-6CD2-419C-B8E8-53437CDB1E8B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B7404198-178C-43C5-9136-4BF25D23EC7E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B7404198-178C-43C5-9136-4BF25D23EC7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B7404198-178C-43C5-9136-4BF25D23EC7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B7404198-178C-43C5-9136-4BF25D23EC7E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

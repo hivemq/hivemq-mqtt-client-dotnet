@@ -33,6 +33,7 @@ public class HiveMQClientOptions
         this.GenerateClientID();
         this.Host = "127.0.0.1";
         this.Port = 1883;
+        this.PreferIPv6 = false;
         this.KeepAlive = 60;
         this.SessionExpiryInterval = 300;
         this.CleanStart = true;
@@ -48,6 +49,9 @@ public class HiveMQClientOptions
 
     // The port to connect to on the MQTT Broker
     public int Port { get; set; }
+
+    // When resolving a DNS hostname in the Host property, prefer IPv6 addresses over IPv4 addresses.
+    public bool PreferIPv6 { get; set; }
 
     // The the maximum time interval that is permitted to elapse between the point at which the Client
     // finishes transmitting one MQTT Control Packet and the point it starts sending the next.
