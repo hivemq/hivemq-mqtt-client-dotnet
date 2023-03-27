@@ -26,3 +26,8 @@ template: |
   ## :busts_in_silhouette: List of contributors
 
   $CONTRIBUTORS
+
+  ## NuGet Package
+
+  v$NEXT_PATCH_VERSION is available on NuGet:
+  https://www.nuget.org/packages/HiveMQtt/$NEXT_PATCH_VERSION
