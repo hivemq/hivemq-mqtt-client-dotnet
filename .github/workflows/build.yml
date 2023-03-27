@@ -74,7 +74,7 @@ jobs:
 
   push-nuget:
     name: "Push NuGet Packages"
-    runs-on: ${{matrix.os}}
+    runs-on: 'ubuntu-latest'
     needs: build
     if: github.event_name == 'release'
     environment:
