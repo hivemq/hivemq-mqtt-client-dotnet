@@ -82,7 +82,7 @@ jobs:
       url: https://www.nuget.org/packages/HiveMQtt
     steps:
       - name: Push with dotnet
-        run: dotnet nuget push Artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+        run: dotnet nuget push ../Artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
 
 
   # push-github-packages:
