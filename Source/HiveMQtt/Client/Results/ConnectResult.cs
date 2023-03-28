@@ -61,7 +61,20 @@ public class ConnectResult
     /// </para>
     /// </summary>
     /// <returns>The integer value of the maximum number of QoS 1 + QoS 2 concurrent messages.</returns>
-    public int? BrokerReceiveMaximum => this.Properties.ReceiveMaximum;
+    public int BrokerReceiveMaximum
+    {
+        get
+        {
+            if (this.Properties.ReceiveMaximum is null)
+            {
+                return 65535;
+            }
+            else
+            {
+                return (int)this.Properties.ReceiveMaximum;
+            }
+        }
+    }
 
     /// <summary>
     /// Gets the Maximum Packet Size the MQTT broker is willing to accept.
@@ -88,7 +101,20 @@ public class ConnectResult
     /// </para>
     /// </summary>
     /// <returns>The maximum Quality of Service level supported by the MQTT broker.</returns>
-    public int? MaximumQoS => this.Properties.MaximumQoS;
+    public int MaximumQoS
+    {
+        get
+        {
+            if (this.Properties.MaximumQoS is null or 2)
+            {
+                return 2;
+            }
+            else
+            {
+                return (int)this.Properties.MaximumQoS;
+            }
+        }
+    }
 
     /// <summary>
     /// Gets a value indicating whether gets the flags indicating whether the MQTT broker supports Retained Messages.
@@ -232,6 +258,27 @@ public class ConnectResult
     /// Gets a byte array containing authentication data.
     /// </summary>
     public byte[]? AuthenticationData => this.Properties.AuthenticationData;
+
+    public override string ToString()
+    {
+        var code = $"Code: {this.ReasonCode}";
+
+        if (this.ReasonCode == ConnAckReasonCode.Success)
+        {
+            var sessionPresent = $"SessionPresent: {this.SessionPresent}";
+            var sessionExpiry = $"SessionExpiryInterval: {this.SessionExpiryInterval}";
+            var maxQoS = $"MaximumQoS: {this.MaximumQoS}";
+            var retainAvailable = $"RetainAvailable: {this.RetainAvailable}";
+            var topicAliasMax = $"TopicAliasMaximum: {this.BrokerTopicAliasMaximum}";
+            var receiveMax = $"BrokerReceiveMaximum: {this.BrokerReceiveMaximum}";
+
+            return $"ConnectResult[{code}]: {sessionPresent}, {sessionExpiry}, {maxQoS}, {retainAvailable}, {topicAliasMax}, {receiveMax}";
+        }
+        else
+        {
+            return $"ConnectResult[{code}]";
+        }
+    }
 
     /// <summary>
     /// Gets or sets the MQTT Properties returned from the connection request.

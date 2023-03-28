@@ -63,34 +63,27 @@ jobs:
       - name: "Dotnet Cake Test"
         run: dotnet cake --target=Test
         shell: pwsh
-      # - name: "Dotnet Cake Pack"
-      #   run: dotnet cake --target=Pack
-      #   shell: pwsh
-      # - name: "Publish Artifacts"
-      #   uses: actions/upload-artifact@v3.1.2
-      #   with:
-      #     name: ${{matrix.os}}
-      #     path: "./Artifacts"
+      - name: "Dotnet Cake Pack"
+        run: dotnet cake --target=Pack
+        shell: pwsh
+      - name: "Publish Artifacts"
+        uses: actions/upload-artifact@v3.1.2
+        with:
+          name: ${{matrix.os}}
+          path: "./Artifacts"
 
-  # push-nuget:
-  #   name: "Push NuGet Packages"
-  #   needs: build
-  #   if: github.event_name == 'release'
-  #   environment:
-  #     name: "NuGet"
-  #     url: https://www.nuget.org/packages/HiveMQtt
-  #   runs-on: windows-latest
-  #   steps:
-  #     - name: "Download Artifact"
-  #       uses: actions/download-artifact@v3.0.1
-  #       with:
-  #         name: "windows-latest"
-  #     - name: "Dotnet NuGet Push"
-  #       run: |
-  #         Get-ChildItem .\ -Filter *.nupkg |
-  #         Where-Object { !$_.Name.Contains('preview') } |
-  #         ForEach-Object { dotnet nuget push $_ --source https://api.nuget.org/v3/index.json --skip-duplicate --api-key ${{secrets.NUGET_API_KEY}} }
-  #       shell: pwsh
+  push-nuget:
+    name: "Push NuGet Packages"
+    runs-on: 'ubuntu-latest'
+    needs: build
+    if: github.event_name == 'release'
+    environment:
+      name: "NuGet"
+      url: https://www.nuget.org/packages/HiveMQtt
+    steps:
+      - name: Push with dotnet
+        run: dotnet nuget push ./Artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+
 
   # push-github-packages:
   #   name: "Push GitHub Packages"

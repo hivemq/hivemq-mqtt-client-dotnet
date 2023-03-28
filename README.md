@@ -5,6 +5,7 @@
 
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/hivemq/hivemq-mqtt-client-dotnet?style=for-the-badge)](https://github.com/hivemq/hivemq-mqtt-client-dotnet/releases)
 [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/hivemq/hivemq-mqtt-client-dotnet/build.yml?style=for-the-badge)](https://github.com/hivemq/hivemq-mqtt-client-dotnet/actions)
+[![Nuget](https://img.shields.io/nuget/dt/HiveMQtt?style=for-the-badge)](https://www.nuget.org/packages/HiveMQtt)
 [![GitHub](https://img.shields.io/github/license/hivemq/hivemq-mqtt-client-dotnet?style=for-the-badge)](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/LICENSE)
 
 _This .NET MQTT client was put together with love from the HiveMQ team but is still in DEVELOPMENT.  As such some things may not work completely until it matures and although unlikely, APIs may change slightly before version 1.0._
@@ -40,6 +41,18 @@ Need a broker? Sign up for a free broker at [HiveMQ Cloud](https://www.hivemq.co
 * [MQTT Client Library Encyclopedia](https://www.hivemq.com/mqtt-client-library-encyclopedia/)
 * HiveMQ [Public Broker](http://www.mqtt-dashboard.com)
 * HiveMQ [Support](https://www.hivemq.com/support/)
+
+## Need an MQTT Broker?
+
+This client communicates with an MQTT broker to publish and consume messages.  It's built to be compatible with all major MQTT brokers but if you need a broker now run the HiveMQ Community Edition:
+
+```bash
+docker run --name hivemq-ce -d -p 1883:1883 hivemq/hivemq-ce
+```
+
+This will run the HiveMQ Community Edition broker on localhost port 1883.
+
+If you need advanced features, checkout our [premium editions](https://www.hivemq.com/hivemq/editions/) or alternatively [HiveMQ Cloud](https://www.hivemq.com/mqtt-cloud-broker/) which is free to connect up to 100 devices (no credit card required).
 
 ## Install
 
@@ -99,6 +112,8 @@ await client.PublishAsync(
 ```
 
 For more examples that you can easily copy/paste, see our [Examples](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Documentation/Examples.md).
+
+There is even an https://github.com/hivemq/hivemq-mqtt-client-dotnet/tree/main/Examples/HiveMQtt-CLI to demonstrate usage of the package.
 
 ## Other MQTT Clients
 
