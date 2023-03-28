@@ -76,13 +76,13 @@ jobs:
     name: "Push NuGet Packages"
     runs-on: 'ubuntu-latest'
     needs: build
-    if: github.event_name == 'release'
+    # if: github.event_name == 'release'
     environment:
       name: "NuGet"
       url: https://www.nuget.org/packages/HiveMQtt
     steps:
       - name: Push with dotnet
-        run: dotnet nuget push ./Artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+        run: dotnet nuget push Artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
 
 
   # push-github-packages:
