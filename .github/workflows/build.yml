@@ -81,8 +81,14 @@ jobs:
       name: "NuGet"
       url: https://www.nuget.org/packages/HiveMQtt
     steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: ${{matrix.os}}
+          path: "./Artifacts"
+      - name: Display structure of downloaded files
+        run: ls -R
       - name: Push with dotnet
-        run: dotnet nuget push ../Artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+        run: dotnet nuget push ./Artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
 
 
   # push-github-packages:
