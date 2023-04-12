@@ -17,6 +17,11 @@ namespace HiveMQtt.Client.Events;
 
 using HiveMQtt.Client.Options;
 
+/// <summary>
+/// Event arguments for the <see cref="HiveMQClient.BeforeSubscribe"/> event.
+/// <para>This event is called before a subscribe is sent to the broker.</para>
+/// <para><see cref="BeforeSubscribeEventArgs.Options"/> contains the options of the subscribe operation.</para>
+/// </summary>
 public class BeforeSubscribeEventArgs : EventArgs
 {
     public BeforeSubscribeEventArgs(SubscribeOptions options) => this.Options = options;

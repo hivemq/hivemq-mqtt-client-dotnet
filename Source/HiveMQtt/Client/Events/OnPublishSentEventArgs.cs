@@ -17,6 +17,11 @@ namespace HiveMQtt.Client.Events;
 
 using HiveMQtt.MQTT5.Packets;
 
+/// <summary>
+/// Event arguments for the <see cref="HiveMQClient.OnPublishSent"/> event.
+/// <para>This event is called when a PUBLISH packet is sent to the broker.</para>
+/// <para><see cref="OnPublishSentEventArgs.PublishPacket"/> contains the sent PUBLISH packet.</para>
+/// </summary>
 public class OnPublishSentEventArgs : EventArgs
 {
     public OnPublishSentEventArgs(PublishPacket publishPacket) => this.PublishPacket = publishPacket;

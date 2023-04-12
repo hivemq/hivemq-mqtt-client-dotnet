@@ -17,6 +17,11 @@ namespace HiveMQtt.Client.Events;
 
 using HiveMQtt.MQTT5.Packets;
 
+/// <summary>
+/// Event arguments for the <see cref="HiveMQClient.OnPubRecSent"/> event.
+/// <para>This event is called when a PUBREC packet is sent to the broker.</para>
+/// <para><see cref="OnPubRecSentEventArgs.PubRecPacket"/> contains the sent PUBREC packet.</para>
+/// </summary>
 public class OnPubRecSentEventArgs : EventArgs
 {
     public OnPubRecSentEventArgs(PubRecPacket pubRecPacket) => this.PubRecPacket = pubRecPacket;

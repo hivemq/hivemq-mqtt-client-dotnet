@@ -17,6 +17,11 @@ namespace HiveMQtt.Client.Events;
 
 using HiveMQtt.MQTT5.Packets;
 
+/// <summary>
+/// Event arguments for the <see cref="PublishPacket.OnPublishQoS2Complete"/> event.
+/// <para>This event is called when a QoS level 2 publish as been completed.</para>
+/// <para><see cref="OnPublishQoS2CompleteEventArgs.PubRecPacket"/> contains the received PUBREC packet.</para>
+/// </summary>
 public class OnPublishQoS2CompleteEventArgs : EventArgs
 {
     public OnPublishQoS2CompleteEventArgs(PubRecPacket packet) => this.PubRecPacket = packet;

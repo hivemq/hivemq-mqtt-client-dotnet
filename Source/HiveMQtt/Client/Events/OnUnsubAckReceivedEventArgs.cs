@@ -17,6 +17,11 @@ namespace HiveMQtt.Client.Events;
 
 using HiveMQtt.MQTT5.Packets;
 
+/// <summary>
+/// Event arguments for the <see cref="HiveMQClient.OnUnsubAckReceived"/> event.
+/// <para>This event is called when a UNSUBACK packet is received from the broker.</para>
+/// <para><see cref="OnUnsubAckReceivedEventArgs.UnsubAckPacket"/> contains the received UNSUBACK packet.</para>
+/// </summary>
 public class OnUnsubAckReceivedEventArgs : EventArgs
 {
     public OnUnsubAckReceivedEventArgs(UnsubAckPacket unsubAckPacket) => this.UnsubAckPacket = unsubAckPacket;

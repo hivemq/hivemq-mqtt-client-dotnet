@@ -17,6 +17,11 @@ namespace HiveMQtt.Client.Events;
 
 using HiveMQtt.MQTT5.Packets;
 
+/// <summary>
+/// Event arguments for the <see cref="HiveMQClient.OnDisconnectSent"/> event.
+/// <para>This event is called when a DISCONNECT packet is sent to the broker.</para>
+/// <para><see cref="OnDisconnectSentEventArgs.DisconnectPacket"/> contains the sent DISCONNECT packet.</para>
+/// </summary>
 public class OnDisconnectSentEventArgs : EventArgs
 {
     public OnDisconnectSentEventArgs(DisconnectPacket packet) => this.DisconnectPacket = packet;

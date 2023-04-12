@@ -17,6 +17,11 @@ namespace HiveMQtt.Client.Events;
 
 using HiveMQtt.MQTT5.Packets;
 
+/// <summary>
+/// Event arguments for the <see cref="HiveMQClient.OnSubAckReceived"/> event.
+/// <para>This event is called when a SUBACK packet is received from the broker.</para>
+/// <para><see cref="OnSubAckReceivedEventArgs.SubAckPacket"/> contains the received SUBACK packet.</para>
+/// </summary>
 public class OnSubAckReceivedEventArgs : EventArgs
 {
     public OnSubAckReceivedEventArgs(SubAckPacket subAckPacket) => this.SubAckPacket = subAckPacket;

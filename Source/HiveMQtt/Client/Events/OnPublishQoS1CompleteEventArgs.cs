@@ -17,6 +17,11 @@ namespace HiveMQtt.Client.Events;
 
 using HiveMQtt.MQTT5.Packets;
 
+/// <summary>
+/// Event arguments for the <see cref="PublishPacket.OnPublishQoS1Complete"/> event.
+/// <para>This event is called when a QoS level 1 publish as been completed.</para>
+/// <para><see cref="OnPublishQoS1CompleteEventArgs.PubAckPacket"/> contains the received PUBACK packet.</para>
+/// </summary>
 public class OnPublishQoS1CompleteEventArgs : EventArgs
 {
     public OnPublishQoS1CompleteEventArgs(PubAckPacket packet) => this.PubAckPacket = packet;

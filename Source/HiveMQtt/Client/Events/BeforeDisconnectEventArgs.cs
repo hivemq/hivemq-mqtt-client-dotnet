@@ -17,6 +17,11 @@ namespace HiveMQtt.Client.Events;
 
 using HiveMQtt.Client.Options;
 
+/// <summary>
+/// Event arguments for the <see cref="HiveMQClient.BeforeDisconnect"/> event.
+/// <para>This event is called before a disconnect is sent to the broker.</para>
+/// <para><see cref="BeforeDisconnectEventArgs.Options"/> contains the options of the disconnect operation.</para>
+/// </summary>
 public class BeforeDisconnectEventArgs : EventArgs
 {
     public BeforeDisconnectEventArgs(HiveMQClientOptions options) => this.Options = options;
