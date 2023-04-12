@@ -17,6 +17,11 @@ namespace HiveMQtt.Client.Events;
 
 using HiveMQtt.MQTT5.Types;
 
+/// <summary>
+/// Event arguments for the <see cref="HiveMQClient.OnMessageReceived"/> event.
+/// <para>This event is called when a message is received from the broker.</para>
+/// <para><see cref="OnMessageReceivedEventArgs.PublishMessage"/> contains the received message.</para>
+/// </summary>
 public class OnMessageReceivedEventArgs : EventArgs
 {
     public OnMessageReceivedEventArgs(MQTT5PublishMessage message) => this.PublishMessage = message;

@@ -17,6 +17,11 @@ namespace HiveMQtt.Client.Events;
 
 using HiveMQtt.MQTT5.Types;
 
+/// <summary>
+/// Event arguments for the <see cref="HiveMQClient.BeforeUnsubscribe"/> event.
+/// <para>This event is called before an unsubscribe is sent to the broker.</para>
+/// <para><see cref="BeforeUnsubscribeEventArgs.Subscriptions"/> contains the subscriptions to unsubscribe.</para>
+/// </summary>
 public class BeforeUnsubscribeEventArgs : EventArgs
 {
     public BeforeUnsubscribeEventArgs(List<Subscription> subscriptions) => this.Subscriptions = subscriptions;

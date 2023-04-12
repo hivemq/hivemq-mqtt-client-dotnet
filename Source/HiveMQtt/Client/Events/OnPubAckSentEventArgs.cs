@@ -17,6 +17,11 @@ namespace HiveMQtt.Client.Events;
 
 using HiveMQtt.MQTT5.Packets;
 
+/// <summary>
+/// Event arguments for the <see cref="HiveMQClient.OnPubAckSent"/> event.
+/// <para>This event is called when a PUBACK packet is sent to the broker.</para>
+/// <para><see cref="OnPubAckSentEventArgs.PubAckPacket"/> contains the sent PUBACK packet.</para>
+/// </summary>
 public class OnPubAckSentEventArgs : EventArgs
 {
     public OnPubAckSentEventArgs(PubAckPacket pubAckPacket) => this.PubAckPacket = pubAckPacket;

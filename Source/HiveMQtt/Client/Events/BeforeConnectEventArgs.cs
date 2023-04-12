@@ -17,6 +17,11 @@ namespace HiveMQtt.Client.Events;
 
 using HiveMQtt.Client.Options;
 
+/// <summary>
+/// Event arguments for the <see cref="HiveMQClient.BeforeConnect"/> event.
+/// <para>This event is called before a connect is sent to the broker.</para>
+/// <para><see cref="BeforeConnectEventArgs.Options"/> contains the options of the connect operation.</para>
+/// </summary>
 public class BeforeConnectEventArgs : EventArgs
 {
     public BeforeConnectEventArgs(HiveMQClientOptions options) => this.Options = options;

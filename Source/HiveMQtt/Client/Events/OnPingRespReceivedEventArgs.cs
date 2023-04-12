@@ -17,6 +17,11 @@ namespace HiveMQtt.Client.Events;
 
 using HiveMQtt.MQTT5.Packets;
 
+/// <summary>
+/// Event arguments for the <see cref="HiveMQClient.OnPingRespReceived"/> event.
+/// <para>This event is called when a PINGRESP packet is received from the broker.</para>
+/// <para><see cref="OnPingRespReceivedEventArgs.PingRespPacket"/> contains the received PINGRESP packet.</para>
+/// </summary>
 public class OnPingRespReceivedEventArgs : EventArgs
 {
     public OnPingRespReceivedEventArgs(PingRespPacket pingRespPacket) => this.PingRespPacket = pingRespPacket;

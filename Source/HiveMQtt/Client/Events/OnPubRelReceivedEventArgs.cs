@@ -17,6 +17,11 @@ namespace HiveMQtt.Client.Events;
 
 using HiveMQtt.MQTT5.Packets;
 
+/// <summary>
+/// Event arguments for the <see cref="HiveMQClient.OnPubRelReceived"/> event.
+/// <para>This event is called when a PUBREL packet is received from the broker.</para>
+/// <para><see cref="OnPubRelReceivedEventArgs.PubRelPacket"/> contains the received PUBREL packet.</para>
+/// </summary>
 public class OnPubRelReceivedEventArgs : EventArgs
 {
     public OnPubRelReceivedEventArgs(PubRelPacket pubRelPacket) => this.PubRelPacket = pubRelPacket;

@@ -17,6 +17,11 @@ namespace HiveMQtt.Client.Events;
 
 using HiveMQtt.MQTT5.Packets;
 
+/// <summary>
+/// Event arguments for the <see cref="HiveMQClient.OnSubscribeSent"/> event.
+/// <para>This event is called when a SUBSCRIBE packet is sent to the broker.</para>
+/// <para><see cref="OnSubscribeSentEventArgs.SubscribePacket"/> contains the sent SUBSCRIBE packet.</para>
+/// </summary>
 public class OnSubscribeSentEventArgs : EventArgs
 {
     public OnSubscribeSentEventArgs(SubscribePacket subscribePacket) => this.SubscribePacket = subscribePacket;

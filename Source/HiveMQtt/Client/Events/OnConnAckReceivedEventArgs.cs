@@ -17,6 +17,11 @@ namespace HiveMQtt.Client.Events;
 
 using HiveMQtt.MQTT5.Packets;
 
+/// <summary>
+/// Event arguments for the <see cref="HiveMQClient.OnConnAckReceived"/> event.
+/// <para>This event is called when a CONNACK packet is received from the broker.</para>
+/// <para><see cref="OnConnAckReceivedEventArgs.ConnAckPacket"/> contains the received CONNACK packet.</para>
+/// </summary>
 public class OnConnAckReceivedEventArgs : EventArgs
 {
     public OnConnAckReceivedEventArgs(ConnAckPacket connAckPacket) => this.ConnAckPacket = connAckPacket;
