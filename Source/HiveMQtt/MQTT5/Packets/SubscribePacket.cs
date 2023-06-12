@@ -59,18 +59,16 @@ public class SubscribePacket : ControlPacket
     /// <returns>An array of bytes ready to be sent.</returns>
     public byte[] Encode()
     {
-        using(var stream = new MemoryStream())
+        using (var vhAndPayloadStream = new MemoryStream())
         {
-            stream.Position = 2;
-
-            // Variable Header - starts at byte 2
-            EncodeTwoByteInteger(stream, this.PacketIdentifier);
-            this.EncodeProperties(stream);
+            // Variable Header
+            EncodeTwoByteInteger(vhAndPayloadStream, this.PacketIdentifier);
+            this.EncodeProperties(vhAndPayloadStream);
 
             // Payload
             foreach (var tf in this.Options.TopicFilters)
             {
-                EncodeUTF8String(stream, tf.Topic);
+                EncodeUTF8String(vhAndPayloadStream, tf.Topic);
 
                 var optionsByte = (byte)tf.QoS;
                 if (tf.NoLocal is true)
@@ -91,18 +89,23 @@ public class SubscribePacket : ControlPacket
                 {
                     optionsByte |= 0x20;
                 }
-                stream.WriteByte(optionsByte);
+                vhAndPayloadStream.WriteByte(optionsByte);
             }
 
-            // Fixed Header
-            stream.Position = 0;
-            var length = stream.Length - 2;
+            // Construct the final packet
+            var constructedPacket = new MemoryStream((int)vhAndPayloadStream.Length + 5);
+
+            // Write the Fixed Header
             var byte1 = (byte)ControlPacketType.Subscribe << 4;
             byte1 |= 0x2;
+            constructedPacket.WriteByte((byte)byte1);
+            _ = EncodeVariableByteInteger(constructedPacket, (int)vhAndPayloadStream.Length);
 
-            stream.WriteByte((byte)byte1);
-            _ = EncodeVariableByteInteger(stream, (int)length);
-            return stream.ToArray();
+            // Copy the Variable Header and Payload
+            vhAndPayloadStream.Position = 0;
+            vhAndPayloadStream.CopyTo(constructedPacket);
+
+            return constructedPacket.ToArray();
         };
     }
 

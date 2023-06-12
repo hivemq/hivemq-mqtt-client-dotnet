@@ -38,13 +38,20 @@ public class ConnAckPacket : ControlPacket
 
     public override ControlPacketType ControlPacketType => ControlPacketType.ConnAck;
 
+    /// <summary>
+    /// Decode the received MQTT ConnAck packet.
+    /// </summary>
+    /// <param name="packetData">The raw packet data off the wire.</param>
     public void Decode(ReadOnlySequence<byte> packetData)
     {
         var packetLength = packetData.Length;
         var reader = new SequenceReader<byte>(packetData);
 
-        // Skip past the Fixed Header
-        reader.Advance(2);
+        // The first byte is the MQTT Control Packet type and flags.
+        reader.Advance(1);
+
+        // The second byte is the Remaining Length
+        var fhRemainingLength = DecodeVariableByteInteger(ref reader, out var vbiLength);
 
         if (reader.TryRead(out var ackFlags))
         {

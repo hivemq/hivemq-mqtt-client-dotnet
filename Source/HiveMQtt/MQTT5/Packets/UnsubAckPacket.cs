@@ -16,7 +16,7 @@
 namespace HiveMQtt.MQTT5.Packets;
 
 using System.Buffers;
-using HiveMQtt.Client.Exceptions;
+using HiveMQtt.MQTT5.Exceptions;
 using HiveMQtt.MQTT5.ReasonCodes;
 
 /// <summary>
@@ -49,25 +49,35 @@ public class UnsubAckPacket : ControlPacket
     /// <param name="packetData">The raw packet data off the wire.</param>
     public void Decode(ReadOnlySequence<byte> packetData)
     {
-        var packetLength = packetData.Length;
         var reader = new SequenceReader<byte>(packetData);
 
-        if (reader.TryRead(out var headerByte))
+        // Skip past the fixed header MQTT Control Packet type
+        reader.Advance(1);
+
+        // Remaining Length
+        var fhRemainingLength = DecodeVariableByteInteger(ref reader, out var vbiLength);
+        var variableHeaderStart = reader.Consumed;
+
+        // FIXME: Centralize packet identifier validation
+        var packetIdentifier = DecodeTwoByteInteger(ref reader);
+        if (packetIdentifier != null && packetIdentifier.Value > 0 && packetIdentifier.Value <= ushort.MaxValue)
         {
-            if (headerByte != 0xB0)
-            {
-                throw new HiveMQttClientException("Invalid UnsubAck header byte");
-            }
+            this.PacketIdentifier = packetIdentifier.Value;
+        }
+        else
+        {
+            throw new MQTTProtocolException("Invalid packet identifier");
         }
 
-        var remainingLength = DecodeVariableByteInteger(ref reader);
-        var packetIdentifier = DecodeTwoByteInteger(ref reader);
-
         var propertyLength = DecodeVariableByteInteger(ref reader, out var lengthOfPropertyLength);
-        _ = this.DecodeProperties(ref reader, propertyLength);
+        if (propertyLength > 0)
+        {
+            this.DecodeProperties(ref reader, propertyLength);
+        }
 
         // Payload
-        var payloadLength = remainingLength - lengthOfPropertyLength - propertyLength - 2;
+        var variableHeaderLength = reader.Consumed - variableHeaderStart;
+        var payloadLength = fhRemainingLength - variableHeaderLength;
 
         // The Payload contains a list of Reason Codes.
         for (var x = 0; x < payloadLength; x++)

@@ -16,7 +16,7 @@
 namespace HiveMQtt.MQTT5.Packets;
 
 using System.Buffers;
-using HiveMQtt.Client.Exceptions;
+using HiveMQtt.MQTT5.Exceptions;
 using HiveMQtt.MQTT5.ReasonCodes;
 
 /// <summary>
@@ -32,16 +32,6 @@ public class SubAckPacket : ControlPacket
     }
 
     /// <summary>
-    /// Gets or sets the Session Present flag.
-    /// </summary>
-    public bool SessionPresent { get; set; }
-
-    /// <summary>
-    /// Gets or sets the Ack Flags.
-    /// </summary>
-    public int AckFlags { get; set; }
-
-    /// <summary>
     /// Gets or sets the list of Reason Codes.
     /// </summary>
     public List<SubAckReasonCode> ReasonCodes { get; set; }
@@ -54,19 +44,25 @@ public class SubAckPacket : ControlPacket
     /// </summary>
     public void Decode(ReadOnlySequence<byte> packetData)
     {
-        var packetLength = packetData.Length;
         var reader = new SequenceReader<byte>(packetData);
 
-        if (reader.TryRead(out var headerByte))
-        {
-            if (headerByte != 0x90)
-            {
-                throw new HiveMQttClientException("Invalid SubAck header byte");
-            }
-        }
+        // Skip past the fixed header MQTT Control Packet type
+        reader.Advance(1);
 
-        var remainingLength = DecodeVariableByteInteger(ref reader);
+        // Remaining Length
+        var fhRemainingLength = DecodeVariableByteInteger(ref reader, out var vbiLength);
+        var variableHeaderStart = reader.Consumed;
+
+        // FIXME: Centralize packet identifier validation
         var packetIdentifier = DecodeTwoByteInteger(ref reader);
+        if (packetIdentifier != null && packetIdentifier.Value > 0 && packetIdentifier.Value <= ushort.MaxValue)
+        {
+            this.PacketIdentifier = packetIdentifier.Value;
+        }
+        else
+        {
+            throw new MQTTProtocolException("Invalid packet identifier");
+        }
 
         var propertyLength = DecodeVariableByteInteger(ref reader, out var lengthOfPropertyLength);
         if (propertyLength > 0)
@@ -75,7 +71,8 @@ public class SubAckPacket : ControlPacket
         }
 
         // Payload
-        var payloadLength = remainingLength - lengthOfPropertyLength - propertyLength - 2;
+        var variableHeaderLength = reader.Consumed - variableHeaderStart;
+        var payloadLength = fhRemainingLength - variableHeaderLength;
 
         // The Payload contains a list of Reason Codes.
         for (var x = 0; x < payloadLength; x++)

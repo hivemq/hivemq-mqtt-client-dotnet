@@ -42,39 +42,41 @@ public class ConnectPacket : ControlPacket
     {
         this.GatherConnectFlagsAndProperties();
 
-        using(var stream = new MemoryStream())
+        using (var vhAndPayloadStream = new MemoryStream())
         {
-            stream.Position = 2;
-
-            // Variable Header - starts at byte 2
-            stream.WriteByte(0);
-            stream.WriteByte(4);
-            stream.Write(Encoding.UTF8.GetBytes("MQTT"));
-            stream.WriteByte(0x5); // Protocol Version
-            stream.WriteByte(this.flags); // Connect Flags
-            _ = EncodeTwoByteInteger(stream, this.clientOptions.KeepAlive);
-            this.EncodeProperties(stream);
+            // Variable Header
+            vhAndPayloadStream.WriteByte(0);
+            vhAndPayloadStream.WriteByte(4);
+            vhAndPayloadStream.Write(Encoding.UTF8.GetBytes("MQTT"));
+            vhAndPayloadStream.WriteByte(0x5); // Protocol Version
+            vhAndPayloadStream.WriteByte(this.flags); // Connect Flags
+            _ = EncodeTwoByteInteger(vhAndPayloadStream, this.clientOptions.KeepAlive);
+            this.EncodeProperties(vhAndPayloadStream);
 
             // Payload
-            _ = EncodeUTF8String(stream, this.clientOptions.ClientId);
+            _ = EncodeUTF8String(vhAndPayloadStream, this.clientOptions.ClientId);
             if (this.clientOptions.UserName != null)
             {
-                _ = EncodeUTF8String(stream, this.clientOptions.UserName);
+                _ = EncodeUTF8String(vhAndPayloadStream, this.clientOptions.UserName);
             }
 
             if (this.clientOptions.Password != null)
             {
-                _ = EncodeUTF8String(stream, this.clientOptions.Password);
+                _ = EncodeUTF8String(vhAndPayloadStream, this.clientOptions.Password);
             }
 
-            var length = stream.Length - 2;
+            // Construct the final packet
+            var constructedPacket = new MemoryStream((int)vhAndPayloadStream.Length + 5);
 
-            // Fixed Header - Add to the beginning of the stream
-            stream.Position = 0;
-            stream.WriteByte(((byte)ControlPacketType.Connect) << 4);
-            _ = EncodeVariableByteInteger(stream, (int)length);
+            // Write the Fixed Header
+            constructedPacket.WriteByte(((byte)ControlPacketType.Connect) << 4);
+            _ = EncodeVariableByteInteger(constructedPacket, (int)vhAndPayloadStream.Length);
 
-            return stream.ToArray();
+            // Copy the Variable Header and Payload
+            vhAndPayloadStream.Position = 0;
+            vhAndPayloadStream.CopyTo(constructedPacket);
+
+            return constructedPacket.ToArray();
         };
     }
 
