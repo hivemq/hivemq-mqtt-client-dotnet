@@ -92,17 +92,17 @@ public class PublishPacket : ControlPacket
     {
         var reader = new SequenceReader<byte>(packetData);
 
-        if (reader.TryRead(out var fixedHeader))
+        if (reader.TryRead(out var fixedHeaderFlags))
         {
             // Dup Flag
-            this.Message.Duplicate = (fixedHeader & 0x8) == 0x8;
+            this.Message.Duplicate = (fixedHeaderFlags & 0x8) == 0x8;
 
             // QoS Flag
-            if ((fixedHeader & 0x6) == 0x2)
+            if ((fixedHeaderFlags & 0x6) == 0x2)
             {
                 this.Message.QoS = QualityOfService.AtLeastOnceDelivery;
             }
-            else if ((fixedHeader & 0x6) == 0x4)
+            else if ((fixedHeaderFlags & 0x6) == 0x4)
             {
                 this.Message.QoS = QualityOfService.ExactlyOnceDelivery;
             }
@@ -112,19 +112,18 @@ public class PublishPacket : ControlPacket
             }
 
             // Retain Flag
-            this.Message.Retain = (fixedHeader & 0x1) == 0x1;
+            this.Message.Retain = (fixedHeaderFlags & 0x1) == 0x1;
         }
 
         // Remaining Length
-        reader.TryRead(out var remainingLength);
-
+        var fhRemainingLength = DecodeVariableByteInteger(ref reader, out var vbiLength);
         var variableHeaderStart = reader.Consumed;
 
         // Variable Header
         // Topic Name
         this.Message.Topic = DecodeUTF8String(ref reader);
 
-        // Packet Identifer
+        // Packet Identifier
         ushort? packetIdentifier = null;
         if (this.Message.QoS != QualityOfService.AtMostOnceDelivery)
         {
@@ -187,11 +186,11 @@ public class PublishPacket : ControlPacket
         } // End properties
 
         var variableHeaderLength = reader.Consumed - variableHeaderStart;
-        var payloadLength = remainingLength - variableHeaderLength;
+        var payloadLength = fhRemainingLength - variableHeaderLength;
 
         // Payload
         this.Message.Payload = new byte[payloadLength];
-        for(var i = 0; i < payloadLength; i++)
+        for (var i = 0; i < payloadLength; i++)
         {
             if (reader.TryRead(out var b))
             {
@@ -206,42 +205,38 @@ public class PublishPacket : ControlPacket
     /// <returns>An array of bytes ready to be sent.</returns>
     public byte[] Encode()
     {
-        var streamSize = this.Message.Payload?.Length ?? 0;
+        var payloadLength = this.Message.Payload?.Length ?? 0;
 
-        using(var stream = new MemoryStream(streamSize))
+        using (var vhAndPayloadStream = new MemoryStream(payloadLength + 256))
         {
-            stream.Position = 2;
-
             this.GatherPublishFlagsAndProperties();
 
-            // Variable Header - starts at byte 2
+            // Variable Header
             // Topic Name
             if (this.Message.Topic != null)
             {
-                _ = EncodeUTF8String(stream, this.Message.Topic);
+                _ = EncodeUTF8String(vhAndPayloadStream, this.Message.Topic);
             }
 
             // Packet Identifier
             if (this.Message.QoS > QualityOfService.AtMostOnceDelivery)
             {
-                EncodeTwoByteInteger(stream, this.PacketIdentifier);
+                EncodeTwoByteInteger(vhAndPayloadStream, this.PacketIdentifier);
             }
 
             // Properties
-            this.EncodeProperties(stream);
+            this.EncodeProperties(vhAndPayloadStream);
 
             // Payload
             if (this.Message.Payload != null)
             {
-                for(var i = 0; i < this.Message.Payload?.Length; i++)
+                for (var i = 0; i < this.Message.Payload?.Length; i++)
                 {
-                    stream.WriteByte(this.Message.Payload[i]);
+                    vhAndPayloadStream.WriteByte(this.Message.Payload[i]);
                 }
             }
 
-            // Fixed Header - starts at byte 0
-            stream.Position = 0;
-
+            // Construct the Fixed Header
             var byte1 = (byte)ControlPacketType.Publish << 4;
 
             // DUP Flag
@@ -266,12 +261,26 @@ public class PublishPacket : ControlPacket
                 byte1 |= 0x1;
             }
 
-            var length = stream.Length - 2;
-            stream.WriteByte((byte)byte1);
-            _ = EncodeVariableByteInteger(stream, (int)length);
+            // Largest possible size of a fixed header is (5):
+            // byte 1: MQTT Control Packet Type & Flags
+            // byte 2: Remaining Length encoded as a variable byte integer
+            // byte 3: Remaining Length encoded as a variable byte integer (max size is 4)
+            // byte 4: Remaining Length encoded as a variable byte integer (max size is 4)
+            // byte 5: Remaining Length encoded as a variable byte integer (max size is 4)
 
-            return stream.ToArray();
-        };
+            // Construct the final packet
+            var constructedPacket = new MemoryStream((int)vhAndPayloadStream.Length + 5);
+
+            // Write the Fixed Header
+            constructedPacket.WriteByte((byte)byte1);
+            _ = EncodeVariableByteInteger(constructedPacket, (int)vhAndPayloadStream.Length);
+
+            // Copy the Variable Header and Payload
+            vhAndPayloadStream.Position = 0;
+            vhAndPayloadStream.CopyTo(constructedPacket);
+
+            return constructedPacket.ToArray();
+        }
     }
 
     /// <summary>

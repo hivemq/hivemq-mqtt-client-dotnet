@@ -41,7 +41,7 @@ public class HiveMQClientPubSubTest
         var subResult = await client.SubscribeAsync("tests/MostBasicPubSubAsync").ConfigureAwait(false);
         var msg = new string(/*lang=json,strict*/ "{\"interference\": \"1029384\"}");
         var result = await client.PublishAsync("tests/MostBasicPubSubAsync", msg).ConfigureAwait(false);
-        await taskCompletionSource.Task.ConfigureAwait(false);
+        await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
     }
 
     [Fact]
@@ -83,7 +83,7 @@ public class HiveMQClientPubSubTest
         // Publish a QoS1 message
         var msg = new string(/*lang=json,strict*/ "{\"interference\": \"1029384\"}");
         var result = await client.PublishAsync("tests/QoS1PubSubAsync", msg, QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
-        await taskCompletionSource.Task.ConfigureAwait(false);
+        await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
     }
 
     [Fact]
@@ -124,6 +124,47 @@ public class HiveMQClientPubSubTest
         // Publish a QoS1 message
         var msg = new string(/*lang=json,strict*/ "{\"interference\": \"1029384\"}");
         var result = await client.PublishAsync("tests/QoS1PubSubAsync", msg, QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
-        await taskCompletionSource.Task.ConfigureAwait(false);
+        await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+    }
+
+    [Fact]
+    public async Task LargeMessagePubSubAsync()
+    {
+        var client = new HiveMQClient();
+        var taskCompletionSource = new TaskCompletionSource<bool>();
+        var connectResult = await client.ConnectAsync().ConfigureAwait(false);
+        Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
+
+        // Set the event handler for the message received event
+        client.OnMessageReceived += (sender, args) =>
+        {
+            Assert.Equal("tests/LargeMessagePubSubAsync", args.PublishMessage.Topic);
+            Assert.Equal("1. A delusion starts like any other idea, as an egg. Identical on the outside, perfectly formed. From the shell, you'd never know anything was wrong. It's what's inside that matters. 2. A delusion starts like any other idea, as an egg. Identical on the outside, perfectly formed. From the shell, you'd never know anything was wrong. It's what's inside that matters. 3. A delusion starts like any other idea, as an egg. Identical on the outside, perfectly formed. From the shell, you'd never know anything was wrong. It's what's inside that matters.", args.PublishMessage.PayloadAsString);
+
+            // Disconnect after receiving the message
+            if (sender != null)
+            {
+                var client = (HiveMQClient)sender;
+
+                var disconnect = Task.Run(async () =>
+                {
+                    var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
+                    Assert.True(disconnectResult);
+                    return disconnectResult;
+                });
+                Assert.True(disconnect.Result);
+            }
+
+            taskCompletionSource.SetResult(true);
+        };
+
+        var subResult = await client.SubscribeAsync("tests/LargeMessagePubSubAsync").ConfigureAwait(false);
+
+        // length == 548
+        var msg = new string("1. A delusion starts like any other idea, as an egg. Identical on the outside, perfectly formed. From the shell, you'd never know anything was wrong. It's what's inside that matters. 2. A delusion starts like any other idea, as an egg. Identical on the outside, perfectly formed. From the shell, you'd never know anything was wrong. It's what's inside that matters. 3. A delusion starts like any other idea, as an egg. Identical on the outside, perfectly formed. From the shell, you'd never know anything was wrong. It's what's inside that matters.");
+        var result = await client.PublishAsync("tests/LargeMessagePubSubAsync", msg).ConfigureAwait(false);
+
+        var taskResult = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        Assert.True(taskResult);
     }
 }

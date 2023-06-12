@@ -42,9 +42,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Asynchronous background task that handles the outgoing traffic of packets queued in the sendQueue.
     /// </summary>
-    private Task<bool> TrafficOutflowProcessorAsync()
-    {
-        return Task.Run(async () =>
+    private Task<bool> TrafficOutflowProcessorAsync() => Task.Run(async () =>
         {
             var stopWatch = new Stopwatch();
             var keepAlivePeriod = this.Options.KeepAlive / 2;
@@ -169,20 +167,17 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             Trace.WriteLine($"{Environment.CurrentManagedThreadId}: TrafficOutflowProcessor Exiting...{this.connectState}");
             return true;
         });
-    }
 
     /// <summary>
     /// Asynchronous background task that handles the incoming traffic of packets.
     /// </summary>
-    private Task<bool> TrafficInflowProcessorAsync()
-    {
-        return Task.Run(async () =>
+    private Task<bool> TrafficInflowProcessorAsync() => Task.Run(async () =>
         {
             Trace.WriteLine($"{Environment.CurrentManagedThreadId}: TrafficInflowProcessor Starting...{this.connectState}");
 
             ReadResult readResult;
 
-            while (this.connectState == ConnectState.Connecting || this.connectState == ConnectState.Connected)
+            while (this.connectState is ConnectState.Connecting or ConnectState.Connected)
             {
                 readResult = await this.reader.ReadAsync().ConfigureAwait(false);
 
@@ -272,6 +267,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                                 // FIXME: Log, trace to assist debugging
                                 pubRecResponse.ReasonCode = PubRecReasonCode.PacketIdentifierInUse;
                             }
+
                             this.sendQueue.Enqueue(pubRecResponse);
                         }
 
@@ -301,6 +297,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                         if (this.transactionQueue.TryGetValue(pubRecPacket.PacketIdentifier, out var publishQoS2Chain))
                         {
                             var publishPacket = (PublishPacket)publishQoS2Chain.First();
+
                             // Trigger the packet specific event
                             publishPacket.OnPublishQoS2CompleteEventLauncher(pubRecPacket);
 
@@ -358,5 +355,4 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
             return true;
         });
-    }
 }
