@@ -16,7 +16,6 @@
 namespace HiveMQtt.MQTT5.Packets;
 
 using System.Buffers;
-using HiveMQtt.MQTT5.Exceptions;
 using HiveMQtt.MQTT5.ReasonCodes;
 
 /// <summary>
@@ -62,9 +61,13 @@ public class PubCompPacket : ControlPacket
             vhStream.CopyTo(constructedPacket);
 
             return constructedPacket.ToArray();
-        };
+        }
     }
 
+    /// <summary>
+    /// Decode the raw packet data of a PUBCOMP packet.
+    /// </summary>
+    /// <param name="packetData">The raw packet data.</param>
     public void Decode(ReadOnlySequence<byte> packetData)
     {
         var reader = new SequenceReader<byte>(packetData);
@@ -75,17 +78,7 @@ public class PubCompPacket : ControlPacket
         // Remaining Length
         var fhRemainingLength = DecodeVariableByteInteger(ref reader, out var vbiLength);
 
-        // FIXME: Centralize packet identifier validation
-        var packetIdentifier = DecodeTwoByteInteger(ref reader);
-        if (packetIdentifier != null && packetIdentifier.Value > 0 && packetIdentifier.Value <= ushort.MaxValue)
-        {
-            this.PacketIdentifier = packetIdentifier.Value;
-        }
-        else
-        {
-            throw new MQTTProtocolException("Invalid packet identifier");
-        }
-
+        this.PacketIdentifier = (ushort)DecodePacketIdentifier(ref reader);
 
         if (reader.TryRead(out var reasonCode))
         {

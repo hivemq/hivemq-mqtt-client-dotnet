@@ -124,18 +124,9 @@ public class PublishPacket : ControlPacket
         this.Message.Topic = DecodeUTF8String(ref reader);
 
         // Packet Identifier
-        ushort? packetIdentifier = null;
         if (this.Message.QoS != QualityOfService.AtMostOnceDelivery)
         {
-            packetIdentifier = DecodeTwoByteInteger(ref reader);
-            if (packetIdentifier != null)
-            {
-                this.PacketIdentifier = (ushort)packetIdentifier;
-            }
-            else
-            {
-                throw new IOException("Packet Identifier for incoming Publish is null when QoS > 0");
-            }
+            this.PacketIdentifier = (ushort)DecodePacketIdentifier(ref reader);
         }
 
         // Properties
@@ -324,7 +315,6 @@ public class PublishPacket : ControlPacket
 
         // We never encode SubscriptionIdentifiers for an outgoing Publish packet
         // this.Message.SubscriptionIdentifiers
-
         if (this.Message.ContentType != null)
         {
             this.Properties.ContentType = this.Message.ContentType;

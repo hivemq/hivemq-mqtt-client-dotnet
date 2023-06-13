@@ -16,7 +16,6 @@
 namespace HiveMQtt.MQTT5.Packets;
 
 using System.Buffers;
-using HiveMQtt.MQTT5.Exceptions;
 using HiveMQtt.MQTT5.ReasonCodes;
 
 /// <summary>
@@ -31,10 +30,7 @@ public class PubRelPacket : ControlPacket
         this.ReasonCode = reasonCode;
     }
 
-    public PubRelPacket(ReadOnlySequence<byte> packetData)
-    {
-        this.Decode(packetData);
-    }
+    public PubRelPacket(ReadOnlySequence<byte> packetData) => this.Decode(packetData);
 
     public PubRelReasonCode ReasonCode { get; set; }
 
@@ -67,9 +63,13 @@ public class PubRelPacket : ControlPacket
             vhStream.CopyTo(constructedPacket);
 
             return constructedPacket.ToArray();
-        };
+        }
     }
 
+    /// <summary>
+    /// Decode the packet data of an MQTT PUBREL Packet.
+    /// </summary>
+    /// <param name="packetData">The packet data as a ReadOnlySequence of bytes.</param>
     public void Decode(ReadOnlySequence<byte> packetData)
     {
         var packetLength = packetData.Length;
@@ -79,11 +79,7 @@ public class PubRelPacket : ControlPacket
 
         reader.TryRead(out var remainingLength);
 
-        var packetIdentifier = DecodeTwoByteInteger(ref reader);
-        if (packetIdentifier != null)
-        {
-            this.PacketIdentifier = packetIdentifier.Value;
-        }
+        this.PacketIdentifier = (ushort)DecodePacketIdentifier(ref reader);
 
         if (reader.TryRead(out var reasonCode))
         {

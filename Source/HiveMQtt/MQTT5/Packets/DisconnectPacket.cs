@@ -58,9 +58,13 @@ public class DisconnectPacket : ControlPacket
             EncodeVariableByteInteger(stream, (int)remainingLength);
 
             return stream.ToArray();
-        };
+        }
     }
 
+    /// <summary>
+    /// Decode the raw packet data of a Disconnect packet.
+    /// </summary>
+    /// <param name="packetData">The raw packet data.</param>
     public void Decode(ReadOnlySequence<byte> packetData)
     {
         var reader = new SequenceReader<byte>(packetData);

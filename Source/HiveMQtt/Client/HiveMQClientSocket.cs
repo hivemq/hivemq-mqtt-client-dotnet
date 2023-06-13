@@ -31,6 +31,23 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     private PipeReader? reader;
     private PipeWriter? writer;
 
+    internal static bool ValidateServerCertificate(
+        object sender,
+        X509Certificate certificate,
+        X509Chain chain,
+        SslPolicyErrors sslPolicyErrors)
+    {
+        if (sslPolicyErrors == SslPolicyErrors.None)
+        {
+            return true;
+        }
+
+        Console.WriteLine("Certificate error: {0}", sslPolicyErrors);
+
+        // Do not allow this client to communicate with unauthenticated servers.
+        return false;
+    }
+
     /// <summary>
     /// Make a TCP connection to a remote broker.
     /// </summary>
@@ -102,8 +119,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         this.writer = PipeWriter.Create(this.stream);
 
         // Start the traffic processors
-        this.trafficOutflowProcessor = this.TrafficOutflowProcessorAsync();
-        this.trafficInflowProcessor = this.TrafficInflowProcessorAsync();
+        _ = this.TrafficOutflowProcessorAsync();
+        _ = this.TrafficInflowProcessorAsync();
 
         // Console.WriteLine($"Socket connected to {this.socket.RemoteEndPoint}");
         return socketConnected;
@@ -111,10 +128,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
     internal bool CloseSocket()
     {
-        // Shutdown the traffic processors
-        this.trafficOutflowProcessor = null;
-        this.trafficInflowProcessor = null;
-
         // Shutdown the pipeline
         this.reader = null;
         this.writer = null;
@@ -124,22 +137,5 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         this.socket?.Close();
 
         return true;
-    }
-
-    internal static bool ValidateServerCertificate(
-        object sender,
-        X509Certificate certificate,
-        X509Chain chain,
-        SslPolicyErrors sslPolicyErrors)
-    {
-        if (sslPolicyErrors == SslPolicyErrors.None)
-        {
-            return true;
-        }
-
-        Console.WriteLine("Certificate error: {0}", sslPolicyErrors);
-
-        // Do not allow this client to communicate with unauthenticated servers.
-        return false;
     }
 }
