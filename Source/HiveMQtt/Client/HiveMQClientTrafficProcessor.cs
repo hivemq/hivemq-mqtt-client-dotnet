@@ -35,10 +35,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     // Transactional packets indexed by packet identifer
     private readonly ConcurrentDictionary<int, List<ControlPacket>> transactionQueue = new();
 
-    private Task<bool>? trafficOutflowProcessor;
-
-    private Task<bool>? trafficInflowProcessor;
-
     /// <summary>
     /// Asynchronous background task that handles the outgoing traffic of packets queued in the sendQueue.
     /// </summary>
@@ -161,7 +157,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
                     stopWatch.Restart();
                 }
-
             } // while
 
             Trace.WriteLine($"{Environment.CurrentManagedThreadId}: TrafficOutflowProcessor Exiting...{this.connectState}");

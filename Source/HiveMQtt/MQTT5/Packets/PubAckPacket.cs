@@ -69,7 +69,7 @@ public class PubAckPacket : ControlPacket
             vhStream.CopyTo(constructedPacket);
 
             return constructedPacket.ToArray();
-        };
+        }
     }
 
     /// <summary>

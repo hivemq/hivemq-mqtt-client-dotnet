@@ -315,7 +315,6 @@ public class PublishPacket : ControlPacket
 
         // We never encode SubscriptionIdentifiers for an outgoing Publish packet
         // this.Message.SubscriptionIdentifiers
-
         if (this.Message.ContentType != null)
         {
             this.Properties.ContentType = this.Message.ContentType;

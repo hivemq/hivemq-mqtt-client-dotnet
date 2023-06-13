@@ -58,7 +58,7 @@ public class DisconnectPacket : ControlPacket
             EncodeVariableByteInteger(stream, (int)remainingLength);
 
             return stream.ToArray();
-        };
+        }
     }
 
     /// <summary>

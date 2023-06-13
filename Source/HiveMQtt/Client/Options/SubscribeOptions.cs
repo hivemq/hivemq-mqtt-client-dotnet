@@ -15,8 +15,8 @@
  */
 namespace HiveMQtt.Client.Options;
 
-using HiveMQtt.MQTT5.Types;
 using HiveMQtt.Client.Exceptions;
+using HiveMQtt.MQTT5.Types;
 
 public class SubscribeOptions
 {

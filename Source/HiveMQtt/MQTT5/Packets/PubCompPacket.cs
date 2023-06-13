@@ -61,7 +61,7 @@ public class PubCompPacket : ControlPacket
             vhStream.CopyTo(constructedPacket);
 
             return constructedPacket.ToArray();
-        };
+        }
     }
 
     /// <summary>

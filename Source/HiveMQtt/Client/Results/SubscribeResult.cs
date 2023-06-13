@@ -67,8 +67,9 @@ public class SubscribeResult
     /// <para>
     /// The topic filter must be the same as one used in the Subscribe operation.
     /// </para>
-    /// <returns>The Subscription for the given topic filter or null if not found.</returns>
     /// </summary>
+    /// <param name="topicFilter">The topic filter to get the Subscription for.</param>
+    /// <returns>The Subscription for the given topic filter or null if not found.</returns>
     public Subscription? GetSubscription(string topicFilter)
     {
         foreach (var subscription in this.Subscriptions)
@@ -78,14 +79,13 @@ public class SubscribeResult
                 return subscription;
             }
         }
+
         return null;
     }
 
     /// <summary>
     /// Gets the first Subscription in the list of Subscriptions or null if the list is empty.
     /// </summary>
-    public Subscription? GetFirstSubscription()
-    {
-        return this.Subscriptions.FirstOrDefault();
-    }
+    /// <returns>The first Subscription in the list of Subscriptions or null if the list is empty.</returns>
+    public Subscription? GetFirstSubscription() => this.Subscriptions.FirstOrDefault();
 }

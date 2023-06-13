@@ -35,6 +35,59 @@ public class ConnectPacket : ControlPacket
     public override ControlPacketType ControlPacketType => ControlPacketType.Connect;
 
     /// <summary>
+    /// Validate a value against the range of a given MQTT5DataType.
+    /// </summary>
+    /// <param name="value">The value to validate.</param>
+    /// <param name="type">The type to validate against.</param>
+    /// <returns>The value if it is within the range of the type, otherwise the closest value.</returns>
+    internal static int RangeValidate(int value, MQTT5DataType type)
+    {
+        var result = value;
+
+        switch (type)
+        {
+            case MQTT5DataType.TwoByteInteger:
+                if (value < 0)
+                {
+                    result = 0;
+                }
+                else if (value > 255)
+                {
+                    result = 255;
+                }
+
+                break;
+            case MQTT5DataType.FourByteInteger:
+                if (value < 0)
+                {
+                    result = 0;
+                }
+                else if (value > 65535)
+                {
+                    result = 65535;
+                }
+
+                break;
+            case MQTT5DataType.VariableByteInteger:
+                if (value < 0)
+                {
+                    result = 0;
+                }
+                else if (value > 268435455)
+                {
+                    result = 268435455;
+                }
+
+                break;
+            default:
+                result = value;
+                break;
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Encode this packet to be sent on the wire.
     /// </summary>
     /// <returns>An array of bytes ready to be sent.</returns>
@@ -77,7 +130,7 @@ public class ConnectPacket : ControlPacket
             vhAndPayloadStream.CopyTo(constructedPacket);
 
             return constructedPacket.ToArray();
-        };
+        }
     }
 
     /// <summary>
@@ -165,63 +218,12 @@ public class ConnectPacket : ControlPacket
     }
 
     /// <summary>
-    /// Validate a value against the range of a given MQTT5DataType.
-    /// </summary>
-    /// <param name="value">The value to validate.</param>
-    /// <param name="type">The type to validate against.</param>
-    internal static int RangeValidate(int value, MQTT5DataType type)
-    {
-        var result = value;
-
-        switch (type)
-        {
-            case MQTT5DataType.TwoByteInteger:
-                if (value < 0)
-                {
-                    result = 0;
-                }
-                else if (value > 255)
-                {
-                    result = 255;
-                }
-
-                break;
-            case MQTT5DataType.FourByteInteger:
-                if (value < 0)
-                {
-                    result = 0;
-                }
-                else if (value > 65535)
-                {
-                    result = 65535;
-                }
-
-                break;
-            case MQTT5DataType.VariableByteInteger:
-                if (value < 0)
-                {
-                    result = 0;
-                }
-                else if (value > 268435455)
-                {
-                    result = 268435455;
-                }
-
-                break;
-            default:
-                result = value;
-                break;
-        }
-
-        return result;
-    }
-
-    /// <summary>
     /// Validate a value against a given range.
     /// </summary>
     /// <param name="value">The value to validate.</param>
     /// <param name="min">The minimum value.</param>
     /// <param name="max">The maximum value.</param>
+    /// <returns>The value if it is within the range, otherwise the closest value.</returns>
     internal static int RangeValidate(int value, int min, int max)
     {
         var result = value;

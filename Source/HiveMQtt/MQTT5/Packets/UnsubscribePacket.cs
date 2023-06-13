@@ -84,6 +84,6 @@ public class UnsubscribePacket : ControlPacket
             vhAndPayloadStream.CopyTo(constructedPacket);
 
             return constructedPacket.ToArray();
-        };
+        }
     }
 }

@@ -145,7 +145,6 @@ public abstract class ControlPacket
     /// <returns>A string containing the UTF-8 string.</returns>
     protected static string? DecodeUTF8String(ref SequenceReader<byte> reader)
     {
-
         if (reader.TryReadBigEndian(out Int16 stringLength))
         {
             var array = new byte[stringLength];
@@ -286,7 +285,6 @@ public abstract class ControlPacket
     /// <returns>A byte[] containing the binary data.</returns>
     protected static byte[]? DecodeBinaryData(ref SequenceReader<byte> reader)
     {
-
         if (reader.TryReadBigEndian(out Int16 stringLength))
         {
             var array = new byte[stringLength];
@@ -410,7 +408,7 @@ public abstract class ControlPacket
 
         if (writer.Length > int.MaxValue)
         {
-            throw new ArgumentOutOfRangeException("writer", "The writer stream is too large to encode.");
+            throw new ArgumentOutOfRangeException(nameof(writer), "The writer stream is too large to encode.");
         }
 
         var propertyStream = new MemoryStream((int)writer.Length);
@@ -531,8 +529,8 @@ public abstract class ControlPacket
             foreach (var property in this.Properties.UserProperties)
             {
                 propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.UserProperty);
-                propertiesLength += EncodeUTF8String(propertyStream, (string)property.Key);
-                propertiesLength += EncodeUTF8String(propertyStream, (string)property.Value);
+                propertiesLength += EncodeUTF8String(propertyStream, property.Key);
+                propertiesLength += EncodeUTF8String(propertyStream, property.Value);
             }
         }
 
@@ -584,7 +582,7 @@ public abstract class ControlPacket
                     this.Properties.CorrelationData = DecodeBinaryData(ref reader);
                     break;
                 case MQTT5PropertyType.SubscriptionIdentifier:
-                    this.Properties.SubscriptionIdentifier = (Int32)DecodeVariableByteInteger(ref reader);
+                    this.Properties.SubscriptionIdentifier = DecodeVariableByteInteger(ref reader);
                     break;
                 case MQTT5PropertyType.SessionExpiryInterval:
                     this.Properties.SessionExpiryInterval = DecodeFourByteInteger(ref reader);

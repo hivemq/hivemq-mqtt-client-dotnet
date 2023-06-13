@@ -72,14 +72,14 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             if (disposing)
             {
                 // Dispose managed resources.
-                { }
+                // { }
             }
 
             // Call the appropriate methods to clean up
             // unmanaged resources here.
             // If disposing is false,
             // only the following code is executed.
-            { }
+            // { }
 
             // Note disposing has been done.
             this.disposed = true;

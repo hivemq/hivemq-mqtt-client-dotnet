@@ -89,6 +89,7 @@ public class SubscribePacket : ControlPacket
                 {
                     optionsByte |= 0x20;
                 }
+
                 vhAndPayloadStream.WriteByte(optionsByte);
             }
 
@@ -106,7 +107,7 @@ public class SubscribePacket : ControlPacket
             vhAndPayloadStream.CopyTo(constructedPacket);
 
             return constructedPacket.ToArray();
-        };
+        }
     }
 
     /// <summary>

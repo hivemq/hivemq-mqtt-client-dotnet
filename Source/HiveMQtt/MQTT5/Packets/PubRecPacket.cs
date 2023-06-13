@@ -16,7 +16,6 @@
 namespace HiveMQtt.MQTT5.Packets;
 
 using System.Buffers;
-using HiveMQtt.MQTT5.Exceptions;
 using HiveMQtt.MQTT5.ReasonCodes;
 
 /// <summary>
@@ -62,7 +61,7 @@ public class PubRecPacket : ControlPacket
             vhStream.CopyTo(constructedPacket);
 
             return constructedPacket.ToArray();
-        };
+        }
     }
 
     /// <summary>

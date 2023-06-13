@@ -69,11 +69,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         var socketIsConnected = await this.ConnectSocketAsync().ConfigureAwait(false);
 
         var taskCompletionSource = new TaskCompletionSource<ConnAckPacket>();
+        void TaskHandler(object? sender, OnConnAckReceivedEventArgs args) => taskCompletionSource.SetResult(args.ConnAckPacket);
 
-        EventHandler<OnConnAckReceivedEventArgs> eventHandler = (sender, args) =>
-        {
-            taskCompletionSource.SetResult(args.ConnAckPacket);
-        };
+        EventHandler<OnConnAckReceivedEventArgs> eventHandler = TaskHandler;
         this.OnConnAckReceived += eventHandler;
 
         // Construct the MQTT Connect packet and queue to send
@@ -138,10 +136,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         this.connectState = ConnectState.Disconnecting;
 
         var taskCompletionSource = new TaskCompletionSource<DisconnectPacket>();
-        EventHandler<OnDisconnectSentEventArgs> eventHandler = (sender, args) =>
-        {
-            taskCompletionSource.SetResult(args.DisconnectPacket);
-        };
+        void TaskHandler(object? sender, OnDisconnectSentEventArgs args) => taskCompletionSource.SetResult(args.DisconnectPacket);
+        EventHandler<OnDisconnectSentEventArgs> eventHandler = TaskHandler;
         this.OnDisconnectSent += eventHandler;
 
         this.sendQueue.Enqueue(disconnectPacket);
@@ -188,11 +184,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         {
             // QoS 1: Acknowledged Delivery
             var taskCompletionSource = new TaskCompletionSource<PubAckPacket>();
-
-            EventHandler<OnPublishQoS1CompleteEventArgs> eventHandler = (sender, args) =>
-            {
-                taskCompletionSource.SetResult(args.PubAckPacket);
-            };
+            void TaskHandler(object? sender, OnPublishQoS1CompleteEventArgs args) => taskCompletionSource.SetResult(args.PubAckPacket);
+            EventHandler<OnPublishQoS1CompleteEventArgs> eventHandler = TaskHandler;
             publishPacket.OnPublishQoS1Complete += eventHandler;
 
             // Construct the MQTT Connect packet and queue to send
@@ -207,11 +200,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         {
             // QoS 2: Assured Delivery
             var taskCompletionSource = new TaskCompletionSource<PubRecPacket>();
-
-            EventHandler<OnPublishQoS2CompleteEventArgs> eventHandler = (sender, args) =>
-            {
-                taskCompletionSource.SetResult(args.PubRecPacket);
-            };
+            void TaskHandler(object? sender, OnPublishQoS2CompleteEventArgs args) => taskCompletionSource.SetResult(args.PubRecPacket);
+            EventHandler<OnPublishQoS2CompleteEventArgs> eventHandler = TaskHandler;
             publishPacket.OnPublishQoS2Complete += eventHandler;
 
             // Construct the MQTT Connect packet and queue to send
@@ -274,12 +264,10 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         var subscribePacket = new SubscribePacket(options, (ushort)packetIdentifier);
 
         var taskCompletionSource = new TaskCompletionSource<SubAckPacket>();
+        void TaskHandler(object? sender, OnSubAckReceivedEventArgs args) => taskCompletionSource.SetResult(args.SubAckPacket);
 
         // FIXME: We should only ever have one subscribe in flight at any time (for now)
-        EventHandler<OnSubAckReceivedEventArgs> eventHandler = (sender, args) =>
-        {
-            taskCompletionSource.SetResult(args.SubAckPacket);
-        };
+        EventHandler<OnSubAckReceivedEventArgs> eventHandler = TaskHandler;
         this.OnSubAckReceived += eventHandler;
 
         // Construct the MQTT Connect packet and queue to send
@@ -297,7 +285,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         catch (System.TimeoutException ex)
         {
             // log.Error(string.Format("Connect timeout.  No response received in time.", ex);
-            throw;
+            throw ex;
         }
         finally
         {
@@ -352,10 +340,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         var unsubscribePacket = new UnsubscribePacket(subscriptions, (ushort)packetIdentifier);
 
         var taskCompletionSource = new TaskCompletionSource<UnsubAckPacket>();
-        EventHandler<OnUnsubAckReceivedEventArgs> eventHandler = (sender, args) =>
-        {
-            taskCompletionSource.SetResult(args.UnsubAckPacket);
-        };
+
+        void TaskHandler(object? sender, OnUnsubAckReceivedEventArgs args) => taskCompletionSource.SetResult(args.UnsubAckPacket);
+        EventHandler<OnUnsubAckReceivedEventArgs> eventHandler = TaskHandler;
         this.OnUnsubAckReceived += eventHandler;
 
         this.sendQueue.Enqueue(unsubscribePacket);
