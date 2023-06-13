@@ -65,6 +65,10 @@ public class PubRecPacket : ControlPacket
         };
     }
 
+    /// <summary>
+    /// Decode the raw packet data of a PUBREC packet.
+    /// </summary>
+    /// <param name="packetData">The raw packet data.</param>
     public void Decode(ReadOnlySequence<byte> packetData)
     {
         var reader = new SequenceReader<byte>(packetData);
@@ -75,16 +79,7 @@ public class PubRecPacket : ControlPacket
         // Remaining Length
         var fhRemainingLength = DecodeVariableByteInteger(ref reader, out var vbiLength);
 
-        // FIXME: Centralize packet identifier validation
-        var packetIdentifier = DecodeTwoByteInteger(ref reader);
-        if (packetIdentifier != null && packetIdentifier.Value > 0 && packetIdentifier.Value <= ushort.MaxValue)
-        {
-            this.PacketIdentifier = packetIdentifier.Value;
-        }
-        else
-        {
-            throw new MQTTProtocolException("Invalid packet identifier");
-        }
+        this.PacketIdentifier = (ushort)DecodePacketIdentifier(ref reader);
 
         if (reader.TryRead(out var reasonCode))
         {

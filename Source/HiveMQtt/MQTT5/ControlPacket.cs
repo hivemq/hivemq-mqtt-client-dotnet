@@ -98,6 +98,23 @@ public abstract class ControlPacket
     internal ushort PacketIdentifier { get; set; }
 
     /// <summary>
+    /// Decodes a MQTT packet identifier as a two byte integer from the given <c>MemoryStream</c>.  It then
+    /// does basic validation and range checking on the decoded value.
+    /// </summary>
+    /// <param name="reader">SequenceReader containing the packet data to be decoded.</param>
+    /// <returns>The packet identifier as a two byte integer.</returns>
+    protected static int DecodePacketIdentifier(ref SequenceReader<byte> reader)
+    {
+        var packetIdentifier = DecodeTwoByteInteger(ref reader);
+        if (packetIdentifier == null || packetIdentifier.Value < 0 || packetIdentifier.Value > ushort.MaxValue)
+        {
+            throw new MQTTProtocolException("Invalid packet identifier");
+        }
+
+        return packetIdentifier.Value;
+    }
+
+    /// <summary>
     /// Encode a UTF-8 string into a <c>MemoryStream</c>.
     ///
     /// See also <seealso href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901010">
@@ -648,4 +665,5 @@ public abstract class ControlPacket
 
         return true;
     }
+
 }

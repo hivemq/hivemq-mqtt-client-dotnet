@@ -16,7 +16,6 @@
 namespace HiveMQtt.MQTT5.Packets;
 
 using System.Buffers;
-using HiveMQtt.MQTT5.Exceptions;
 using HiveMQtt.MQTT5.ReasonCodes;
 
 /// <summary>
@@ -58,16 +57,7 @@ public class UnsubAckPacket : ControlPacket
         var fhRemainingLength = DecodeVariableByteInteger(ref reader, out var vbiLength);
         var variableHeaderStart = reader.Consumed;
 
-        // FIXME: Centralize packet identifier validation
-        var packetIdentifier = DecodeTwoByteInteger(ref reader);
-        if (packetIdentifier != null && packetIdentifier.Value > 0 && packetIdentifier.Value <= ushort.MaxValue)
-        {
-            this.PacketIdentifier = packetIdentifier.Value;
-        }
-        else
-        {
-            throw new MQTTProtocolException("Invalid packet identifier");
-        }
+        this.PacketIdentifier = (ushort)DecodePacketIdentifier(ref reader);
 
         var propertyLength = DecodeVariableByteInteger(ref reader, out var lengthOfPropertyLength);
         if (propertyLength > 0)

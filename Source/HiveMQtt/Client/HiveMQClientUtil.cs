@@ -61,7 +61,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// runtime from inside the finalizer and you should not reference
     /// other objects. Only unmanaged resources can be disposed.
     /// </summary>
-    /// <param name="disposing">fixme.</param>
+    /// <param name="disposing">True if called from user code.</param>
     protected virtual void Dispose(bool disposing)
     {
         // Check to see if Dispose has already been called.

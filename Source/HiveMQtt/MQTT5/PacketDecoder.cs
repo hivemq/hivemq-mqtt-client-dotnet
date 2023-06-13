@@ -40,7 +40,7 @@ internal class PacketDecoder
 
             // Byte 1: Control Packet Type
             srBuffer.TryRead(out var cpByte);
-            var controlPacketType = (int)cpByte >> 4;
+            var controlPacketType = cpByte >> 4;
 
             // Byte 2-5: Remaining Length of the Variable Header
             // Size of VBI in vbiLengthInBytes

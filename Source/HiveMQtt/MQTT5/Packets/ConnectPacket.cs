@@ -80,6 +80,9 @@ public class ConnectPacket : ControlPacket
         };
     }
 
+    /// <summary>
+    /// Gather the connect flags and properties needed for a connect call.
+    /// </summary>
     internal void GatherConnectFlagsAndProperties()
     {
         this.clientOptions.ValidateOptions();
@@ -161,6 +164,11 @@ public class ConnectPacket : ControlPacket
         }
     }
 
+    /// <summary>
+    /// Validate a value against the range of a given MQTT5DataType.
+    /// </summary>
+    /// <param name="value">The value to validate.</param>
+    /// <param name="type">The type to validate against.</param>
     internal static int RangeValidate(int value, MQTT5DataType type)
     {
         var result = value;
@@ -208,6 +216,12 @@ public class ConnectPacket : ControlPacket
         return result;
     }
 
+    /// <summary>
+    /// Validate a value against a given range.
+    /// </summary>
+    /// <param name="value">The value to validate.</param>
+    /// <param name="min">The minimum value.</param>
+    /// <param name="max">The maximum value.</param>
     internal static int RangeValidate(int value, int min, int max)
     {
         var result = value;
