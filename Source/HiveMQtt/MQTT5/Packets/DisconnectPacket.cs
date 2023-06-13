@@ -41,7 +41,7 @@ public class DisconnectPacket : ControlPacket
     /// <returns>An array of bytes ready to be sent.</returns>
     public static byte[] Encode()
     {
-        using(var stream = new MemoryStream(8))
+        using (var stream = new MemoryStream(8))
         {
             stream.Position = 2;
 
@@ -65,33 +65,27 @@ public class DisconnectPacket : ControlPacket
     {
         var reader = new SequenceReader<byte>(packetData);
 
-        // Skip past the Fixed Header
+        // Skip past the MQTT control packet type
         reader.Advance(1);
 
-        if (reader.TryRead(out var remainingLength))
-        {
-            if (remainingLength + 2 > packetData.Length)
-            {
-                // Not enough packet data / partial packet
-                // FIXME: Send back to pipeline to get more data
-            }
-            else if (remainingLength < 1)
-            {
-                // Byte 1 in the Variable Header is the Disconnect Reason Code. If the Remaining Length is less
-                // than 1 the value of 0x00 (Normal disconnection) is used.
-                // See <see href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901208">
-                // Disconnect Reason Codes</see>.
-                this.DisconnectReasonCode = DisconnectReasonCode.NormalDisconnection;
-            }
-            else
-            {
-                if (reader.TryRead(out var reasonCode))
-                {
-                    this.DisconnectReasonCode = (DisconnectReasonCode)reasonCode;
+        var fhRemainingLength = DecodeVariableByteInteger(ref reader, out var vbiLength);
 
-                    var propertyLength = DecodeVariableByteInteger(ref reader);
-                    _ = this.DecodeProperties(ref reader, propertyLength);
-                }
+        if (fhRemainingLength < 1)
+        {
+            // Byte 1 in the Variable Header is the Disconnect Reason Code. If the Remaining Length is less
+            // than 1 the value of 0x00 (Normal disconnection) is used.
+            // See <see href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901208">
+            // Disconnect Reason Codes</see>.
+            this.DisconnectReasonCode = DisconnectReasonCode.NormalDisconnection;
+        }
+        else
+        {
+            if (reader.TryRead(out var reasonCode))
+            {
+                this.DisconnectReasonCode = (DisconnectReasonCode)reasonCode;
+
+                var propertyLength = DecodeVariableByteInteger(ref reader);
+                _ = this.DecodeProperties(ref reader, propertyLength);
             }
         }
     }

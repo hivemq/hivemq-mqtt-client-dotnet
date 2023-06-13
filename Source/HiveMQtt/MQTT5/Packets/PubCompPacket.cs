@@ -16,6 +16,7 @@
 namespace HiveMQtt.MQTT5.Packets;
 
 using System.Buffers;
+using HiveMQtt.MQTT5.Exceptions;
 using HiveMQtt.MQTT5.ReasonCodes;
 
 /// <summary>
@@ -42,40 +43,49 @@ public class PubCompPacket : ControlPacket
     /// <returns>An array of bytes ready to be sent.</returns>
     public byte[] Encode()
     {
-        using(var stream = new MemoryStream())
+        using (var vhStream = new MemoryStream())
         {
-            stream.Position = 2;
+            // Variable Header
+            ControlPacket.EncodeTwoByteInteger(vhStream, this.PacketIdentifier);
+            vhStream.WriteByte((byte)this.ReasonCode);
+            this.EncodeProperties(vhStream);
 
-            // Variable Header - starts at byte 2
-            ControlPacket.EncodeTwoByteInteger(stream, this.PacketIdentifier);
-            stream.WriteByte((byte)this.ReasonCode);
-            this.EncodeProperties(stream);
+            // Construct the final packet
+            var constructedPacket = new MemoryStream((int)vhStream.Length + 5);
 
-            var length = stream.Length - 2;
+            // Write the Fixed Header
+            constructedPacket.WriteByte(((byte)ControlPacketType.PubComp) << 4);
+            _ = EncodeVariableByteInteger(constructedPacket, (int)vhStream.Length);
 
-            // Fixed Header - Add to the beginning of the stream
-            stream.Position = 0;
-            stream.WriteByte(((byte)ControlPacketType.PubComp) << 4);
-            _ = EncodeVariableByteInteger(stream, (int)length);
+            // Copy the Variable Header and Payload
+            vhStream.Position = 0;
+            vhStream.CopyTo(constructedPacket);
 
-            return stream.ToArray();
+            return constructedPacket.ToArray();
         };
     }
 
     public void Decode(ReadOnlySequence<byte> packetData)
     {
-        var packetLength = packetData.Length;
         var reader = new SequenceReader<byte>(packetData);
 
+        // Skip past the fixed header MQTT Control Packet type
         reader.Advance(1);
 
-        reader.TryRead(out var remainingLength);
+        // Remaining Length
+        var fhRemainingLength = DecodeVariableByteInteger(ref reader, out var vbiLength);
 
+        // FIXME: Centralize packet identifier validation
         var packetIdentifier = DecodeTwoByteInteger(ref reader);
-        if (packetIdentifier != null)
+        if (packetIdentifier != null && packetIdentifier.Value > 0 && packetIdentifier.Value <= ushort.MaxValue)
         {
             this.PacketIdentifier = packetIdentifier.Value;
         }
+        else
+        {
+            throw new MQTTProtocolException("Invalid packet identifier");
+        }
+
 
         if (reader.TryRead(out var reasonCode))
         {

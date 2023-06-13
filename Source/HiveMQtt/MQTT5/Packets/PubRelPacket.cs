@@ -16,6 +16,7 @@
 namespace HiveMQtt.MQTT5.Packets;
 
 using System.Buffers;
+using HiveMQtt.MQTT5.Exceptions;
 using HiveMQtt.MQTT5.ReasonCodes;
 
 /// <summary>
@@ -45,25 +46,27 @@ public class PubRelPacket : ControlPacket
     /// <returns>An array of bytes ready to be sent.</returns>
     public byte[] Encode()
     {
-        using(var stream = new MemoryStream())
+        using (var vhStream = new MemoryStream())
         {
-            stream.Position = 2;
+            // Variable Header
+            ControlPacket.EncodeTwoByteInteger(vhStream, this.PacketIdentifier);
+            vhStream.WriteByte((byte)this.ReasonCode);
+            this.EncodeProperties(vhStream);
 
-            // Variable Header - starts at byte 2
-            ControlPacket.EncodeTwoByteInteger(stream, this.PacketIdentifier);
-            stream.WriteByte((byte)this.ReasonCode);
-            this.EncodeProperties(stream);
+            // Construct the final packet
+            var constructedPacket = new MemoryStream((int)vhStream.Length + 5);
 
-            var length = stream.Length - 2;
-
-            // Fixed Header - Add to the beginning of the stream
-            stream.Position = 0;
+            // Write the Fixed Header
             var byte1 = (byte)ControlPacketType.PubRec << 4;
             byte1 |= 0x2;
-            stream.WriteByte((byte)byte1);
-            _ = EncodeVariableByteInteger(stream, (int)length);
+            constructedPacket.WriteByte((byte)byte1);
+            _ = EncodeVariableByteInteger(constructedPacket, (int)vhStream.Length);
 
-            return stream.ToArray();
+            // Copy the Variable Header and Payload
+            vhStream.Position = 0;
+            vhStream.CopyTo(constructedPacket);
+
+            return constructedPacket.ToArray();
         };
     }
 

@@ -11,5 +11,6 @@
         "SUBACK",
         "UNSUBACK",
         "Xunit"
-    ]
+    ],
+    "dotnet.defaultSolution": "HiveMQtt.sln"
 }

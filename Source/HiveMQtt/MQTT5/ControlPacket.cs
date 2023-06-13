@@ -48,6 +48,45 @@ public abstract class ControlPacket
     public abstract ControlPacketType ControlPacketType { get; }
 
     /// <summary>
+    /// Decode an MQTT Variable Byte Integer data representation.
+    ///
+    /// See also <seealso href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901011">
+    /// Data Representation: Variable Byte Integer</seealso>.
+    /// </summary>
+    /// <param name="reader"><cref>SequenceReader</cref> containing the packet data to be decoded.</param>
+    /// <param name="lengthInBytes">The length of the Variable Byte Integer in bytes.</param>
+    /// <returns>The integer value of the Variable Byte Integer.</returns>
+    public static int DecodeVariableByteInteger(ref SequenceReader<byte> reader, out int lengthInBytes)
+    {
+        var multiplier = 1;
+        var value = 0;
+        byte encodedByte;
+        lengthInBytes = 0;
+
+        do
+        {
+            lengthInBytes++;
+
+            if (reader.TryRead(out encodedByte))
+            {
+                value += (encodedByte & 127) * multiplier;
+
+                if (multiplier > 128 * 128 * 128)
+                {
+                    throw new MalformedVBIException();
+                }
+
+                multiplier *= 128;
+            }
+        }
+        while ((encodedByte & 128) != 0);
+
+        return value;
+    }
+
+    public static int DecodeVariableByteInteger(ref SequenceReader<byte> reader) => DecodeVariableByteInteger(ref reader, out _);
+
+    /// <summary>
     /// Gets or sets the MQTT v5
     /// <see href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901027">Properties</see>.
     /// </summary>
@@ -202,45 +241,6 @@ public abstract class ControlPacket
         while (value > 0);
 
         return written;
-    }
-
-    protected static int DecodeVariableByteInteger(ref SequenceReader<byte> reader) => DecodeVariableByteInteger(ref reader, out _);
-
-    /// <summary>
-    /// Decode an MQTT Variable Byte Integer data representation.
-    ///
-    /// See also <seealso href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901011">
-    /// Data Representation: Variable Byte Integer</seealso>.
-    /// </summary>
-    /// <param name="reader"><cref>SequenceReader</cref> containing the packet data to be decoded.</param>
-    /// <param name="lengthInBytes">The length of the Variable Byte Integer in bytes.</param>
-    /// <returns>The integer value of the Variable Byte Integer.</returns>
-    protected static int DecodeVariableByteInteger(ref SequenceReader<byte> reader, out int lengthInBytes)
-    {
-        var multiplier = 1;
-        var value = 0;
-        byte encodedByte;
-        lengthInBytes = 0;
-
-        do
-        {
-            lengthInBytes++;
-
-            if (reader.TryRead(out encodedByte))
-            {
-                value += (encodedByte & 127) * multiplier;
-
-                if (multiplier > 128 * 128 * 128)
-                {
-                    throw new MalformedVBIException();
-                }
-
-                multiplier *= 128;
-            }
-        }
-        while ((encodedByte & 128) != 0);
-
-        return value;
     }
 
     /// <summary>

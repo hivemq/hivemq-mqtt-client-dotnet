@@ -36,15 +36,18 @@ internal class PacketDecoder
                 return new PartialPacket();
             }
 
-            // It's a waste to allocate a SequenceReader here for two bytes.
-            var x = buffer.ToArray();
+            var srBuffer = new SequenceReader<byte>(buffer);
 
             // Byte 1: Control Packet Type
-            var controlPacketType = x[0] >> 4;
+            srBuffer.TryRead(out var cpByte);
+            var controlPacketType = (int)cpByte >> 4;
 
-            // Byte 2: Remaining Length of the Variable Header
-            var remainingLengthOfVH = x[1];
-            var packetLength = remainingLengthOfVH + 2;
+            // Byte 2-5: Remaining Length of the Variable Header
+            // Size of VBI in vbiLengthInBytes
+            var remainingLength = ControlPacket.DecodeVariableByteInteger(ref srBuffer, out var vbiLengthInBytes);
+
+            // control packet byte + variable byte integer length + remaining length
+            var packetLength = 1 + vbiLengthInBytes + remainingLength;
 
             if (buffer.Length < packetLength)
             {
