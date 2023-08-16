@@ -215,6 +215,7 @@ public abstract class ControlPacket
         {
             return (UInt16)intValue;
         }
+
         return null;
     }
 
@@ -663,5 +664,4 @@ public abstract class ControlPacket
 
         return true;
     }
-
 }
