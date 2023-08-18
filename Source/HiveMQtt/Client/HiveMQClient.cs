@@ -85,7 +85,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         {
             connAck = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
         }
-        catch (System.TimeoutException ex)
+        catch (System.TimeoutException)
         {
             // log.Error(string.Format("Connect timeout.  No response received in time.", ex);
             throw;
@@ -146,7 +146,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         {
             disconnectPacket = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
         }
-        catch (System.TimeoutException ex)
+        catch (System.TimeoutException)
         {
             // Does it matter?  We're disconnecting anyway.
         }
@@ -356,7 +356,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
             // FIXME: Validate that the packet identifier matches
         }
-        catch (System.TimeoutException ex)
+        catch (System.TimeoutException)
         {
             // log.Error(string.Format("Connect timeout.  No response received in time.", ex);
             throw;

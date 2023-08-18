@@ -80,10 +80,10 @@
 
     <Rules AnalyzerId="StyleCop.Analyzers" RuleNamespace="StyleCop.Analyzers.OrderingRules">
         <Rule Id="SA1200"  Action="Warning" />          <!-- Using directives should be placed correctly -->
-        <Rule Id="SA1201"  Action="Warning" />          <!-- Elements should appear in the correct order -->
+        <Rule Id="SA1201"  Action="None" />             <!-- Elements should appear in the correct order -->
         <Rule Id="SA1202"  Action="Warning" />          <!-- Elements should be ordered by access -->
         <Rule Id="SA1203"  Action="Warning" />          <!-- Constants should appear before fields -->
-        <Rule Id="SA1204"  Action="Warning" />          <!-- Static elements should appear before instance elements -->
+        <Rule Id="SA1204"  Action="None" />             <!-- Static elements should appear before instance elements -->
         <Rule Id="SA1205"  Action="Warning" />          <!-- Partial elements should declare access -->
         <Rule Id="SA1206"  Action="Warning" />          <!-- Declaration keywords should follow order -->
         <Rule Id="SA1207"  Action="Warning" />          <!-- Protected should come before internal -->
@@ -194,7 +194,7 @@
         <Rule Id="SA1630"  Action="None" />             <!-- Documentation text should contain whitespace -->
         <Rule Id="SA1631"  Action="None" />             <!-- Documentation should meet character percentage -->
         <Rule Id="SA1632"  Action="None" />             <!-- Documentation text should meet minimum character length -->
-        <Rule Id="SA1633"  Action="Warning" />          <!-- File should have header -->
+        <Rule Id="SA1633"  Action="None" />          <!-- File should have header -->
         <Rule Id="SA1634"  Action="Warning" />          <!-- File header should show copyright -->
         <Rule Id="SA1635"  Action="Warning" />          <!-- File header should have copyright text -->
         <Rule Id="SA1636"  Action="Warning" />          <!-- File header copyright text should match -->
