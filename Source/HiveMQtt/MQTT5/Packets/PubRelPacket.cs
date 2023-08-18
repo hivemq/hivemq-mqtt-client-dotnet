@@ -53,7 +53,7 @@ public class PubRelPacket : ControlPacket
             var constructedPacket = new MemoryStream((int)vhStream.Length + 5);
 
             // Write the Fixed Header
-            var byte1 = (byte)ControlPacketType.PubRec << 4;
+            var byte1 = (byte)ControlPacketType.PubRel << 4;
             byte1 |= 0x2;
             constructedPacket.WriteByte((byte)byte1);
             _ = EncodeVariableByteInteger(constructedPacket, (int)vhStream.Length);
