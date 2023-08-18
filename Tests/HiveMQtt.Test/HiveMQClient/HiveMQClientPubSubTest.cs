@@ -55,41 +55,39 @@ public class HiveMQClientPubSubTest
         var testPayload = new string(/*lang=json,strict*/ "{\"interference\": \"1029384\"}");
         var client = new HiveMQClient();
         var taskCompletionSource = new TaskCompletionSource<bool>();
+        var messagesReceived = 0;
 
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
-
-        // Set the event handler for the message received event
-        client.OnMessageReceived += (sender, args) =>
-        {
-            Assert.Equal(QualityOfService.AtLeastOnceDelivery, args.PublishMessage.QoS);
-            Assert.Equal(testTopic, args.PublishMessage.Topic);
-            Assert.Equal(testPayload, args.PublishMessage.PayloadAsString);
-
-            // Disconnect after receiving the message
-            if (sender != null)
-            {
-                var client = (HiveMQClient)sender;
-
-                var disconnect = Task.Run(async () =>
-                {
-                    var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
-                    Assert.True(disconnectResult);
-                    return disconnectResult;
-                });
-                Assert.True(disconnect.Result);
-            }
-            taskCompletionSource.SetResult(true);
-        };
 
         // Subscribe with QoS1
         var subResult = await client.SubscribeAsync(testTopic, QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
         Assert.NotEmpty(subResult.Subscriptions);
         Assert.Equal(SubAckReasonCode.GrantedQoS1, subResult.Subscriptions[0].SubscribeReasonCode);
 
-        // Publish a QoS1 message
-        var result = await client.PublishAsync(testTopic, testPayload, QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
-        await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        // Set the event handler for the message received event
+        client.OnMessageReceived += (sender, args) =>
+        {
+            messagesReceived++;
+            Assert.Equal(QualityOfService.AtLeastOnceDelivery, args.PublishMessage.QoS);
+            Assert.Equal(testTopic, args.PublishMessage.Topic);
+            Assert.Equal(testPayload, args.PublishMessage.PayloadAsString);
+
+            if (messagesReceived >= 5) {
+                taskCompletionSource.SetResult(true);
+            }
+        };
+
+        Client.Results.PublishResult result;
+
+        // Publish 10 messages
+        for (var i = 0; i < 5; i++)
+        {
+            result = await client.PublishAsync(testTopic, testPayload, QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
+            Assert.IsType<Client.Results.PublishResult>(result);
+            Assert.NotNull(result.QoS1ReasonCode);
+            Assert.Equal(PubAckReasonCode.Success, result?.QoS1ReasonCode);
+        }
 
         var taskResult = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
         Assert.True(taskResult);
@@ -105,37 +103,38 @@ public class HiveMQClientPubSubTest
         var taskCompletionSource = new TaskCompletionSource<bool>();
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
+        var messagesReceived = 0;
+
+        // Subscribe with QoS2
+        var subResult = await client.SubscribeAsync(testTopic, QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
+        Assert.NotEmpty(subResult.Subscriptions);
+        Assert.Equal(SubAckReasonCode.GrantedQoS2, subResult.Subscriptions[0].SubscribeReasonCode);
 
         // Set the event handler for the message received event
         client.OnMessageReceived += (sender, args) =>
         {
+            messagesReceived++;
             Assert.Equal(QualityOfService.ExactlyOnceDelivery, args.PublishMessage.QoS);
             Assert.Equal(testTopic, args.PublishMessage.Topic);
             Assert.Equal(testPayload, args.PublishMessage.PayloadAsString);
 
             Assert.NotNull(sender);
 
-            // Disconnect after receiving the message
-            var client = (HiveMQClient)sender;
-
-            var disconnect = Task.Run(async () =>
-            {
-                var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
-                Assert.True(disconnectResult);
-                return disconnectResult;
-            });
-            Assert.True(disconnect.Result);
-            taskCompletionSource.SetResult(true);
+            if (messagesReceived >= 5) {
+                taskCompletionSource.SetResult(true);
+            }
         };
 
-        // Subscribe with QoS1
-        var subResult = await client.SubscribeAsync(testTopic, QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
-        Assert.NotEmpty(subResult.Subscriptions);
-        Assert.Equal(SubAckReasonCode.GrantedQoS2, subResult.Subscriptions[0].SubscribeReasonCode);
+        Client.Results.PublishResult result;
 
-        // Publish a QoS1 message
-        var result = await client.PublishAsync(testTopic, testPayload, QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
-        await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        // Publish 10 messages
+        for (var i = 0; i < 5; i++)
+        {
+            result = await client.PublishAsync(testTopic, testPayload, QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
+            Assert.IsType<Client.Results.PublishResult>(result);
+            Assert.NotNull(result.QoS2ReasonCode);
+            Assert.Equal(PubRecReasonCode.Success, result?.QoS2ReasonCode);
+        }
 
         var taskResult = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
         Assert.True(taskResult);
