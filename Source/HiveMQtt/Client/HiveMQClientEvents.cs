@@ -186,7 +186,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     protected virtual void OnDisconnectReceivedEventLauncher(DisconnectPacket packet)
     {
         var eventArgs = new OnDisconnectReceivedEventArgs(packet);
-        Trace.WriteLine("OnDisconnectReceivedEventLauncher");
+        Trace.WriteLine("OnDisconnectReceivedEventLauncher: ReasonCode: " + packet.DisconnectReasonCode + " ReasonString: " + packet.Properties.ReasonString);
         this.OnDisconnectReceived?.Invoke(this, eventArgs);
     }
 
