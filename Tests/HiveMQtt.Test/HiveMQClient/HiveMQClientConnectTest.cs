@@ -32,8 +32,10 @@ public class HiveMQClientConnectTest
     [Fact(Skip = "Inconsistent test, sometimes fails.  TODO: Fix this test.")]
     public async Task DoubleConnectAsync()
     {
-        var options = new HiveMQClientOptions();
-        options.ClientId = "DoubleConnectTest";
+        var options = new HiveMQClientOptions
+        {
+            ClientId = "DoubleConnectTest",
+        };
 
         var client = new HiveMQClient(options);
         Assert.NotNull(client);

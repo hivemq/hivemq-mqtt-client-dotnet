@@ -18,6 +18,7 @@ namespace HiveMQtt.Client.Options;
 using System;
 using System.Linq;
 
+using HiveMQtt.Client;
 using HiveMQtt.Client.Exceptions;
 
 /// <summary>
@@ -151,6 +152,11 @@ public class HiveMQClientOptions
     /// Gets or sets a value indicating whether the MQTT client should use TLS.
     /// </summary>
     public bool UseTLS { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether a Last Will and Testament should be used in the Connect.
+    /// </summary>
+    public LastWillAndTestament? LastWillAndTestament { get; set; }
 
     /// <summary>
     /// Generate a semi-random client identifier to be used in <c>Client</c> connections.

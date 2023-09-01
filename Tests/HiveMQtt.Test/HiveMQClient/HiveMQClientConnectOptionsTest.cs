@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using HiveMQtt.Client;
 using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.ReasonCodes;
+using HiveMQtt.MQTT5.Types;
 using Xunit;
 
 public class HiveMQClientConnectOptionsTest
@@ -169,6 +170,21 @@ public class HiveMQClientConnectOptionsTest
         Assert.Equal("Sent CONNECT with packet size set to '0'. This is a protocol violation.", connectResult.ReasonString);
 
         Assert.False(client.IsConnected());
+    }
+
+    [Fact]
+    public async Task Last_Will_Async()
+    {
+        var options = new HiveMQClientOptions
+        {
+            LastWillAndTestament = new LastWillAndTestament("last/will", QualityOfService.AtLeastOnceDelivery, "last will message"),
+        };
+
+        var client = new HiveMQClient(options);
+
+        var connectResult = await client.ConnectAsync().ConfigureAwait(false);
+        Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
+        Assert.True(client.IsConnected());
     }
 
     // FIXME: Add Authentication Tests

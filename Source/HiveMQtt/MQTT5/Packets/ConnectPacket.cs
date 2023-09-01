@@ -30,62 +30,19 @@ public class ConnectPacket : ControlPacket
 
     private byte flags;
 
-    public ConnectPacket(HiveMQClientOptions clientOptions) => this.clientOptions = clientOptions;
+    public ConnectPacket(HiveMQClientOptions clientOptions)
+    {
+        this.clientOptions = clientOptions;
+        this.LastWillProperties = new MQTT5LastWillProperties();
+    }
 
     public override ControlPacketType ControlPacketType => ControlPacketType.Connect;
 
     /// <summary>
-    /// Validate a value against the range of a given MQTT5DataType.
+    /// Gets or sets the MQTT v5
+    /// <see href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901060">Will Properties</see>.
     /// </summary>
-    /// <param name="value">The value to validate.</param>
-    /// <param name="type">The type to validate against.</param>
-    /// <returns>The value if it is within the range of the type, otherwise the closest value.</returns>
-    internal static int RangeValidate(int value, MQTT5DataType type)
-    {
-        var result = value;
-
-        switch (type)
-        {
-            case MQTT5DataType.TwoByteInteger:
-                if (value < 0)
-                {
-                    result = 0;
-                }
-                else if (value > 255)
-                {
-                    result = 255;
-                }
-
-                break;
-            case MQTT5DataType.FourByteInteger:
-                if (value < 0)
-                {
-                    result = 0;
-                }
-                else if (value > 65535)
-                {
-                    result = 65535;
-                }
-
-                break;
-            case MQTT5DataType.VariableByteInteger:
-                if (value < 0)
-                {
-                    result = 0;
-                }
-                else if (value > 268435455)
-                {
-                    result = 268435455;
-                }
-
-                break;
-            default:
-                result = value;
-                break;
-        }
-
-        return result;
-    }
+    internal MQTT5LastWillProperties LastWillProperties { get; set; }
 
     /// <summary>
     /// Encode this packet to be sent on the wire.
@@ -107,12 +64,29 @@ public class ConnectPacket : ControlPacket
             this.EncodeProperties(vhAndPayloadStream);
 
             // Payload
+            // Client Identifier
             _ = EncodeUTF8String(vhAndPayloadStream, this.clientOptions.ClientId);
+
+            // Last Will and Testament
+            if (this.clientOptions.LastWillAndTestament != null)
+            {
+                // Will Properties
+                this.EncodeLastWillProperties(vhAndPayloadStream);
+
+                // Will Topic
+                _ = EncodeUTF8String(vhAndPayloadStream, this.clientOptions.LastWillAndTestament.Topic);
+
+                // Will Payload
+                _ = EncodeBinaryData(vhAndPayloadStream, this.clientOptions.LastWillAndTestament.Payload);
+            }
+
+            // Username
             if (this.clientOptions.UserName != null)
             {
                 _ = EncodeUTF8String(vhAndPayloadStream, this.clientOptions.UserName);
             }
 
+            // Password
             if (this.clientOptions.Password != null)
             {
                 _ = EncodeUTF8String(vhAndPayloadStream, this.clientOptions.Password);
@@ -146,15 +120,36 @@ public class ConnectPacket : ControlPacket
             this.flags |= 0x2;
         }
 
-        // TODO: LWT options
-        if (this.clientOptions.UserName != null)
+        if (this.clientOptions.LastWillAndTestament != null)
         {
-            this.flags |= 0x80;
+            // Will Flag
+            this.flags |= 0x4;
+
+            // Will QoS
+            if (this.clientOptions.LastWillAndTestament.QoS == QualityOfService.AtLeastOnceDelivery)
+            {
+                this.flags |= 0x8;
+            }
+            else if (this.clientOptions.LastWillAndTestament.QoS == QualityOfService.ExactlyOnceDelivery)
+            {
+                this.flags |= 0x10;
+            }
+
+            // Will Retain
+            if (this.clientOptions.LastWillAndTestament.Retain)
+            {
+                this.flags |= 0x20;
+            }
         }
 
         if (this.clientOptions.Password != null)
         {
             this.flags |= 0x40;
+        }
+
+        if (this.clientOptions.UserName != null)
+        {
+            this.flags |= 0x80;
         }
 
         // Properties
@@ -215,6 +210,113 @@ public class ConnectPacket : ControlPacket
         {
             this.Properties.AuthenticationData = this.clientOptions.AuthenticationData;
         }
+
+        // Last Will and Testament Properties
+        if (this.clientOptions.LastWillAndTestament != null)
+        {
+            if (this.clientOptions.LastWillAndTestament.WillDelayInterval.HasValue)
+            {
+                this.LastWillProperties.WillDelayInterval = (UInt32)this.clientOptions.LastWillAndTestament.WillDelayInterval;
+            }
+
+            if (this.clientOptions.LastWillAndTestament.PayloadFormatIndicator.HasValue)
+            {
+                this.LastWillProperties.PayloadFormatIndicator = (byte)this.clientOptions.LastWillAndTestament.PayloadFormatIndicator;
+            }
+
+            if (this.clientOptions.LastWillAndTestament.MessageExpiryInterval.HasValue)
+            {
+                this.LastWillProperties.MessageExpiryInterval = (UInt32)this.clientOptions.LastWillAndTestament.MessageExpiryInterval;
+            }
+
+            if (this.clientOptions.LastWillAndTestament.ContentType != null)
+            {
+                this.LastWillProperties.ContentType = this.clientOptions.LastWillAndTestament.ContentType;
+            }
+
+            if (this.clientOptions.LastWillAndTestament.ResponseTopic != null)
+            {
+                this.LastWillProperties.ResponseTopic = this.clientOptions.LastWillAndTestament.ResponseTopic;
+            }
+
+            if (this.clientOptions.LastWillAndTestament.CorrelationData != null)
+            {
+                this.LastWillProperties.CorrelationData = this.clientOptions.LastWillAndTestament.CorrelationData;
+            }
+
+            if (this.clientOptions.LastWillAndTestament.UserProperties != null)
+            {
+                this.LastWillProperties.UserProperties = this.clientOptions.LastWillAndTestament.UserProperties;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Encode a stream of Last Will and Testament Properties.
+    /// </summary>
+    /// <param name="writer">MemoryStream to encode the properties into.</param>
+    protected void EncodeLastWillProperties(MemoryStream writer)
+    {
+        var propertiesLength = 0;
+
+        if (writer.Length > int.MaxValue)
+        {
+            throw new ArgumentOutOfRangeException(nameof(writer), "The writer stream is too large to encode.");
+        }
+
+        var propertyStream = new MemoryStream((int)writer.Length);
+
+        if (this.LastWillProperties.WillDelayInterval != null)
+        {
+            propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.WillDelayInterval);
+            propertiesLength += EncodeFourByteInteger(propertyStream, (uint)this.LastWillProperties.WillDelayInterval);
+        }
+
+        if (this.LastWillProperties.PayloadFormatIndicator != null)
+        {
+            propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.PayloadFormatIndicator);
+            propertyStream.WriteByte((byte)this.LastWillProperties.PayloadFormatIndicator);
+            propertiesLength++;
+        }
+
+        if (this.LastWillProperties.MessageExpiryInterval != null)
+        {
+            propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.MessageExpiryInterval);
+            propertiesLength += EncodeFourByteInteger(propertyStream, (uint)this.LastWillProperties.MessageExpiryInterval);
+        }
+
+        if (this.LastWillProperties.ContentType != null)
+        {
+            propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.ContentType);
+            propertiesLength += EncodeUTF8String(propertyStream, this.LastWillProperties.ContentType);
+        }
+
+        if (this.LastWillProperties.ResponseTopic != null)
+        {
+            propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.ResponseTopic);
+            propertiesLength += EncodeUTF8String(propertyStream, this.LastWillProperties.ResponseTopic);
+        }
+
+        if (this.LastWillProperties.CorrelationData != null)
+        {
+            propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.CorrelationData);
+            propertiesLength += EncodeBinaryData(propertyStream, this.LastWillProperties.CorrelationData);
+        }
+
+        if (this.LastWillProperties.UserProperties.Count > 0)
+        {
+            foreach (var property in this.LastWillProperties.UserProperties)
+            {
+                propertiesLength += EncodeVariableByteInteger(propertyStream, (int)MQTT5PropertyType.UserProperty);
+                propertiesLength += EncodeUTF8String(propertyStream, property.Key);
+                propertiesLength += EncodeUTF8String(propertyStream, property.Value);
+            }
+        }
+
+        _ = EncodeVariableByteInteger(writer, propertiesLength);
+
+        _ = propertyStream.Seek(0, SeekOrigin.Begin);
+        propertyStream.CopyTo(writer);
     }
 
     /// <summary>
@@ -239,4 +341,58 @@ public class ConnectPacket : ControlPacket
 
         return result;
     }
+
+    /// <summary>
+    /// Validate a value against the range of a given MQTT5DataType.
+    /// </summary>
+    /// <param name="value">The value to validate.</param>
+    /// <param name="type">The type to validate against.</param>
+    /// <returns>The value if it is within the range of the type, otherwise the closest value.</returns>
+    internal static int RangeValidate(int value, MQTT5DataType type)
+    {
+        var result = value;
+
+        switch (type)
+        {
+            case MQTT5DataType.TwoByteInteger:
+                if (value < 0)
+                {
+                    result = 0;
+                }
+                else if (value > 255)
+                {
+                    result = 255;
+                }
+
+                break;
+            case MQTT5DataType.FourByteInteger:
+                if (value < 0)
+                {
+                    result = 0;
+                }
+                else if (value > 65535)
+                {
+                    result = 65535;
+                }
+
+                break;
+            case MQTT5DataType.VariableByteInteger:
+                if (value < 0)
+                {
+                    result = 0;
+                }
+                else if (value > 268435455)
+                {
+                    result = 268435455;
+                }
+
+                break;
+            default:
+                result = value;
+                break;
+        }
+
+        return result;
+    }
+
 }
