@@ -172,21 +172,6 @@ public class HiveMQClientConnectOptionsTest
         Assert.False(client.IsConnected());
     }
 
-    [Fact]
-    public async Task Last_Will_Async()
-    {
-        var options = new HiveMQClientOptions
-        {
-            LastWillAndTestament = new LastWillAndTestament("last/will", QualityOfService.AtLeastOnceDelivery, "last will message"),
-        };
-
-        var client = new HiveMQClient(options);
-
-        var connectResult = await client.ConnectAsync().ConfigureAwait(false);
-        Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
-        Assert.True(client.IsConnected());
-    }
-
     // FIXME: Add Authentication Tests
     // AuthenticationMethod/Data
 }

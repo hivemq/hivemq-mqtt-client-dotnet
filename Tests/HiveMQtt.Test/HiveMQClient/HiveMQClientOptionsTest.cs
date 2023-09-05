@@ -19,7 +19,7 @@ public class HiveMQClientOptionsTest
         options.KeepAlive = int.MaxValue;
         options.ValidateOptions();
 
-        Assert.Equal(UInt16.MaxValue, options.KeepAlive);
+        Assert.Equal(ushort.MaxValue, options.KeepAlive);
     }
 
     [Fact]
@@ -36,7 +36,7 @@ public class HiveMQClientOptionsTest
         options.SessionExpiryInterval = long.MaxValue;
         options.ValidateOptions();
 
-        Assert.Equal(UInt32.MaxValue, options.SessionExpiryInterval);
+        Assert.Equal(uint.MaxValue, options.SessionExpiryInterval);
     }
 
     [Fact]
@@ -51,7 +51,7 @@ public class HiveMQClientOptionsTest
 
         options.ClientReceiveMaximum = int.MaxValue;
         options.ValidateOptions();
-        Assert.Equal(UInt16.MaxValue, options.ClientReceiveMaximum);
+        Assert.Equal(ushort.MaxValue, options.ClientReceiveMaximum);
     }
 
     [Fact]
@@ -66,7 +66,7 @@ public class HiveMQClientOptionsTest
 
         options.ClientMaximumPacketSize = long.MaxValue;
         options.ValidateOptions();
-        Assert.Equal(UInt32.MaxValue, options.ClientMaximumPacketSize);
+        Assert.Equal(uint.MaxValue, options.ClientMaximumPacketSize);
     }
 
     [Fact]
@@ -79,9 +79,9 @@ public class HiveMQClientOptionsTest
         options.ValidateOptions();
         Assert.Equal(0, options.ClientTopicAliasMaximum);
 
-        options.ClientTopicAliasMaximum = UInt16.MaxValue;
+        options.ClientTopicAliasMaximum = ushort.MaxValue;
         options.ValidateOptions();
-        Assert.Equal(UInt16.MaxValue, options.ClientTopicAliasMaximum);
+        Assert.Equal(ushort.MaxValue, options.ClientTopicAliasMaximum);
     }
 
     [Fact]
