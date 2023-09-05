@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 namespace HiveMQtt.Client;
 
 using System;
@@ -109,7 +108,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         // Data massage: This class is used for end users.  Let's prep the data so it's easily understandable.
         // If the Session Expiry Interval is absent the value in the CONNECT Packet used.
-        connectResult.Properties.SessionExpiryInterval ??= (UInt32)this.Options.SessionExpiryInterval;
+        connectResult.Properties.SessionExpiryInterval ??= (uint)this.Options.SessionExpiryInterval;
 
         // Fire the corresponding event
         this.AfterConnectEventLauncher(connectResult);

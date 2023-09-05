@@ -188,7 +188,7 @@ public abstract class ControlPacket
     /// </summary>
     /// <param name="stream">The <cref>MemoryStream</cref> to write the Two Byte Integer into.</param>
     /// <param name="value">The integer to be encoded and written.</param>
-    protected static void EncodeTwoByteInteger(MemoryStream stream, UInt16 value)
+    protected static void EncodeTwoByteInteger(MemoryStream stream, ushort value)
     {
         var valueInBytes = BitConverter.GetBytes(value);
 
@@ -209,11 +209,11 @@ public abstract class ControlPacket
     /// </summary>
     /// <param name="reader">SequenceReader containing the packet data to be decoded.</param>
     /// <returns>The value of the two byte integer.</returns>
-    protected static UInt16? DecodeTwoByteInteger(ref SequenceReader<byte> reader)
+    protected static ushort? DecodeTwoByteInteger(ref SequenceReader<byte> reader)
     {
         if (reader.TryReadBigEndian(out Int16 intValue))
         {
-            return (UInt16)intValue;
+            return (ushort)intValue;
         }
 
         return null;
@@ -314,7 +314,7 @@ public abstract class ControlPacket
     /// <param name="stream">The <cref>MemoryStream</cref> to write the Four Byte Integer into.</param>
     /// <param name="value">The integer to be encoded and written.</param>
     /// <returns>The value 4 is always returned.</returns>
-    protected static int EncodeFourByteInteger(MemoryStream stream, UInt32 value)
+    protected static int EncodeFourByteInteger(MemoryStream stream, uint value)
     {
         var valueInBytes = BitConverter.GetBytes(value);
 
@@ -342,11 +342,11 @@ public abstract class ControlPacket
     /// </summary>
     /// <param name="reader">SequenceReader containing the packet data to be decoded.</param>
     /// <returns>The value of the four byte integer.</returns>
-    protected static UInt32? DecodeFourByteInteger(ref SequenceReader<byte> reader)
+    protected static uint? DecodeFourByteInteger(ref SequenceReader<byte> reader)
     {
         if (reader.TryReadBigEndian(out Int32 intValue))
         {
-            return (UInt32)intValue;
+            return (uint)intValue;
         }
 
         return null;

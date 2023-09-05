@@ -84,7 +84,7 @@ public class HiveMQClientOptions
     /// The Session State lasts as long as the latest Network Connection plus the Session Expiry Interval.
     /// </para>
     /// </summary>
-    /// We use long here because uint in C# is non CLS compliant.  The value range is unsigned 4 byte integer (uint32).
+    /// We use long here because uint in C# is non CLS compliant.  The value range is unsigned 4 byte integer (uint).
     public long SessionExpiryInterval { get; set; }
 
     /// <summary>
@@ -247,13 +247,13 @@ public class HiveMQClientOptions
     /// <returns>A corrected value or the original if it was in range.</returns>
     internal static int RangeValidateTwoByteInteger(int value)
     {
-        if (value < UInt16.MinValue)
+        if (value < ushort.MinValue)
         {
-            value = UInt16.MinValue;
+            value = ushort.MinValue;
         }
-        else if (value > UInt16.MaxValue)
+        else if (value > ushort.MaxValue)
         {
-            value = UInt16.MaxValue;
+            value = ushort.MaxValue;
         }
 
         return value;
@@ -266,13 +266,13 @@ public class HiveMQClientOptions
     /// <returns>A corrected value or the original if it was in range.</returns>
     internal static long RangeValidateFourByteInteger(long value)
     {
-        if (value < UInt32.MinValue)
+        if (value < uint.MinValue)
         {
-            value = UInt32.MinValue;
+            value = uint.MinValue;
         }
-        else if (value > UInt32.MaxValue)
+        else if (value > uint.MaxValue)
         {
-            value = UInt32.MaxValue;
+            value = uint.MaxValue;
         }
 
         return value;

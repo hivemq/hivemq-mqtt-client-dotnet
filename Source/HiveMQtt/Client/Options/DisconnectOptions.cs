@@ -50,7 +50,7 @@ public class DisconnectOptions
     public string? ReasonString { get; set; }
 
     /// <summary>
-    /// Gets of sets the user properties for the disconnection.
+    /// Gets or sets the user properties for the disconnection.
     /// </summary>
     public Dictionary<string, string> UserProperties { get; set; }
 }
