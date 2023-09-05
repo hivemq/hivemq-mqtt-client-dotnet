@@ -55,7 +55,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 if (elapsed > TimeSpan.FromSeconds(keepAlivePeriod))
                 {
                     // Send PingReq
-                    var writeResult = await this.writer.WriteAsync(PingReqPacket.Encode()).ConfigureAwait(false);
+                    var writeResult = await this.WriteAsync(PingReqPacket.Encode()).ConfigureAwait(false);
                     this.OnPingReqSentEventLauncher(new PingReqPacket());
                     stopWatch.Restart();
                 }
@@ -82,22 +82,22 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                         // FIXME: Only one connect, subscribe or unsubscribe packet can be sent at a time.
                         case ConnectPacket connectPacket:
                             Trace.WriteLine("--> ConnectPacket");
-                            writeResult = await this.writer.WriteAsync(connectPacket.Encode()).ConfigureAwait(false);
+                            writeResult = await this.WriteAsync(connectPacket.Encode()).ConfigureAwait(false);
                             this.OnConnectSentEventLauncher(connectPacket);
                             break;
                         case DisconnectPacket disconnectPacket:
                             Trace.WriteLine("--> DisconnectPacket");
-                            writeResult = await this.writer.WriteAsync(DisconnectPacket.Encode()).ConfigureAwait(false);
+                            writeResult = await this.WriteAsync(DisconnectPacket.Encode()).ConfigureAwait(false);
                             this.OnDisconnectSentEventLauncher(disconnectPacket);
                             break;
                         case SubscribePacket subscribePacket:
                             Trace.WriteLine("--> SubscribePacket");
-                            writeResult = await this.writer.WriteAsync(subscribePacket.Encode()).ConfigureAwait(false);
+                            writeResult = await this.WriteAsync(subscribePacket.Encode()).ConfigureAwait(false);
                             this.OnSubscribeSentEventLauncher(subscribePacket);
                             break;
                         case UnsubscribePacket unsubscribePacket:
                             Trace.WriteLine("--> UnsubscribePacket");
-                            writeResult = await this.writer.WriteAsync(unsubscribePacket.Encode()).ConfigureAwait(false);
+                            writeResult = await this.WriteAsync(unsubscribePacket.Encode()).ConfigureAwait(false);
                             this.OnUnsubscribeSentEventLauncher(unsubscribePacket);
                             break;
                         case PublishPacket publishPacket:
@@ -112,7 +112,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                                 }
                             }
 
-                            writeResult = await this.writer.WriteAsync(publishPacket.Encode()).ConfigureAwait(false);
+                            writeResult = await this.WriteAsync(publishPacket.Encode()).ConfigureAwait(false);
 
                             this.OnPublishSentEventLauncher(publishPacket);
                             break;
@@ -120,30 +120,31 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                             // This is in response to a received Publish packet.  Communication chain management
                             // was done in the receiver code.  Just send the response.
                             Trace.WriteLine("--> PubAckPacket");
-                            writeResult = await this.writer.WriteAsync(pubAckPacket.Encode()).ConfigureAwait(false);
+                            writeResult = await this.WriteAsync(pubAckPacket.Encode()).ConfigureAwait(false);
                             this.OnPubAckSentEventLauncher(pubAckPacket);
                             break;
                         case PubRecPacket pubRecPacket:
                             // This is in response to a received Publish packet.  Communication chain management
                             // was done in the receiver code.  Just send the response.
                             Trace.WriteLine("--> PubRecPacket");
-                            writeResult = await this.writer.WriteAsync(pubRecPacket.Encode()).ConfigureAwait(false);
+                            writeResult = await this.WriteAsync(pubRecPacket.Encode()).ConfigureAwait(false);
                             this.OnPubRecSentEventLauncher(pubRecPacket);
                             break;
                         case PubRelPacket pubRelPacket:
                             // This is in response to a received PubRec packet.  Communication chain management
                             // was done in the receiver code.  Just send the response.
                             Trace.WriteLine("--> PubRelPacket");
-                            writeResult = await this.writer.WriteAsync(pubRelPacket.Encode()).ConfigureAwait(false);
+                            writeResult = await this.WriteAsync(pubRelPacket.Encode()).ConfigureAwait(false);
                             this.OnPubRelSentEventLauncher(pubRelPacket);
                             break;
                         case PubCompPacket pubCompPacket:
                             // This is in response to a received PubRel packet.  Communication chain management
                             // was done in the receiver code.  Just send the response.
                             Trace.WriteLine("--> PubCompPacket");
-                            writeResult = await this.writer.WriteAsync(pubCompPacket.Encode()).ConfigureAwait(false);
+                            writeResult = await this.WriteAsync(pubCompPacket.Encode()).ConfigureAwait(false);
                             this.OnPubCompSentEventLauncher(pubCompPacket);
                             break;
+
                         /* case AuthPacket authPacket:
                         /*     writeResult = await this.writer.WriteAsync(authPacket.Encode()).ConfigureAwait(false);
                         /*     this.OnAuthSentEventLauncher(authPacket);
@@ -174,7 +175,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
             while (this.connectState is ConnectState.Connecting or ConnectState.Connected)
             {
-                readResult = await this.reader.ReadAsync().ConfigureAwait(false);
+                readResult = await this.ReadAsync().ConfigureAwait(false);
 
                 if (readResult.IsCanceled)
                 {
@@ -350,4 +351,22 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
             return true;
         });
+
+    internal ValueTask<FlushResult> WriteAsync(ReadOnlyMemory<byte> source, CancellationToken cancellationToken = default)
+    {
+        if (this.writer is null)
+        {
+            throw new HiveMQttClientException("Writer is null");
+        }
+        return this.writer.WriteAsync(source, cancellationToken);
+    }
+
+    internal ValueTask<ReadResult> ReadAsync(CancellationToken cancellationToken = default)
+    {
+        if (this.reader is null)
+        {
+            throw new HiveMQttClientException("Reader is null");
+        }
+        return this.reader.ReadAsync(cancellationToken);
+    }
 }
