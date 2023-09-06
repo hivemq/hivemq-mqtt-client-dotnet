@@ -39,14 +39,14 @@ public class DisconnectPacket : ControlPacket
     /// Encode this packet to be sent on the wire.
     /// </summary>
     /// <returns>An array of bytes ready to be sent.</returns>
-    public static byte[] Encode()
+    public byte[] Encode()
     {
         using (var stream = new MemoryStream(8))
         {
             stream.Position = 2;
 
             // Variable Header - starts at byte 2
-            stream.WriteByte((int)DisconnectReasonCode.NormalDisconnection);
+            stream.WriteByte((byte)this.DisconnectReasonCode);
 
             // Disconnect has no payload
 

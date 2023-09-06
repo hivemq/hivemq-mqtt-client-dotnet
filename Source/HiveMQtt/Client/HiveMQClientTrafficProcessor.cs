@@ -87,7 +87,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                             break;
                         case DisconnectPacket disconnectPacket:
                             Trace.WriteLine("--> DisconnectPacket");
-                            writeResult = await this.WriteAsync(DisconnectPacket.Encode()).ConfigureAwait(false);
+                            writeResult = await this.WriteAsync(disconnectPacket.Encode()).ConfigureAwait(false);
                             this.OnDisconnectSentEventLauncher(disconnectPacket);
                             break;
                         case SubscribePacket subscribePacket:

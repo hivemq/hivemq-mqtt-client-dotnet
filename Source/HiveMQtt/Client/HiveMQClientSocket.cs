@@ -79,6 +79,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     ipAddress = address;
                     break;
                 }
+
                 if (address.AddressFamily == AddressFamily.InterNetwork)
                 {
                     ipAddress = address;
@@ -87,12 +88,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             }
         }
 
-        if (ipAddress == null)
-        {
-            // We have multiple address returned, but none of them match the PreferIPv6 option.
-            // Use the first one whatever it is.
-            ipAddress = ipHostInfo.AddressList[0];
-        }
+        // We have multiple address returned, but none of them match the PreferIPv6 option.
+        // Use the first one whatever it is.
+        ipAddress ??= ipHostInfo.AddressList[0];
 
         IPEndPoint ipEndPoint = new(ipAddress, this.Options.Port);
 
@@ -126,11 +124,14 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         return socketConnected;
     }
 
-    internal bool CloseSocket()
+    internal bool CloseSocket(bool? shutdownPipeline = true)
     {
-        // Shutdown the pipeline
-        this.reader = null;
-        this.writer = null;
+        if (shutdownPipeline == true)
+        {
+            // Shutdown the pipeline
+            this.reader = null;
+            this.writer = null;
+        }
 
         // Shutdown the socket
         this.socket?.Shutdown(SocketShutdown.Both);
