@@ -76,6 +76,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 if (this.sendQueue.TryDequeue(out var packet))
                 {
                     FlushResult writeResult;
+
                     // FIXME: Handle writeResult.IsCanceled and writeResult.IsCompleted
                     switch (packet)
                     {
@@ -358,6 +359,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         {
             throw new HiveMQttClientException("Writer is null");
         }
+
         return this.writer.WriteAsync(source, cancellationToken);
     }
 
@@ -367,6 +369,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         {
             throw new HiveMQttClientException("Reader is null");
         }
+
         return this.reader.ReadAsync(cancellationToken);
     }
 }

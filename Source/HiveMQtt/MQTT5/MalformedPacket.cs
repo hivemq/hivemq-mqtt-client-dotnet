@@ -22,7 +22,10 @@ using System.Buffers;
 /// </summary>
 internal class MalformedPacket : ControlPacket
 {
+#pragma warning disable IDE0052
+    // Keep packet data for debugging purposes
     private readonly ReadOnlySequence<byte> packetData;
+#pragma warning restore IDE0052
 
     public MalformedPacket(ReadOnlySequence<byte> buffer) => this.packetData = buffer;
 

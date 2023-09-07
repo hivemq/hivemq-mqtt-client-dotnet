@@ -51,7 +51,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <inheritdoc />
     public List<Subscription> Subscriptions { get; } = new();
 
-    /// <inheritdoc />
     internal MQTT5Properties? ConnectionProperties { get; }
 
     /// <inheritdoc />

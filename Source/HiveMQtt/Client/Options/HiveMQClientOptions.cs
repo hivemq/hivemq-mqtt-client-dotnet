@@ -31,7 +31,7 @@ public class HiveMQClientOptions
 
     public HiveMQClientOptions()
     {
-        this.GenerateClientID();
+        this.ClientId = this.GenerateClientID();
         this.Host = "127.0.0.1";
         this.Port = 1883;
         this.PreferIPv6 = false;
@@ -162,7 +162,8 @@ public class HiveMQClientOptions
     /// Generate a semi-random client identifier to be used in <c>Client</c> connections.
     /// hivec#-pid-randomstring.
     /// </summary>
-    public void GenerateClientID()
+    /// <returns>A string containing the generated client identifier.</returns>
+    public string GenerateClientID()
     {
         var rand = new Random();
         var pid_string = Convert.ToString(Environment.ProcessId, System.Globalization.CultureInfo.InvariantCulture);
@@ -173,7 +174,7 @@ public class HiveMQClientOptions
                                             this.clientIdCharset[rand.Next(this.clientIdCharset.Length)])
                                             .ToArray());
 
-        this.ClientId = pid_string + "-" + clientID;
+        return pid_string + "-" + clientID;
     }
 
     /// <summary>

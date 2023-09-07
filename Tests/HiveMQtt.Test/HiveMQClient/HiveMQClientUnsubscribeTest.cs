@@ -41,10 +41,7 @@ public class HiveMQClientUnsubscribeTest
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
         // Unsubscribe from a non-existing subscription should throw an exception
-        await Assert.ThrowsAsync<HiveMQttClientException>(() =>
-            {
-                return subClient.UnsubscribeAsync("tests/InvalidUnsubscribeStringAsync");
-            }).ConfigureAwait(false);
+        await Assert.ThrowsAsync<HiveMQttClientException>(() => subClient.UnsubscribeAsync("tests/InvalidUnsubscribeStringAsync")).ConfigureAwait(false);
 
         Assert.True(subClient.Subscriptions.Count == 0);
 
@@ -63,10 +60,7 @@ public class HiveMQClientUnsubscribeTest
         var subscription = new Subscription(topicFilter);
 
         // Unsubscribe from a non-existing subscription should throw an exception
-        await Assert.ThrowsAsync<HiveMQttClientException>(() =>
-            {
-                return subClient.UnsubscribeAsync(subscription);
-            }).ConfigureAwait(false);
+        await Assert.ThrowsAsync<HiveMQttClientException>(() => subClient.UnsubscribeAsync(subscription)).ConfigureAwait(false);
 
         Assert.True(subClient.Subscriptions.Count == 0);
 

@@ -63,7 +63,7 @@ public class PublishPacket : ControlPacket
     /// <summary>
     /// Valid for outgoing Publish messages QoS 1.  An event that is fired after the the QoS 1 publish transaction is complete.
     /// </summary>
-    public event EventHandler<OnPublishQoS1CompleteEventArgs> OnPublishQoS1Complete = new EventHandler<OnPublishQoS1CompleteEventArgs>((client, e) => { });
+    public event EventHandler<OnPublishQoS1CompleteEventArgs> OnPublishQoS1Complete = new((client, e) => { });
 
     internal virtual void OnPublishQoS1CompleteEventLauncher(PubAckPacket packet)
     {
@@ -75,7 +75,7 @@ public class PublishPacket : ControlPacket
     /// <summary>
     /// Valid for outgoing Publish messages QoS 2.  An event that is fired after the the QoS 2 PubRec is received.
     /// </summary>
-    public event EventHandler<OnPublishQoS2CompleteEventArgs> OnPublishQoS2Complete = new EventHandler<OnPublishQoS2CompleteEventArgs>((client, e) => { });
+    public event EventHandler<OnPublishQoS2CompleteEventArgs> OnPublishQoS2Complete = new((client, e) => { });
 
     internal virtual void OnPublishQoS2CompleteEventLauncher(PubRecPacket packet)
     {

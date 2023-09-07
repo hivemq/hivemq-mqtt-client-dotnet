@@ -38,6 +38,7 @@ public class HiveMQClientPubSubTest
                 });
                 Assert.True(disconnect.Result);
             }
+
             taskCompletionSource.SetResult(true);
         };
 

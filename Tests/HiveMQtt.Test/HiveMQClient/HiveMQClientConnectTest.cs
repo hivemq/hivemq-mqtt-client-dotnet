@@ -104,10 +104,7 @@ public class HiveMQClientConnectTest
 
         // Set up TaskCompletionSource to wait for event handlers to finish
         var taskCompletionSource = new TaskCompletionSource<bool>();
-        client.OnDisconnectSent += (sender, args) =>
-        {
-            taskCompletionSource.SetResult(true);
-        };
+        client.OnDisconnectSent += (sender, args) => taskCompletionSource.SetResult(true);
 
         // Connect and Disconnect
         var result = await client.ConnectAsync().ConfigureAwait(false);

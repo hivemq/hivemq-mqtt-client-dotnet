@@ -20,7 +20,7 @@ using Microsoft.Extensions.Logging;
 /// <inheritdoc />
 public partial class HiveMQClient : IDisposable, IHiveMQClient
 {
-    private ILogger<HiveMQClient> _logger;
+    private ILogger<HiveMQClient> logger;
 
-    public void AttachLogger(ILogger<HiveMQClient> logger) => this._logger = logger;
+    public void AttachLogger(ILogger<HiveMQClient> logger) => this.logger = logger;
 }
