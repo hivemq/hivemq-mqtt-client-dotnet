@@ -151,11 +151,11 @@ public class ControlPacketTest : ControlPacket
         reader = new SequenceReader<byte>(sequence);
         decodedInteger = DecodeFourByteInteger(ref reader);
         Assert.NotNull(decodedInteger);
-        Assert.Equal(UInt32.MinValue, decodedInteger);
+        Assert.Equal(uint.MinValue, decodedInteger);
 
         // Max Value
         stream = new MemoryStream(2);
-        EncodeFourByteInteger(stream, UInt32.MaxValue);
+        EncodeFourByteInteger(stream, uint.MaxValue);
         buffer = stream.ToArray();
 
         // Decode back
@@ -163,6 +163,6 @@ public class ControlPacketTest : ControlPacket
         reader = new SequenceReader<byte>(sequence);
         decodedInteger = DecodeFourByteInteger(ref reader);
         Assert.NotNull(decodedInteger);
-        Assert.Equal(UInt32.MaxValue, decodedInteger);
+        Assert.Equal(uint.MaxValue, decodedInteger);
     }
 }

@@ -43,16 +43,6 @@ public class SubscribeResult
     }
 
     /// <summary>
-    /// Gets the options used for the Subscribe operation.
-    /// </summary>
-    internal SubscribeOptions Options { get; }
-
-    /// <summary>
-    /// Gets the MQTT5Properties returned by the MQTT broker in the subscribe request.
-    /// </summary>
-    internal MQTT5Properties Properties { get; }
-
-    /// <summary>
     /// Gets the list of Subscriptions that were a result of the subscribe call.
     /// </summary>
     public List<Subscription> Subscriptions { get; }
@@ -88,4 +78,14 @@ public class SubscribeResult
     /// </summary>
     /// <returns>The first Subscription in the list of Subscriptions or null if the list is empty.</returns>
     public Subscription? GetFirstSubscription() => this.Subscriptions.FirstOrDefault();
+
+    /// <summary>
+    /// Gets the options used for the Subscribe operation.
+    /// </summary>
+    internal SubscribeOptions Options { get; }
+
+    /// <summary>
+    /// Gets the MQTT5Properties returned by the MQTT broker in the subscribe request.
+    /// </summary>
+    internal MQTT5Properties Properties { get; }
 }

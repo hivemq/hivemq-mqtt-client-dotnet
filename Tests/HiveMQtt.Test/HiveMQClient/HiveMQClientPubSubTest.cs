@@ -73,7 +73,8 @@ public class HiveMQClientPubSubTest
             Assert.Equal(testTopic, args.PublishMessage.Topic);
             Assert.Equal(testPayload, args.PublishMessage.PayloadAsString);
 
-            if (messagesReceived >= 5) {
+            if (messagesReceived >= 5)
+            {
                 taskCompletionSource.SetResult(true);
             }
         };
@@ -120,7 +121,8 @@ public class HiveMQClientPubSubTest
 
             Assert.NotNull(sender);
 
-            if (messagesReceived >= 5) {
+            if (messagesReceived >= 5)
+            {
                 taskCompletionSource.SetResult(true);
             }
         };

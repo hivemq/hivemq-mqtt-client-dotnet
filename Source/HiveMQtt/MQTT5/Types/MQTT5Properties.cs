@@ -25,7 +25,7 @@ internal class MQTT5Properties
 
     public byte? PayloadFormatIndicator { get; set; }
 
-    public UInt32? MessageExpiryInterval { get; set; }
+    public uint? MessageExpiryInterval { get; set; }
 
     public string? ContentType { get; set; }
 
@@ -38,7 +38,7 @@ internal class MQTT5Properties
     /// <summary>
     /// Gets or sets a value that represents the session expiration duration in use by the MQTT broker.
     /// </summary>
-    public UInt32? SessionExpiryInterval { get; set; }
+    public uint? SessionExpiryInterval { get; set; }
 
     /// <summary>
     /// Gets or sets the Client Identifier which was assigned by the Server because a zero length Client
@@ -52,7 +52,7 @@ internal class MQTT5Properties
     /// If this value is set, this overrides any Keep Alive sent in the Connect request.
     /// </para>
     /// </summary>
-    public UInt16? ServerKeepAlive { get; set; }
+    public ushort? ServerKeepAlive { get; set; }
 
     /// <summary>
     /// Gets or sets a string containing the name of the authentication method.
@@ -66,7 +66,7 @@ internal class MQTT5Properties
 
     public byte? RequestProblemInformation { get; set; }
 
-    public UInt32? WillDelayInterval { get; set; }
+    public uint? WillDelayInterval { get; set; }
 
     public byte? RequestResponseInformation { get; set; }
 
@@ -97,7 +97,7 @@ internal class MQTT5Properties
     /// Gets or sets a value that indicates the maximum number of QoS 1 and QoS 2 publications that the
     /// MQTT broker is willing to process concurrently.
     /// </summary>
-    public UInt16? ReceiveMaximum { get; set; }
+    public ushort? ReceiveMaximum { get; set; }
 
     /// <summary>
     /// Gets or sets a value that indicates the highest value that the Server will accept as a Topic Alias sent by the Client.
@@ -106,15 +106,15 @@ internal class MQTT5Properties
     /// A value of 0 indicates that the Server does not accept any Topic Aliases on this connection.
     /// </para>
     /// </summary>
-    public UInt16? TopicAliasMaximum { get; set; }
+    public ushort? TopicAliasMaximum { get; set; }
 
-    public UInt16? TopicAlias { get; set; }
+    public ushort? TopicAlias { get; set; }
 
     /// <summary>
     /// Gets or sets a value that indicates the maximum "Quality of Service" level that the MQTT
     /// broker is willing to accept.
     /// </summary>
-    public UInt16? MaximumQoS { get; set; }
+    public ushort? MaximumQoS { get; set; }
 
     /// <summary>
     /// Gets or sets a value that indicates whether the MQTT broker supports Retained Messages.
@@ -130,7 +130,7 @@ internal class MQTT5Properties
     /// Gets or sets a value that indicates the maximum packet size that the MQTT broker is willing
     /// accept.
     /// </summary>
-    public UInt32? MaximumPacketSize { get; set; }
+    public uint? MaximumPacketSize { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether the Server supports Wildcard Subscriptions.

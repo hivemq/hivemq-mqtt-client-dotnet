@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using HiveMQtt.Client;
 using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.ReasonCodes;
+using HiveMQtt.MQTT5.Types;
 using Xunit;
 
 public class HiveMQClientConnectOptionsTest
