@@ -26,16 +26,13 @@
   </ItemGroup>
 
   <ItemGroup Label="Files">
-    <None Include="../../Images\Icon.png" Pack="true" PackagePath="/" />
-    <None Include="../../README.md" Pack="true" PackagePath="/" />
+    <None Include="..\..\Images\Icon.png" Pack="true" PackagePath="\" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
-  <!-- <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <CodeAnalysisRuleSet>../../StyleCop.Analyzers.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup> -->
-
+  <!-- <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' "> -->
   <PropertyGroup>
-      <CodeAnalysisRuleSet>./../../StyleCop.Analyzers.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>./../../StyleCop.Analyzers.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <AdditionalFiles Include="$(MSBuildThisFileDirectory)./../stylecop.json" Link="stylecop.json" />
