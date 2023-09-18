@@ -137,6 +137,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         this.socket?.Shutdown(SocketShutdown.Both);
         this.socket?.Close();
 
+        this.AfterDisconnectEventLauncher(true);
+
         return true;
     }
 }

@@ -126,6 +126,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         options ??= new DisconnectOptions();
 
+        // Fire the corresponding event
+        this.BeforeDisconnectEventLauncher();
+
         var disconnectPacket = new DisconnectPacket
         {
             DisconnectReasonCode = options.ReasonCode,

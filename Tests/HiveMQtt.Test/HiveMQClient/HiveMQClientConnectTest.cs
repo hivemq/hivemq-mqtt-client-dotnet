@@ -120,12 +120,17 @@ public class HiveMQClientConnectTest
         Assert.True(client.LocalStore.ContainsKey("BeforeConnectHandlerCalled"));
         Assert.True(client.LocalStore.ContainsKey("AfterConnectHandlerCalled"));
 
+        Assert.True(client.LocalStore.ContainsKey("BeforeDisconnectHandlerCalled"));
+        Assert.True(client.LocalStore.ContainsKey("AfterDisconnectHandlerCalled"));
+
         Assert.True(client.LocalStore.ContainsKey("OnConnectSentHandlerCalled"));
         Assert.True(client.LocalStore.ContainsKey("OnConnAckReceivedHandlerCalled"));
 
         // Remove event handlers
         client.BeforeConnect -= BeforeConnectHandler;
         client.AfterConnect -= AfterConnectHandler;
+        client.BeforeDisconnect -= BeforeDisconnectHandler;
+        client.AfterDisconnect -= AfterDisconnectHandler;
 
         client.OnConnectSent -= OnConnectSentHandler;
         client.OnConnAckReceived -= OnConnAckReceivedHandler;
@@ -187,8 +192,6 @@ public class HiveMQClientConnectTest
             var client = (HiveMQClient)sender;
             client.LocalStore.Add("BeforeDisconnectHandlerCalled", "true");
         }
-
-        Assert.NotNull(eventArgs.Options);
     }
 
     private static void AfterDisconnectHandler(object? sender, AfterDisconnectEventArgs eventArgs)
@@ -199,6 +202,8 @@ public class HiveMQClientConnectTest
             var client = (HiveMQClient)sender;
             client.LocalStore.Add("AfterDisconnectHandlerCalled", "true");
         }
+
+        Assert.True(eventArgs.CleanDisconnect);
     }
 
     private static void OnDisconnectSentHandler(object? sender, OnDisconnectSentEventArgs eventArgs)

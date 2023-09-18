@@ -215,12 +215,12 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 else if (packet is MalformedPacket)
                 {
                     Trace.WriteLine("TrafficInflowProcessor Malformed Packet Detected !!! Skipping...");
-                    this.reader.AdvanceTo(consumed);
+                    this.reader?.AdvanceTo(consumed);
                     continue;
                 }
 
                 // We have a valid packet.  Mark the data as consumed.
-                this.reader.AdvanceTo(consumed);
+                this.reader?.AdvanceTo(consumed);
 
                 switch (packet)
                 {
@@ -349,6 +349,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
             Trace.WriteLine($"{Environment.CurrentManagedThreadId}: TrafficInflowProcessor Exiting...{this.connectState}");
 
+            if (this.connectState != ConnectState.Disconnecting)
+            {
+                // This is an unexpected exit and may be due to a failure.
+                // Launch the AfterDisconnect event with a clean disconnect set to false.
+                this.AfterDisconnectEventLauncher(false);
+            }
+
             return true;
         });
 
@@ -358,6 +365,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         {
             throw new HiveMQttClientException("Writer is null");
         }
+
         return this.writer.WriteAsync(source, cancellationToken);
     }
 
@@ -367,6 +375,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         {
             throw new HiveMQttClientException("Reader is null");
         }
+
         return this.reader.ReadAsync(cancellationToken);
     }
 }
