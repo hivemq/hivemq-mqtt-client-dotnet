@@ -14,8 +14,8 @@ var options = new HiveMQClientOptions
     Host = "b8212ae75b11f4y2abs254bdea608173b.s1.eu.hivemq.cloud",
     Port = 8883,
     UseTLS = true,
-    UserName = 'myusername',
-    Password = "mypassword',
+    UserName = "myusername",
+    Password = "mypassword",
 }
 ```
 
