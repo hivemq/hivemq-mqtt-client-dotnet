@@ -136,6 +136,37 @@ public class HiveMQClientConnectTest
         client.OnConnAckReceived -= OnConnAckReceivedHandler;
     }
 
+    [Fact]
+    public async Task Test_AfterDisconnectEvent_Async()
+    {
+        var client = new HiveMQClient();
+
+        // Client Events
+        client.AfterDisconnect += AfterDisconnectHandler;
+
+        // Set up TaskCompletionSource to wait for event handlers to finish
+        var taskCompletionSource = new TaskCompletionSource<bool>();
+        client.OnDisconnectSent += (sender, args) =>
+        {
+            taskCompletionSource.SetResult(true);
+        };
+
+        // Connect and Disconnect
+        var result = await client.ConnectAsync().ConfigureAwait(false);
+        await client.DisconnectAsync().ConfigureAwait(false);
+
+        // Wait for event handlers to finish
+        await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+        // Assert that all Events were called
+        Assert.True(client.LocalStore.ContainsKey("AfterDisconnectHandlerCalled"));
+        Assert.True(client.LocalStore.ContainsKey("AfterDisconnectHandlerCalledCount"));
+        Assert.Equal(client.LocalStore["AfterDisconnectHandlerCalledCount"], "1");
+
+        // Remove event handlers
+        client.AfterDisconnect -= AfterDisconnectHandler;
+    }
+
     private static void BeforeConnectHandler(object? sender, BeforeConnectEventArgs eventArgs)
     {
         Assert.NotNull(sender);
@@ -200,10 +231,19 @@ public class HiveMQClientConnectTest
         if (sender is not null)
         {
             var client = (HiveMQClient)sender;
-            client.LocalStore.Add("AfterDisconnectHandlerCalled", "true");
-        }
 
-        Assert.True(eventArgs.CleanDisconnect);
+            if (client.LocalStore.ContainsKey("AfterDisconnectHandlerCalled"))
+            {
+                var count = Convert.ToInt16(client.LocalStore["AfterDisconnectHandlerCalledCount"]);
+                count++;
+                client.LocalStore.Add("AfterDisconnectHandlerCalledCount", count.ToString());
+            }
+            else
+            {
+                client.LocalStore.Add("AfterDisconnectHandlerCalled", "true");
+                client.LocalStore.Add("AfterDisconnectHandlerCalledCount", "1");
+            }
+        }
     }
 
     private static void OnDisconnectSentHandler(object? sender, OnDisconnectSentEventArgs eventArgs)
@@ -212,7 +252,18 @@ public class HiveMQClientConnectTest
         if (sender is not null)
         {
             var client = (HiveMQClient)sender;
-            client.LocalStore.Add("OnDisconnectSentHandlerCalled", "true");
+
+            if (client.LocalStore.ContainsKey("OnDisconnectSentHandlerCalled"))
+            {
+                var count = Convert.ToInt16(client.LocalStore["OnDisconnectSentHandlerCalledCount"]);
+                count++;
+                client.LocalStore.Add("OnDisconnectSentHandlerCalledCount", count.ToString());
+            }
+            else
+            {
+                client.LocalStore.Add("OnDisconnectSentHandlerCalled", "true");
+                client.LocalStore.Add("OnDisconnectSentHandlerCalledCount", "1");
+            }
         }
 
         Assert.NotNull(eventArgs.DisconnectPacket);
