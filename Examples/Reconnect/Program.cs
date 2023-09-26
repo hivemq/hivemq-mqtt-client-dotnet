@@ -40,7 +40,7 @@ client.AfterDisconnect += async (sender, args) =>
         // We could have been disconnected for any number of reasons: network outage, broker outage, etc.
         // Here we loop with a backing off delay until we reconnect
 
-        // Start with a 1 second delay and double each retry to a maximum of 10 seconds.
+        // Start with a small delay and double it on each retry up to a maximum value
         var delay = 5000;
         var reconnectAttempts = 0;
 
@@ -64,7 +64,7 @@ client.AfterDisconnect += async (sender, args) =>
                 {
                     Console.WriteLine($"--> Failed to connect: {connectResult.ReasonString}");
 
-                    // Double the delay with each failed retry to a maximum of 30 seconds.
+                    // Double the delay with each failed retry to a maximum
                     delay = Math.Min(delay * 2, 30000);
                     Console.WriteLine($"--> Will delay for {delay / 1000} seconds until next try.");
                 }
@@ -78,7 +78,7 @@ client.AfterDisconnect += async (sender, args) =>
             {
                 Console.WriteLine($"--> Failed to connect: {ex.Message}");
 
-                // Double the delay with each failed retry to a maximum of 10 seconds.
+                // Double the delay with each failed retry to a maximum
                 delay = Math.Min(delay * 2, 10000);
                 Console.WriteLine($"--> Will delay for {delay / 1000} seconds until next try.");
             }
@@ -122,6 +122,7 @@ var resultPublish = await client.PublishAsync(
         Command = "Hello",
     })
 ).ConfigureAwait(false);
+
 
 while (true)
 {
