@@ -9,13 +9,12 @@
 
   <!-- Use the HiveMQtt project as a local source.  Otherwise, fetch from nuget. -->
   <PropertyGroup>
-    <RestoreSources>;../../Source/HiveMQtt/bin/Debug/;</RestoreSources>
-    <!-- <RestoreSources>$(RestoreSources);../../Source/HiveMQtt/bin/Debug/;https://api.nuget.org/v3/index.json</RestoreSources> -->
+    <RestoreSources>$(RestoreSources);../../Source/HiveMQtt/bin/Debug/;https://api.nuget.org/v3/index.json</RestoreSources>
   </PropertyGroup>
 
   <!-- Update the version to match -->
   <ItemGroup>
-    <PackageReference Include="HiveMQtt" Version="0.3.1-preview.0.2" />
+    <PackageReference Include="HiveMQtt" Version="0.4.0" />
   </ItemGroup>
 
 </Project>

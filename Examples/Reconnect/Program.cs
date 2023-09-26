@@ -41,7 +41,7 @@ client.AfterDisconnect += async (sender, args) =>
         // Here we loop with a backing off delay until we reconnect
 
         // Start with a 1 second delay and double each retry to a maximum of 10 seconds.
-        var delay = 1000;
+        var delay = 5000;
         var reconnectAttempts = 0;
 
         while (true)
@@ -64,8 +64,8 @@ client.AfterDisconnect += async (sender, args) =>
                 {
                     Console.WriteLine($"--> Failed to connect: {connectResult.ReasonString}");
 
-                    // Double the delay with each failed retry to a maximum of 10 seconds.
-                    delay = Math.Min(delay * 2, 10000);
+                    // Double the delay with each failed retry to a maximum of 30 seconds.
+                    delay = Math.Min(delay * 2, 30000);
                     Console.WriteLine($"--> Will delay for {delay / 1000} seconds until next try.");
                 }
                 else
@@ -99,7 +99,7 @@ try
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"Failed to connect: {ex.Message}");
+    Console.WriteLine($"Failed to connect to broker: {ex.Message}");
     return;
 }
 
@@ -129,6 +129,7 @@ while (true)
     Console.WriteLine("Press q exit...");
     if (Console.ReadKey().Key == ConsoleKey.Q)
     {
+        Console.WriteLine("\n");
         break;
     }
 }
