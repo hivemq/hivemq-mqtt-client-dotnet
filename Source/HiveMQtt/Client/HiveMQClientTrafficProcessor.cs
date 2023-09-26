@@ -38,7 +38,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Asynchronous background task that handles the outgoing traffic of packets queued in the sendQueue.
     /// </summary>
-    private Task<bool> TrafficOutflowProcessorAsync() => Task.Run(async () =>
+    private Task<bool> TrafficOutflowProcessorAsync(CancellationToken cancellationToken) => Task.Run(async () =>
         {
             var stopWatch = new Stopwatch();
             var keepAlivePeriod = this.Options.KeepAlive / 2;
@@ -162,12 +162,12 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
             Trace.WriteLine($"{Environment.CurrentManagedThreadId}: TrafficOutflowProcessor Exiting...{this.connectState}");
             return true;
-        });
+        }, cancellationToken);
 
     /// <summary>
     /// Asynchronous background task that handles the incoming traffic of packets.
     /// </summary>
-    private Task<bool> TrafficInflowProcessorAsync() => Task.Run(async () =>
+    private Task<bool> TrafficInflowProcessorAsync(CancellationToken cancellationToken) => Task.Run(async () =>
         {
             Trace.WriteLine($"{Environment.CurrentManagedThreadId}: TrafficInflowProcessor Starting...{this.connectState}");
 
@@ -215,12 +215,12 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 else if (packet is MalformedPacket)
                 {
                     Trace.WriteLine("TrafficInflowProcessor Malformed Packet Detected !!! Skipping...");
-                    this.reader.AdvanceTo(consumed);
+                    this.reader?.AdvanceTo(consumed);
                     continue;
                 }
 
                 // We have a valid packet.  Mark the data as consumed.
-                this.reader.AdvanceTo(consumed);
+                this.reader?.AdvanceTo(consumed);
 
                 switch (packet)
                 {
@@ -349,8 +349,29 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
             Trace.WriteLine($"{Environment.CurrentManagedThreadId}: TrafficInflowProcessor Exiting...{this.connectState}");
 
+            // Launch the AfterDisconnect event only in certain cases
+            switch (this.connectState)
+            {
+                case ConnectState.Disconnecting:
+                    // This disconnect was either user or broker initiated.
+                    // Launch the AfterDisconnect event with a clean disconnect set to true.
+                    this.AfterDisconnectEventLauncher(true);
+                    break;
+                case ConnectState.Connected:
+                    // This is an unexpected exit and may be due to a failure.
+                    // Launch the AfterDisconnect event with a clean disconnect set to false.
+                    this.AfterDisconnectEventLauncher(false);
+                    break;
+                case ConnectState.Connecting:
+                    break;
+                case ConnectState.Disconnected:
+                    break;
+                default:
+                    break;
+            }
+
             return true;
-        });
+        }, cancellationToken);
 
     internal ValueTask<FlushResult> WriteAsync(ReadOnlyMemory<byte> source, CancellationToken cancellationToken = default)
     {
@@ -358,6 +379,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         {
             throw new HiveMQttClientException("Writer is null");
         }
+
         return this.writer.WriteAsync(source, cancellationToken);
     }
 
@@ -367,6 +389,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         {
             throw new HiveMQttClientException("Reader is null");
         }
+
         return this.reader.ReadAsync(cancellationToken);
     }
 }

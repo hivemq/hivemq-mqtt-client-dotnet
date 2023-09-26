@@ -21,6 +21,9 @@ using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
 
+using System.Threading;
+using System.Threading.Tasks;
+
 using HiveMQtt.Client.Exceptions;
 
 /// <inheritdoc />
@@ -30,6 +33,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     private Stream? stream;
     private PipeReader? reader;
     private PipeWriter? writer;
+    private CancellationTokenSource cancellationSource;
+    private CancellationToken outFlowCancellationToken;
+    private CancellationToken infoFlowCancellationToken;
 
     internal static bool ValidateServerCertificate(
         object sender,
@@ -116,9 +122,14 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         this.reader = PipeReader.Create(this.stream);
         this.writer = PipeWriter.Create(this.stream);
 
+        // Setup the cancellation tokens
+        this.cancellationSource = new CancellationTokenSource();
+        this.outFlowCancellationToken = this.cancellationSource.Token;
+        this.infoFlowCancellationToken = this.cancellationSource.Token;
+
         // Start the traffic processors
-        _ = this.TrafficOutflowProcessorAsync();
-        _ = this.TrafficInflowProcessorAsync();
+        _ = this.TrafficOutflowProcessorAsync(this.outFlowCancellationToken);
+        _ = this.TrafficInflowProcessorAsync(this.infoFlowCancellationToken);
 
         // Console.WriteLine($"Socket connected to {this.socket.RemoteEndPoint}");
         return socketConnected;
@@ -126,6 +137,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
     internal bool CloseSocket(bool? shutdownPipeline = true)
     {
+        this.cancellationSource.Cancel();
+
         if (shutdownPipeline == true)
         {
             // Shutdown the pipeline

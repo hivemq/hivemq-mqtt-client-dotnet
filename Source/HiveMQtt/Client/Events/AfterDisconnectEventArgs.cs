@@ -17,12 +17,20 @@ namespace HiveMQtt.Client.Events;
 
 /// <summary>
 /// Event arguments for the <see cref="HiveMQClient.AfterDisconnect"/> event.
-/// <para>This event is called after a disconnect is sent to the broker.</para>
-/// <para><see cref="AfterDisconnectEventArgs.DisconnectResult"/> contains the result of the disconnect operation.</para>
+/// <para>
+/// This event is called after a disconnect from the MQTT broker.  This can be happen because
+/// of a call to <see cref="HiveMQClient.DisconnectAsync"/> or because of a failure.
+/// </para>
+/// <para>
+/// If the disconnect was caused by a call to <see cref="HiveMQClient.DisconnectAsync"/>, then
+/// <see cref="AfterDisconnectEventArgs.CleanDisconnect"/> will be <c>true</c>.  If the disconnect
+/// was caused by a failure, then <see cref="AfterDisconnectEventArgs.CleanDisconnect"/> will be
+/// <c>false</c>.
+/// </para>
 /// </summary>
 public class AfterDisconnectEventArgs : EventArgs
 {
-    public AfterDisconnectEventArgs(bool result) => this.DisconnectResult = result;
+    public AfterDisconnectEventArgs(bool clean = false) => this.CleanDisconnect = clean;
 
-    public bool DisconnectResult { get; set; }
+    public bool CleanDisconnect { get; set; }
 }

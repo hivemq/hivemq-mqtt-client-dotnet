@@ -17,6 +17,7 @@ namespace HiveMQtt.Client;
 
 using System;
 using System.Diagnostics;
+using System.Security.Claims;
 using HiveMQtt.Client.Events;
 using HiveMQtt.Client.Options;
 using HiveMQtt.Client.Results;
@@ -55,25 +56,25 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     }
 
     /// <summary>
-    /// Event that is fired before the client connects to the broker.
+    /// Event that is fired before the client disconnects from the broker.
     /// </summary>
     public event EventHandler<BeforeDisconnectEventArgs> BeforeDisconnect = new((client, e) => { });
 
-    protected virtual void BeforeDisconnectEventLauncher(HiveMQClientOptions options)
+    protected virtual void BeforeDisconnectEventLauncher()
     {
-        var eventArgs = new BeforeDisconnectEventArgs(options);
+        var eventArgs = new BeforeDisconnectEventArgs();
         Trace.WriteLine("BeforeDisconnectEventLauncher");
         this.BeforeDisconnect?.Invoke(this, eventArgs);
     }
 
     /// <summary>
-    /// Event that is fired after the client connects to the broker.
+    /// Event that is fired after the client is disconnected from the broker.
     /// </summary>
     public event EventHandler<AfterDisconnectEventArgs> AfterDisconnect = new((client, e) => { });
 
-    protected virtual void AfterDisconnectEventLauncher(bool result)
+    protected virtual void AfterDisconnectEventLauncher(bool clean = false)
     {
-        var eventArgs = new AfterDisconnectEventArgs(result);
+        var eventArgs = new AfterDisconnectEventArgs(clean);
         Trace.WriteLine("AfterDisconnectEventLauncher");
         this.AfterDisconnect?.Invoke(this, eventArgs);
     }

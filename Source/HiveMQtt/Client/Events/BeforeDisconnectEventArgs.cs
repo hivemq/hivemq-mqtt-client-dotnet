@@ -24,7 +24,9 @@ using HiveMQtt.Client.Options;
 /// </summary>
 public class BeforeDisconnectEventArgs : EventArgs
 {
-    public BeforeDisconnectEventArgs(HiveMQClientOptions options) => this.Options = options;
+    public BeforeDisconnectEventArgs()
+    {
+    }
 
     public HiveMQClientOptions Options { get; set; }
 }
