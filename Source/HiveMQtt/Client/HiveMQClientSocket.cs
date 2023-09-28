@@ -137,8 +137,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
     internal bool CloseSocket(bool? shutdownPipeline = true)
     {
-        this.cancellationSource.Cancel();
-
         if (shutdownPipeline == true)
         {
             // Shutdown the pipeline
@@ -149,6 +147,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         // Shutdown the socket
         this.socket?.Shutdown(SocketShutdown.Both);
         this.socket?.Close();
+
+        this.cancellationSource.Cancel();
 
         return true;
     }
