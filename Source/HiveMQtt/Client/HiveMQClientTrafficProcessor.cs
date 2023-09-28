@@ -356,20 +356,16 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 case ConnectState.Disconnected:
                     // This disconnect was either user or broker initiated.
                     // Launch the AfterDisconnect event with a clean disconnect set to true.
-                    Trace.WriteLine($"Launching AfterDisconnect event: connectState: {this.connectState}");
                     this.AfterDisconnectEventLauncher(true);
                     break;
                 case ConnectState.Connected:
                     // This is an unexpected exit and may be due to a failure.
                     // Launch the AfterDisconnect event with a clean disconnect set to false.
-                    Trace.WriteLine($"Launching AfterDisconnect event: connectState: {this.connectState}");
                     this.AfterDisconnectEventLauncher(false);
                     break;
                 case ConnectState.Connecting:
-                    Trace.WriteLine($"NOT Launching AfterDisconnect event: connectState: {this.connectState}");
                     break;
                 default:
-                    Trace.WriteLine($"xxNOT Launching AfterDisconnect event: connectState: {this.connectState}");
                     break;
             }
 
