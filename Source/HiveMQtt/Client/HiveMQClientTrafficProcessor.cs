@@ -353,6 +353,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             switch (this.connectState)
             {
                 case ConnectState.Disconnecting:
+                case ConnectState.Disconnected:
                     // This disconnect was either user or broker initiated.
                     // Launch the AfterDisconnect event with a clean disconnect set to true.
                     this.AfterDisconnectEventLauncher(true);
@@ -363,8 +364,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     this.AfterDisconnectEventLauncher(false);
                     break;
                 case ConnectState.Connecting:
-                    break;
-                case ConnectState.Disconnected:
                     break;
                 default:
                     break;

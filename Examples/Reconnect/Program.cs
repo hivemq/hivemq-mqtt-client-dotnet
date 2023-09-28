@@ -135,5 +135,6 @@ while (true)
     }
 }
 
-Console.WriteLine("Disconnecting gracefully...");
+Console.WriteLine("Disconnecting gracefully and waiting 5 seconds...");
 await client.DisconnectAsync().ConfigureAwait(false);
+await Task.Delay(5000).ConfigureAwait(false);
