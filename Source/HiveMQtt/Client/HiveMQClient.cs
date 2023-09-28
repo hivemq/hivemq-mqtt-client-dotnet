@@ -158,10 +158,10 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             this.OnDisconnectSent -= eventHandler;
         }
 
-        this.connectState = ConnectState.Disconnected;
-
         // Close the socket
         this.CloseSocket();
+
+        this.connectState = ConnectState.Disconnected;
 
         // Clear the send queue
         this.sendQueue.Clear();
