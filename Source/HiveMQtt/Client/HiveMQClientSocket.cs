@@ -101,7 +101,15 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         IPEndPoint ipEndPoint = new(ipAddress, this.Options.Port);
 
         this.socket = new(ipEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-        await this.socket.ConnectAsync(ipEndPoint).ConfigureAwait(false);
+
+        try
+        {
+            await this.socket.ConnectAsync(ipEndPoint).ConfigureAwait(false);
+        }
+        catch (SocketException socketException)
+        {
+            throw new HiveMQttClientException("Failed to connect to broker", socketException);
+        }
 
         var socketConnected = this.socket.Connected;
 
@@ -131,7 +139,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         _ = this.TrafficOutflowProcessorAsync(this.outFlowCancellationToken);
         _ = this.TrafficInflowProcessorAsync(this.infoFlowCancellationToken);
 
-        // Console.WriteLine($"Socket connected to {this.socket.RemoteEndPoint}");
+        logger.Trace($"Socket connected to {this.socket.RemoteEndPoint}");
         return socketConnected;
     }
 

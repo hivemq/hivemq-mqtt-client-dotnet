@@ -34,6 +34,8 @@ using HiveMQtt.MQTT5.Types;
 /// </summary>
 public partial class HiveMQClient : IDisposable, IHiveMQClient
 {
+    private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
     private ConnectState connectState = ConnectState.Disconnected;
 
     public HiveMQClient(HiveMQClientOptions? options = null)
@@ -84,10 +86,10 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         {
             connAck = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
         }
-        catch (System.TimeoutException)
+        catch (TimeoutException)
         {
-            // log.Error(string.Format("Connect timeout.  No response received in time.", ex);
-            throw;
+            this.connectState = ConnectState.Disconnected;
+            throw new HiveMQttClientException("Connect timeout.  No response received in time.");
         }
         finally
         {
@@ -148,7 +150,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         {
             disconnectPacket = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
         }
-        catch (System.TimeoutException)
+        catch (TimeoutException)
         {
             // Does it matter?  We're disconnecting anyway.
         }
@@ -160,6 +162,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         // Close the socket
         this.CloseSocket();
+
+        // Fire the corresponding event
+        this.AfterDisconnectEventLauncher(true);
 
         this.connectState = ConnectState.Disconnected;
 

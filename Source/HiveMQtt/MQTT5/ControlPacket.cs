@@ -27,6 +27,8 @@ using HiveMQtt.MQTT5.Types;
 /// </summary>
 public abstract class ControlPacket
 {
+    internal static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+
     public ControlPacket() => this.Properties = new MQTT5Properties();
 
     /// <summary>
