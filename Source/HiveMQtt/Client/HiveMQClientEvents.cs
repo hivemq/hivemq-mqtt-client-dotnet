@@ -16,7 +16,6 @@
 namespace HiveMQtt.Client;
 
 using System;
-using System.Diagnostics;
 using HiveMQtt.Client.Events;
 using HiveMQtt.Client.Options;
 using HiveMQtt.Client.Results;

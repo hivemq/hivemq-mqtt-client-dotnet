@@ -207,7 +207,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 if (readResult.IsCompleted)
                 {
                     // This is an unexpected exit and may be due to a network failure.
-                    Logger.Trace("TrafficInflowProcessor IsCompleted: end of the streamx");
+                    Logger.Trace("TrafficInflowProcessor IsCompleted: end of the stream");
 
                     if (this.connectState == ConnectState.Connected)
                     {
@@ -220,6 +220,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                         this.cancellationSource.Cancel();
                         return false;
                     }
+
                     return true;
                 }
 
@@ -308,7 +309,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Handle an incoming Publish packet.
     /// </summary>
-    /// <param name="publishPacket"></param>
+    /// <param name="publishPacket">The received publish packet.</param>
     internal void HandleIncomingPublishPacket(PublishPacket publishPacket)
     {
         Logger.Trace("<-- Publish");
@@ -339,8 +340,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Handle an incoming ConnAck packet.
     /// </summary>
-    /// <param name="pubAckPacket"></param>
-    /// <exception cref="HiveMQttClientException"></exception>
+    /// <param name="pubAckPacket">The received PubAck packet.</param>
+    /// <exception cref="HiveMQttClientException">Raised if the packet identifier is unknown.</exception>
     internal void HandleIncomingPubAckPacket(PubAckPacket pubAckPacket)
     {
         Logger.Trace("<-- PubAck");
@@ -362,7 +363,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Handle an incoming PubRec packet.
     /// </summary>
-    /// <param name="pubRecPacket"></param>
+    /// <param name="pubRecPacket">The received PubRec packet.</param>
     internal void HandleIncomingPubRecPacket(PubRecPacket pubRecPacket)
     {
         Logger.Trace("<-- PubRec");
@@ -394,7 +395,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Handle an incoming PubRel packet.
     /// </summary>
-    /// <param name="pubRelPacket"></param>
+    /// <param name="pubRelPacket">The received PubRel packet.</param>
     internal void HandleIncomingPubRelPacket(PubRelPacket pubRelPacket)
     {
         Logger.Trace("<-- PubRel");
@@ -417,8 +418,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Handle an incoming PubComp packet.
     /// </summary>
-    /// <param name="pubCompPacket"></param>
-    /// <exception cref="HiveMQttClientException"></exception>
+    /// <param name="pubCompPacket">The received PubComp packet.</param>
+    /// <exception cref="HiveMQttClientException">Raised if the packet identifier is unknown.</exception>
     internal void HandleIncomingPubCompPacket(PubCompPacket pubCompPacket)
     {
         Logger.Trace("<-- PubComp");
@@ -433,10 +434,10 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Write a buffer to the stream.
     /// </summary>
-    /// <param name="source"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    /// <exception cref="HiveMQttClientException"></exception>
+    /// <param name="source">The buffer to write.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A FlushResult wrapped in a ValueTask.</returns>
+    /// <exception cref="HiveMQttClientException">Raised if the writer is null.</exception>
     internal ValueTask<FlushResult> WriteAsync(ReadOnlyMemory<byte> source, CancellationToken cancellationToken = default)
     {
         if (this.writer is null)
@@ -450,9 +451,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <summary>
     /// Read a buffer from the stream.
     /// </summary>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    /// <exception cref="HiveMQttClientException"></exception>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A ReadResult wrapped in a ValueTask.</returns>
+    /// <exception cref="HiveMQttClientException">Raised if the reader is null.</exception>
     internal ValueTask<ReadResult> ReadAsync(CancellationToken cancellationToken = default)
     {
         if (this.reader is null)
