@@ -38,7 +38,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     protected virtual void BeforeConnectEventLauncher(HiveMQClientOptions options)
     {
         var eventArgs = new BeforeConnectEventArgs(options);
-        logger.Trace("BeforeConnectEventLauncher");
+        Logger.Trace("BeforeConnectEventLauncher");
         this.BeforeConnect?.Invoke(this, eventArgs);
     }
 
@@ -50,7 +50,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     protected virtual void AfterConnectEventLauncher(ConnectResult results)
     {
         var eventArgs = new AfterConnectEventArgs(results);
-        logger.Trace("AfterConnectEventLauncher");
+        Logger.Trace("AfterConnectEventLauncher");
         this.AfterConnect?.Invoke(this, eventArgs);
     }
 
@@ -62,7 +62,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     protected virtual void BeforeDisconnectEventLauncher()
     {
         var eventArgs = new BeforeDisconnectEventArgs();
-        logger.Trace("BeforeDisconnectEventLauncher");
+        Logger.Trace("BeforeDisconnectEventLauncher");
         this.BeforeDisconnect?.Invoke(this, eventArgs);
     }
 
@@ -74,7 +74,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     protected virtual void AfterDisconnectEventLauncher(bool clean = false)
     {
         var eventArgs = new AfterDisconnectEventArgs(clean);
-        logger.Trace("AfterDisconnectEventLauncher");
+        Logger.Trace("AfterDisconnectEventLauncher");
         this.AfterDisconnect?.Invoke(this, eventArgs);
     }
 
@@ -86,7 +86,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     protected virtual void BeforeSubscribeEventLauncher(SubscribeOptions options)
     {
         var eventArgs = new BeforeSubscribeEventArgs(options);
-        logger.Trace("BeforeSubscribeEventLauncher");
+        Logger.Trace("BeforeSubscribeEventLauncher");
         this.BeforeSubscribe?.Invoke(this, eventArgs);
     }
 
@@ -98,7 +98,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     protected virtual void AfterSubscribeEventLauncher(SubscribeResult results)
     {
         var eventArgs = new AfterSubscribeEventArgs(results);
-        logger.Trace("AfterSubscribeEventLauncher");
+        Logger.Trace("AfterSubscribeEventLauncher");
         this.AfterSubscribe?.Invoke(this, eventArgs);
     }
 
@@ -110,7 +110,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     protected virtual void BeforeUnsubscribeEventLauncher(List<Subscription> subscriptions)
     {
         var eventArgs = new BeforeUnsubscribeEventArgs(subscriptions);
-        logger.Trace("BeforeUnsubscribeEventLauncher");
+        Logger.Trace("BeforeUnsubscribeEventLauncher");
         this.BeforeUnsubscribe?.Invoke(this, eventArgs);
     }
 
@@ -122,7 +122,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     protected virtual void AfterUnsubscribeEventLauncher(UnsubscribeResult results)
     {
         var eventArgs = new AfterUnsubscribeEventArgs(results);
-        logger.Trace("AfterUnsubscribeEventLauncher");
+        Logger.Trace("AfterUnsubscribeEventLauncher");
         this.AfterUnsubscribe?.Invoke(this, eventArgs);
     }
 
@@ -134,7 +134,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     protected virtual void OnMessageReceivedEventLauncher(PublishPacket packet)
     {
         var eventArgs = new OnMessageReceivedEventArgs(packet.Message);
-        logger.Trace("OnMessageReceivedEventLauncher");
+        Logger.Trace("OnMessageReceivedEventLauncher");
         this.OnMessageReceived?.Invoke(this, eventArgs);
     }
 
@@ -150,7 +150,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     protected virtual void OnConnectSentEventLauncher(ConnectPacket packet)
     {
         var eventArgs = new OnConnectSentEventArgs(packet);
-        logger.Trace("OnConnectSentEventLauncher");
+        Logger.Trace("OnConnectSentEventLauncher");
         this.OnConnectSent?.Invoke(this, eventArgs);
     }
 
@@ -162,7 +162,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     protected virtual void OnConnAckReceivedEventLauncher(ConnAckPacket packet)
     {
         var eventArgs = new OnConnAckReceivedEventArgs(packet);
-        logger.Trace("OnConnAckReceivedEventLauncher");
+        Logger.Trace("OnConnAckReceivedEventLauncher");
         this.OnConnAckReceived?.Invoke(this, eventArgs);
     }
 
@@ -174,7 +174,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     protected virtual void OnDisconnectSentEventLauncher(DisconnectPacket packet)
     {
         var eventArgs = new OnDisconnectSentEventArgs(packet);
-        logger.Trace("OnDisconnectSentEventLauncher");
+        Logger.Trace("OnDisconnectSentEventLauncher");
         this.OnDisconnectSent?.Invoke(this, eventArgs);
     }
 
@@ -186,7 +186,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     protected virtual void OnDisconnectReceivedEventLauncher(DisconnectPacket packet)
     {
         var eventArgs = new OnDisconnectReceivedEventArgs(packet);
-        logger.Trace("OnDisconnectReceivedEventLauncher: ReasonCode: " + packet.DisconnectReasonCode + " ReasonString: " + packet.Properties.ReasonString);
+        Logger.Trace("OnDisconnectReceivedEventLauncher: ReasonCode: " + packet.DisconnectReasonCode + " ReasonString: " + packet.Properties.ReasonString);
         this.OnDisconnectReceived?.Invoke(this, eventArgs);
     }
 
@@ -198,7 +198,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     protected virtual void OnPingReqSentEventLauncher(PingReqPacket packet)
     {
         var eventArgs = new OnPingReqSentEventArgs(packet);
-        logger.Trace("OnPingReqSentEventLauncher");
+        Logger.Trace("OnPingReqSentEventLauncher");
         this.OnPingReqSent?.Invoke(this, eventArgs);
     }
 
@@ -210,7 +210,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     protected virtual void OnPingRespReceivedEventLauncher(PingRespPacket packet)
     {
         var eventArgs = new OnPingRespReceivedEventArgs(packet);
-        logger.Trace("OnPingRespReceivedEventLauncher");
+        Logger.Trace("OnPingRespReceivedEventLauncher");
         this.OnPingRespReceived?.Invoke(this, eventArgs);
     }
 
@@ -222,7 +222,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     protected virtual void OnSubscribeSentEventLauncher(SubscribePacket packet)
     {
         var eventArgs = new OnSubscribeSentEventArgs(packet);
-        logger.Trace("OnSubscribeSentEventLauncher");
+        Logger.Trace("OnSubscribeSentEventLauncher");
         this.OnSubscribeSent?.Invoke(this, eventArgs);
     }
 
@@ -234,7 +234,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     protected virtual void OnSubAckReceivedEventLauncher(SubAckPacket packet)
     {
         var eventArgs = new OnSubAckReceivedEventArgs(packet);
-        logger.Trace("OnSubAckReceivedEventLauncher");
+        Logger.Trace("OnSubAckReceivedEventLauncher");
         this.OnSubAckReceived?.Invoke(this, eventArgs);
     }
 
@@ -246,7 +246,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     protected virtual void OnUnsubscribeSentEventLauncher(UnsubscribePacket packet)
     {
         var eventArgs = new OnUnsubscribeSentEventArgs(packet);
-        logger.Trace("OnUnsubscribeSentEventLauncher");
+        Logger.Trace("OnUnsubscribeSentEventLauncher");
         this.OnUnsubscribeSent?.Invoke(this, eventArgs);
     }
 
@@ -258,7 +258,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     protected virtual void OnUnsubAckReceivedEventLauncher(UnsubAckPacket packet)
     {
         var eventArgs = new OnUnsubAckReceivedEventArgs(packet);
-        logger.Trace("OnUnsubAckReceivedEventLauncher");
+        Logger.Trace("OnUnsubAckReceivedEventLauncher");
         this.OnUnsubAckReceived?.Invoke(this, eventArgs);
     }
 
@@ -270,7 +270,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     protected virtual void OnPublishReceivedEventLauncher(PublishPacket packet)
     {
         var eventArgs = new OnPublishReceivedEventArgs(packet);
-        logger.Trace("OnPublishReceivedEventLauncher");
+        Logger.Trace("OnPublishReceivedEventLauncher");
         this.OnPublishReceived?.Invoke(this, eventArgs);
     }
 
@@ -282,7 +282,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     protected virtual void OnPublishSentEventLauncher(PublishPacket packet)
     {
         var eventArgs = new OnPublishSentEventArgs(packet);
-        logger.Trace("OnPublishSentEventLauncher");
+        Logger.Trace("OnPublishSentEventLauncher");
         this.OnPublishSent?.Invoke(this, eventArgs);
     }
 
@@ -294,7 +294,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     protected virtual void OnPubAckReceivedEventLauncher(PubAckPacket packet)
     {
         var eventArgs = new OnPubAckReceivedEventArgs(packet);
-        logger.Trace("OnPubAckReceivedEventLauncher");
+        Logger.Trace("OnPubAckReceivedEventLauncher");
         this.OnPubAckReceived?.Invoke(this, eventArgs);
     }
 
@@ -306,7 +306,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     protected virtual void OnPubAckSentEventLauncher(PubAckPacket packet)
     {
         var eventArgs = new OnPubAckSentEventArgs(packet);
-        logger.Trace("OnPubAckSentEventLauncher");
+        Logger.Trace("OnPubAckSentEventLauncher");
         this.OnPubAckSent?.Invoke(this, eventArgs);
     }
 
@@ -318,7 +318,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     protected virtual void OnPubRecReceivedEventLauncher(PubRecPacket packet)
     {
         var eventArgs = new OnPubRecReceivedEventArgs(packet);
-        logger.Trace("OnPubRecReceivedEventLauncher");
+        Logger.Trace("OnPubRecReceivedEventLauncher");
         this.OnPubRecReceived?.Invoke(this, eventArgs);
     }
 
@@ -330,7 +330,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     protected virtual void OnPubRecSentEventLauncher(PubRecPacket packet)
     {
         var eventArgs = new OnPubRecSentEventArgs(packet);
-        logger.Trace("OnPubRecSentEventLauncher");
+        Logger.Trace("OnPubRecSentEventLauncher");
         this.OnPubRecSent?.Invoke(this, eventArgs);
     }
 
@@ -342,7 +342,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     protected virtual void OnPubRelReceivedEventLauncher(PubRelPacket packet)
     {
         var eventArgs = new OnPubRelReceivedEventArgs(packet);
-        logger.Trace("OnPubRelReceivedEventLauncher");
+        Logger.Trace("OnPubRelReceivedEventLauncher");
         this.OnPubRelReceived?.Invoke(this, eventArgs);
     }
 
@@ -354,7 +354,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     protected virtual void OnPubRelSentEventLauncher(PubRelPacket packet)
     {
         var eventArgs = new OnPubRelSentEventArgs(packet);
-        logger.Trace("OnPubRelSentEventLauncher");
+        Logger.Trace("OnPubRelSentEventLauncher");
         this.OnPubRelSent?.Invoke(this, eventArgs);
     }
 
@@ -366,7 +366,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     protected virtual void OnPubCompReceivedEventLauncher(PubCompPacket packet)
     {
         var eventArgs = new OnPubCompReceivedEventArgs(packet);
-        logger.Trace("PubCompReceivedEventLauncher");
+        Logger.Trace("PubCompReceivedEventLauncher");
         this.OnPubCompReceived?.Invoke(this, eventArgs);
     }
 
@@ -378,7 +378,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     protected virtual void OnPubCompSentEventLauncher(PubCompPacket packet)
     {
         var eventArgs = new OnPubCompSentEventArgs(packet);
-        logger.Trace("PubCompSentEventLauncher");
+        Logger.Trace("PubCompSentEventLauncher");
         this.OnPubCompSent?.Invoke(this, eventArgs);
     }
 }

@@ -34,7 +34,7 @@ using HiveMQtt.MQTT5.Types;
 /// </summary>
 public partial class HiveMQClient : IDisposable, IHiveMQClient
 {
-    private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+    private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
     private ConnectState connectState = ConnectState.Disconnected;
 
@@ -289,7 +289,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
             // FIXME: Validate that the packet identifier matches
         }
-        catch (System.TimeoutException ex)
+        catch (TimeoutException ex)
         {
             // log.Error(string.Format("Connect timeout.  No response received in time.", ex);
             throw ex;
@@ -363,7 +363,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
             // FIXME: Validate that the packet identifier matches
         }
-        catch (System.TimeoutException)
+        catch (TimeoutException)
         {
             // log.Error(string.Format("Connect timeout.  No response received in time.", ex);
             throw;

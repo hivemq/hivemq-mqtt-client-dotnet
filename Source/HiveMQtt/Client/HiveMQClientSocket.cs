@@ -139,7 +139,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         _ = this.TrafficOutflowProcessorAsync(this.outFlowCancellationToken);
         _ = this.TrafficInflowProcessorAsync(this.infoFlowCancellationToken);
 
-        logger.Trace($"Socket connected to {this.socket.RemoteEndPoint}");
+        Logger.Trace($"Socket connected to {this.socket.RemoteEndPoint}");
         return socketConnected;
     }
 

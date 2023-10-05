@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup Label="Build">
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <AssemblyName>HiveMQtt</AssemblyName>
     <Description>HiveMQ MQTT Client that is a MQTT 5.0 compatible C# client library.</Description>
   </PropertyGroup>
