@@ -16,7 +16,6 @@
 namespace HiveMQtt.MQTT5.Packets;
 
 using System.Buffers;
-using System.Diagnostics;
 using System.IO;
 using HiveMQtt.Client.Events;
 using HiveMQtt.MQTT5.Types;
@@ -68,7 +67,7 @@ public class PublishPacket : ControlPacket
     internal virtual void OnPublishQoS1CompleteEventLauncher(PubAckPacket packet)
     {
         var eventArgs = new OnPublishQoS1CompleteEventArgs(packet);
-        Trace.WriteLine("OnPublishQoS1CompleteEventLauncher");
+        Logger.Trace("OnPublishQoS1CompleteEventLauncher");
         this.OnPublishQoS1Complete?.Invoke(this, eventArgs);
     }
 
@@ -80,7 +79,7 @@ public class PublishPacket : ControlPacket
     internal virtual void OnPublishQoS2CompleteEventLauncher(PubRecPacket packet)
     {
         var eventArgs = new OnPublishQoS2CompleteEventArgs(packet);
-        Trace.WriteLine("OnPublishQoS2CompleteEventLauncher");
+        Logger.Trace("OnPublishQoS2CompleteEventLauncher");
         this.OnPublishQoS2Complete?.Invoke(this, eventArgs);
     }
 

@@ -16,7 +16,6 @@
 namespace HiveMQtt.MQTT5;
 
 using System.Buffers;
-using System.Diagnostics;
 using HiveMQtt.MQTT5.Packets;
 
 /// <summary>
@@ -24,6 +23,8 @@ using HiveMQtt.MQTT5.Packets;
 /// </summary>
 internal class PacketDecoder
 {
+    private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+
     public static ControlPacket Decode(ReadOnlySequence<byte> buffer, out SequencePosition consumed)
     {
         try
@@ -75,9 +76,9 @@ internal class PacketDecoder
             consumed = buffer.GetPosition(packetLength);
             return packet;
         }
-        catch (System.Exception)
+        catch (Exception)
         {
-            Trace.WriteLine("PacketDecoder.Decode: Exception caught.  Returning MalformedPacket.");
+            Logger.Trace("PacketDecoder.Decode: Exception caught.  Returning MalformedPacket.");
             consumed = buffer.Start;
             return new MalformedPacket(buffer);
         }
