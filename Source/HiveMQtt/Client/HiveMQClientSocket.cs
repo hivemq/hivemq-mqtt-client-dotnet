@@ -29,11 +29,11 @@ using HiveMQtt.Client.Exceptions;
 /// <inheritdoc />
 public partial class HiveMQClient : IDisposable, IHiveMQClient
 {
-    private readonly CancellationTokenSource cancellationSource;
     private Socket? socket;
     private Stream? stream;
     private PipeReader? reader;
     private PipeWriter? writer;
+    private CancellationTokenSource cancellationSource;
     private CancellationToken outFlowCancellationToken;
     private CancellationToken infoFlowCancellationToken;
 
@@ -129,6 +129,10 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         // Setup the Pipeline
         this.reader = PipeReader.Create(this.stream);
         this.writer = PipeWriter.Create(this.stream);
+
+        // Reset the CancellationTokenSource in case this is a reconnect
+        this.cancellationSource.Dispose();
+        this.cancellationSource = new CancellationTokenSource();
 
         // Setup the cancellation tokens
         this.outFlowCancellationToken = this.cancellationSource.Token;
