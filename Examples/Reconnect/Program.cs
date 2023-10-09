@@ -47,17 +47,12 @@ client.AfterDisconnect += async (sender, args) =>
         // Start with a small delay and double it on each retry up to a maximum value
         var delay = 5000;
         var reconnectAttempts = 0;
+        var maxReconnectAttempts = 15;
 
         while (true)
         {
             await Task.Delay(delay).ConfigureAwait(false);
             reconnectAttempts++;
-
-            if (reconnectAttempts > 3)
-            {
-                Console.WriteLine("--> Maximum reconnect attempts exceeded.  Exiting.");
-                break;
-            }
 
             try
             {
@@ -69,7 +64,7 @@ client.AfterDisconnect += async (sender, args) =>
                     Console.WriteLine($"--> Failed to connect: {connectResult.ReasonString}");
 
                     // Double the delay with each failed retry to a maximum
-                    delay = Math.Min(delay * 2, 30000);
+                    delay = Math.Min(delay * 2, 60000);
                     Console.WriteLine($"--> Will delay for {delay / 1000} seconds until next try.");
                 }
                 else
@@ -82,8 +77,14 @@ client.AfterDisconnect += async (sender, args) =>
             {
                 Console.WriteLine($"--> Failed to reconnect: {ex.Message}");
 
+                if (reconnectAttempts > maxReconnectAttempts)
+                {
+                    Console.WriteLine("--> Maximum reconnect attempts exceeded.  Exiting.");
+                    break;
+                }
+
                 // Double the delay with each failed retry to a maximum
-                delay = Math.Min(delay * 2, 15000);
+                delay = Math.Min(delay * 2, 60000);
                 Console.WriteLine($"--> Will delay for {delay / 1000} seconds until next try.");
             }
         }
