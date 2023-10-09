@@ -1,5 +1,6 @@
 namespace HiveMQtt.Test.HiveMQClient;
 
+using System.Globalization;
 using System.Threading.Tasks;
 using HiveMQtt.Client;
 using HiveMQtt.Client.Events;
@@ -161,7 +162,7 @@ public class HiveMQClientConnectTest
         // Assert that all Events were called
         Assert.True(client.LocalStore.ContainsKey("AfterDisconnectHandlerCalled"));
         Assert.True(client.LocalStore.ContainsKey("AfterDisconnectHandlerCalledCount"));
-        Assert.Equal(client.LocalStore["AfterDisconnectHandlerCalledCount"], "1");
+        Assert.Equal("1", client.LocalStore["AfterDisconnectHandlerCalledCount"]);
 
         // Remove event handlers
         client.AfterDisconnect -= AfterDisconnectHandler;
@@ -232,11 +233,11 @@ public class HiveMQClientConnectTest
         {
             var client = (HiveMQClient)sender;
 
-            if (client.LocalStore.ContainsKey("AfterDisconnectHandlerCalled"))
+            if (client.LocalStore.TryGetValue("AfterDisconnectHandlerCalled", out var value))
             {
-                var count = Convert.ToInt16(client.LocalStore["AfterDisconnectHandlerCalledCount"]);
+                var count = Convert.ToInt16(value, CultureInfo.InvariantCulture);
                 count++;
-                client.LocalStore.Add("AfterDisconnectHandlerCalledCount", count.ToString());
+                client.LocalStore.Add("AfterDisconnectHandlerCalledCount", count.ToString(CultureInfo.InvariantCulture));
             }
             else
             {
@@ -253,11 +254,11 @@ public class HiveMQClientConnectTest
         {
             var client = (HiveMQClient)sender;
 
-            if (client.LocalStore.ContainsKey("OnDisconnectSentHandlerCalled"))
+            if (client.LocalStore.TryGetValue("OnDisconnectSentHandlerCalled", out var value))
             {
-                var count = Convert.ToInt16(client.LocalStore["OnDisconnectSentHandlerCalledCount"]);
+                var count = Convert.ToInt16(value, CultureInfo.InvariantCulture);
                 count++;
-                client.LocalStore.Add("OnDisconnectSentHandlerCalledCount", count.ToString());
+                client.LocalStore.Add("OnDisconnectSentHandlerCalledCount", count.ToString(CultureInfo.InvariantCulture));
             }
             else
             {

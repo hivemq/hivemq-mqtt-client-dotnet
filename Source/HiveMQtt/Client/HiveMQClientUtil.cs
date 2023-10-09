@@ -18,8 +18,8 @@ namespace HiveMQtt.Client;
 /// <inheritdoc />
 public partial class HiveMQClient : IDisposable, IHiveMQClient
 {
-    private bool disposed = false;
-    private int lastPacketId = 0;
+    private bool disposed;
+    private int lastPacketId;
 
     /// <summary>
     /// https://learn.microsoft.com/en-us/dotnet/api/system.idisposable?view=net-6.0.
