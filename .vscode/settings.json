@@ -4,6 +4,8 @@
     ],
     "cSpell.words": [
         "CONNACK",
+        "hivemq",
+        "hivemqtt",
         "PUBACK",
         "PUBCOMP",
         "PUBREC",

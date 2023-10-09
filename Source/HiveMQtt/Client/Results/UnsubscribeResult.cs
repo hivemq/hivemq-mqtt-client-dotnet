@@ -19,7 +19,6 @@ using HiveMQtt.MQTT5.Types;
 
 public class UnsubscribeResult
 {
-    // FIXME: List of subscriptions with their unsubscribe reason codes
     public UnsubscribeResult()
     {
         this.Subscriptions = new List<Subscription>();

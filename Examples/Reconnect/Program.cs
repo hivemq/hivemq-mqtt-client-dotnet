@@ -1,12 +1,16 @@
 using HiveMQtt.Client;
+using HiveMQtt.Client.Exceptions;
 using HiveMQtt.Client.Options;
 using System.Text.Json;
+using System.Diagnostics;
 
 var topic = "hivemqtt/waiting/game";
 
-var options = new HiveMQClientOptions();
-options.Host = "127.0.0.1";
-options.Port = 1883;
+var options = new HiveMQClientOptions
+{
+    Host = "127.0.0.1",
+    Port = 1883,
+};
 
 var client = new HiveMQClient(options);
 
@@ -74,12 +78,12 @@ client.AfterDisconnect += async (sender, args) =>
                     break;
                 }
             }
-            catch (Exception ex)
+            catch (HiveMQttClientException ex)
             {
-                Console.WriteLine($"--> Failed to connect: {ex.Message}");
+                Console.WriteLine($"--> Failed to reconnect: {ex.Message}");
 
                 // Double the delay with each failed retry to a maximum
-                delay = Math.Min(delay * 2, 10000);
+                delay = Math.Min(delay * 2, 15000);
                 Console.WriteLine($"--> Will delay for {delay / 1000} seconds until next try.");
             }
         }
@@ -122,7 +126,6 @@ var resultPublish = await client.PublishAsync(
         Command = "Hello",
     })
 ).ConfigureAwait(false);
-
 
 while (true)
 {
