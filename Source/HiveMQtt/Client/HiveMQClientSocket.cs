@@ -35,7 +35,15 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     private PipeWriter? writer;
     private CancellationTokenSource cancellationSource;
     private CancellationToken outFlowCancellationToken;
-    private CancellationToken infoFlowCancellationToken;
+    private CancellationToken inFlowCancellationToken;
+    private CancellationToken receivedPacketsCancellationToken;
+
+#pragma warning disable IDE0052
+    private Task trafficOutflowProcessorTask;
+    private Task trafficInflowProcessorTask;
+    private Task receivedPacketsProcessorAsync;
+#pragma warning restore IDE0052
+
 
     internal static bool ValidateServerCertificate(
         object sender,
@@ -136,11 +144,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         // Setup the cancellation tokens
         this.outFlowCancellationToken = this.cancellationSource.Token;
-        this.infoFlowCancellationToken = this.cancellationSource.Token;
+        this.inFlowCancellationToken = this.cancellationSource.Token;
+        this.receivedPacketsCancellationToken = this.cancellationSource.Token;
 
         // Start the traffic processors
-        _ = this.TrafficOutflowProcessorAsync(this.outFlowCancellationToken);
-        _ = this.TrafficInflowProcessorAsync(this.infoFlowCancellationToken);
+        this.trafficOutflowProcessorTask = this.TrafficOutflowProcessorAsync(this.outFlowCancellationToken);
+        this.trafficInflowProcessorTask = this.TrafficInflowProcessorAsync(this.inFlowCancellationToken);
+        this.receivedPacketsProcessorAsync = this.ReceivedPacketsProcessorAsync(this.receivedPacketsCancellationToken);
 
         Logger.Trace($"Socket connected to {this.socket.RemoteEndPoint}");
         return socketConnected;

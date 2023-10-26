@@ -25,6 +25,7 @@ using HiveMQtt.Client.Exceptions;
 using HiveMQtt.Client.Internal;
 using HiveMQtt.Client.Options;
 using HiveMQtt.Client.Results;
+using HiveMQtt.MQTT5;
 using HiveMQtt.MQTT5.Packets;
 using HiveMQtt.MQTT5.ReasonCodes;
 using HiveMQtt.MQTT5.Types;
@@ -85,7 +86,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         ConnectResult connectResult;
         try
         {
-            connAck = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            connAck = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(120)).ConfigureAwait(false);
         }
         catch (TimeoutException)
         {
@@ -149,7 +150,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         try
         {
-            disconnectPacket = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            disconnectPacket = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(120)).ConfigureAwait(false);
         }
         catch (TimeoutException)
         {
@@ -199,7 +200,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             // Construct the MQTT Connect packet and queue to send
             this.sendQueue.Enqueue(publishPacket);
 
-            var pubAckPacket = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            var pubAckPacket = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(120)).ConfigureAwait(false);
 
             publishPacket.OnPublishQoS1Complete -= eventHandler;
             return new PublishResult(publishPacket.Message, pubAckPacket);
@@ -207,18 +208,34 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         else if (message.QoS == QualityOfService.ExactlyOnceDelivery)
         {
             // QoS 2: Assured Delivery
-            var taskCompletionSource = new TaskCompletionSource<PubRecPacket>();
-            void TaskHandler(object? sender, OnPublishQoS2CompleteEventArgs args) => taskCompletionSource.SetResult(args.PubRecPacket);
+            var taskCompletionSource = new TaskCompletionSource<List<ControlPacket>>();
+            void TaskHandler(object? sender, OnPublishQoS2CompleteEventArgs args) => taskCompletionSource.SetResult(args.PacketList);
             EventHandler<OnPublishQoS2CompleteEventArgs> eventHandler = TaskHandler;
             publishPacket.OnPublishQoS2Complete += eventHandler;
 
             // Construct the MQTT Connect packet and queue to send
             this.sendQueue.Enqueue(publishPacket);
 
-            var pubRecPacket = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            // Wait on the QoS 2 handshake
+            var packetList = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(120)).ConfigureAwait(false);
 
+            PublishResult? publishResult = null;
+            foreach (var packet in packetList)
+            {
+                if (packet is PubRecPacket pubRecPacket)
+                {
+                    publishResult = new PublishResult(publishPacket.Message, pubRecPacket);
+                }
+            }
+
+            if (publishResult is null)
+            {
+                throw new HiveMQttClientException("PublishAsync: QoS 2 complete but no PubRec packet received.");
+            }
+
+            // Remove our wait handler
             publishPacket.OnPublishQoS2Complete -= eventHandler;
-            return new PublishResult(publishPacket.Message, pubRecPacket);
+            return publishResult;
         }
 
         throw new HiveMQttClientException("Invalid QoS value.");
@@ -286,9 +303,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         SubscribeResult subscribeResult;
         try
         {
-            subAck = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
-
-            // FIXME: Validate that the packet identifier matches
+            subAck = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(120)).ConfigureAwait(false);
         }
         catch (TimeoutException ex)
         {
@@ -360,7 +375,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         UnsubscribeResult unsubscribeResult;
         try
         {
-            unsubAck = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            unsubAck = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(120)).ConfigureAwait(false);
 
             // FIXME: Validate that the packet identifier matches
         }

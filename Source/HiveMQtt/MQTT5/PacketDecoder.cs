@@ -30,7 +30,6 @@ internal class PacketDecoder
         try
         {
             consumed = buffer.Start;
-
             if (buffer.Length < 2)
             {
                 // We need at least the MQTT Header
@@ -53,6 +52,7 @@ internal class PacketDecoder
             if (buffer.Length < packetLength)
             {
                 // Not all data for this packet has arrived yet.  Try again...
+                Logger.Trace("PacketDecoder.Decode: Not all data for this packet has arrived yet.  Returning PartialPacket.");
                 return new PartialPacket();
             }
 
