@@ -25,7 +25,7 @@ internal class PacketDecoder
 {
     private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
-    public static ControlPacket Decode(ReadOnlySequence<byte> buffer, out SequencePosition consumed)
+    public static Boolean TryDecode(ReadOnlySequence<byte> buffer, out ControlPacket decodedPacket, out SequencePosition consumed)
     {
         try
         {
@@ -33,7 +33,9 @@ internal class PacketDecoder
             if (buffer.Length < 2)
             {
                 // We need at least the MQTT Header
-                return new PartialPacket();
+                decodedPacket = new PartialPacket();
+                consumed = default;
+                return false;
             }
 
             var srBuffer = new SequenceReader<byte>(buffer);
@@ -53,7 +55,9 @@ internal class PacketDecoder
             {
                 // Not all data for this packet has arrived yet.  Try again...
                 Logger.Trace("PacketDecoder.Decode: Not all data for this packet has arrived yet.  Returning PartialPacket.");
-                return new PartialPacket();
+                decodedPacket = new PartialPacket();
+                consumed = default;
+                return false;
             }
 
             var packetData = buffer.Slice(0, packetLength);
@@ -74,13 +78,17 @@ internal class PacketDecoder
             };
 
             consumed = buffer.GetPosition(packetLength);
-            return packet;
+            decodedPacket = packet;
+
+            Logger.Trace($"PacketDecoder: Decoded Packet: consumed={consumed.GetInteger()}, packet={packet} id={packet.PacketIdentifier}");
+            return true;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            Logger.Trace("PacketDecoder.Decode: Exception caught.  Returning MalformedPacket.");
+            Logger.Error(ex, $"PacketDecoder.Decode: Exception caught.  Returning MalformedPacket.");
             consumed = buffer.Start;
-            return new MalformedPacket(buffer);
+            decodedPacket = new MalformedPacket(buffer);
+            return false;
         }
     }
 }
