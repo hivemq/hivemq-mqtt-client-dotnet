@@ -86,7 +86,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 while (this.sendQueue.TryDequeue(out var p))
                 {
                     packetsToSend.Add(p);
-                    if (packetsToSend.Count >= 20)
+                    if (packetsToSend.Count >= 50)
                     {
                         break;
                     }
