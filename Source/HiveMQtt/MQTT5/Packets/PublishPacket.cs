@@ -72,13 +72,13 @@ public class PublishPacket : ControlPacket
     }
 
     /// <summary>
-    /// Valid for outgoing Publish messages QoS 2.  An event that is fired after the the QoS 2 PubRec is received.
+    /// Valid for outgoing Publish messages QoS 2.  An event that is fired after the the QoS 2 PubComp is received.
     /// </summary>
     public event EventHandler<OnPublishQoS2CompleteEventArgs> OnPublishQoS2Complete = new EventHandler<OnPublishQoS2CompleteEventArgs>((client, e) => { });
 
-    internal virtual void OnPublishQoS2CompleteEventLauncher(PubRecPacket packet)
+    internal virtual void OnPublishQoS2CompleteEventLauncher(List<ControlPacket> packetList)
     {
-        var eventArgs = new OnPublishQoS2CompleteEventArgs(packet);
+        var eventArgs = new OnPublishQoS2CompleteEventArgs(packetList);
         Logger.Trace("OnPublishQoS2CompleteEventLauncher");
         this.OnPublishQoS2Complete?.Invoke(this, eventArgs);
     }
