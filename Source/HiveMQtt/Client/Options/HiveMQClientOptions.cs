@@ -40,6 +40,7 @@ public class HiveMQClientOptions
         this.CleanStart = true;
         this.UserProperties = new Dictionary<string, string>();
         this.UseTLS = false;
+        this.TLSAllowInvalidBrokerCertificates = false;
     }
 
     // Client Identifier to be used in the Client.  Will be set automatically if not specified.
@@ -152,6 +153,11 @@ public class HiveMQClientOptions
     /// Gets or sets a value indicating whether the MQTT client should use TLS.
     /// </summary>
     public bool UseTLS { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the MQTT client should allow invalid broker TLS certificates.
+    /// </summary>
+    public bool TLSAllowInvalidBrokerCertificates { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether a Last Will and Testament should be used in the Connect.

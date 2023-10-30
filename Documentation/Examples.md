@@ -62,6 +62,23 @@ var options = new HiveMQClientOptions()
 var client = new HiveMQClient(options);
 var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 ```
+
+## Connect with TLS but allow Invalid TLS Certificates
+
+```C#
+var options = new HiveMQClientOptions()
+{
+    Host = "broker-with-invalid-tls-cert.localhost.dev",
+    Port = 8883,
+    UseTLS = true,
+    TLSAllowInvalidBrokerCertificates = true,
+};
+
+var client = new HiveMQClient(options);
+var connectResult = await client.ConnectAsync().ConfigureAwait(false);
+``````
+
+
 ## See Also
 
 * HiveMQClient [Events](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Documentation/Events.md)

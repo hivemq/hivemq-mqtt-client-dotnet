@@ -44,7 +44,37 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     private Task receivedPacketsProcessorAsync;
 #pragma warning restore IDE0052
 
+    /// <summary>
+    /// SSLStream Callback.  This is used to always allow invalid broker certificates.
+    /// </summary>
+    /// <param name="sender">An object that contains state information for this validation.</param>
+    /// <param name="certificate">The certificate used to authenticate the remote party.</param>
+    /// <param name="chain">The chain of certificate authorities associated with the remote certificate.</param>
+    /// <param name="sslPolicyErrors">One or more errors associated with the remote certificate.</param>
+    /// <returns>A Boolean that says every certificate is valid.</returns>
+    internal static bool AllowInvalidBrokerCertificates(
+        object sender,
+        X509Certificate certificate,
+        X509Chain chain,
+        SslPolicyErrors sslPolicyErrors)
+    {
+        // Ignore the unused parameters
+        _ = sender;
+        _ = certificate;
+        _ = chain;
+        _ = sslPolicyErrors;
 
+        return true;
+    }
+
+    /// <summary>
+    /// SSLStream Callback.  This is used to validate TLS certificates.
+    /// </summary>
+    /// <param name="sender">An object that contains state information for this validation.</param>
+    /// <param name="certificate">The certificate used to authenticate the remote party.</param>
+    /// <param name="chain">The chain of certificate authorities associated with the remote certificate.</param>
+    /// <param name="sslPolicyErrors">One or more errors associated with the remote certificate.</param>
+    /// <returns>A Boolean indicating whether the TLS certificate is valid.</returns>
     internal static bool ValidateServerCertificate(
         object sender,
         X509Certificate certificate,
@@ -56,7 +86,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             return true;
         }
 
-        Console.WriteLine("Certificate error: {0}", sslPolicyErrors);
+        Logger.Warn("Broker TLS Certificate error: {0}", sslPolicyErrors);
 
         // Do not allow this client to communicate with unauthenticated servers.
         return false;
@@ -130,7 +160,14 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         this.stream = new NetworkStream(this.socket);
         if (this.Options.UseTLS)
         {
-            this.stream = new SslStream(this.stream, false, HiveMQClient.ValidateServerCertificate, null);
+            if (this.Options.TLSAllowInvalidBrokerCertificates)
+            {
+                this.stream = new SslStream(this.stream, false, HiveMQClient.AllowInvalidBrokerCertificates, null);
+            }
+            else
+            {
+                this.stream = new SslStream(this.stream, false, HiveMQClient.ValidateServerCertificate, null);
+            }
             await ((SslStream)this.stream).AuthenticateAsClientAsync(this.Options.Host).ConfigureAwait(false);
         }
 
