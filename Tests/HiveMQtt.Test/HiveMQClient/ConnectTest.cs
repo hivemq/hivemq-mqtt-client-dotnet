@@ -8,7 +8,7 @@ using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.ReasonCodes;
 using Xunit;
 
-public class HiveMQClientConnectTest
+public class ConnectTest
 {
     /// TODO: Add out of order tests: connect when connected, disconnect when not connected, etc.
     [Fact]

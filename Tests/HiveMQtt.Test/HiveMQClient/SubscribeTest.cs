@@ -3,11 +3,10 @@ namespace HiveMQtt.Test.HiveMQClient;
 using System.Threading.Tasks;
 using HiveMQtt.Client;
 using HiveMQtt.Client.Events;
-using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.ReasonCodes;
 using Xunit;
 
-public class HiveMQClientSubscribeTest
+public class SubscribeTest
 {
     [Fact]
     public async Task MostBasicSubscribeAsync()

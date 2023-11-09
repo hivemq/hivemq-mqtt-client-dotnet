@@ -47,5 +47,6 @@ public class SubscribeOptions
     /// <exception cref="HiveMQttClientException">The exception raised if some value is out of range or invalid.</exception>
     public void ValidateOptions()
     {
+        // FIXME: Validate options
     }
 }
