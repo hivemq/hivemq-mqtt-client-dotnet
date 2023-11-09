@@ -201,7 +201,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             CertificateRevocationCheckMode = X509RevocationMode.NoCheck,
         };
 
-        if (this.Options.TLSAllowInvalidBrokerCertificates)
+        if (this.Options.AllowInvalidBrokerCertificates)
         {
             Logger.Trace("Allowing invalid broker certificates");
             var yesMan = new RemoteCertificateValidationCallback((sender, certificate, chain, errors) => true);

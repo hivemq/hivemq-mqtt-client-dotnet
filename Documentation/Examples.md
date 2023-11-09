@@ -71,7 +71,7 @@ var options = new HiveMQClientOptions()
     Host = "broker-with-invalid-tls-cert.localhost.dev",
     Port = 8883,
     UseTLS = true,
-    TLSAllowInvalidBrokerCertificates = true,
+    AllowInvalidBrokerCertificates = true,
 };
 
 var client = new HiveMQClient(options);
