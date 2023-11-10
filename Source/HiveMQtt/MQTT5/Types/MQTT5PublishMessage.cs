@@ -168,11 +168,7 @@ public class MQTT5PublishMessage
     /// <exception cref="HiveMQttClientException">The exception raised if some value is out of range or invalid.</exception>
     public void Validate()
     {
-        if (this.PayloadFormatIndicator.HasValue && (this.PayloadFormatIndicator.Value is not MQTT5PayloadFormatIndicator.Unspecified and not MQTT5PayloadFormatIndicator.UTF8Encoded))
-        {
-            throw new HiveMQttClientException("Payload Format Indicator must be Unspecified or UTF8Encoded.");
-        }
-        else
+        if (!this.PayloadFormatIndicator.HasValue)
         {
             this.PayloadFormatIndicator = MQTT5PayloadFormatIndicator.Unspecified;
         }

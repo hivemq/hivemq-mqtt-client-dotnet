@@ -1,8 +1,10 @@
 namespace HiveMQtt.Test.HiveMQClient;
 
+using System.Text;
 using System.Threading.Tasks;
 using HiveMQtt.Client;
 using HiveMQtt.MQTT5.ReasonCodes;
+using HiveMQtt.MQTT5.Types;
 using Xunit;
 
 public class PublishTest
@@ -142,6 +144,33 @@ public class PublishTest
 
         var msg = new string(/*lang=json,strict*/ "{\"interference\": \"1029384\"}");
         var result = await client.PublishAsync("tests/PublishWithOptionsAsync", msg).ConfigureAwait(false);
+
+        var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
+        Assert.True(disconnectResult);
+    }
+
+    [Fact]
+    public async Task PublishPayloadFormatIndicatorAsync()
+    {
+        var client = new HiveMQClient();
+        var connectResult = await client.ConnectAsync().ConfigureAwait(false);
+        Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
+
+        var msg = new MQTT5PublishMessage("tests/PublishPayloadFormatIndicatorAsync", QualityOfService.AtMostOnceDelivery)
+        {
+            PayloadFormatIndicator = MQTT5PayloadFormatIndicator.UTF8Encoded,
+            Payload = Encoding.ASCII.GetBytes("blah"),
+        };
+
+        var taskCompletionSource = new TaskCompletionSource<bool>();
+        client.OnPublishSent += (sender, args) =>
+        {
+            Assert.Equal(MQTT5PayloadFormatIndicator.UTF8Encoded, args.PublishPacket.Message.PayloadFormatIndicator);
+            taskCompletionSource.SetResult(true);
+        };
+
+        var result = await client.PublishAsync(msg).ConfigureAwait(false);
+        var eventResult = await taskCompletionSource.Task.ConfigureAwait(false);
 
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
