@@ -2,11 +2,10 @@ namespace HiveMQtt.Test.HiveMQClient;
 
 using System.Threading.Tasks;
 using HiveMQtt.Client;
-using HiveMQtt.Client.ReasonCodes;
 using HiveMQtt.MQTT5.ReasonCodes;
 using Xunit;
 
-public class HiveMQClientPublishTest
+public class PublishTest
 {
     [Fact]
     public async Task MostBasicPublishAsync()

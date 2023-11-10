@@ -24,5 +24,5 @@ public class UnsubscribeResult
         this.Subscriptions = new List<Subscription>();
     }
 
-    public List<Subscription> Subscriptions;
+    public List<Subscription> Subscriptions { get; set; }
 }

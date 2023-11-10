@@ -65,7 +65,10 @@ public class ConnectPacket : ControlPacket
 
             // Payload
             // Client Identifier
-            _ = EncodeUTF8String(vhAndPayloadStream, this.clientOptions.ClientId);
+            if (this.clientOptions.ClientId != null)
+            {
+                _ = EncodeUTF8String(vhAndPayloadStream, this.clientOptions.ClientId);
+            }
 
             // Last Will and Testament
             if (this.clientOptions.LastWillAndTestament != null)

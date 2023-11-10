@@ -42,6 +42,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     public HiveMQClient(HiveMQClientOptions? options = null)
     {
         options ??= new HiveMQClientOptions();
+        options.ValidateOptions();
+
         this.Options = options;
         this.cancellationSource = new CancellationTokenSource();
     }

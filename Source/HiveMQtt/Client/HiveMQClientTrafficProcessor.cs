@@ -16,7 +16,6 @@
 namespace HiveMQtt.Client;
 
 using System;
-using System.Buffers;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO.Pipelines;

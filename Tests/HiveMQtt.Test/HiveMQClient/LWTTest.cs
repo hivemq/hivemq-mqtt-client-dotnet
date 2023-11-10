@@ -7,7 +7,7 @@ using HiveMQtt.MQTT5.ReasonCodes;
 using HiveMQtt.MQTT5.Types;
 using Xunit;
 
-public class HiveMQClientLWTTest
+public class LWTTest
 {
     [Fact]
     public async Task Basic_Last_Will_Async()

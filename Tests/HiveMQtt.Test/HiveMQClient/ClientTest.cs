@@ -3,7 +3,7 @@ namespace HiveMQtt.Test.HiveMQClient;
 using HiveMQtt.Client;
 using Xunit;
 
-public class HiveMQClientTest
+public class ClientTest
 {
     [Fact]
     public void Client_Initializes_With_Defaults()

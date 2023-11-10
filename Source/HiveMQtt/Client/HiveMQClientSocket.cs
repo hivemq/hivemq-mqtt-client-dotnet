@@ -19,6 +19,7 @@ using System.IO.Pipelines;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 
 using System.Threading;
@@ -39,16 +40,46 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     private CancellationToken receivedPacketsCancellationToken;
 
 #pragma warning disable IDE0052
-    private Task trafficOutflowProcessorTask;
-    private Task trafficInflowProcessorTask;
-    private Task receivedPacketsProcessorAsync;
+    private Task? trafficOutflowProcessorTask;
+    private Task? trafficInflowProcessorTask;
+    private Task? receivedPacketsProcessorAsync;
 #pragma warning restore IDE0052
 
+    /// <summary>
+    /// SSLStream Callback.  This is used to always allow invalid broker certificates.
+    /// </summary>
+    /// <param name="sender">An object that contains state information for this validation.</param>
+    /// <param name="certificate">The certificate used to authenticate the remote party.</param>
+    /// <param name="chain">The chain of certificate authorities associated with the remote certificate.</param>
+    /// <param name="sslPolicyErrors">One or more errors associated with the remote certificate.</param>
+    /// <returns>A Boolean that says every certificate is valid.</returns>
+    internal static bool AllowInvalidBrokerCertificates(
+        object sender,
+        X509Certificate? certificate,
+        X509Chain? chain,
+        SslPolicyErrors sslPolicyErrors)
+    {
+        // Ignore the unused parameters
+        _ = sender;
+        _ = certificate;
+        _ = chain;
+        _ = sslPolicyErrors;
 
+        return true;
+    }
+
+    /// <summary>
+    /// SSLStream Callback.  This is used to validate TLS certificates.
+    /// </summary>
+    /// <param name="sender">An object that contains state information for this validation.</param>
+    /// <param name="certificate">The certificate used to authenticate the remote party.</param>
+    /// <param name="chain">The chain of certificate authorities associated with the remote certificate.</param>
+    /// <param name="sslPolicyErrors">One or more errors associated with the remote certificate.</param>
+    /// <returns>A Boolean indicating whether the TLS certificate is valid.</returns>
     internal static bool ValidateServerCertificate(
         object sender,
-        X509Certificate certificate,
-        X509Chain chain,
+        X509Certificate? certificate,
+        X509Chain? chain,
         SslPolicyErrors sslPolicyErrors)
     {
         if (sslPolicyErrors == SslPolicyErrors.None)
@@ -56,7 +87,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             return true;
         }
 
-        Console.WriteLine("Certificate error: {0}", sslPolicyErrors);
+        Logger.Warn("Broker TLS Certificate error: {0}", sslPolicyErrors);
 
         // Do not allow this client to communicate with unauthenticated servers.
         return false;
@@ -120,7 +151,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         }
 
         var socketConnected = this.socket.Connected;
-
         if (!socketConnected || this.socket == null)
         {
             throw new HiveMQttClientException("Failed to connect socket");
@@ -128,10 +158,14 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         // Setup the stream
         this.stream = new NetworkStream(this.socket);
+
         if (this.Options.UseTLS)
         {
-            this.stream = new SslStream(this.stream, false, HiveMQClient.ValidateServerCertificate, null);
-            await ((SslStream)this.stream).AuthenticateAsClientAsync(this.Options.Host).ConfigureAwait(false);
+            var result = await this.CreateTLSConnectionAsync(this.stream).ConfigureAwait(false);
+            if (!result)
+            {
+                throw new HiveMQttClientException("Failed to create TLS connection");
+            }
         }
 
         // Setup the Pipeline
@@ -154,6 +188,58 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         Logger.Trace($"Socket connected to {this.socket.RemoteEndPoint}");
         return socketConnected;
+    }
+
+    private async Task<bool> CreateTLSConnectionAsync(Stream stream)
+    {
+        Logger.Trace("Creating TLS connection");
+
+        var tlsOptions = new SslClientAuthenticationOptions
+        {
+            TargetHost = this.Options.Host,
+            EnabledSslProtocols = SslProtocols.Tls13 | SslProtocols.Tls12,
+        };
+
+        if (this.Options.AllowInvalidBrokerCertificates)
+        {
+            Logger.Trace("Allowing invalid broker certificates");
+            var yesMan = new RemoteCertificateValidationCallback((sender, certificate, chain, errors) => true);
+            tlsOptions.RemoteCertificateValidationCallback = yesMan;
+        }
+        else
+        {
+            tlsOptions.RemoteCertificateValidationCallback = HiveMQClient.ValidateServerCertificate;
+        }
+
+        try
+        {
+            Logger.Trace("Authenticating TLS connection");
+            this.stream = new SslStream(stream);
+            await ((SslStream)this.stream).AuthenticateAsClientAsync(tlsOptions).ConfigureAwait(false);
+            return true;
+        }
+        catch (SocketException e)
+        {
+            Logger.Error(e.Message);
+            if (e.InnerException != null)
+            {
+                Logger.Error(e.InnerException.Message);
+            }
+
+            Console.WriteLine("Socket error while establishing TLS connection - closing the connection.");
+            return false;
+        }
+        catch (AuthenticationException e)
+        {
+            Logger.Error(e.Message);
+            if (e.InnerException != null)
+            {
+                Logger.Error(e.InnerException.Message);
+            }
+
+            Console.WriteLine("TLS Authentication failed - closing the connection.");
+            return false;
+        }
     }
 
     internal bool CloseSocket(bool? shutdownPipeline = true)
