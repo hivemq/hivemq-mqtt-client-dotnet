@@ -226,7 +226,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 Logger.Error(e.InnerException.Message);
             }
 
-            Console.WriteLine("Socket error - closing the connection.");
+            Console.WriteLine("Socket error while establishing TLS connection - closing the connection.");
             return false;
         }
         catch (AuthenticationException e)
@@ -237,7 +237,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 Logger.Error(e.InnerException.Message);
             }
 
-            Console.WriteLine("Authentication failed - closing the connection.");
+            Console.WriteLine("TLS Authentication failed - closing the connection.");
             return false;
         }
     }
