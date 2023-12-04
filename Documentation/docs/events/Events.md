@@ -12,7 +12,7 @@ The following serves as a few examples on how to utilize the built in event syst
 
 This one simply prints out the HiveMQClientOptions prior to the connect command being sent to the broker.
 
-```C#
+```csharp
 using HiveMQtt.Client.Events;
 
 private static void BeforeConnectHandler(object? sender, BeforeConnectEventArgs eventArgs)
@@ -37,7 +37,7 @@ var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 
 Suppose you wanted to take some global action after every subscribe call made by the client.
 
-```C#
+```csharp
 using HiveMQtt.Client.Events;
 
 private static void AfterSubscribeHandler(object? sender, AfterSubscribeEventArgs eventArgs)
@@ -65,7 +65,7 @@ var subscribeResult = await client.SubscribeAsync("district/9/level", MQTT5.Type
 
 The following can be used to monitor when publish packets are transmitted from the client.  A potential debug vector in application development.
 
-```C#
+```csharp
 using HiveMQtt.Client.Events;
 
 private static void OnPublishSentHandler(object? sender, OnPublishSentEventArgs eventArgs)
@@ -97,7 +97,7 @@ var result = await client.PublishAsync("district/7/count", "82", MQTT5.Types.Qua
 
 The following can be used to monitor SubAck responses from the broker
 
-```C#
+```csharp
 using HiveMQtt.Client.Events;
 
 private static void OnSubAckReceivedHandler(object? sender, OnSubAckReceivedEventArgs eventArgs)
