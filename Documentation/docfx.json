@@ -1,0 +1,48 @@
+{
+  "metadata": [
+    {
+      "src": [
+        {
+          "src": "../",
+          "files": [
+            "**/HiveMQtt.csproj"
+          ]
+        }
+      ],
+      "dest": ".metadata",
+      "outputFormat": "markdown"
+    }
+  ],
+  "build": {
+    "markdownEngineName": "markdig",
+    "content": [
+      {
+        "src": ".metadata",
+        "dest": ".",
+        "files": [
+          "**/*.yml",
+          "**/*.md"
+        ],
+        "exclude": [
+          "**/node_modules/**"
+        ]
+      }
+    ],
+    "resource": [
+      {
+        "files": []
+      }
+    ],
+    "output": "api",
+    "template": [
+      "default",
+      "modern"
+    ],
+    "globalMetadata": {
+      "_appName": "HiveMQtt",
+      "_appTitle": "HiveMQtt",
+      "_enableSearch": false,
+      "pdf": false
+    }
+  }
+}

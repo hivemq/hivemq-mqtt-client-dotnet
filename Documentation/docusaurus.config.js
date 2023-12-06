@@ -25,8 +25,12 @@ const config = {
   deploymentBranch: 'gh-pages',
   trailingSlash: false,
 
-  onBrokenLinks: 'throw',
+  onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
+
+  markdown: {
+    format: 'detect'
+  },
 
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
@@ -73,7 +77,6 @@ const config = {
             position: 'left',
             label: 'Docs',
           },
-          {to: '/docs/api', label: 'API', position: 'left'},
           {to: '/docs/events', label: 'Events', position: 'left'},
           {to: '/docs/category/how-to-guides', label: 'How-To\'s', position: 'left'},
           {
@@ -92,10 +95,6 @@ const config = {
               {
                 label: 'Docs',
                 to: '/docs/intro',
-              },
-              {
-                label: 'API',
-                to: '/docs/api',
               },
               {
                 label: 'Events',

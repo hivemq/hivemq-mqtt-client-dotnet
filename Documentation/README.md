@@ -2,6 +2,30 @@
 
 The documentation portal for the HiveMQtt client is built using [Docusaurus 2](https://docusaurus.io/), a modern static website generator.
 
+The API documentation is generated from the C# source code using docfx.
+
+## DocFX
+
+### Installation
+
+```
+$ dotnet tool install docfx
+```
+
+### Generate API Metadata
+
+```
+dotnet tool run docfx metadata ./docfx.json
+```
+
+### Generate API Documentation
+
+```
+$ dotnet tool run docfx build ./docfx.json
+```
+
+## Docusaurus
+
 ### Installation
 
 ```
@@ -27,7 +51,6 @@ This command generates static content into the `build` directory and can be serv
 ### Deployment
 
 ```yarn deploy```
-
 
 Using SSH:
 
