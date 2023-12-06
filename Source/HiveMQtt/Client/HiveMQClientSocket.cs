@@ -203,7 +203,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         if (this.Options.AllowInvalidBrokerCertificates)
         {
             Logger.Trace("Allowing invalid broker certificates");
+#pragma warning disable CA5359
             var yesMan = new RemoteCertificateValidationCallback((sender, certificate, chain, errors) => true);
+#pragma warning restore CA5359
             tlsOptions.RemoteCertificateValidationCallback = yesMan;
         }
         else
