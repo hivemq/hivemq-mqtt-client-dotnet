@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-present HiveMQ and the HiveMQ Community
+ * Copyright 2023-present HiveMQ and the HiveMQ Community
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,13 @@ using HiveMQtt.Client.Exceptions;
 
 public class TopicFilter
 {
-    public TopicFilter(string topic, QualityOfService qos)
+    public TopicFilter(string topic, QualityOfService qos, bool? noLocal = null, bool? retainAsPublished = null, RetainHandling? retainHandling = null)
     {
         this.Topic = topic;
         this.QoS = qos;
+        this.NoLocal = noLocal;
+        this.RetainAsPublished = retainAsPublished;
+        this.RetainHandling = retainHandling;
     }
 
     /// <summary>

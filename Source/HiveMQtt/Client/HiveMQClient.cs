@@ -271,11 +271,11 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     }
 
     /// <inheritdoc />
-    public async Task<SubscribeResult> SubscribeAsync(string topic, QualityOfService qos = QualityOfService.AtMostOnceDelivery)
+    public async Task<SubscribeResult> SubscribeAsync(string topic, QualityOfService qos = QualityOfService.AtMostOnceDelivery, bool noLocal = false, bool retainAsPublished = false, RetainHandling retainHandling = RetainHandling.SendAtSubscribe)
     {
         var options = new SubscribeOptions();
 
-        var tf = new TopicFilter(topic, qos);
+        var tf = new TopicFilter(topic, qos, noLocal, retainAsPublished, retainHandling);
         options.TopicFilters.Add(tf);
 
         return await this.SubscribeAsync(options).ConfigureAwait(false);

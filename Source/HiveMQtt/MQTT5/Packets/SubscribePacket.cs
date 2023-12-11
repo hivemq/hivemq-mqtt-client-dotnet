@@ -114,5 +114,5 @@ public class SubscribePacket : ControlPacket
     /// Gather the flags and properties for a Subscribe packet from <see cref="SubscribeOptions"/>
     /// as data preparation for encoding in <see cref="SubscribePacket"/>.
     /// </summary>
-    internal void GatherSubscribeFlagsAndProperties() => this.Options.ValidateOptions();
+    internal void GatherSubscribeFlagsAndProperties() => this.Options.Validate();
 }
