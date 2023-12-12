@@ -15,9 +15,36 @@
  */
 namespace HiveMQtt.Client.Options;
 
+using HiveMQtt.Client.Exceptions;
+using HiveMQtt.MQTT5.Types;
+
 public class UnsubscribeOptions
 {
-    public UnsubscribeOptions() => this.UserProperties = new Dictionary<string, string>();
+    public UnsubscribeOptions()
+    {
+        this.TopicFilters = new List<TopicFilter>();
+        this.UserProperties = new Dictionary<string, string>();
+    }
 
+    /// <summary>
+    /// Gets or sets the Topic Filters for this unsubscribe.
+    /// </summary>
+    public List<TopicFilter> TopicFilters { get; set; }
+
+    /// <summary>
+    /// Gets or sets the User Properties for this unsubscribe.
+    /// </summary>
     public Dictionary<string, string> UserProperties { get; set; }
+
+    /// <summary>
+    /// Validate that the options in this instance are valid.
+    /// </summary>
+    /// <exception cref="HiveMQttClientException">Raises this exception if the options are invalid.</exception>
+    public void Validate()
+    {
+        if (this.TopicFilters.Count == 0)
+        {
+            throw new HiveMQttClientException("At least one topic filter must be specified for UnsubscribeOptions.");
+        }
+    }
 }

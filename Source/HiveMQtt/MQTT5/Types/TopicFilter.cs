@@ -19,7 +19,7 @@ using HiveMQtt.Client.Exceptions;
 
 public class TopicFilter
 {
-    public TopicFilter(string topic, QualityOfService qos, bool? noLocal = null, bool? retainAsPublished = null, RetainHandling? retainHandling = null)
+    public TopicFilter(string topic, QualityOfService qos = QualityOfService.AtMostOnceDelivery, bool? noLocal = null, bool? retainAsPublished = null, RetainHandling? retainHandling = null)
     {
         this.Topic = topic;
         this.QoS = qos;
