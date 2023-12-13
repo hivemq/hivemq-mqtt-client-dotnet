@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-namespace HiveMQtt.MQTT5.Client;
+namespace HiveMQtt.Client;
 
 using System.Text;
 using HiveMQtt.MQTT5.Types;

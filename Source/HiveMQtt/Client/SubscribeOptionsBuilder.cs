@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-namespace HiveMQtt.Client.Options;
+namespace HiveMQtt.Client;
 
+using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.Types;
 
 public class SubscribeOptionsBuilder

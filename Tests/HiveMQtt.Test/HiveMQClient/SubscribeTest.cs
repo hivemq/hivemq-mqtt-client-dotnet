@@ -21,6 +21,7 @@ public class SubscribeTest
 
         Assert.NotEmpty(subResult.Subscriptions);
         Assert.Equal(SubAckReasonCode.GrantedQoS0, subResult.Subscriptions[0].SubscribeReasonCode);
+        Assert.Single(subClient.Subscriptions);
 
         var disconnectResult = await subClient.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
@@ -41,8 +42,10 @@ public class SubscribeTest
         var subResult = await subClient.SubscribeAsync(subscribeOptions).ConfigureAwait(false);
 
         Assert.NotEmpty(subResult.Subscriptions);
-        Assert.Equal(SubAckReasonCode.GrantedQoS0, subResult.Subscriptions[0].SubscribeReasonCode);
-        Assert.Equal(SubAckReasonCode.GrantedQoS0, subResult.Subscriptions[1].SubscribeReasonCode);
+        Assert.Equal(SubAckReasonCode.GrantedQoS1, subResult.Subscriptions[0].SubscribeReasonCode);
+        Assert.Equal(SubAckReasonCode.GrantedQoS1, subResult.Subscriptions[1].SubscribeReasonCode);
+        Assert.Equal(2, subResult.Subscriptions.Count);
+        Assert.Equal(2, subClient.Subscriptions.Count);
 
         var disconnectResult = await subClient.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
@@ -63,11 +66,11 @@ public class SubscribeTest
         var subResult = await subClient.SubscribeAsync(subscribeOptions).ConfigureAwait(false);
 
         Assert.NotEmpty(subResult.Subscriptions);
-        Assert.Equal(SubAckReasonCode.GrantedQoS0, subResult.Subscriptions[0].SubscribeReasonCode);
+        Assert.Equal(SubAckReasonCode.GrantedQoS1, subResult.Subscriptions[0].SubscribeReasonCode);
         Assert.Equal(true, subResult.Subscriptions[0].TopicFilter.NoLocal);
         Assert.Equal(true, subResult.Subscriptions[0].TopicFilter.RetainAsPublished);
         Assert.Equal(MQTT5.Types.RetainHandling.SendAtSubscribe, subResult.Subscriptions[0].TopicFilter.RetainHandling);
-        Assert.Equal(SubAckReasonCode.GrantedQoS0, subResult.Subscriptions[1].SubscribeReasonCode);
+        Assert.Equal(SubAckReasonCode.GrantedQoS1, subResult.Subscriptions[1].SubscribeReasonCode);
 
         var disconnectResult = await subClient.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
