@@ -16,7 +16,7 @@ public class PublishBuilderTest
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
-        var message = new MQTT5PublishMessageBuilder()
+        var message = new PublishMessageBuilder()
             .WithTopic("tests/MostBasicPublishWithQoS0Async")
             .WithPayload(new byte[] { 0x01, 0x02, 0x03 })
             .WithQualityOfService(MQTT5.Types.QualityOfService.AtMostOnceDelivery)
@@ -39,7 +39,7 @@ public class PublishBuilderTest
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
-        var message = new MQTT5PublishMessageBuilder()
+        var message = new PublishMessageBuilder()
             .WithTopic("tests/MostBasicPublishWithQoS1Async")
             .WithPayload(new byte[] { 0x01, 0x02, 0x03 })
             .WithQualityOfService(MQTT5.Types.QualityOfService.AtLeastOnceDelivery)
@@ -61,7 +61,7 @@ public class PublishBuilderTest
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
-        var message = new MQTT5PublishMessageBuilder()
+        var message = new PublishMessageBuilder()
             .WithTopic("tests/MostBasicPublishWithQoS1Async")
             .WithPayload(new byte[] { 0x01, 0x02, 0x03 })
             .WithQualityOfService(MQTT5.Types.QualityOfService.ExactlyOnceDelivery)
@@ -83,7 +83,7 @@ public class PublishBuilderTest
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
-        var message = new MQTT5PublishMessageBuilder()
+        var message = new PublishMessageBuilder()
             .WithTopic("tests/MultiPublishWithQoS0Async")
             .WithPayload(new byte[] { 0x01, 0x02, 0x03 })
             .WithQualityOfService(MQTT5.Types.QualityOfService.AtMostOnceDelivery)
@@ -111,7 +111,7 @@ public class PublishBuilderTest
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
-        var message = new MQTT5PublishMessageBuilder()
+        var message = new PublishMessageBuilder()
             .WithTopic("tests/MultiPublishWithQoS1Async")
             .WithPayload(new byte[] { 0x01, 0x02, 0x03 })
             .WithQualityOfService(MQTT5.Types.QualityOfService.AtLeastOnceDelivery)
@@ -137,7 +137,7 @@ public class PublishBuilderTest
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
-        var message = new MQTT5PublishMessageBuilder()
+        var message = new PublishMessageBuilder()
             .WithTopic("tests/MultiPublishWithQoS2Async")
             .WithPayload(new byte[] { 0x01, 0x02, 0x03 })
             .WithQualityOfService(MQTT5.Types.QualityOfService.ExactlyOnceDelivery)
@@ -162,7 +162,7 @@ public class PublishBuilderTest
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
-        var message = new MQTT5PublishMessageBuilder()
+        var message = new PublishMessageBuilder()
             .WithTopic("tests/PublishWithOptionsAsync")
             .WithPayload(new byte[] { 0x01, 0x02, 0x03 })
             .WithQualityOfService(MQTT5.Types.QualityOfService.AtMostOnceDelivery)
@@ -187,7 +187,7 @@ public class PublishBuilderTest
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
-        var message = new MQTT5PublishMessageBuilder()
+        var message = new PublishMessageBuilder()
             .WithTopic("tests/PublishPayloadFormatIndicatorAsync")
             .WithPayload(new byte[] { 0x01, 0x02, 0x03 })
             .WithQualityOfService(MQTT5.Types.QualityOfService.AtMostOnceDelivery)

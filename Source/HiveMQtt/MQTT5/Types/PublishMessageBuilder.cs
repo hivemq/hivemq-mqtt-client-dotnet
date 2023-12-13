@@ -18,46 +18,46 @@ namespace HiveMQtt.MQTT5.Types;
 using System.Text;
 using HiveMQtt.MQTT5.Packets;
 
-public class MQTT5PublishMessageBuilder
+public class PublishMessageBuilder
 {
     private readonly MQTT5PublishMessage message;
 
-    public MQTT5PublishMessageBuilder()
+    public PublishMessageBuilder()
     {
         this.message = new MQTT5PublishMessage();
     }
 
-    public MQTT5PublishMessageBuilder WithPayload(byte[] payload)
+    public PublishMessageBuilder WithPayload(byte[] payload)
     {
         this.message.Payload = payload;
         return this;
     }
 
-    public MQTT5PublishMessageBuilder WithPayload(string payload)
+    public PublishMessageBuilder WithPayload(string payload)
     {
         this.message.Payload = Encoding.UTF8.GetBytes(payload);
         return this;
     }
 
-    public MQTT5PublishMessageBuilder WithTopic(string topic)
+    public PublishMessageBuilder WithTopic(string topic)
     {
         this.message.Topic = topic;
         return this;
     }
 
-    public MQTT5PublishMessageBuilder WithQualityOfService(QualityOfService qos)
+    public PublishMessageBuilder WithQualityOfService(QualityOfService qos)
     {
         this.message.QoS = qos;
         return this;
     }
 
-    public MQTT5PublishMessageBuilder WithUserProperty(string key, string value)
+    public PublishMessageBuilder WithUserProperty(string key, string value)
     {
         this.message.UserProperties[key] = value;
         return this;
     }
 
-    public MQTT5PublishMessageBuilder WithUserProperties(Dictionary<string, string> properties)
+    public PublishMessageBuilder WithUserProperties(Dictionary<string, string> properties)
     {
         foreach (var property in properties)
         {
@@ -67,13 +67,13 @@ public class MQTT5PublishMessageBuilder
         return this;
     }
 
-    public MQTT5PublishMessageBuilder WithSubscriptionIdentifier(int identifier)
+    public PublishMessageBuilder WithSubscriptionIdentifier(int identifier)
     {
         this.message.SubscriptionIdentifiers.Add(identifier);
         return this;
     }
 
-    public MQTT5PublishMessageBuilder WithPayloadFormatIndicator(MQTT5PayloadFormatIndicator indicator)
+    public PublishMessageBuilder WithPayloadFormatIndicator(MQTT5PayloadFormatIndicator indicator)
     {
         this.message.PayloadFormatIndicator = indicator;
         return this;
