@@ -22,14 +22,14 @@ public class UnsubscribeOptions
 {
     public UnsubscribeOptions()
     {
-        this.TopicFilters = new List<TopicFilter>();
+        this.Subscriptions = new List<Subscription>();
         this.UserProperties = new Dictionary<string, string>();
     }
 
     /// <summary>
-    /// Gets or sets the Topic Filters for this unsubscribe.
+    /// Gets or sets the Subscriptions for this unsubscribe.
     /// </summary>
-    public List<TopicFilter> TopicFilters { get; set; }
+    public List<Subscription> Subscriptions { get; set; }
 
     /// <summary>
     /// Gets or sets the User Properties for this unsubscribe.
@@ -42,7 +42,7 @@ public class UnsubscribeOptions
     /// <exception cref="HiveMQttClientException">Raises this exception if the options are invalid.</exception>
     public void Validate()
     {
-        if (this.TopicFilters.Count == 0)
+        if (this.Subscriptions.Count == 0)
         {
             throw new HiveMQttClientException("At least one topic filter must be specified for UnsubscribeOptions.");
         }

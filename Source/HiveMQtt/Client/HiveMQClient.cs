@@ -340,29 +340,16 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             }
         }
 
-        throw new HiveMQttClientException("No subscription found for topic: " + topic);
+        throw new HiveMQttClientException($"No subscription found for topic: {topic}.  Make sure to take individual subscription from client.Subscriptions.");
     }
 
-    /// <inheritdoc />
-    public async Task<UnsubscribeResult> UnsubscribeAsync(Subscription subscription)
-    {
-        if (!this.Subscriptions.Contains(subscription))
-        {
-            throw new HiveMQttClientException("No such subscription found.  Make sure to take individual subscription from client.Subscriptions.");
-        }
-
-        var subscriptions = new List<Subscription> { subscription };
-        return await this.UnsubscribeAsync(subscriptions).ConfigureAwait(false);
-    }
-
-    /// <inheritdoc />
-    public async Task<UnsubscribeResult> UnsubscribeAsync(List<Subscription> subscriptions)
+    public async Task<UnsubscribeResult> UnsubscribeAsync(UnsubscribeOptions unsubOptions)
     {
         // Fire the corresponding event
-        this.BeforeUnsubscribeEventLauncher(subscriptions);
+        this.BeforeUnsubscribeEventLauncher(unsubOptions.Subscriptions);
 
         var packetIdentifier = this.GeneratePacketIdentifier();
-        var unsubscribePacket = new UnsubscribePacket(subscriptions, (ushort)packetIdentifier);
+        var unsubscribePacket = new UnsubscribePacket(unsubOptions, (ushort)packetIdentifier);
 
         var taskCompletionSource = new TaskCompletionSource<UnsubAckPacket>();
 
@@ -413,5 +400,38 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         this.AfterUnsubscribeEventLauncher(unsubscribeResult);
 
         return unsubscribeResult;
+    }
+
+    /// <inheritdoc />
+    public async Task<UnsubscribeResult> UnsubscribeAsync(Subscription subscription)
+    {
+        if (!this.Subscriptions.Contains(subscription))
+        {
+            throw new HiveMQttClientException("No such subscription found.  Make sure to take individual subscription from client.Subscriptions.");
+        }
+
+        var unsubOptions = new UnsubscribeOptionsBuilder()
+            .WithSubscription(subscription)
+            .Build();
+
+        return await this.UnsubscribeAsync(unsubOptions).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<UnsubscribeResult> UnsubscribeAsync(List<Subscription> subscriptions)
+    {
+        for (var i = 0; i < subscriptions.Count; i++)
+        {
+            if (!this.Subscriptions.Contains(subscriptions[i]))
+            {
+                throw new HiveMQttClientException("No such subscription found.  Make sure to take individual subscription from client.Subscriptions.");
+            }
+        }
+
+        var unsubOptions = new UnsubscribeOptionsBuilder()
+            .WithSubscriptions(subscriptions)
+            .Build();
+
+        return await this.UnsubscribeAsync(unsubOptions).ConfigureAwait(false);
     }
 }

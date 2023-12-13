@@ -16,7 +16,7 @@
 namespace HiveMQtt.MQTT5.Packets;
 
 using System.IO;
-
+using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.Types;
 
 /// <summary>
@@ -31,17 +31,13 @@ public class UnsubscribePacket : ControlPacket
     /// Initializes a new instance of the <see cref="UnsubscribePacket"/> class
     /// with the options to be used for the publish.
     /// </summary>
-    /// <param name="subscriptions">The list of subscriptions to unsubscribe.</param>
+    /// <param name="unsubOptions">The constructed UnsubscribeOptions class.</param>
     /// <param name="packetIdentifier">A unique packet identifier for the packet to be created.</param>
-    /// <param name="userProperties">User properties to be sent with the packet.</param>
-    public UnsubscribePacket(List<Subscription> subscriptions, ushort packetIdentifier, Dictionary<string, string>? userProperties = null)
+    public UnsubscribePacket(UnsubscribeOptions unsubOptions, ushort packetIdentifier)
     {
         this.PacketIdentifier = packetIdentifier;
-        this.Subscriptions = subscriptions;
-        if (userProperties != null)
-        {
-            this.Properties.UserProperties = userProperties;
-        }
+        this.Subscriptions = unsubOptions.Subscriptions;
+        this.Properties.UserProperties = unsubOptions.UserProperties;
     }
 
     /// <summary>

@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-namespace HiveMQtt.MQTT5.Types;
+namespace HiveMQtt.MQTT5.Client;
 
 using System.Text;
-using HiveMQtt.MQTT5.Packets;
+using HiveMQtt.MQTT5.Types;
 
 public class PublishMessageBuilder
 {
