@@ -47,8 +47,13 @@ public class UnsubscribeOptionsBuilder
     /// <summary>
     /// Adds a user property to be sent along with the unsubscribe request.
     ///
-    /// You can read more about user properties here:
-    /// https://www.hivemq.com/blog/mqtt5-essentials-part6-user-properties/
+    /// In MQTT 5, User Properties provide a mechanism for attaching custom key-value pairs to MQTT
+    /// messages. User Properties allow clients to include additional metadata or application-specific
+    /// information beyond the standard MQTT headers and payload. These properties can be used for
+    /// various purposes such as message routing, filtering, or conveying application-specific data.
+    /// User Properties are optional and can be included in MQTT packets like CONNECT, PUBLISH, SUBSCRIBE,
+    /// UNSUBSCRIBE, and others. They enable extensibility and interoperability by allowing clients and
+    /// brokers to exchange custom information in a standardized manner within the MQTT protocol.
     /// </summary>
     /// <param name="key">The key of the user property.</param>
     /// <param name="value">The value of the user property.</param>

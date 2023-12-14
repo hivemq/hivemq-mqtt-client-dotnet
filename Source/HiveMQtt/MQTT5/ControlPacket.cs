@@ -147,7 +147,7 @@ public abstract class ControlPacket
     /// <returns>A string containing the UTF-8 string.</returns>
     protected static string? DecodeUTF8String(ref SequenceReader<byte> reader)
     {
-        if (reader.TryReadBigEndian(out Int16 stringLength))
+        if (reader.TryReadBigEndian(out short stringLength))
         {
             var array = new byte[stringLength];
             var span = new Span<byte>(array);
@@ -213,7 +213,7 @@ public abstract class ControlPacket
     /// <returns>The value of the two byte integer.</returns>
     protected static ushort? DecodeTwoByteInteger(ref SequenceReader<byte> reader)
     {
-        if (reader.TryReadBigEndian(out Int16 intValue))
+        if (reader.TryReadBigEndian(out short intValue))
         {
             return (ushort)intValue;
         }
@@ -288,7 +288,7 @@ public abstract class ControlPacket
     /// <returns>A byte[] containing the binary data.</returns>
     protected static byte[]? DecodeBinaryData(ref SequenceReader<byte> reader)
     {
-        if (reader.TryReadBigEndian(out Int16 stringLength))
+        if (reader.TryReadBigEndian(out short stringLength))
         {
             var array = new byte[stringLength];
             var span = new Span<byte>(array);
@@ -346,7 +346,7 @@ public abstract class ControlPacket
     /// <returns>The value of the four byte integer.</returns>
     protected static uint? DecodeFourByteInteger(ref SequenceReader<byte> reader)
     {
-        if (reader.TryReadBigEndian(out Int32 intValue))
+        if (reader.TryReadBigEndian(out int intValue))
         {
             return (uint)intValue;
         }

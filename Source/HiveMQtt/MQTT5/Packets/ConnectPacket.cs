@@ -115,7 +115,7 @@ public class ConnectPacket : ControlPacket
     /// </summary>
     internal void GatherConnectFlagsAndProperties()
     {
-        this.clientOptions.ValidateOptions();
+        this.clientOptions.Validate();
 
         this.flags = 0x0;
         if (this.clientOptions.CleanStart is true)
@@ -156,16 +156,16 @@ public class ConnectPacket : ControlPacket
         }
 
         // Properties
-        this.Properties.SessionExpiryInterval = (UInt32)this.clientOptions.SessionExpiryInterval;
+        this.Properties.SessionExpiryInterval = (uint)this.clientOptions.SessionExpiryInterval;
 
         if (this.clientOptions.ClientReceiveMaximum != null)
         {
-            this.Properties.ReceiveMaximum = (UInt16)this.clientOptions.ClientReceiveMaximum;
+            this.Properties.ReceiveMaximum = (ushort)this.clientOptions.ClientReceiveMaximum;
         }
 
         if (this.clientOptions.ClientMaximumPacketSize != null)
         {
-            this.Properties.MaximumPacketSize = (UInt16)this.clientOptions.ClientMaximumPacketSize;
+            this.Properties.MaximumPacketSize = (ushort)this.clientOptions.ClientMaximumPacketSize;
         }
 
         if (this.clientOptions.ClientTopicAliasMaximum != null)
@@ -219,7 +219,7 @@ public class ConnectPacket : ControlPacket
         {
             if (this.clientOptions.LastWillAndTestament.WillDelayInterval.HasValue)
             {
-                this.LastWillProperties.WillDelayInterval = (UInt32)this.clientOptions.LastWillAndTestament.WillDelayInterval;
+                this.LastWillProperties.WillDelayInterval = (uint)this.clientOptions.LastWillAndTestament.WillDelayInterval;
             }
 
             if (this.clientOptions.LastWillAndTestament.PayloadFormatIndicator.HasValue)
@@ -229,7 +229,7 @@ public class ConnectPacket : ControlPacket
 
             if (this.clientOptions.LastWillAndTestament.MessageExpiryInterval.HasValue)
             {
-                this.LastWillProperties.MessageExpiryInterval = (UInt32)this.clientOptions.LastWillAndTestament.MessageExpiryInterval;
+                this.LastWillProperties.MessageExpiryInterval = (uint)this.clientOptions.LastWillAndTestament.MessageExpiryInterval;
             }
 
             if (this.clientOptions.LastWillAndTestament.ContentType != null)

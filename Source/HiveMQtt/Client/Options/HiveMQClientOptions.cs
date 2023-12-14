@@ -26,6 +26,8 @@ using HiveMQtt.Client.Exceptions;
 /// </summary>
 public class HiveMQClientOptions
 {
+    private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+
     // The set of valid characters that a client identifier can consist of
     private readonly string clientIdCharset = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
@@ -166,27 +168,37 @@ public class HiveMQClientOptions
 
     /// <summary>
     /// Generate a semi-random client identifier to be used in <c>Client</c> connections.
-    /// hivec#-pid-randomstring.
+    /// hmqc#-pid-randomstring.
     /// </summary>
     public void GenerateClientID()
     {
         var rand = new Random();
-        var pid_string = Convert.ToString(Environment.ProcessId, System.Globalization.CultureInfo.InvariantCulture);
-        var stampLength = 23 - pid_string.Length;
+        var stamp = "hmqcs";
 
-        var clientID = new string(Enumerable.Range(0, stampLength - 1)
+        var clientID = new string(Enumerable.Range(0, 18) // Target length 23 (5 chars for stamp)
                                             .Select(_ =>
                                             this.clientIdCharset[rand.Next(this.clientIdCharset.Length)])
                                             .ToArray());
 
-        this.ClientId = pid_string + "-" + clientID;
+        this.ClientId = stamp + clientID;
+    }
+
+    public void ValidateOptions()
+    {
+        Logger.Warn("HiveMQClientOptions.ValidateOptions() is deprecated.  Use Validate() instead.");
+        this.Validate();
     }
 
     /// <summary>
     /// Validate that the options specified in this class are all sane.
     /// </summary>
-    public void ValidateOptions()
+    public void Validate()
     {
+        if (this.Host == null)
+        {
+            throw new HiveMQttClientException("Host (broker) must be specified.");
+        }
+
         this.KeepAlive = RangeValidateTwoByteInteger(this.KeepAlive);
         this.SessionExpiryInterval = RangeValidateFourByteInteger(this.SessionExpiryInterval);
 
@@ -213,16 +225,23 @@ public class HiveMQClientOptions
             this.ClientTopicAliasMaximum = RangeValidateTwoByteInteger((int)this.ClientTopicAliasMaximum);
         }
 
-        foreach (var property in this.UserProperties)
+        if (this.UserProperties is null)
         {
-            if (property.Key is not string key || key.Length > 65535)
+            this.UserProperties = new Dictionary<string, string>();
+        }
+        else
+        {
+            foreach (var property in this.UserProperties)
             {
-                throw new HiveMQttClientException("User Property Key must be less than 65535 characters.");
-            }
+                if (property.Key is not string key || key.Length > 65535)
+                {
+                    throw new HiveMQttClientException("User Property Key must be less than 65535 characters.");
+                }
 
-            if (property.Value is not string value || value.Length > 65535)
-            {
-                throw new HiveMQttClientException("User Property Value must be less than 65535 characters.");
+                if (property.Value is not string value || value.Length > 65535)
+                {
+                    throw new HiveMQttClientException("User Property Value must be less than 65535 characters.");
+                }
             }
         }
 

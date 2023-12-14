@@ -12,12 +12,12 @@ public class OptionsTest
         {
             KeepAlive = -300,
         };
-        options.ValidateOptions();
+        options.Validate();
 
         Assert.Equal(0, options.KeepAlive);
 
         options.KeepAlive = int.MaxValue;
-        options.ValidateOptions();
+        options.Validate();
 
         Assert.Equal(ushort.MaxValue, options.KeepAlive);
     }
@@ -29,7 +29,7 @@ public class OptionsTest
         {
             SessionExpiryInterval = -300,
         };
-        options.ValidateOptions();
+        options.Validate();
 
         Assert.Equal(0, options.SessionExpiryInterval);
 
@@ -46,11 +46,11 @@ public class OptionsTest
         {
             ClientReceiveMaximum = -300,
         };
-        options.ValidateOptions();
+        options.Validate();
         Assert.Equal(0, options.ClientReceiveMaximum);
 
         options.ClientReceiveMaximum = int.MaxValue;
-        options.ValidateOptions();
+        options.Validate();
         Assert.Equal(ushort.MaxValue, options.ClientReceiveMaximum);
     }
 
@@ -61,11 +61,11 @@ public class OptionsTest
         {
             ClientMaximumPacketSize = -300,
         };
-        options.ValidateOptions();
+        options.Validate();
         Assert.Equal(0, options.ClientMaximumPacketSize);
 
         options.ClientMaximumPacketSize = long.MaxValue;
-        options.ValidateOptions();
+        options.Validate();
         Assert.Equal(uint.MaxValue, options.ClientMaximumPacketSize);
     }
 
@@ -76,11 +76,11 @@ public class OptionsTest
         {
             ClientTopicAliasMaximum = -300,
         };
-        options.ValidateOptions();
+        options.Validate();
         Assert.Equal(0, options.ClientTopicAliasMaximum);
 
         options.ClientTopicAliasMaximum = ushort.MaxValue;
-        options.ValidateOptions();
+        options.Validate();
         Assert.Equal(ushort.MaxValue, options.ClientTopicAliasMaximum);
     }
 
@@ -97,7 +97,7 @@ public class OptionsTest
         {
             UserProperties = userProperties,
         };
-        options.ValidateOptions();
+        options.Validate();
 
         Assert.Equal(userProperties, options.UserProperties);
         Assert.True(options.UserProperties.ContainsKey("key1"));
@@ -113,7 +113,7 @@ public class OptionsTest
         {
             ClientId = null,
         };
-        options.ValidateOptions();
+        options.Validate();
 
         Assert.NotNull(options.ClientId);
         Assert.True(options.ClientId.Length < 24);
