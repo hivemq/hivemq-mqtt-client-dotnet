@@ -28,9 +28,11 @@ var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 #### With Options
 
 ```csharp
-var options = new HiveMQClientOptions();
-options.Host = 'candy.x39.eu.hivemq.cloud';
-options.Port = 8883;
+var options = new HiveMQClientOptionsBuilder().
+                    WithBroker('candy.x39.eu.hivemq.cloud').
+                    WithPort(8883).
+                    WithUseTLS(true).
+                    Build();
 
 var client = new HiveMQClient(options);
 var connectResult = await client.ConnectAsync().ConfigureAwait(false);
@@ -48,10 +50,12 @@ client.OnMessageReceived += (sender, args) =>
 // Subscribe
 await client.SubscribeAsync("instrument/x9284/boston").ConfigureAwait(false);
 
-await client.PublishAsync(
-                "core/dynamic_graph/entity/227489", // Topic to publish to
-                "{'2023': '👍'}"                    // Message to publish
-                ).ConfigureAwait(false);
+var publishMessage = new PublishMessageBuilder().
+                            WithTopic("core/dynamic_graph/entity/227489").
+                            WithPayload("{'2023': '👍'}").
+                            Build();
+
+await client.PublishAsync(publishMessage).ConfigureAwait(false);
 ```
 
 
