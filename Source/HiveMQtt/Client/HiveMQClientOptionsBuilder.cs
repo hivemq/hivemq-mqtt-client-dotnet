@@ -178,6 +178,26 @@ public class HiveMQClientOptionsBuilder
     }
 
     /// <summary>
+    /// Adds a user property to be sent in the connect call.
+    ///
+    /// In MQTT 5, User Properties provide a flexible way to include custom key-value pairs in MQTT messages.
+    /// User Properties allow clients to attach additional metadata or application-specific information to
+    /// messages beyond the standard MQTT headers and payload. These properties can be used for various purposes
+    /// such as message routing, filtering, or conveying application-specific data. User Properties are optional
+    /// and can be included in MQTT packets like CONNECT, PUBLISH, SUBSCRIBE, UNSUBSCRIBE, and others. They enable
+    /// extensibility and interoperability by allowing clients and brokers to exchange custom information in a
+    /// standardized manner within the MQTT protocol.
+    /// </summary>
+    /// <param name="key">The key of the user property.</param>
+    /// <param name="value">The value of the user property.</param>
+    /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
+    public HiveMQClientOptionsBuilder WithUserProperty(string key, string value)
+    {
+        this.options.UserProperties.Add(key, value);
+        return this;
+    }
+
+    /// <summary>
     /// Sets the user properties to be sent in the connect call.
     ///
     /// In MQTT 5, User Properties provide a flexible way to include custom key-value pairs in MQTT messages.
