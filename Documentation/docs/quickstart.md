@@ -214,6 +214,8 @@ By using the `SubscribeOptionsBuilder`, you can easily configure multiple subscr
 To illustrate _each and every possible call_ with `SubscribeOptionsBuilder`, see the following example:
 
 ```csharp
+using HiveMQtt.MQTT5.Types;
+
 var options = new SubscribeOptionsBuilder().
                     .WithSubscription(
                         "topic1",                             // Topic
