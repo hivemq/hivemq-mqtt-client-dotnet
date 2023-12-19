@@ -28,10 +28,7 @@ public class SubscribeOptionsBuilder
     }
 
     /// <summary>
-    /// Sets the Subscription Identifier (AKA TopicFilter).
-    ///
-    /// See also: <see href="https://www.hivemq.com/blog/mqtt-essentials-part-5-mqtt-topics-best-practices/">MQTT Topics Best Practices</see>.
-    ///
+    /// Adds a subscription to the list of subscriptions to be sent in the subscribe call.
     /// </summary>
     /// <param name="topic">The string topic name.</param>
     /// <param name="qos">The quality of service level.</param>
@@ -46,7 +43,7 @@ public class SubscribeOptionsBuilder
     }
 
     /// <summary>
-    /// Sets the Subscription Identifier (AKA TopicFilter).
+    /// Adds a user property to be sent in the subscribe call.
     ///
     /// In MQTT 5, User Properties provide a flexible way to include custom key-value pairs in MQTT messages.
     /// User Properties allow clients to attach additional metadata or application-specific information to
