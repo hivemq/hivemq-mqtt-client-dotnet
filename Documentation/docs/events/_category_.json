@@ -1,8 +1,4 @@
 {
   "label": "Lifecycle Events",
-  "position": 3,
-  "link": {
-    "type": "generated-index",
-    "description": "Events Reference for HiveMQtt."
-  }
+  "position": 4
 }

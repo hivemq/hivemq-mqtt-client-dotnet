@@ -7,7 +7,7 @@ The simple way to publish a message is to use the following API:
 ```csharp
 await client.PublishAsync(
                 "core/dynamic_graph/entity/227489", // Topic to publish to
-                "{'2023': '👍'}"                    // Message to publish
+                "{'2023': '👍'}",                   // Message to publish
                 QualityOfService.AtMostOnceDelivery
                 ).ConfigureAwait(false);
 
@@ -42,6 +42,23 @@ var result = await client.PublishAsync(message);
 ```
 
 For the full details, see the source code on [MQTT5PublishMessage](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Source/HiveMQtt/MQTT5/Types/MQTT5PublishMessage.cs).
+
+# PublishMessageBuilder
+
+The `PublishMessageBuilder` class provides a convenient way to construct MQTT publish messages with various options and properties. It allows you to customize the topic, payload, quality of service (QoS) level, retain flag, and other attributes of the message.
+
+```csharp
+var publishMessage = new PublishMessageBuilder().
+                            WithTopic("topic1/example").
+                            WithPayload("{'HiveMQ': '👍'}").
+                            WithContentType("application/json")
+                            WithResponseTopic("response/topic")
+                            Build();
+
+await client.PublishAsync(publishMessage).ConfigureAwait(false);
+```
+
+By using `PublishMessageBuilder`, you can easily construct MQTT publish messages with the desired properties and options. It provides a fluent and intuitive way to customize the topic, payload, QoS level, retain flag, and other attributes of the message.
 
 # Publish Return Value: `PublishResult`
 
