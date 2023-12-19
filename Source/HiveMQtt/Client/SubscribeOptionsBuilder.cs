@@ -44,7 +44,7 @@ public class SubscribeOptionsBuilder
 
     /// <summary>
     /// Adds a user property to be sent in the subscribe call.
-    ///
+    /// <para>
     /// In MQTT 5, User Properties provide a flexible way to include custom key-value pairs in MQTT messages.
     /// User Properties allow clients to attach additional metadata or application-specific information to
     /// messages beyond the standard MQTT headers and payload. These properties can be used for various purposes
@@ -52,6 +52,7 @@ public class SubscribeOptionsBuilder
     /// and can be included in MQTT packets like CONNECT, PUBLISH, SUBSCRIBE, UNSUBSCRIBE, and others. They enable
     /// extensibility and interoperability by allowing clients and brokers to exchange custom information in a
     /// standardized manner within the MQTT protocol.
+    /// </para>
     /// </summary>
     /// <param name="key">The key of the user property.</param>
     /// <param name="value">The value of the user property.</param>
@@ -64,7 +65,7 @@ public class SubscribeOptionsBuilder
 
     /// <summary>
     /// Sets the user properties to be sent in the subscribe call.
-    ///
+    /// <para>
     /// In MQTT 5, User Properties provide a flexible way to include custom key-value pairs in MQTT messages.
     /// User Properties allow clients to attach additional metadata or application-specific information to
     /// messages beyond the standard MQTT headers and payload. These properties can be used for various purposes
@@ -72,6 +73,7 @@ public class SubscribeOptionsBuilder
     /// and can be included in MQTT packets like CONNECT, PUBLISH, SUBSCRIBE, UNSUBSCRIBE, and others. They enable
     /// extensibility and interoperability by allowing clients and brokers to exchange custom information in a
     /// standardized manner within the MQTT protocol.
+    /// </para>
     /// </summary>
     /// <param name="userProperties">The user properties to be sent in the subscribe call.</param>
     /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
