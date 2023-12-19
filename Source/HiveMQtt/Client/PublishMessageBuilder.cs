@@ -126,17 +126,16 @@ public class PublishMessageBuilder
     }
 
     /// <summary>
-    /// Sets the message expiry interval of the publish message.
+    /// Sets the response topic of the publish message.
     ///
-    /// The message expiry interval in an MQTT 5 publish message is a property that specifies
-    /// the maximum duration for which the message should be considered valid. It allows the
-    /// sender to set a time limit on the message's relevance and ensures that outdated or
-    /// expired messages are not delivered to subscribers. If a message's expiry interval is
-    /// reached before it is delivered, the broker will discard the message instead of
-    /// delivering it. The message expiry interval helps maintain message freshness and
-    /// relevance in MQTT communication.
+    /// In MQTT 5 publish, the response topic is an optional property that the publisher
+    /// can include in the message. It specifies the topic to which the recipient should
+    /// send a response or acknowledgement related to the published message. The response
+    /// topic allows for request-response communication patterns, where the publisher can
+    /// indicate where the response should be sent. This enables more advanced message
+    /// exchange scenarios and facilitates bidirectional communication in MQTT 5.
     /// </summary>
-    /// <param name="messageExpiryInterval">The message expiry interval.</param>
+    /// <param name="responseTopic">The response topic.</param>
     /// <returns>The builder instance.</returns>
     public PublishMessageBuilder WithResponseTopic(string responseTopic)
     {
@@ -200,18 +199,19 @@ public class PublishMessageBuilder
     }
 
     /// <summary>
-    /// Sets the payload format indicator of the publish message.
+    /// Sets the message expiry interval of the publish message.
     ///
-    /// The payload format indicator in an MQTT 5 publish message is a property that indicates the
-    /// format of the payload data being published. It provides a hint to the receiver about how
-    /// to interpret and process the payload. The payload format indicator can be used to specify
-    /// the encoding, compression, or any other format information related to the payload. It
-    /// allows for more precise handling and processing of the payload data based on the specified
-    /// format, enhancing interoperability and flexibility in MQTT communication.
+    /// The message expiry interval in an MQTT 5 publish message is a property that specifies
+    /// the maximum duration for which the message should be considered valid. It allows the
+    /// sender to set a time limit on the message's relevance and ensures that outdated or
+    /// expired messages are not delivered to subscribers. If a message's expiry interval is
+    /// reached before it is delivered, the broker will discard the message instead of
+    /// delivering it. The message expiry interval helps maintain message freshness and
+    /// relevance in MQTT communication.
     /// </summary>
-    /// <param name="payloadFormatIndicator">The payload format indicator.</param>
+    /// <param name="messageExpiryInterval">The message expiry interval.</param>
     /// <returns>The builder instance.</returns>
-    public PublishMessageBuilder WithMessageExpiryInterval(uint messageExpiryInterval)
+    public PublishMessageBuilder WithMessageExpiryInterval(int messageExpiryInterval)
     {
         this.message.MessageExpiryInterval = messageExpiryInterval;
         return this;

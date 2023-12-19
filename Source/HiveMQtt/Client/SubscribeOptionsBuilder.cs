@@ -76,7 +76,8 @@ public class SubscribeOptionsBuilder
     /// extensibility and interoperability by allowing clients and brokers to exchange custom information in a
     /// standardized manner within the MQTT protocol.
     /// </summary>
-    /// <param name="properties">A dictionary of key value pairs to send along with the connect request.</param>
+    /// <param name="key">The key of the user property.</param>
+    /// <param name="value">The value of the user property.</param>
     /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
     public SubscribeOptionsBuilder WithUserProperties(string key, string value)
     {
