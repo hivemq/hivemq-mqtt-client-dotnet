@@ -208,11 +208,15 @@ public class HiveMQClientOptionsBuilder
     /// extensibility and interoperability by allowing clients and brokers to exchange custom information in a
     /// standardized manner within the MQTT protocol.
     /// </summary>
-    /// <param name="properties">A dictionary of key value pairs to send along with the connect request.</param>
+    /// <param name="properties">The user properties to be sent in the connect call.</param>
     /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
     public HiveMQClientOptionsBuilder WithUserProperties(Dictionary<string, string> properties)
     {
-        this.options.UserProperties = properties;
+        foreach (var property in properties)
+        {
+            this.options.UserProperties.Add(property.Key, property.Value);
+        }
+
         return this;
     }
 

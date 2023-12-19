@@ -18,7 +18,7 @@ public class SubscribeBuilderTest
         var subscribeOptions = new SubscribeOptionsBuilder()
             .WithSubscription("tests/MultiSubscribeAsync", MQTT5.Types.QualityOfService.AtLeastOnceDelivery)
             .WithSubscription("tests/MultiSubscribeAsync2", MQTT5.Types.QualityOfService.AtLeastOnceDelivery)
-            .WithUserProperties("test", "test")
+            .WithUserProperty("test", "test")
             .Build();
 
         var subResult = await subClient.SubscribeAsync(subscribeOptions).ConfigureAwait(false);
@@ -41,7 +41,7 @@ public class SubscribeBuilderTest
         var subscribeOptions = new SubscribeOptionsBuilder()
             .WithSubscription("tests/MultiSubscribeAsync", MQTT5.Types.QualityOfService.AtLeastOnceDelivery, true, true, MQTT5.Types.RetainHandling.SendAtSubscribe)
             .WithSubscription("tests/MultiSubscribeAsync2", MQTT5.Types.QualityOfService.AtLeastOnceDelivery)
-            .WithUserProperties("test", "test")
+            .WithUserProperty("test", "test")
             .Build();
 
         var subResult = await subClient.SubscribeAsync(subscribeOptions).ConfigureAwait(false);

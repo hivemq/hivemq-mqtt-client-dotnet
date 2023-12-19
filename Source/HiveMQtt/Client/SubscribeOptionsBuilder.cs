@@ -73,12 +73,15 @@ public class SubscribeOptionsBuilder
     /// extensibility and interoperability by allowing clients and brokers to exchange custom information in a
     /// standardized manner within the MQTT protocol.
     /// </summary>
-    /// <param name="key">The key of the user property.</param>
-    /// <param name="value">The value of the user property.</param>
+    /// <param name="userProperties">The user properties to be sent in the subscribe call.</param>
     /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
-    public SubscribeOptionsBuilder WithUserProperties(string key, string value)
+    public SubscribeOptionsBuilder WithUserProperties(Dictionary<string, string> userProperties)
     {
-        this.options.UserProperties.Add(key, value);
+        foreach (var userProperty in userProperties)
+        {
+            this.options.UserProperties.Add(userProperty.Key, userProperty.Value);
+        }
+
         return this;
     }
 

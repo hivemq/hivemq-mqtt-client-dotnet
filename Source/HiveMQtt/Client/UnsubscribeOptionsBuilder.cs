@@ -44,8 +44,14 @@ public class UnsubscribeOptionsBuilder
         return this;
     }
 
+    public UnsubscribeOptionsBuilder WithUserProperty(string key, string value)
+    {
+        this.options.UserProperties.Add(key, value);
+        return this;
+    }
+
     /// <summary>
-    /// Adds a user property to be sent along with the unsubscribe request.
+    /// Adds user properties to be sent along with the unsubscribe request.
     ///
     /// In MQTT 5, User Properties provide a mechanism for attaching custom key-value pairs to MQTT
     /// messages. User Properties allow clients to include additional metadata or application-specific
@@ -55,12 +61,15 @@ public class UnsubscribeOptionsBuilder
     /// UNSUBSCRIBE, and others. They enable extensibility and interoperability by allowing clients and
     /// brokers to exchange custom information in a standardized manner within the MQTT protocol.
     /// </summary>
-    /// <param name="key">The key of the user property.</param>
-    /// <param name="value">The value of the user property.</param>
+    /// <param name="userProperties">A dictionary of user properties.</param>
     /// <returns>The UnsubscribeOptionsBuilder instance.</returns>
-    public UnsubscribeOptionsBuilder WithUserProperties(string key, string value)
+    public UnsubscribeOptionsBuilder WithUserProperties(Dictionary<string, string> userProperties)
     {
-        this.options.UserProperties.Add(key, value);
+        foreach (var userProperty in userProperties)
+        {
+            this.options.UserProperties.Add(userProperty.Key, userProperty.Value);
+        }
+
         return this;
     }
 
