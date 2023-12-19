@@ -45,8 +45,11 @@ public class SubscribeOptions
     /// Validate that the options in this instance are valid.
     /// </summary>
     /// <exception cref="HiveMQttClientException">The exception raised if some value is out of range or invalid.</exception>
-    public void ValidateOptions()
+    public void Validate()
     {
-        // FIXME: Validate options
+        if (this.TopicFilters.Count == 0)
+        {
+            throw new HiveMQttClientException("At least one topic filter must be specified for SubscribeOptions.");
+        }
     }
 }

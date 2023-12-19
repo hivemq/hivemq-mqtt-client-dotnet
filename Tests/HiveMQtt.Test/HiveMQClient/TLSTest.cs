@@ -44,7 +44,6 @@ public class TLSTest
         Assert.True(disconnectResult);
     }
 
-
     [Fact]
     public async Task Public_Broker_TLS_Async()
     {

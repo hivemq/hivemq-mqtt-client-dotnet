@@ -32,6 +32,15 @@ public class LastWillAndTestament
         this.UserProperties = new Dictionary<string, string>();
     }
 
+    public LastWillAndTestament(string topic, QualityOfService? qos, byte[] payload, bool retain = false)
+    {
+        this.Topic = topic;
+        this.QoS = qos;
+        this.Payload = payload;
+        this.Retain = retain;
+        this.UserProperties = new Dictionary<string, string>();
+    }
+
     /// <summary>
     /// Gets or sets the topic of this Publish.
     /// </summary>

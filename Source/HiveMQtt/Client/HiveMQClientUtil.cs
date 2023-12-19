@@ -15,11 +15,54 @@
  */
 namespace HiveMQtt.Client;
 
+using HiveMQtt.MQTT5.Types;
+
 /// <inheritdoc />
 public partial class HiveMQClient : IDisposable, IHiveMQClient
 {
     private bool disposed;
     private int lastPacketId;
+
+    /// <summary>
+    /// Validates whether a subscription already exists.
+    /// </summary>
+    /// <param name="subscription">The subscription to compare.</param>
+    /// <returns>A boolean indicating whether the subscription exists.</returns>
+    internal bool SubscriptionExists(Subscription subscription)
+    {
+        if (this.Subscriptions.Contains(subscription))
+        {
+            return true;
+        }
+
+        foreach (var candidate in this.Subscriptions)
+        {
+            if (candidate.TopicFilter.Topic == subscription.TopicFilter.Topic)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Gets a subscription by topic from the list of existing subscriptions.
+    /// </summary>
+    /// <param name="topic">The topic to match.</param>
+    /// <returns>The subscription or null if not found.</returns>
+    internal Subscription? GetSubscriptionByTopic(string topic)
+    {
+        foreach (var subscription in this.Subscriptions)
+        {
+            if (subscription.TopicFilter.Topic == topic)
+            {
+                return subscription;
+            }
+        }
+
+        return null;
+    }
 
     /// <summary>
     /// https://learn.microsoft.com/en-us/dotnet/api/system.idisposable?view=net-6.0.

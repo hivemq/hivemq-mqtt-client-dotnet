@@ -109,8 +109,11 @@ public interface IHiveMQClient : IDisposable
     /// </example>
     /// <param name="topic">The topic filter to subscribe to.</param>
     /// <param name="qos">The <seealso cref="QualityOfService">QualityOfService</seealso> level to subscribe with.</param>
+    /// <param name="noLocal">A boolean indicating whether this client will receive the messages published by this client.</param>
+    /// <param name="retainAsPublished">A boolean indicating whether Application Messages forwarded using this subscription keep the RETAIN flag they were published with.</param>
+    /// <param name="retainHandling">A RetainHandling value indicating whether retained messages are sent when the subscription is established.</param>
     /// <returns>SubscribeResult reflecting the result of the operation.</returns>
-    Task<SubscribeResult> SubscribeAsync(string topic, QualityOfService qos = QualityOfService.AtMostOnceDelivery);
+    Task<SubscribeResult> SubscribeAsync(string topic, QualityOfService qos = QualityOfService.AtMostOnceDelivery, bool noLocal = false, bool retainAsPublished = false, RetainHandling retainHandling = RetainHandling.SendAtSubscribe);
 
     /// <summary>
     /// Subscribe with SubscribeOptions on the MQTT broker.
