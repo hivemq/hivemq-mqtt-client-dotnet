@@ -5,6 +5,27 @@ sidebar_position: 2
 
 The following serves as a few examples on how to utilize the built in event system.
 
+## Pattern
+
+All events are available on the client instance: `client.<event_name>`.  Handlers can be assigned to the event by simply adding your handler to the list:
+
+```csharp
+client.AfterDisconnect += MyAfterDisconnectHAndler
+```
+
+...where `MyAfterDisconnectHandler` is an already-defined function in my application.
+
+### Lambdas
+
+An alternative to using a pre-defined function are lambdas:
+
+```csharp
+client.AfterUnsubscribe += (sender, args) =>
+{
+    // code
+}
+```
+
 ## Display Options Prior to Connecting
 
 This example simply prints out the `HiveMQClientOptions` prior to the connect command being sent to the broker.

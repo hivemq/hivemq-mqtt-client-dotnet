@@ -29,6 +29,6 @@ using HiveMQtt.MQTT5.Types;
 | `HiveMQtt.Client.Exceptions` | HiveMQtt Exceptions. | `HiveMQttClientException` |
 | `HiveMQtt.Client.ReasonCodes` | Reason code exceptions. | `QoS1ReasonCode`, `QoS2ReasonCode`|
 | `HiveMQtt.Client.Results` | Result classes.| `ConnectResult`, `PublishResult`, `SubscribeResult`, `UnsubscribeResult`|
+| `HiveMQtt.MQTT5.Types`   | MQTT protocol types.| `QualityOfService`, `RetainHandling`, `TopicFilter` etc...|
 | `HiveMQtt.MQTT5.Packets` | MQTT packet classes. | `ConnectPacket`, `PingReqPacket` etc...|
-| `HiveMQtt.MQTT5.ReasonCodes` | Packet level reason code exceptions. | `ConnAckReasonCode`, `PubRecReasonCode`|
-| `HiveMQtt.MQTT5.Types`   | MQTT protocol types.| |
+| `HiveMQtt.MQTT5.ReasonCodes` | Packet level reason codes. | `ConnAckReasonCode`, `PubRecReasonCode`|
