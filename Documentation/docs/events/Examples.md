@@ -7,13 +7,19 @@ The following serves as a few examples on how to utilize the built in event syst
 
 ## Pattern
 
-All events are available on the client instance: `client.<event_name>`.  Handlers can be assigned to the event by simply adding your handler to the list:
+All events are available on the client instance: `client.<event_name>`.
+
+Handlers can be assigned to the event by simply adding your handler to the list.  Handlers can be either a pre-defined function or a lambda (illustrated in the next section).
 
 ```csharp
 client.AfterDisconnect += MyAfterDisconnectHAndler
 ```
 
-...where `MyAfterDisconnectHandler` is an already-defined function in my application.
+...where `MyAfterDisconnectHandler` is an already-defined function in my application with the following signature:
+
+```csharp
+static void MyAfterDisconnectHandler(object? sender, AfterDisconnectEventArgs eventArgs)
+```
 
 ### Lambdas
 
@@ -25,6 +31,10 @@ client.AfterUnsubscribe += (sender, args) =>
     // code
 }
 ```
+
+### Event Arguments
+
+The definitions for all event arguments [can be found here](https://github.com/hivemq/hivemq-mqtt-client-dotnet/tree/main/Source/HiveMQtt/Client/Events).
 
 ## Display Options Prior to Connecting
 
