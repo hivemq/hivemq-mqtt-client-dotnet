@@ -193,8 +193,13 @@ dotnet_diagnostic.IDE0028.severity = none
 dotnet_diagnostic.IDE0049.severity = none
 dotnet_diagnostic.IDE0053.severity = none
 dotnet_diagnostic.IDE0090.severity = none
+dotnet_diagnostic.IDE0300.severity = none
 dotnet_diagnostic.IDE0290.severity = none
 dotnet_diagnostic.SA1508.severity = none
+
+# FIXME: CLS Compliance
+dotnet_diagnostic.CS3001.severity = none
+dotnet_diagnostic.CS3002.severity = none
 
 ##########################################
 # Formatting Rules

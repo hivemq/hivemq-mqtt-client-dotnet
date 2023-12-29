@@ -338,7 +338,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                             break;
                         default:
                             Logger.Trace("<-- Unknown");
-                            Console.WriteLine($"Unknown packet received: {packet}");
+                            Logger.Error($"Unknown packet received: {packet}");
                             break;
                     } // switch (packet)
                 }
