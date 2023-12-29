@@ -15,6 +15,7 @@
  */
 namespace HiveMQtt.Client;
 
+using System.Security.Cryptography.X509Certificates;
 using HiveMQtt.Client.Options;
 
 /// <summary>
@@ -127,6 +128,44 @@ public class HiveMQClientOptionsBuilder
     public HiveMQClientOptionsBuilder WithUseTls(bool useTls)
     {
         this.options.UseTLS = useTls;
+        return this;
+    }
+
+    /// <summary>
+    /// Adds an X.509 certificate to be used for client authentication.  This can be called
+    /// multiple times to add multiple certificates.
+    /// </summary>
+    /// <param name="clientCertificate">The client X.509 certificate to be used for client authentication.</param>
+    /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
+    public HiveMQClientOptionsBuilder WithClientCertificate(X509Certificate2 clientCertificate)
+    {
+        this.options.ClientCertificates.Add(clientCertificate);
+        return this;
+    }
+
+    /// <summary>
+    /// Adds a list of X.509 certificates to be used for client authentication.
+    /// </summary>
+    /// <param name="clientCertificates">The list of client X.509 certificates to be used for client authentication.</param>
+    /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
+    public HiveMQClientOptionsBuilder WithClientCertificates(List<X509Certificate2> clientCertificates)
+    {
+        foreach (var certificate in clientCertificates)
+        {
+            this.options.ClientCertificates.Add(certificate);
+        }
+
+        return this;
+    }
+
+    /// <summary>
+    /// Adds an X.509 certificate to be used for client authentication.
+    /// </summary>
+    /// <param name="clientCertificatePath">The path to the client X.509 certificate to be used for client authentication.</param>
+    /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
+    public HiveMQClientOptionsBuilder WithClientCertificate(string clientCertificatePath)
+    {
+        this.options.ClientCertificates.Add(new X509Certificate2(clientCertificatePath));
         return this;
     }
 

@@ -198,6 +198,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         {
             TargetHost = this.Options.Host,
             EnabledSslProtocols = SslProtocols.Tls13 | SslProtocols.Tls12,
+            ClientCertificates = this.Options.ClientCertificates,
         };
 
         if (this.Options.AllowInvalidBrokerCertificates)
