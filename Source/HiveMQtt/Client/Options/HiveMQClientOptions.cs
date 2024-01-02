@@ -43,6 +43,7 @@ public class HiveMQClientOptions
         this.UserProperties = new Dictionary<string, string>();
         this.UseTLS = false;
         this.AllowInvalidBrokerCertificates = false;
+        this.ClientCertificates = new X509CertificateCollection();
     }
 
     // Client Identifier to be used in the Client.  Will be set automatically if not specified.
