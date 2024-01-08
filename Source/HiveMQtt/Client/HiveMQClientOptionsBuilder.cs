@@ -59,6 +59,7 @@ using HiveMQtt.Client.Options;
 public class HiveMQClientOptionsBuilder
 {
     private readonly HiveMQClientOptions options = new HiveMQClientOptions();
+    private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
     /// <summary>
     /// Sets the address of the broker to connect to.
@@ -165,8 +166,34 @@ public class HiveMQClientOptionsBuilder
     /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
     public HiveMQClientOptionsBuilder WithClientCertificate(string clientCertificatePath)
     {
-        this.options.ClientCertificates.Add(new X509Certificate2(clientCertificatePath));
-        return this;
+        if (File.Exists(clientCertificatePath))
+        {
+            // Check if the file is readable
+            try
+            {
+                using (FileStream fileStream = File.OpenRead(clientCertificatePath))
+                {
+                    // File exists and is readable.
+                    this.options.ClientCertificates.Add(new X509Certificate2(clientCertificatePath));
+                    return this;
+                }
+            }
+            catch (UnauthorizedAccessException)
+            {
+                Logger.Error("File exists but is not readable due to access permissions.");
+                throw;
+            }
+            catch (IOException)
+            {
+                Logger.Error("An I/O error occurred while trying to read the file.");
+                throw;
+            }
+        }
+        else
+        {
+            Logger.Error("File does not exist.");
+            throw new FileNotFoundException();
+        }
     }
 
     /// <summary>

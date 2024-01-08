@@ -92,13 +92,13 @@ public class ClientOptionsBuilderTest
     }
 
     [Fact]
-    public void WithClientCertificate_NonExistentDirectory_ShouldThrowDirectoryNotFoundException()
+    public void WithClientCertificate_NonExistentDirectory_ShouldThrowFileNotFoundException()
     {
         // Arrange
         var builder = new HiveMQClientOptionsBuilder();
         var nonExistentDirectoryPath = "/this/nonexistent/file.pem";
 
         // Act & Assert
-        Assert.Throws<DirectoryNotFoundException>(() => builder.WithClientCertificate(nonExistentDirectoryPath));
+        Assert.Throws<FileNotFoundException>(() => builder.WithClientCertificate(nonExistentDirectoryPath));
     }
 }
