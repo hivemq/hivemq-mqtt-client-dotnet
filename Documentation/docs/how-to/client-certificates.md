@@ -9,17 +9,61 @@ For more information on X.509 client certificates, see the following:
 
 You can add one or more client certificates to the HiveMQtt client through the `HiveMQClientOptionsBuilder` class.
 
+Adding certificates will cause the client to present these certificates to the broker upon TLS connection negotiation.
+
+# Using X509Certificate2
+
 ```csharp
 using HiveMQtt.Client.Options;
 using System.Security.Cryptography.X509Certificates;
 
+// Can pre-create a X509Certificate2 or alternatively pass a string path
+// to the certificate (see below)
 var clientCertificate = new X509Certificate2('path/to/certificate-file-1.pem');
 
-var options = new HiveMQClientOptionsBuilder().
+var options = new HiveMQClientOptionsBuilder()
                     .WithClientCertificate(clientCertificate);
                     .WithClientCertificate('path/to/certificate-file-2.pem');
 
 var client = new HiveMQttClient(options);
 ```
 
-Adding the certificates will cause the client to present these certificates to the broker upon TLS connection negotiation.
+# Using Certificates with a Passwords
+
+If your certificate and protected with a password, you can either instantiate the
+`X509Certificate2` object manually and pass it to the HiveMQtt client with
+`WithClientCertificate`:
+
+```csharp
+using HiveMQtt.Client.Options;
+using System.Security.Cryptography.X509Certificates;
+
+var clientCertificate = new X509Certificate2('path/to/certificate-with-password.pem',
+                                             'certificate-password');
+
+var options = new HiveMQClientOptionsBuilder()
+                    .WithClientCertificate(clientCertificate);
+
+var client = new HiveMQttClient(options);
+```
+
+...or alternatively, just pass the string path to the certificate with the password:
+
+```csharp
+using HiveMQtt.Client.Options;
+using System.Security.Cryptography.X509Certificates;
+
+
+var options = new HiveMQClientOptionsBuilder()
+                    .WithClientCertificate(
+                        'path/to/certificate-with-password.pem',
+                        'certificate-password'
+                    );
+
+var client = new HiveMQttClient(options);
+```
+
+# Extended Options
+
+TLS negotiation with client certificates is based on the `X509Certificate2` class.  See the [official
+.NET documentation](https://learn.microsoft.com/en-us/dotnet/api/system.security.cryptography.x509certificates.x509certificate2?view=net-8.0) for more options and information.
