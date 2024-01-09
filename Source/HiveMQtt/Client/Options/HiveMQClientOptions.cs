@@ -17,7 +17,7 @@ namespace HiveMQtt.Client.Options;
 
 using System;
 using System.Linq;
-
+using System.Security.Cryptography.X509Certificates;
 using HiveMQtt.Client;
 using HiveMQtt.Client.Exceptions;
 
@@ -43,6 +43,7 @@ public class HiveMQClientOptions
         this.UserProperties = new Dictionary<string, string>();
         this.UseTLS = false;
         this.AllowInvalidBrokerCertificates = false;
+        this.ClientCertificates = new X509CertificateCollection();
     }
 
     // Client Identifier to be used in the Client.  Will be set automatically if not specified.
@@ -155,6 +156,11 @@ public class HiveMQClientOptions
     /// Gets or sets a value indicating whether the MQTT client should use TLS.
     /// </summary>
     public bool UseTLS { get; set; }
+
+    /// <summary>
+    /// Gets or sets the collection of client X509 certificates.
+    /// </summary>
+    public X509CertificateCollection ClientCertificates { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether the MQTT client should allow invalid broker TLS certificates.

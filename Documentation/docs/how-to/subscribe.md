@@ -1,6 +1,6 @@
 # Subscribe
 
-# Set Your Message Handlers First
+## Set Your Message Handlers First
 
 You can subscribe to one or many topics in MQTT.  But to do so, you must first set a message handler.
 
@@ -27,7 +27,7 @@ client.OnMessageReceived += MessageHandler;
 
 * See: [OnMessageReceivedEventArgs](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Source/HiveMQtt/Client/Events/OnMessageReceivedEventArgs.cs)
 
-# Basic
+## Basic
 
 To subscribe to a single topic with a Quality of Service level, use `SubscribeAsync` as follows.
 
@@ -39,7 +39,7 @@ assert subscribeResult.Subscriptions.Length() == 1
 assert subscribeResult.Subscriptions[0].SubscribeReasonCode == SubAckReasonCode.GrantedQoS1
 ```
 
-# Using `SubscribeOptions`
+## Using `SubscribeOptions`
 
 To utilize the complete set of options for `SubscribeAsync`, create a `SubscribeOptions` object.
 
@@ -61,7 +61,7 @@ subscribeOptions.UserProperties.Add("Client-Geo", "-33.8688, 151.2093");
 var result = await client.SubscribeAsync(subscribeOptions).ConfigureAwait(false);
 ```
 
-# See Also
+## See Also
 
 * [TopicFilter](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Source/HiveMQtt/MQTT5/Types/TopicFilter.cs)
 * [SubscribeOptions](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Source/HiveMQtt/Client/Options/SubscribeOptions.cs)

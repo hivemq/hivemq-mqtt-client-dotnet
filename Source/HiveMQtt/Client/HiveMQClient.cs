@@ -307,10 +307,10 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         {
             subAck = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(120)).ConfigureAwait(false);
         }
-        catch (TimeoutException ex)
+        catch (TimeoutException)
         {
-            // log.Error(string.Format("Connect timeout.  No response received in time.", ex);
-            throw ex;
+            Logger.Error("Subscribe timeout.  No response received in time.");
+            throw;
         }
         finally
         {

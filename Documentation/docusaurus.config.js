@@ -145,7 +145,7 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} HiveMQ, GmbH. Built with Docusaurus.`,
+        copyright: `Copyright © ${new Date().getFullYear()} HiveMQ, GmbH.`,
       },
       prism: {
         additionalLanguages: ['csharp'],
