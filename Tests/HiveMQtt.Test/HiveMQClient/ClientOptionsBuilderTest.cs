@@ -10,7 +10,7 @@ public class ClientOptionsBuilderTest
 {
     [Theory]
 #pragma warning disable CS3016 // Arrays as attribute arguments is not CLS-compliant
-    [InlineData("mqtt.example.com", 1883, "myClientId", true, true, true, 60, "UsernamePassword", "authData", "myUserName", "myPassword", true, 10, true, true)]
+    [InlineData("mqtt.example.com", 1883, "myClientId", true, true, true, 60, "UsernamePassword", "authData", "myUserName", "myPassword", true, 10, true, true, "HiveMQClient/TestFiles/hivemq-server-cert.pem")]
 #pragma warning restore CS3016 // Arrays as attribute arguments is not CLS-compliant
     public void Build_WithValidParameters_ReturnsValidOptions(
         string broker,
@@ -27,7 +27,8 @@ public class ClientOptionsBuilderTest
         bool preferIPv6,
         int topicAliasMaximum,
         bool requestResponseInfo,
-        bool requestProblemInfo)
+        bool requestProblemInfo,
+        string clientCertificatePath)
     {
         // Arrange
         var builder = new HiveMQClientOptionsBuilder()
@@ -50,7 +51,8 @@ public class ClientOptionsBuilderTest
             .WithPreferIPv6(preferIPv6)
             .WithTopicAliasMaximum(topicAliasMaximum)
             .WithRequestResponseInformation(requestResponseInfo)
-            .WithRequestProblemInformation(requestProblemInfo);
+            .WithRequestProblemInformation(requestProblemInfo)
+            .WithClientCertificate(clientCertificatePath);
 
         // Act
         var options = builder.Build();
@@ -75,5 +77,28 @@ public class ClientOptionsBuilderTest
         Assert.NotNull(options.LastWillAndTestament);
         Assert.Equal(2, options.UserProperties.Count);
         Assert.Equal("LWT message", options.LastWillAndTestament.PayloadAsString);
+        Assert.Single(options.ClientCertificates);
+    }
+
+    [Fact]
+    public void WithClientCertificate_NonExistentFile_ShouldThrowFileNotFoundException()
+    {
+        // Arrange
+        var builder = new HiveMQClientOptionsBuilder();
+        var nonExistentFilePath = "nonexistent-file.pem";
+
+        // Act & Assert
+        Assert.Throws<FileNotFoundException>(() => builder.WithClientCertificate(nonExistentFilePath));
+    }
+
+    [Fact]
+    public void WithClientCertificate_NonExistentDirectory_ShouldThrowFileNotFoundException()
+    {
+        // Arrange
+        var builder = new HiveMQClientOptionsBuilder();
+        var nonExistentDirectoryPath = "/this/nonexistent/file.pem";
+
+        // Act & Assert
+        Assert.Throws<FileNotFoundException>(() => builder.WithClientCertificate(nonExistentDirectoryPath));
     }
 }

@@ -198,6 +198,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         {
             TargetHost = this.Options.Host,
             EnabledSslProtocols = SslProtocols.Tls13 | SslProtocols.Tls12,
+            ClientCertificates = this.Options.ClientCertificates,
         };
 
         if (this.Options.AllowInvalidBrokerCertificates)
@@ -220,7 +221,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             await ((SslStream)this.stream).AuthenticateAsClientAsync(tlsOptions).ConfigureAwait(false);
             return true;
         }
-        catch (SocketException e)
+        catch (Exception e)
         {
             Logger.Error(e.Message);
             if (e.InnerException != null)
@@ -228,18 +229,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 Logger.Error(e.InnerException.Message);
             }
 
-            Console.WriteLine("Socket error while establishing TLS connection - closing the connection.");
-            return false;
-        }
-        catch (AuthenticationException e)
-        {
-            Logger.Error(e.Message);
-            if (e.InnerException != null)
-            {
-                Logger.Error(e.InnerException.Message);
-            }
-
-            Console.WriteLine("TLS Authentication failed - closing the connection.");
+            Logger.Error("Error while establishing TLS connection - closing the connection.");
             return false;
         }
     }
