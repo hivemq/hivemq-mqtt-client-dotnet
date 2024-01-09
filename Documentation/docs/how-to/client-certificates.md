@@ -63,6 +63,21 @@ var options = new HiveMQClientOptionsBuilder()
 var client = new HiveMQttClient(options);
 ```
 
+# Security Tips
+
+When using `X509Certificate2` in C# with TLS client certificates that require a password, it's important to handle and protect the certificate passwords securely. Here are some tips to manage certificate passwords safely:
+
+1. **Avoid Hardcoding Passwords:** Never hardcode the certificate password directly in the source code. This can lead to security vulnerabilities, as the source code (or compiled binaries) could be accessed by unauthorized parties.
+
+2. **Use Configuration Files:** Store the password in a configuration file separate from the codebase. Ensure this file is not checked into source control (like Git) and is only accessible by the application and authorized team members.
+
+3. **Environment Variables:** Consider using environment variables to store certificate passwords. This is useful in cloud or containerized environments. Environment variables can be set at the operating system level or within the deployment environment, keeping sensitive data out of the code.
+
+4. **Secure Secrets Management:** When appropriate, utilize a secrets management tool (like Azure Key Vault, AWS Secrets Manager, or HashiCorp Vault) to store and access secrets like certificate passwords. These tools provide a secure and centralized way to manage sensitive data, with features like access control, audit logs, and automatic rotation of secrets.
+
+5. **Regular Updates and Rotation:** Regularly update and rotate certificates and passwords. This practice can limit the damage if a certificate or its password is compromised.
+
+
 # Extended Options
 
 TLS negotiation with client certificates is based on the `X509Certificate2` class.  See the [official
