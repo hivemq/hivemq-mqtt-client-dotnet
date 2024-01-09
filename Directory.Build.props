@@ -15,12 +15,15 @@
     <Copyright>Copyright © HiveMQ GmbH. All rights Reserved</Copyright>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/hivemq/hivemq-mqtt-client-dotnet</PackageProjectUrl>
+    <PackageProjectUrl>https://hivemq.github.io/hivemq-mqtt-client-dotnet/</PackageProjectUrl>
     <PackageIcon>Icon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <RepositoryUrl>https://github.com/hivemq/hivemq-mqtt-client-dotnet.git</RepositoryUrl>
+    <RepositoryUrl>https://github.com/hivemq/hivemq-mqtt-client-dotnet</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageReleaseNotes>https://github.com/hivemq/hivemq-mqtt-client-dotnet/releases</PackageReleaseNotes>
+    <PackageReleaseNotes>
+      The HiveMQtt release details are maintained in Github:
+      https://github.com/hivemq/hivemq-mqtt-client-dotnet/releases
+    </PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup Label="Package References">
