@@ -1,6 +1,6 @@
 # Publish
 
-# Simple
+## Simple
 
 The simple way to publish a message is to use the following API:
 
@@ -23,7 +23,7 @@ For the Quality of Service, see the [QualityOfService enum](https://github.com/h
 
 But if you want more control and extended options for a publish, see the next section.
 
-# MQTT5PublishMessage
+## MQTT5PublishMessage
 
 The [MQTT5PublishMessage](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Source/HiveMQtt/MQTT5/Types/MQTT5PublishMessage.cs) class represents the entirety of a publish message in MQTT.  If you construct this class directly, you can access all of the MQTT publish options such as `Retain`, `PayloadFormatIndicator`, `UserProperties` and so forth.
 
@@ -43,7 +43,7 @@ var result = await client.PublishAsync(message);
 
 For the full details, see the source code on [MQTT5PublishMessage](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Source/HiveMQtt/MQTT5/Types/MQTT5PublishMessage.cs).
 
-# PublishMessageBuilder
+## PublishMessageBuilder
 
 The `PublishMessageBuilder` class provides a convenient way to construct MQTT publish messages with various options and properties. It allows you to customize the topic, payload, quality of service (QoS) level, retain flag, and other attributes of the message.
 
@@ -60,7 +60,7 @@ await client.PublishAsync(publishMessage).ConfigureAwait(false);
 
 By using `PublishMessageBuilder`, you can easily construct MQTT publish messages with the desired properties and options. It provides a fluent and intuitive way to customize the topic, payload, QoS level, retain flag, and other attributes of the message.
 
-# Publish Return Value: `PublishResult`
+## Publish Return Value: `PublishResult`
 
 The `PublishAsync` method returns a `PublishResult` object.
 
@@ -70,7 +70,7 @@ For `QualityOfService.AtLeastOnceDelivery` (QoS level 1) and `QualityOfService.E
 
 For ease of use, you can call `PublishResult.ReasonCode()` to retrieve the appropriate result code automatically.
 
-# See Also
+## See Also
 
 * [MQTT5PublishMessage](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Source/HiveMQtt/MQTT5/Types/MQTT5PublishMessage.cs)
 * [QualityOfService](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Source/HiveMQtt/MQTT5/Types/QualityOfService.cs)
