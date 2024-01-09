@@ -165,7 +165,7 @@ public class HiveMQClientOptionsBuilder
     /// <param name="clientCertificatePath">The path to the client X.509 certificate to be used for client authentication.</param>
     /// <param name="password">The optional password for the client X.509 certificate.</param>
     /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
-    public HiveMQClientOptionsBuilder WithClientCertificate(string clientCertificatePath, string? password)
+    public HiveMQClientOptionsBuilder WithClientCertificate(string clientCertificatePath, string? password = null)
     {
         if (File.Exists(clientCertificatePath))
         {
