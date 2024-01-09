@@ -163,18 +163,19 @@ public class HiveMQClientOptionsBuilder
     /// Adds an X.509 certificate to be used for client authentication.
     /// </summary>
     /// <param name="clientCertificatePath">The path to the client X.509 certificate to be used for client authentication.</param>
+    /// <param name="password">The optional password for the client X.509 certificate.</param>
     /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
-    public HiveMQClientOptionsBuilder WithClientCertificate(string clientCertificatePath)
+    public HiveMQClientOptionsBuilder WithClientCertificate(string clientCertificatePath, string? password)
     {
         if (File.Exists(clientCertificatePath))
         {
             // Check if the file is readable
             try
             {
-                using (FileStream fileStream = File.OpenRead(clientCertificatePath))
+                using (var fileStream = File.OpenRead(clientCertificatePath))
                 {
                     // File exists and is readable.
-                    this.options.ClientCertificates.Add(new X509Certificate2(clientCertificatePath));
+                    this.options.ClientCertificates.Add(new X509Certificate2(clientCertificatePath, password));
                     return this;
                 }
             }
