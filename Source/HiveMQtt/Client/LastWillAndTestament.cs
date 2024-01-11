@@ -23,7 +23,72 @@ using HiveMQtt.MQTT5.Types;
 /// </summary>
 public class LastWillAndTestament
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LastWillAndTestament"/> class.
+    /// <para>
+    /// This constructor is obsolete.  Use the constructor that uses QualityOfService with a default value instead.
+    /// </para>
+    /// </summary>
+    /// <param name="topic">The topic of the Last Will and Testament.</param>
+    /// <param name="qos">The Quality of Service level for the Last Will and Testament.</param>
+    /// <param name="payload">The UTF-8 encoded payload of the Last Will and Testament.</param>
+    /// <param name="retain">A value indicating whether the Last Will and Testament should be retained by the MQTT broker when published.</param>
+    [Obsolete("Use the LastWillAndTestament constructor that uses QualityOfService with a default value instead.")]
     public LastWillAndTestament(string topic, QualityOfService? qos, string payload, bool retain = false)
+    {
+        this.Topic = topic;
+
+        if (qos is null)
+        {
+            this.QoS = QualityOfService.AtMostOnceDelivery;
+        }
+        else
+        {
+            this.QoS = (QualityOfService)qos;
+        }
+
+        this.PayloadAsString = payload;
+        this.Retain = retain;
+        this.UserProperties = new Dictionary<string, string>();
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LastWillAndTestament"/> class.
+    /// <para>
+    /// This constructor is obsolete.  Use the constructor that uses QualityOfService with a default value instead.
+    /// </para>
+    /// </summary>
+    /// <param name="topic">The topic of the Last Will and Testament.</param>
+    /// <param name="qos">The Quality of Service level for the Last Will and Testament.</param>
+    /// <param name="payload">The byte payload of the Last Will and Testament.</param>
+    /// <param name="retain">A value indicating whether the Last Will and Testament should be retained by the MQTT broker when published.</param>
+    [Obsolete("Use the LastWillAndTestament constructor that uses QualityOfService with a default value instead.")]
+    public LastWillAndTestament(string topic, QualityOfService? qos, byte[] payload, bool retain = false)
+    {
+        this.Topic = topic;
+
+        if (qos is null)
+        {
+            this.QoS = QualityOfService.AtMostOnceDelivery;
+        }
+        else
+        {
+            this.QoS = (QualityOfService)qos;
+        }
+
+        this.Payload = payload;
+        this.Retain = retain;
+        this.UserProperties = new Dictionary<string, string>();
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LastWillAndTestament"/> class.
+    /// </summary>
+    /// <param name="topic">The topic of the Last Will and Testament.</param>
+    /// <param name="payload">The UTF-8 encoded payload of the Last Will and Testament.</param>
+    /// <param name="qos">The Quality of Service level for the Last Will and Testament.</param>
+    /// <param name="retain">A value indicating whether the Last Will and Testament should be retained by the MQTT broker when published.</param>
+    public LastWillAndTestament(string topic, string payload, QualityOfService qos = QualityOfService.AtMostOnceDelivery, bool retain = false)
     {
         this.Topic = topic;
         this.QoS = qos;
@@ -32,7 +97,14 @@ public class LastWillAndTestament
         this.UserProperties = new Dictionary<string, string>();
     }
 
-    public LastWillAndTestament(string topic, QualityOfService? qos, byte[] payload, bool retain = false)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LastWillAndTestament"/> class.
+    /// </summary>
+    /// <param name="topic">The topic of the Last Will and Testament.</param>
+    /// <param name="payload">The byte payload of the Last Will and Testament.</param>
+    /// <param name="qos">The Quality of Service level for the Last Will and Testament.</param>
+    /// <param name="retain">A value indicating whether the Last Will and Testament should be retained by the MQTT broker when published.</param>
+    public LastWillAndTestament(string topic, byte[] payload, QualityOfService qos = QualityOfService.AtMostOnceDelivery, bool retain = false)
     {
         this.Topic = topic;
         this.QoS = qos;
@@ -44,12 +116,12 @@ public class LastWillAndTestament
     /// <summary>
     /// Gets or sets the topic of this Publish.
     /// </summary>
-    public string? Topic { get; set; }
+    public string Topic { get; set; }
 
     /// <summary>
     /// Gets or sets the Quality of Service level for this publish.
     /// </summary>
-    public QualityOfService? QoS { get; set; }
+    public QualityOfService QoS { get; set; }
 
     /// <summary>
     ///  Gets or sets the UTF-8 encoded payload of this Publish.
@@ -98,7 +170,7 @@ public class LastWillAndTestament
     /// See <seealso href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901062">Will Delay Interval</seealso>.
     /// </para>
     /// </summary>
-    public Int64? WillDelayInterval { get; set; }
+    public long? WillDelayInterval { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating the format of the Payload.
@@ -108,7 +180,7 @@ public class LastWillAndTestament
     /// <summary>
     /// Gets or sets a value indicating the lifetime of the message in seconds.
     /// </summary>
-    public Int64? MessageExpiryInterval { get; set; }
+    public long? MessageExpiryInterval { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating the content type of the Payload.
@@ -129,4 +201,11 @@ public class LastWillAndTestament
     /// Gets or sets a Dictionary containing the User Properties to be sent with the Last Will and Testament message.
     /// </summary>
     public Dictionary<string, string> UserProperties { get; set; }
+
+    public bool Validate()
+    {
+        // Validate Topic
+
+        return true;
+    }
 }

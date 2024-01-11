@@ -58,9 +58,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     public List<Subscription> Subscriptions { get; } = new();
 
     /// <inheritdoc />
-    internal MQTT5Properties? ConnectionProperties { get; }
-
-    /// <inheritdoc />
     public bool IsConnected() => this.connectState == ConnectState.Connected;
 
     /// <inheritdoc />
