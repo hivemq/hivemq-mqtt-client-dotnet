@@ -14,3 +14,8 @@ var result = await client.SubscribeAsync(options);
 * `result.Subscriptions` contains the list of subscriptions made with this call
 * `client.Subscriptions` is updated with complete list of subscriptions made up to this point
 * each `Subscription` object has a resulting `ReasonCode` that represents the Subscribe result in `result.Subscriptions[0].ReasonCode`
+
+## See Also
+
+* [TopicFilter.cs](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Source/HiveMQtt/MQTT5/Types/TopicFilter.cs)
+* [SubscribeOptionsBuilder.cs](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Source/HiveMQtt/Client/SubscribeOptionsBuilder.cs)

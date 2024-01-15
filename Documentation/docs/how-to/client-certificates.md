@@ -191,3 +191,11 @@ A couple tips on the above example:
 
 TLS negotiation with client certificates is based on the `X509Certificate2` class.  See the [official
 .NET documentation](https://learn.microsoft.com/en-us/dotnet/api/system.security.cryptography.x509certificates.x509certificate2?view=net-8.0) for more options and information.
+
+## See Also
+
+* [X509 Client Certificate Authentication - MQTT Security Fundamentals](https://www.hivemq.com/blog/mqtt-security-fundamentals-x509-client-certificate-authentication/)
+* [TLS/SSL - MQTT Security Fundamentals](https://www.hivemq.com/blog/mqtt-security-fundamentals-tls-ssl/)
+* [HiveMQClientOptionsBuilder.cs](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Source/HiveMQtt/Client/HiveMQClientOptionsBuilder.cs)
+* [HiveMQClientOptions.cs](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Source/HiveMQtt/Client/Options/HiveMQClientOptions.cs)
+* [Microsoft .NET Documentation: X.509](https://learn.microsoft.com/en-us/dotnet/api/system.security.cryptography.x509certificates.x509certificate2?view=net-8.0)

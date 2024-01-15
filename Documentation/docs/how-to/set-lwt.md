@@ -4,8 +4,7 @@ The Last Will and Testament support of MQTT can be used to notify subscribers th
 
 For a more in-depth explanation, see [What is MQTT Last Will and Testament (LWT)? – MQTT Essentials: Part 9](https://www.hivemq.com/blog/mqtt-essentials-part-9-last-will-and-testament/).
 
-
-# LastWillAndTestament
+## Using LastWillAndTestament
 
 This example instantiates the `LastWillAndTestament` in the `HiveMQClientOption` class.  This is then sent to the broker in the `connect` operation.
 
@@ -37,12 +36,11 @@ var disconnectResult = await client.DisconnectAsync(disconnectOptions).Configure
 
 Because the client above disconnected with `DisconnectReasonCode.DisconnectWithWillMessage`, subscribers to the `last/will` topic will receive the Last Will and Testament message as specified above.
 
-# LastWillAndTestament Builder Class
+## The LastWillAndTestament Builder Class
 
-As an ease-of-use alternative, the HiveMQtt client offers a `LastWillAndTestamentBuilder` class to more easily define a last will and testament class.
+As an ease-of-use alternative, the HiveMQtt client offers a `LastWillAndTestamentBuilder` class to more easily instantiate a `LastWillAndTestament` class.
 
 ```csharp
-
 var lwt = new LastWillAndTestamentBuilder()
             .WithTopic("last/will")
             .WithPayload("last will message")
@@ -56,13 +54,18 @@ var lwt = new LastWillAndTestamentBuilder()
             .WithWillDelayInterval(1)
             .Build();
 
-        // Setup & Connect the client with LWT
-        var options = new HiveMQClientOptions
-        {
-            LastWillAndTestament = lwt,
-        };
+// Setup & Connect the client with LWT
+var options = new HiveMQClientOptions
+{
+    LastWillAndTestament = lwt,
+};
 
-        var client = new HiveMQClient(options);
-        connectResult = await client.ConnectAsync().ConfigureAwait(false);
+var client = new HiveMQClient(options);
+connectResult = await client.ConnectAsync().ConfigureAwait(false);
 ```
 
+## See Also
+
+  * [What is MQTT Last Will and Testament (LWT)? – MQTT Essentials: Part 9](https://www.hivemq.com/blog/mqtt-essentials-part-9-last-will-and-testament/)
+  * [LastWillAndTestamentBuilder.cs](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Source/HiveMQtt/Client/LastWillAndTestamentBuilder.cs)
+  * [LastWillAndTestament.cs](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Source/HiveMQtt/Client/LastWillAndTestament.cs)

@@ -30,6 +30,12 @@ await client.DisconnectAsync().ConfigureAwait(false);
 await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
 ```
 
+## See Also
+
+* [Lifecycle Events](/docs/events)
+* [Events Source](https://github.com/hivemq/hivemq-mqtt-client-dotnet/tree/main/Source/HiveMQtt/Client/Events)
+* [TaskCompletionSource<TResult> Class (System.Threading.Tasks)](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.taskcompletionsource-1?view=net-8.0)
+
 
 
 
