@@ -22,6 +22,7 @@ using System.Text;
 
 public class LastWillAndTestamentBuilder
 {
+    private readonly Dictionary<string, string> userProperties = new Dictionary<string, string>();
     private string? topic;
     private byte[]? payload;
     private QualityOfService qos = QualityOfService.AtMostOnceDelivery;
@@ -32,32 +33,56 @@ public class LastWillAndTestamentBuilder
     private string? contentType;
     private string? responseTopic;
     private byte[]? correlationData;
-    private readonly Dictionary<string, string> userProperties = new Dictionary<string, string>();
 
+    /// <summary>
+    /// Sets the Topic for the Last Will and Testament message.
+    /// </summary>
+    /// <param name="topic">The topic name.</param>
+    /// <returns>The builder instance.</returns>
     public LastWillAndTestamentBuilder WithTopic(string topic)
     {
         this.topic = topic;
         return this;
     }
 
+    /// <summary>
+    /// Sets the Payload for the Last Will and Testament message.
+    /// </summary>
+    /// <param name="payload">The payload to send in bytes.</param>
+    /// <returns>The builder instance.</returns>
     public LastWillAndTestamentBuilder WithPayload(byte[] payload)
     {
         this.payload = payload;
         return this;
     }
 
+    /// <summary>
+    /// Sets the Payload for the Last Will and Testament message.
+    /// </summary>
+    /// <param name="payload">The string payload to send.</param>
+    /// <returns>The builder instance.</returns>
     public LastWillAndTestamentBuilder WithPayload(string payload)
     {
         this.payload = Encoding.UTF8.GetBytes(payload);
         return this;
     }
 
+    /// <summary>
+    /// Sets the Quality of Service Level for the Last Will and Testament message.
+    /// </summary>
+    /// <param name="qos">The quality of service level.</param>
+    /// <returns>The builder instance.</returns>
     public LastWillAndTestamentBuilder WithQualityOfServiceLevel(QualityOfService qos)
     {
         this.qos = qos;
         return this;
     }
 
+    /// <summary>
+    /// Sets the Retain flag for the Last Will and Testament message.
+    /// </summary>
+    /// <param name="retain">The boolean value of the retain flag.</param>
+    /// <returns>The builder instance.</returns>
     public LastWillAndTestamentBuilder WithRetain(bool retain)
     {
         this.retain = retain;
@@ -111,6 +136,18 @@ public class LastWillAndTestamentBuilder
             throw new HiveMQttClientException("Payload Format Indicator must be 0 or 1");
         }
 
+        this.payloadFormatIndicator = (byte)payloadFormatIndicator;
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the Payload Format Indicator.  This value indicates the format
+    /// of the payload.  The value is a MQTT5PayloadFormatIndicator enum.
+    /// </summary>
+    /// <param name="payloadFormatIndicator">A value from the MQTT5PayloadFormatIndicator enum.</param>
+    /// <returns>The builder instance.</returns>
+    public LastWillAndTestamentBuilder WithPayloadFormatIndicator(MQTT5PayloadFormatIndicator payloadFormatIndicator)
+    {
         this.payloadFormatIndicator = (byte)payloadFormatIndicator;
         return this;
     }
@@ -181,12 +218,23 @@ public class LastWillAndTestamentBuilder
         return this;
     }
 
+    /// <summary>
+    /// Set a user property to be sent with the Last Will and Testament message.
+    /// </summary>
+    /// <param name="key">The key of the user property.</param>
+    /// <param name="value">The value of the user property to send.</param>
+    /// <returns>The builder instance.</returns>
     public LastWillAndTestamentBuilder WithUserProperty(string key, string value)
     {
         this.userProperties.Add(key, value);
         return this;
     }
 
+    /// <summary>
+    /// Set a collection of user properties to be sent with the Last Will and Testament message.
+    /// </summary>
+    /// <param name="properties">A dictionary of user properties to send.</param>
+    /// <returns>The builder instance.</returns>
     public LastWillAndTestamentBuilder WithUserProperties(Dictionary<string, string> properties)
     {
         foreach (var property in properties)
@@ -197,6 +245,11 @@ public class LastWillAndTestamentBuilder
         return this;
     }
 
+    /// <summary>
+    /// Builds the Last Will and Testament message.
+    /// </summary>
+    /// <returns>The Last Will and Testament message.</returns>
+    /// <exception cref="HiveMQttClientException">Thrown if the Last Will and Testament message is invalid in any way.</exception>
     public LastWillAndTestament Build()
     {
         if (this.topic is null)

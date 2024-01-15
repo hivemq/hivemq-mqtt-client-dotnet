@@ -16,6 +16,8 @@
 namespace HiveMQtt.Client;
 
 using System.Text;
+using HiveMQtt.Client.Exceptions;
+using HiveMQtt.Client.Internal;
 using HiveMQtt.MQTT5.Types;
 
 /// <summary>
@@ -202,9 +204,26 @@ public class LastWillAndTestament
     /// </summary>
     public Dictionary<string, string> UserProperties { get; set; }
 
+    /// <summary>
+    /// Validates the LastWillAndTestament.
+    /// </summary>
+    /// <returns>A value indicating whether the LastWillAndTestament is valid.</returns>
+    /// <exception cref="HiveMQttClientException">Thrown if the LastWillAndTestament is not valid.</exception>
     public bool Validate()
     {
-        // Validate Topic
+        if (this.Topic is null)
+        {
+            throw new HiveMQttClientException("LastWillAndTestament requires a Topic: Topic must not be null");
+        }
+        else
+        {
+            Validator.ValidateTopicName(this.Topic);
+        }
+
+        if (this.Payload is null)
+        {
+            throw new HiveMQttClientException("LastWillAndTestament requires a Payload: Payload must not be null");
+        }
 
         return true;
     }
