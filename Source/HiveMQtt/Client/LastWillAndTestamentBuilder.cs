@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-present HiveMQ and the HiveMQ Community
+ * Copyright 2024-present HiveMQ and the HiveMQ Community
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ public class LastWillAndTestamentBuilder
     private string? contentType;
     private string? responseTopic;
     private byte[]? correlationData;
-    private Dictionary<string, string> userProperties = new Dictionary<string, string>();
+    private readonly Dictionary<string, string> userProperties = new Dictionary<string, string>();
 
     public LastWillAndTestamentBuilder WithTopic(string topic)
     {
