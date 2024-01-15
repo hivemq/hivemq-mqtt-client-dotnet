@@ -1,4 +1,4 @@
-# Configure HiveMQtt Logging
+# Configure Logging
 
 The HiveMQtt package uses [NLog](https://github.com/NLog/NLog) and can be configured with a configuration file (`NLog.config`).  Having this file in the same directory of your executable will configure the HiveMQtt logger to output as configured:
 
@@ -32,3 +32,7 @@ Setting `minlevel` to `Trace` will output all activity in the HiveMQtt package d
 2023-10-04 16:56:55.0374|TRACE|HiveMQtt.Client.HiveMQClient|OnConnAckReceivedEventLauncher
 2023-10-04 16:56:55.0379|TRACE|HiveMQtt.Client.HiveMQClient|AfterConnectEventLauncher
 ```
+
+## See Also
+
+* [NLog](https://github.com/NLog/NLog)

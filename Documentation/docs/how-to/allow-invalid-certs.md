@@ -13,3 +13,10 @@ var options = new HiveMQClientOptionsBuilder()
 var client = new HiveMQClient(options);
 var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 ```
+
+## See Also
+
+* [HiveMQClientOptionsBuilder.cs](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Source/HiveMQtt/Client/HiveMQClientOptionsBuilder.cs)
+* [HiveMQClientOptions.cs](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Source/HiveMQtt/Client/Options/HiveMQClientOptions.cs)
+* [TLS/SSL - MQTT Security Fundamentals](https://www.hivemq.com/blog/mqtt-security-fundamentals-tls-ssl/)
+* [HiveMQ Documentation on Security](https://docs.hivemq.com/hivemq/latest/user-guide/security.html)
