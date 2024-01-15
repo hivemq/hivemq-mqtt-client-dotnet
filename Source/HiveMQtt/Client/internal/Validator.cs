@@ -39,7 +39,7 @@ public class Validator
 
         if (clientId.Length == 0)
         {
-            throw new HiveMQttClientException("Client identifier must not be empty."));
+            throw new HiveMQttClientException("Client identifier must not be empty.");
         }
 
         // Regular expression to match any character that is NOT in the specified set
