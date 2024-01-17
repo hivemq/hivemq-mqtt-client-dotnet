@@ -1,11 +1,14 @@
 ---
 sidebar_position: 1
 ---
-# Reference
+# Event Reference
 
-## List of Supported Events
+This document provides a comprehensive list of events supported by the HiveMQtt client library. These events are categorized into two sections: General and Packet Level.
 
-### General
+## General Events
+
+General events are triggered by high-level operations such as connecting, subscribing, unsubscribing, and receiving messages.
+
 
 | Event         | EventArgs Class          | Event Arguments      |
 | ------------- | ------------------------ | -------------------- |
@@ -17,9 +20,10 @@ sidebar_position: 1
 | AfterUnsubscribe  | `AfterUnsubscribeEventArgs` |  `UnsubscribeResult` |
 | OnMessageReceived | `OnMessageReceivedEventArgs` |  `MQTT5PublishMessage` |
 
-### Packet Level
+## Packet Level Events
 
-These events happen based on MQTT packet activity.
+Packet level events are triggered by the underlying MQTT packet activity. These events provide a more granular level of control and can be useful for debugging or advanced use cases.
+
 
 | Event         | EventArgs Class          | Event Arguments      |
 | ------------- | ------------------------ | -------------------- |
