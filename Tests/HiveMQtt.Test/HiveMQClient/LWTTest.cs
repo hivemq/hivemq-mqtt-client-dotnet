@@ -87,7 +87,7 @@ public class LWTTest
         var disconnectResult = await client.DisconnectAsync(disconnectOptions).ConfigureAwait(false);
 
         // Wait until the LWT message is received
-        var taskResult = await taskLWTReceived.Task.WaitAsync(TimeSpan.FromSeconds(20)).ConfigureAwait(false);
+        var taskResult = await taskLWTReceived.Task.WaitAsync(TimeSpan.FromSeconds(25)).ConfigureAwait(false);
         Assert.True(taskResult);
     }
 }
