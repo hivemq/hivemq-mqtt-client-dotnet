@@ -63,11 +63,14 @@ public class SubscribeBuilderTest
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
+        var tcs = new TaskCompletionSource<bool>();
+
         var subscribeOptions = new SubscribeOptionsBuilder()
             .WithSubscription("tests/PerSubscriptionHandler", MQTT5.Types.QualityOfService.AtLeastOnceDelivery, messageReceivedHandler: (sender, args) =>
             {
                 Assert.Equal("tests/PerSubscriptionHandler", args.PublishMessage.Topic);
                 Assert.Equal("test", args.PublishMessage.PayloadAsString);
+                tcs.SetResult(true);
             })
             .Build();
 
@@ -81,7 +84,9 @@ public class SubscribeBuilderTest
         Assert.True(pubConnectResult.ReasonCode == ConnAckReasonCode.Success);
 
         var pubResult = await pubClient.PublishAsync("tests/PerSubscriptionHandler", "test").ConfigureAwait(false);
-        Assert.Equal(PubAckReasonCode.Success, pubResult.QoS1ReasonCode);
+
+        var handlerResult = await tcs.Task.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+        Assert.True(handlerResult);
 
         var disconnectResult = await subClient.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
