@@ -15,6 +15,7 @@
  */
 namespace HiveMQtt.Client;
 
+using HiveMQtt.Client.Events;
 using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.Types;
 
@@ -36,9 +37,46 @@ public class SubscribeOptionsBuilder
     /// <param name="retainAsPublished">A boolean indicating whether Application Messages forwarded using this subscription keep the RETAIN flag they were published with.</param>
     /// <param name="retainHandling">A RetainHandling value indicating whether retained messages are sent when the subscription is established.</param>
     /// <returns>SubscribeOptionsBuilder to continue the build process.</returns>
-    public SubscribeOptionsBuilder WithSubscription(string topic, QualityOfService qos, bool? noLocal = null, bool? retainAsPublished = null, RetainHandling? retainHandling = RetainHandling.SendAtSubscribe)
+    public SubscribeOptionsBuilder WithSubscription(string topic, QualityOfService qos, bool? noLocal = null, bool? retainAsPublished = null, RetainHandling? retainHandling = RetainHandling.SendAtSubscribe, EventHandler<OnMessageReceivedEventArgs> messageReceivedHandler = null)
     {
         this.options.TopicFilters.Add(new TopicFilter(topic, qos, noLocal, retainAsPublished, retainHandling));
+        if (messageReceivedHandler != null)
+        {
+            this.options.Handlers.Add(topic, handler);
+        }
+        return this;
+    }
+
+    /// <summary>
+    /// Adds a subscription to the list of subscriptions to be sent in the subscribe call.  This variation allows
+    /// the caller to specify a message handler for the subscription (aka per subscription callback).
+    /// </summary>
+    /// <param name="topicFilter">The TopicFilter for the subscription.</param>
+    /// <param name="handler">The message handler for the subscription.</param>
+    /// <returns>SubscribeOptionsBuilder to continue the build process.</returns>
+    public SubscribeOptionsBuilder WithSubscription(TopicFilter topicFilter, EventHandler<OnMessageReceivedEventArgs>? handler = null)
+    {
+        this.options.TopicFilters.Add(topicFilter);
+        if (handler != null)
+        {
+            this.options.Handlers.Add(topicFilter.Topic, handler);
+        }
+
+        return this;
+    }
+
+    /// <summary>
+    /// Adds one or many subscriptions at once given the provided list of TopicFilters.
+    /// </summary>
+    /// <param name="topicFilters">The list of TopicFilters to be added to the subscriptions.</param>
+    /// <returns>SubscribeOptionsBuilder to continue the build process.</returns>
+    public SubscribeOptionsBuilder WithSubscriptions(IEnumerable<TopicFilter> topicFilters)
+    {
+        foreach (var topicFilter in topicFilters)
+        {
+            this.options.TopicFilters.Add(topicFilter);
+        }
+
         return this;
     }
 
@@ -87,6 +125,11 @@ public class SubscribeOptionsBuilder
         return this;
     }
 
+    /// <summary>
+    /// Builds the SubscribeOptions based on the previous calls.  This
+    /// step will also run validation on the final SubscribeOptions.
+    /// </summary>
+    /// <returns>The constructed SubscribeOptions instance.</returns>
     public SubscribeOptions Build()
     {
         this.options.Validate();
