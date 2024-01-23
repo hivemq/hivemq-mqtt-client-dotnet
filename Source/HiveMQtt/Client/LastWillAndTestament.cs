@@ -35,7 +35,7 @@ public class LastWillAndTestament
     /// <param name="qos">The Quality of Service level for the Last Will and Testament.</param>
     /// <param name="payload">The UTF-8 encoded payload of the Last Will and Testament.</param>
     /// <param name="retain">A value indicating whether the Last Will and Testament should be retained by the MQTT broker when published.</param>
-    [Obsolete("Use the LastWillAndTestament constructor that uses QualityOfService with a default value instead.")]
+    [Obsolete("Use the LastWillAndTestament constructor that uses QualityOfService with a default value instead. Argument order: topic, payload, qos?, retain?.")]
     public LastWillAndTestament(string topic, QualityOfService? qos, string payload, bool retain = false)
     {
         this.Topic = topic;
@@ -64,7 +64,7 @@ public class LastWillAndTestament
     /// <param name="qos">The Quality of Service level for the Last Will and Testament.</param>
     /// <param name="payload">The byte payload of the Last Will and Testament.</param>
     /// <param name="retain">A value indicating whether the Last Will and Testament should be retained by the MQTT broker when published.</param>
-    [Obsolete("Use the LastWillAndTestament constructor that uses QualityOfService with a default value instead.")]
+    [Obsolete("Use the LastWillAndTestament constructor that uses QualityOfService with a default value instead. Argument order: topic, payload, qos?, retain?.")]
     public LastWillAndTestament(string topic, QualityOfService? qos, byte[] payload, bool retain = false)
     {
         this.Topic = topic;

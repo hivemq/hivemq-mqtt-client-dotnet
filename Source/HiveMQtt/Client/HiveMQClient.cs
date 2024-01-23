@@ -284,20 +284,20 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         // Fire the corresponding event
         this.BeforeSubscribeEventLauncher(options);
 
+        // FIXME: We should only ever have one subscribe in flight at any time (for now)
+        // Construct the MQTT Connect packet
         var packetIdentifier = this.GeneratePacketIdentifier();
         var subscribePacket = new SubscribePacket(options, (ushort)packetIdentifier);
 
+        // Setup the task completion source to wait for the SUBACK
         var taskCompletionSource = new TaskCompletionSource<SubAckPacket>();
         void TaskHandler(object? sender, OnSubAckReceivedEventArgs args) => taskCompletionSource.SetResult(args.SubAckPacket);
-
-        // FIXME: We should only ever have one subscribe in flight at any time (for now)
         EventHandler<OnSubAckReceivedEventArgs> eventHandler = TaskHandler;
         this.OnSubAckReceived += eventHandler;
 
-        // Construct the MQTT Connect packet and queue to send
+        // Queue the constructed packet to be sent on the wire
         this.sendQueue.Enqueue(subscribePacket);
 
-        // FIXME: Cancellation token and better timeout value
         SubAckPacket subAck;
         SubscribeResult subscribeResult;
         try
@@ -318,7 +318,19 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         subscribeResult = new SubscribeResult(options, subAck);
 
         // Add the subscriptions to the client
-        this.Subscriptions.AddRange(subscribeResult.Subscriptions);
+        foreach (var subscription in subscribeResult.Subscriptions)
+        {
+            // If the user has registered a handler for this topic, add it to the subscription
+            foreach (var handler in options.Handlers)
+            {
+                if (handler.Key == subscription.TopicFilter.Topic)
+                {
+                    subscription.MessageReceivedHandler = handler.Value;
+                }
+            }
+
+            this.Subscriptions.Add(subscription);
+        }
 
         // Fire the corresponding event
         this.AfterSubscribeEventLauncher(subscribeResult);

@@ -134,7 +134,18 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         var eventArgs = new OnMessageReceivedEventArgs(packet.Message);
         Logger.Trace("OnMessageReceivedEventLauncher");
+
+        // Global Event Handler
         this.OnMessageReceived?.Invoke(this, eventArgs);
+
+        // Per Subscription Event Handler
+        foreach (var subscription in this.Subscriptions)
+        {
+            if (subscription.TopicFilter.Topic == packet.Message.Topic)
+            {
+                subscription.MessageReceivedHandler?.Invoke(this, eventArgs);
+            }
+        }
     }
 
     /* ========================================================================================= */

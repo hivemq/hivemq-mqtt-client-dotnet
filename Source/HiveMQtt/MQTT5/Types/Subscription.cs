@@ -15,6 +15,7 @@
  */
 namespace HiveMQtt.MQTT5.Types;
 
+using HiveMQtt.Client.Events;
 using HiveMQtt.MQTT5.ReasonCodes;
 
 public class Subscription
@@ -25,6 +26,11 @@ public class Subscription
     /// Gets the topic filter for the subscription.
     /// </summary>
     public TopicFilter TopicFilter { get; }
+
+    /// <summary>
+    /// Gets or sets the message handler for the subscription.
+    /// </summary>
+    public EventHandler<OnMessageReceivedEventArgs>? MessageReceivedHandler { get; set; }
 
     /// <summary>
     /// Gets or sets the reason code (result) for the subscribe call.

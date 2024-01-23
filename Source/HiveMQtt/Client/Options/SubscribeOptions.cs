@@ -15,6 +15,7 @@
  */
 namespace HiveMQtt.Client.Options;
 
+using HiveMQtt.Client.Events;
 using HiveMQtt.Client.Exceptions;
 using HiveMQtt.MQTT5.Types;
 
@@ -40,6 +41,16 @@ public class SubscribeOptions
     /// Gets or sets the Topic Filters for this subscribe.
     /// </summary>
     public List<TopicFilter> TopicFilters { get; set; }
+
+    /// <summary>
+    /// Gets or sets the handlers for this subscribe.
+    /// <para>
+    /// Per subscription callbacks can be registered here. The key is the topic filter
+    /// and the value is the handler.  If the topic string isn't found in one of the
+    /// <c>List&lt;TopicFilters&gt;</c>, the handler will not be registered for that subscription.
+    /// </para>
+    /// </summary>
+    public Dictionary<string, EventHandler<OnMessageReceivedEventArgs>> Handlers { get; set; } = new Dictionary<string, EventHandler<OnMessageReceivedEventArgs>>();
 
     /// <summary>
     /// Validate that the options in this instance are valid.
