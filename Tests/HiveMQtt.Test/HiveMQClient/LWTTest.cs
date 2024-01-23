@@ -14,7 +14,7 @@ public class LWTTest
     {
         var options = new HiveMQClientOptions
         {
-            LastWillAndTestament = new LastWillAndTestament("last/will", QualityOfService.AtLeastOnceDelivery, "last will message"),
+            LastWillAndTestament = new LastWillAndTestament("last/will", "last will message"),
         };
 
         var client = new HiveMQClient(options);
@@ -66,7 +66,7 @@ public class LWTTest
         // Setup & Connect the client with LWT
         var options = new HiveMQClientOptions
         {
-            LastWillAndTestament = new LastWillAndTestament("last/will", QualityOfService.AtLeastOnceDelivery, "last will message"),
+            LastWillAndTestament = new LastWillAndTestament("last/will", "last will message"),
         };
 
         options.LastWillAndTestament.WillDelayInterval = 1;

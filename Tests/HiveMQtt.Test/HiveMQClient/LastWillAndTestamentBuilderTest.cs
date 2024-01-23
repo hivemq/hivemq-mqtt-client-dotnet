@@ -12,7 +12,6 @@ public class LastWillAndTestamentBuilderTest
     [Fact]
     public async Task Basic_Last_Will_Async()
     {
-
         var lwt = new LastWillAndTestamentBuilder()
             .WithTopic("last/will")
             .WithPayload("last will message")

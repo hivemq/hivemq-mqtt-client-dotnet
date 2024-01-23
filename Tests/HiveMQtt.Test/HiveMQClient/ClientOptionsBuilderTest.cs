@@ -4,7 +4,6 @@ using System.Text;
 using Xunit;
 
 using HiveMQtt.Client;
-using HiveMQtt.MQTT5.Types;
 
 public class ClientOptionsBuilderTest
 {
@@ -42,7 +41,7 @@ public class ClientOptionsBuilderTest
             .WithAuthenticationMethod(authMethod)
             .WithAuthenticationData(Encoding.UTF8.GetBytes(authData))
             .WithUserProperties(new Dictionary<string, string> { { "property1", "value1" }, { "property2", "value2" } })
-            .WithLastWillAndTestament(new LastWillAndTestament("lwt/topic", QualityOfService.AtLeastOnceDelivery, "LWT message", true))
+            .WithLastWillAndTestament(new LastWillAndTestament("lwt/topic", "LWT message"))
             .WithMaximumPacketSize(1024)
             .WithReceiveMaximum(100)
             .WithSessionExpiryInterval(3600)

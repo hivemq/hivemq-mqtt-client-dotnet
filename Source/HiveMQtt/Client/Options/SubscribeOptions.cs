@@ -49,6 +49,7 @@ public class SubscribeOptions
     /// and the value is the handler.  If the topic string isn't found in one of the
     /// <c>List&lt;TopicFilters&gt;</c>, the handler will not be registered for that subscription.
     /// </para>
+    /// </summary>
     public Dictionary<string, EventHandler<OnMessageReceivedEventArgs>> Handlers { get; set; } = new Dictionary<string, EventHandler<OnMessageReceivedEventArgs>>();
 
     /// <summary>

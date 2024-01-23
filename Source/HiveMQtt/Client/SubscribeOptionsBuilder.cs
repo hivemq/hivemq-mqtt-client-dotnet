@@ -36,14 +36,16 @@ public class SubscribeOptionsBuilder
     /// <param name="noLocal">A boolean indicating whether this client will receive the messages published by this client.</param>
     /// <param name="retainAsPublished">A boolean indicating whether Application Messages forwarded using this subscription keep the RETAIN flag they were published with.</param>
     /// <param name="retainHandling">A RetainHandling value indicating whether retained messages are sent when the subscription is established.</param>
+    /// <param name="messageReceivedHandler">A message handler for the subscription.</param>
     /// <returns>SubscribeOptionsBuilder to continue the build process.</returns>
-    public SubscribeOptionsBuilder WithSubscription(string topic, QualityOfService qos, bool? noLocal = null, bool? retainAsPublished = null, RetainHandling? retainHandling = RetainHandling.SendAtSubscribe, EventHandler<OnMessageReceivedEventArgs> messageReceivedHandler = null)
+    public SubscribeOptionsBuilder WithSubscription(string topic, QualityOfService qos, bool? noLocal = null, bool? retainAsPublished = null, RetainHandling? retainHandling = RetainHandling.SendAtSubscribe, EventHandler<OnMessageReceivedEventArgs>? messageReceivedHandler = null)
     {
         this.options.TopicFilters.Add(new TopicFilter(topic, qos, noLocal, retainAsPublished, retainHandling));
         if (messageReceivedHandler != null)
         {
-            this.options.Handlers.Add(topic, handler);
+            this.options.Handlers.Add(topic, messageReceivedHandler);
         }
+
         return this;
     }
 

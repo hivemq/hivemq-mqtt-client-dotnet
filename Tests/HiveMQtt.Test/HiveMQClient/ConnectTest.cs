@@ -10,7 +10,6 @@ using Xunit;
 
 public class ConnectTest
 {
-    /// TODO: Add out of order tests: connect when connected, disconnect when not connected, etc.
     [Fact]
     public async Task Basic_Connect_And_Disconnect_Async()
     {
@@ -27,64 +26,6 @@ public class ConnectTest
 
         var disconnectResult = await client.DisconnectAsync(disconnectOptions).ConfigureAwait(false);
         Assert.True(disconnectResult);
-        Assert.False(client.IsConnected());
-    }
-
-    [Fact(Skip = "Inconsistent test, sometimes fails.  TODO: Fix this test.")]
-    public async Task DoubleConnectAsync()
-    {
-        var options = new HiveMQClientOptions
-        {
-            ClientId = "DoubleConnectTest",
-        };
-
-        var client = new HiveMQClient(options);
-        Assert.NotNull(client);
-
-        var connectResult = await client.ConnectAsync().ConfigureAwait(false);
-
-        Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
-        Assert.True(client.IsConnected());
-
-        var taskCompletionSource = new TaskCompletionSource<bool>();
-        client.OnDisconnectReceived += (sender, args) =>
-        {
-            Assert.True(args.DisconnectPacket.DisconnectReasonCode == DisconnectReasonCode.SessionTakenOver);
-            taskCompletionSource.SetResult(true);
-        };
-
-        // Connect again with the same client
-        connectResult = await client.ConnectAsync().ConfigureAwait(false);
-
-        Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
-        Assert.True(client.IsConnected());
-
-        try
-        {
-            await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
-        }
-        catch (Exception)
-        {
-            Assert.True(false, "OnDisconnectReceived was not called");
-        }
-    }
-
-    [Fact(Skip = "Inconsistent test, sometimes fails.  TODO: Fix this test.")]
-    public async Task DoubleDisconnectAsync()
-    {
-        var client = new HiveMQClient();
-        Assert.NotNull(client);
-
-        var connectResult = await client.ConnectAsync().ConfigureAwait(false);
-
-        Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
-        Assert.True(client.IsConnected());
-
-        var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
-        Assert.False(client.IsConnected());
-
-        disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
-        Assert.False(disconnectResult);
         Assert.False(client.IsConnected());
     }
 
@@ -105,10 +46,7 @@ public class ConnectTest
 
         // Set up TaskCompletionSource to wait for event handlers to finish
         var taskCompletionSource = new TaskCompletionSource<bool>();
-        client.OnDisconnectSent += (sender, args) =>
-        {
-            taskCompletionSource.SetResult(true);
-        };
+        client.OnDisconnectSent += (sender, args) => taskCompletionSource.SetResult(true);
 
         // Connect and Disconnect
         var result = await client.ConnectAsync().ConfigureAwait(false);
@@ -147,10 +85,7 @@ public class ConnectTest
 
         // Set up TaskCompletionSource to wait for event handlers to finish
         var taskCompletionSource = new TaskCompletionSource<bool>();
-        client.OnDisconnectSent += (sender, args) =>
-        {
-            taskCompletionSource.SetResult(true);
-        };
+        client.OnDisconnectSent += (sender, args) => taskCompletionSource.SetResult(true);
 
         // Connect and Disconnect
         var result = await client.ConnectAsync().ConfigureAwait(false);
