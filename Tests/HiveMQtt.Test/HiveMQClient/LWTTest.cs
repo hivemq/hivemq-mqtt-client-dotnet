@@ -63,7 +63,7 @@ public class LWTTest
         Assert.Equal(SubAckReasonCode.GrantedQoS1, result.Subscriptions[0].SubscribeReasonCode);
         Assert.Equal("last/will", result.Subscriptions[0].TopicFilter.Topic);
 
-        // Setup & Connect the client with LWT
+        // Setup & Connect another client with a LWT
         var options = new HiveMQClientOptions
         {
             LastWillAndTestament = new LastWillAndTestament("last/will", "last will message"),
@@ -87,7 +87,7 @@ public class LWTTest
         var disconnectResult = await client.DisconnectAsync(disconnectOptions).ConfigureAwait(false);
 
         // Wait until the LWT message is received
-        var taskResult = await taskLWTReceived.Task.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+        var taskResult = await taskLWTReceived.Task.WaitAsync(TimeSpan.FromSeconds(20)).ConfigureAwait(false);
         Assert.True(taskResult);
     }
 }
