@@ -65,6 +65,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         this.connectState = ConnectState.Connecting;
 
+        Logger.Info("Connecting to broker at {0}:{1}", this.Options.Host, this.Options.Port);
+
         // Fire the corresponding event
         this.BeforeConnectEventLauncher(this.Options);
 
@@ -128,6 +130,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         }
 
         options ??= new DisconnectOptions();
+
+        Logger.Info("Disconnecting from broker at {0}:{1}", this.Options.Host, this.Options.Port);
 
         // Fire the corresponding event
         this.BeforeDisconnectEventLauncher();

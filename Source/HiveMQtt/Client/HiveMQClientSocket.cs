@@ -219,6 +219,24 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             Logger.Trace("Authenticating TLS connection");
             this.stream = new SslStream(stream);
             await ((SslStream)this.stream).AuthenticateAsClientAsync(tlsOptions).ConfigureAwait(false);
+
+            Logger.Info($"Connected via TLS: {((SslStream)this.stream).IsEncrypted}");
+            Logger.Debug($"Cipher Algorithm: {((SslStream)this.stream).CipherAlgorithm}");
+            Logger.Debug($"Cipher Strength: {((SslStream)this.stream).CipherStrength}");
+            Logger.Debug($"Hash Algorithm: {((SslStream)this.stream).HashAlgorithm}");
+            Logger.Debug($"Hash Strength: {((SslStream)this.stream).HashStrength}");
+            Logger.Debug($"Key Exchange Algorithm: {((SslStream)this.stream).KeyExchangeAlgorithm}");
+            Logger.Debug($"Key Exchange Strength: {((SslStream)this.stream).KeyExchangeStrength}");
+
+            var remoteCertificate = ((SslStream)this.stream).RemoteCertificate;
+            if (remoteCertificate != null)
+            {
+                Logger.Info($"Remote Certificate Subject: {remoteCertificate.Subject}");
+                Logger.Info($"Remote Certificate Issuer: {remoteCertificate.Issuer}");
+                Logger.Info($"Remote Certificate Serial Number: {remoteCertificate.GetSerialNumberString()}");
+            }
+
+            Logger.Info($"TLS Protocol: {((SslStream)this.stream).SslProtocol}");
             return true;
         }
         catch (Exception e)
