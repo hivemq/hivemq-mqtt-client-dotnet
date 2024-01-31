@@ -243,6 +243,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     {
                         if (decodedPacket is MalformedPacket)
                         {
+                            Logger.Warn($"Malformed packet received.  Disconnecting.");
+                            Logger.Debug($"Malformed packet received: {decodedPacket}");
+
                             var opts = new DisconnectOptions
                             {
                                 ReasonCode = DisconnectReasonCode.MalformedPacket,
@@ -307,6 +310,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                             break;
                         case DisconnectPacket disconnectPacket:
                             Logger.Trace($"<-- Disconnect id={disconnectPacket.PacketIdentifier}");
+                            Logger.Warn($"Disconnect received: {disconnectPacket.DisconnectReasonCode} {disconnectPacket.Properties.ReasonString}");
                             this.OnDisconnectReceivedEventLauncher(disconnectPacket);
                             break;
                         case PingRespPacket pingRespPacket:
@@ -338,7 +342,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                             break;
                         default:
                             Logger.Trace("<-- Unknown");
-                            Logger.Error($"Unknown packet received: {packet}");
+                            Logger.Error($"Unrecognized packet received.  Will discard. {packet}");
                             break;
                     } // switch (packet)
                 }
