@@ -20,7 +20,7 @@ using HiveMQtt.MQTT5.Packets;
 /// <summary>
 /// Event arguments for the <see cref="HiveMQClient.OnPublishReceived"/> event.
 /// <para>This event is called when a PUBLISH packet is received from the broker.</para>
-/// <para><see cref="OnPublishReceivedEventArgs.PublishPacket"/> contains the received PUBLISH packet.</para>
+/// <para><see cref="PublishPacket"/> contains the received PUBLISH packet.</para>
 /// </summary>
 public class OnPublishReceivedEventArgs : EventArgs
 {

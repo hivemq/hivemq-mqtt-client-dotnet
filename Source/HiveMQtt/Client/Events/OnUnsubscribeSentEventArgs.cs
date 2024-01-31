@@ -20,7 +20,7 @@ using HiveMQtt.MQTT5.Packets;
 /// <summary>
 /// Event arguments for the <see cref="HiveMQClient.OnUnsubscribeSent"/> event.
 /// <para>This event is called when a UNSUBSCRIBE packet is sent to the broker.</para>
-/// <para><see cref="OnUnsubscribeSentEventArgs.UnsubscribePacket"/> contains the sent UNSUBSCRIBE packet.</para>
+/// <para><see cref="UnsubscribePacket"/> contains the sent UNSUBSCRIBE packet.</para>
 /// </summary>
 public class OnUnsubscribeSentEventArgs : EventArgs
 {

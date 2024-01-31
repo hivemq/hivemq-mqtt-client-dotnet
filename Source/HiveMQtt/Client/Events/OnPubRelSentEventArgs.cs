@@ -20,7 +20,7 @@ using HiveMQtt.MQTT5.Packets;
 /// <summary>
 /// Event arguments for the <see cref="HiveMQClient.OnPubRelSent"/> event.
 /// <para>This event is called when a PUBREL packet is sent to the broker.</para>
-/// <para><see cref="OnPubRelSentEventArgs.PubRelPacket"/> contains the sent PUBREL packet.</para>
+/// <para><see cref="PubRelPacket"/> contains the sent PUBREL packet.</para>
 /// </summary>
 public class OnPubRelSentEventArgs : EventArgs
 {

@@ -20,7 +20,7 @@ using HiveMQtt.Client.Results;
 /// <summary>
 /// Event arguments for the <see cref="HiveMQClient.AfterUnsubscribe"/> event.
 /// <para>This event is called after a unsubscribe is sent to the broker.</para>
-/// <para><see cref="AfterUnsubscribeEventArgs.UnsubscribeResult"/> contains the result of the unsubscribe operation.</para>
+/// <para><see cref="UnsubscribeResult"/> contains the result of the unsubscribe operation.</para>
 /// </summary>
 public class AfterUnsubscribeEventArgs : EventArgs
 {

@@ -23,8 +23,8 @@ namespace HiveMQtt.Client.Events;
 /// </para>
 /// <para>
 /// If the disconnect was caused by a call to <see cref="HiveMQClient.DisconnectAsync"/>, then
-/// <see cref="AfterDisconnectEventArgs.CleanDisconnect"/> will be <c>true</c>.  If the disconnect
-/// was caused by a failure, then <see cref="AfterDisconnectEventArgs.CleanDisconnect"/> will be
+/// <see cref="CleanDisconnect"/> will be <c>true</c>.  If the disconnect
+/// was caused by a failure, then <see cref="CleanDisconnect"/> will be
 /// <c>false</c>.
 /// </para>
 /// </summary>

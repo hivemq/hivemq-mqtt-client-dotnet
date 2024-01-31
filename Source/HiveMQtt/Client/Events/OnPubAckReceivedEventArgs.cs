@@ -20,7 +20,7 @@ using HiveMQtt.MQTT5.Packets;
 /// <summary>
 /// Event arguments for the <see cref="HiveMQClient.OnPubAckReceived"/> event.
 /// <para>This event is called when a PUBACK packet is received from the broker.</para>
-/// <para><see cref="OnPubAckReceivedEventArgs.PubAckPacket"/> contains the received PUBACK packet.</para>
+/// <para><see cref="PubAckPacket"/> contains the received PUBACK packet.</para>
 /// </summary>
 public class OnPubAckReceivedEventArgs : EventArgs
 {

@@ -23,11 +23,11 @@ internal class MQTT5LastWillProperties
 {
     public MQTT5LastWillProperties() => this.UserProperties = new Dictionary<string, string>();
 
-    public UInt32? WillDelayInterval { get; set; }
+    public uint? WillDelayInterval { get; set; }
 
     public byte? PayloadFormatIndicator { get; set; }
 
-    public UInt32? MessageExpiryInterval { get; set; }
+    public uint? MessageExpiryInterval { get; set; }
 
     public string? ContentType { get; set; }
 

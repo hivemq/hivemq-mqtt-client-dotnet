@@ -20,7 +20,7 @@ using HiveMQtt.MQTT5.Packets;
 /// <summary>
 /// Event arguments for the <see cref="HiveMQClient.OnPingReqSent"/> event.
 /// <para>This event is called when a PINGREQ packet is sent to the broker.</para>
-/// <para><see cref="OnPingReqSentEventArgs.PingReqPacket"/> contains the sent PINGREQ packet.</para>
+/// <para><see cref="PingReqPacket"/> contains the sent PINGREQ packet.</para>
 /// </summary>
 public class OnPingReqSentEventArgs : EventArgs
 {
