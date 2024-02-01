@@ -38,7 +38,7 @@ public class DisconnectOptions
 
     /// <summary>
     /// Gets or sets the session expiry.  This sets the expiration for the session
-    /// to the indicated value.  The value respresents the session expiration time
+    /// to the indicated value.  The value represents the session expiration time
     /// in seconds.
     /// </summary>
     public int? SessionExpiry { get; set; }

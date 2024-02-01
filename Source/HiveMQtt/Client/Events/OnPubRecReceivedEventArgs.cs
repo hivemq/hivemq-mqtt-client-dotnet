@@ -20,7 +20,7 @@ using HiveMQtt.MQTT5.Packets;
 /// <summary>
 /// Event arguments for the <see cref="HiveMQClient.OnPubRecReceived"/> event.
 /// <para>This event is called when a PUBREC packet is received from the broker.</para>
-/// <para><see cref="OnPubRecReceivedEventArgs.PubRecPacket"/> contains the received PUBREC packet.</para>
+/// <para><see cref="PubRecPacket"/> contains the received PUBREC packet.</para>
 /// </summary>
 public class OnPubRecReceivedEventArgs : EventArgs
 {

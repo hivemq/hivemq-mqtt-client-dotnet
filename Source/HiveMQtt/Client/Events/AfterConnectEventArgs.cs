@@ -20,7 +20,7 @@ using HiveMQtt.Client.Results;
 /// <summary>
 /// Event arguments for the <see cref="HiveMQClient.AfterConnect"/> event.
 /// <para>This event is called after a connect is sent to the broker.</para>
-/// <para><see cref="AfterConnectEventArgs.ConnectResult"/> contains the result of the connect operation.</para>
+/// <para><see cref="ConnectResult"/> contains the result of the connect operation.</para>
 /// </summary>
 public class AfterConnectEventArgs : EventArgs
 {

@@ -20,7 +20,7 @@ using HiveMQtt.Client.Results;
 /// <summary>
 /// Event arguments for the <see cref="HiveMQClient.AfterSubscribe"/> event.
 /// <para>This event is called after a subscribe is sent to the broker.</para>
-/// <para><see cref="AfterSubscribeEventArgs.SubscribeResult"/> contains the result of the subscribe operation.</para>
+/// <para><see cref="SubscribeResult"/> contains the result of the subscribe operation.</para>
 /// </summary>
 public class AfterSubscribeEventArgs : EventArgs
 {

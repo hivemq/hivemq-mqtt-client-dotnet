@@ -21,7 +21,7 @@ using HiveMQtt.MQTT5.Packets;
 /// <summary>
 /// Event arguments for the <see cref="PublishPacket.OnPublishQoS2Complete"/> event.
 /// <para>This event is called when a QoS level 2 publish as been completed.</para>
-/// <para><see cref="OnPublishQoS2CompleteEventArgs.PacketList"/> contains the list of
+/// <para><see cref="PacketList"/> contains the list of
 /// packets sent/received in the QoS 2 transaction chain.</para>
 /// </summary>
 public class OnPublishQoS2CompleteEventArgs : EventArgs

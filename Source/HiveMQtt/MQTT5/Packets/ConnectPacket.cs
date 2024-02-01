@@ -80,7 +80,10 @@ public class ConnectPacket : ControlPacket
                 _ = EncodeUTF8String(vhAndPayloadStream, this.clientOptions.LastWillAndTestament.Topic);
 
                 // Will Payload
-                _ = EncodeBinaryData(vhAndPayloadStream, this.clientOptions.LastWillAndTestament.Payload);
+                if (this.clientOptions.LastWillAndTestament.Payload != null)
+                {
+                    _ = EncodeBinaryData(vhAndPayloadStream, this.clientOptions.LastWillAndTestament.Payload);
+                }
             }
 
             // Username

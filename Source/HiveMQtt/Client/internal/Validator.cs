@@ -27,10 +27,7 @@ public class Validator
     /// <param name="clientId">The client identifier to validate.</param>
     public static void ValidateClientId(string clientId)
     {
-        if (clientId is null)
-        {
-            throw new ArgumentNullException(nameof(clientId));
-        }
+        ArgumentNullException.ThrowIfNull(clientId);
 
         if (clientId.Length > 65535)
         {
@@ -62,10 +59,7 @@ public class Validator
     /// <exception cref="HiveMQttClientException">Thrown when the topic name contains any null characters.</exception>
     public static void ValidateTopicName(string topic)
     {
-        if (topic is null)
-        {
-            throw new ArgumentNullException(nameof(topic));
-        }
+        ArgumentNullException.ThrowIfNull(topic);
 
         if (topic.Length > 65535)
         {
@@ -99,10 +93,7 @@ public class Validator
     /// <exception cref="HiveMQttClientException">Thrown when the topic filter contains any null characters.</exception>
     public static void ValidateTopicFilter(string topic)
     {
-        if (topic is null)
-        {
-            throw new ArgumentNullException(nameof(topic));
-        }
+        ArgumentNullException.ThrowIfNull(topic);
 
         if (topic.Length > 65535)
         {

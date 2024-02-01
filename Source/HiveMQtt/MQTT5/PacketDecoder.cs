@@ -25,7 +25,7 @@ internal class PacketDecoder
 {
     private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
-    public static Boolean TryDecode(ReadOnlySequence<byte> buffer, out ControlPacket decodedPacket, out SequencePosition consumed)
+    public static bool TryDecode(ReadOnlySequence<byte> buffer, out ControlPacket decodedPacket, out SequencePosition consumed)
     {
         try
         {

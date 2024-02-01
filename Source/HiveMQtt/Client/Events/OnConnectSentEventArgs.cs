@@ -20,7 +20,7 @@ using HiveMQtt.MQTT5.Packets;
 /// <summary>
 /// Event arguments for the <see cref="HiveMQClient.OnConnectSent"/> event.
 /// <para>This event is called when a CONNECT packet is sent to the broker.</para>
-/// <para><see cref="OnConnectSentEventArgs.ConnectPacket"/> contains the sent CONNECT packet.</para>
+/// <para><see cref="ConnectPacket"/> contains the sent CONNECT packet.</para>
 /// </summary>
 public class OnConnectSentEventArgs : EventArgs
 {
