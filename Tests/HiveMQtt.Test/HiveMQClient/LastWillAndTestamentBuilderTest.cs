@@ -47,7 +47,7 @@ public class LastWillAndTestamentBuilderTest
         {
             messagesReceived++;
             Assert.Equal(QualityOfService.AtLeastOnceDelivery, args.PublishMessage.QoS);
-            Assert.Equal("last/will", args.PublishMessage.Topic);
+            Assert.Equal("last/will7", args.PublishMessage.Topic);
             Assert.Equal("last will message", args.PublishMessage.PayloadAsString);
             Assert.Equal("application/text", args.PublishMessage.ContentType);
             Assert.Equal("response/topic", args.PublishMessage.ResponseTopic);
@@ -64,13 +64,13 @@ public class LastWillAndTestamentBuilderTest
             taskLWTReceived.SetResult(true);
         };
 
-        var result = await listenerClient.SubscribeAsync("last/will", QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
+        var result = await listenerClient.SubscribeAsync("last/will7", QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
         Assert.Single(result.Subscriptions);
         Assert.Equal(SubAckReasonCode.GrantedQoS1, result.Subscriptions[0].SubscribeReasonCode);
-        Assert.Equal("last/will", result.Subscriptions[0].TopicFilter.Topic);
+        Assert.Equal("last/will7", result.Subscriptions[0].TopicFilter.Topic);
 
         var lwt = new LastWillAndTestamentBuilder()
-            .WithTopic("last/will")
+            .WithTopic("last/will7")
             .WithPayload("last will message")
             .WithQualityOfServiceLevel(QualityOfService.AtLeastOnceDelivery)
             .WithContentType("application/text")
@@ -79,7 +79,7 @@ public class LastWillAndTestamentBuilderTest
             .WithPayloadFormatIndicator(MQTT5PayloadFormatIndicator.UTF8Encoded)
             .WithMessageExpiryInterval(100)
             .WithUserProperty("userPropertyKey", "userPropertyValue")
-            .WithWillDelayInterval(1)
+            .WithWillDelayInterval(5)
             .Build();
 
         // Setup & Connect the client with LWT
@@ -92,6 +92,8 @@ public class LastWillAndTestamentBuilderTest
         connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
         Assert.True(client.IsConnected());
+
+        await Task.Delay(5000).ConfigureAwait(false);
 
         // Call DisconnectWithWillMessage.  listenerClient should receive the LWT message
         var disconnectOptions = new DisconnectOptions { ReasonCode = DisconnectReasonCode.DisconnectWithWillMessage };
