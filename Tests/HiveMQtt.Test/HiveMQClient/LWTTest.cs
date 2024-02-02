@@ -69,7 +69,7 @@ public class LWTTest
             LastWillAndTestament = new LastWillAndTestament("last/will", "last will message"),
         };
 
-        options.LastWillAndTestament.WillDelayInterval = 1;
+        options.LastWillAndTestament.WillDelayInterval = 5;
         options.LastWillAndTestament.PayloadFormatIndicator = 1;
         options.LastWillAndTestament.MessageExpiryInterval = 100;
         options.LastWillAndTestament.ContentType = "application/text";
