@@ -79,7 +79,7 @@ public class LastWillAndTestamentBuilderTest
             .WithPayloadFormatIndicator(MQTT5PayloadFormatIndicator.UTF8Encoded)
             .WithMessageExpiryInterval(100)
             .WithUserProperty("userPropertyKey", "userPropertyValue")
-            .WithWillDelayInterval(1)
+            .WithWillDelayInterval(6)
             .Build();
 
         // Setup & Connect the client with LWT
