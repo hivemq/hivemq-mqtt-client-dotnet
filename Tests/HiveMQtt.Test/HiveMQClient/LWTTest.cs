@@ -41,7 +41,7 @@ public class LWTTest
         {
             messagesReceived++;
             Assert.Equal(QualityOfService.AtLeastOnceDelivery, args.PublishMessage.QoS);
-            Assert.Equal("last/will", args.PublishMessage.Topic);
+            Assert.Equal("last/will2", args.PublishMessage.Topic);
             Assert.Equal("last will message", args.PublishMessage.PayloadAsString);
             Assert.Equal("application/text", args.PublishMessage.ContentType);
             Assert.Equal("response/topic", args.PublishMessage.ResponseTopic);
@@ -58,15 +58,15 @@ public class LWTTest
             taskLWTReceived.SetResult(true);
         };
 
-        var result = await listenerClient.SubscribeAsync("last/will", QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
+        var result = await listenerClient.SubscribeAsync("last/will2", QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
         Assert.Single(result.Subscriptions);
         Assert.Equal(SubAckReasonCode.GrantedQoS1, result.Subscriptions[0].SubscribeReasonCode);
-        Assert.Equal("last/will", result.Subscriptions[0].TopicFilter.Topic);
+        Assert.Equal("last/will2", result.Subscriptions[0].TopicFilter.Topic);
 
         // Setup & Connect another client with a LWT
         var options = new HiveMQClientOptions
         {
-            LastWillAndTestament = new LastWillAndTestament("last/will", "last will message"),
+            LastWillAndTestament = new LastWillAndTestament("last/will2", "last will message"),
         };
 
         options.LastWillAndTestament.WillDelayInterval = 5;
@@ -81,6 +81,8 @@ public class LWTTest
         connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
         Assert.True(client.IsConnected());
+
+        await Task.Delay(5000).ConfigureAwait(false);
 
         // Call DisconnectWithWillMessage.  listenerClient should receive the LWT message
         var disconnectOptions = new DisconnectOptions { ReasonCode = DisconnectReasonCode.DisconnectWithWillMessage };
