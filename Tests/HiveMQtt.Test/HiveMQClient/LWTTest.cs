@@ -10,21 +10,6 @@ using Xunit;
 public class LWTTest
 {
     [Fact]
-    public async Task Basic_Last_Will_Async()
-    {
-        var options = new HiveMQClientOptions
-        {
-            LastWillAndTestament = new LastWillAndTestament("last/will", "last will message"),
-        };
-
-        var client = new HiveMQClient(options);
-
-        var connectResult = await client.ConnectAsync().ConfigureAwait(false);
-        Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
-        Assert.True(client.IsConnected());
-    }
-
-    [Fact]
     public async Task Last_Will_With_Properties_Async()
     {
         // Setup & Connect a client to listen for LWT
@@ -72,6 +57,7 @@ public class LWTTest
         options.LastWillAndTestament.WillDelayInterval = 5;
         options.LastWillAndTestament.PayloadFormatIndicator = 1;
         options.LastWillAndTestament.MessageExpiryInterval = 100;
+        options.LastWillAndTestament.QoS = QualityOfService.AtLeastOnceDelivery;
         options.LastWillAndTestament.ContentType = "application/text";
         options.LastWillAndTestament.ResponseTopic = "response/topic";
         options.LastWillAndTestament.CorrelationData = new byte[] { 1, 2, 3, 4, 5 };
@@ -91,5 +77,8 @@ public class LWTTest
         // Wait until the LWT message is received
         var taskResult = await taskLWTReceived.Task.WaitAsync(TimeSpan.FromSeconds(25)).ConfigureAwait(false);
         Assert.True(taskResult);
+
+        Assert.Equal(1, messagesReceived);
+        await listenerClient.DisconnectAsync().ConfigureAwait(false);
     }
 }
