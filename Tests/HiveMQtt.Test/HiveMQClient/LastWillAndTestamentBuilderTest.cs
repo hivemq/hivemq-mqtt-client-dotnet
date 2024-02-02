@@ -64,7 +64,7 @@ public class LastWillAndTestamentBuilderTest
             taskLWTReceived.SetResult(true);
         };
 
-        var result = await listenerClient.SubscribeAsync("last/will", QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
+        var result = await listenerClient.SubscribeAsync("last/will7", QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
         Assert.Single(result.Subscriptions);
         Assert.Equal(SubAckReasonCode.GrantedQoS1, result.Subscriptions[0].SubscribeReasonCode);
         Assert.Equal("last/will7", result.Subscriptions[0].TopicFilter.Topic);
