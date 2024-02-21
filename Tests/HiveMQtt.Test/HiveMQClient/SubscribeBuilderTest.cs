@@ -1,5 +1,6 @@
 namespace HiveMQtt.Test.HiveMQClient;
 
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using HiveMQtt.Client;
 using HiveMQtt.Client.Events;
@@ -150,6 +151,57 @@ public class SubscribeBuilderTest
         var globalHandlerResult = await gtcs.Task.ConfigureAwait(false);
         Assert.True(handlerResult);
         Assert.True(globalHandlerResult);
+
+        var disconnectResult = await subClient.DisconnectAsync().ConfigureAwait(false);
+        Assert.True(disconnectResult);
+    }
+
+    [Fact]
+    public async Task PerSubHandlerWithSingleLevelWildcardAsync()
+    {
+        // Create a subClient that subscribes to a topic with a single-level wildcard
+        var subClient = new HiveMQClient();
+        var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
+        Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
+
+        var tcs = new TaskCompletionSource<bool>();
+        var messageCount = 0;
+
+        var subscribeOptions = new SubscribeOptionsBuilder()
+            .WithSubscription("tests/PerSubHandlerWithSingleLevelWildcard/+/msg", MQTT5.Types.QualityOfService.AtLeastOnceDelivery, messageReceivedHandler: (sender, args) =>
+            {
+                messageCount++;
+                var pattern = @"^tests/PerSubHandlerWithSingleLevelWildcard/[0-2]/msg$";
+                var regex = new Regex(pattern);
+                Assert.Matches(regex, args.PublishMessage.Topic);
+
+                Assert.Equal("test", args.PublishMessage.PayloadAsString);
+
+                if (messageCount == 3)
+                {
+                    tcs.SetResult(true);
+                }
+            })
+            .Build();
+
+        var subResult = await subClient.SubscribeAsync(subscribeOptions).ConfigureAwait(false);
+
+        Assert.NotEmpty(subResult.Subscriptions);
+        Assert.Equal(SubAckReasonCode.GrantedQoS1, subResult.Subscriptions[0].SubscribeReasonCode);
+
+        var pubClient = new HiveMQClient();
+        var pubConnectResult = await pubClient.ConnectAsync().ConfigureAwait(false);
+        Assert.True(pubConnectResult.ReasonCode == ConnAckReasonCode.Success);
+
+        // Publish 3 messages that will match the single-level wildcard
+        for (var i = 0; i < 3; i++)
+        {
+            await pubClient.PublishAsync($"tests/PerSubHandlerWithSingleLevelWildcard/{i}/msg", "test").ConfigureAwait(false);
+        }
+
+        // Wait for the 3 messages to be received by the per-subscription handler
+        var handlerResult = await tcs.Task.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+        Assert.True(handlerResult);
 
         var disconnectResult = await subClient.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
