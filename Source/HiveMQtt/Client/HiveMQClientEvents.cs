@@ -141,7 +141,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         // Per Subscription Event Handler
         foreach (var subscription in this.Subscriptions)
         {
-            if (subscription.TopicFilter.Topic == packet.Message.Topic)
+            if (packet.Message.Topic != null && MatchTopic(subscription.TopicFilter.Topic, packet.Message.Topic))
             {
                 subscription.MessageReceivedHandler?.Invoke(this, eventArgs);
             }

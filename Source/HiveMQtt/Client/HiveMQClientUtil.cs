@@ -15,6 +15,8 @@
  */
 namespace HiveMQtt.Client;
 
+using System;
+using System.Text.RegularExpressions;
 using HiveMQtt.MQTT5.Types;
 
 /// <inheritdoc />
@@ -62,6 +64,71 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// This method is used to determine if a topic filter matches a topic.
+    ///
+    /// It implements the MQTT 5.0 specification definitions for single-level
+    /// and multi-level wildcard characters (and related rules).
+    ///
+    /// </summary>
+    /// <param name="pattern">The topic filter.</param>
+    /// <param name="candidate">The topic to match.</param>
+    /// <returns>A boolean indicating whether the topic filter matches the topic.</returns>
+    /// <exception cref="ArgumentException">Thrown when the topic filter is invalid.</exception>
+    public static bool MatchTopic(string pattern, string candidate)
+    {
+        if (pattern == candidate)
+        {
+            return true;
+        }
+
+        if (pattern == "#")
+        {
+            // A subscription to “#” will not receive any messages published to a topic beginning with a $
+            if (candidate.StartsWith("$", System.StringComparison.CurrentCulture))
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        if (pattern == "+")
+        {
+            // A subscription to “+” will not receive any messages published to a topic containing a $
+            if (candidate.StartsWith("$", System.StringComparison.CurrentCulture) ||
+                candidate.StartsWith("/", System.StringComparison.CurrentCulture))
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        // If pattern contains a multi-level wildcard character, it must be the last character in the pattern
+        // and it must be preceded by a topic level separator.
+        var mlwcValidityRegex = new Regex(@"(?<!/)#");
+
+        if (pattern.Contains("/#/") | mlwcValidityRegex.IsMatch(pattern))
+        {
+            throw new ArgumentException(
+                "The multi-level wildcard character must be specified either on its own or following a topic level separator. " +
+                "In either case it must be the last character specified in the Topic Filter.");
+        }
+
+        // ^sport\/tennis\/player1(\/?|.+)$
+        var regexp = "\\A" + Regex.Escape(pattern).Replace(@"\+", @"?[/][^/]*") + "\\z";
+
+        regexp = regexp.Replace(@"/\#", @"(/?|.+)");
+        regexp = regexp.EndsWith("\\z", System.StringComparison.CurrentCulture) ? regexp : regexp + "\\z";
+
+        return Regex.IsMatch(candidate, regexp);
     }
 
     /// <summary>
