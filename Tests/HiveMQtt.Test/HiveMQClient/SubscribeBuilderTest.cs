@@ -219,10 +219,13 @@ public class SubscribeBuilderTest
         var messageCount = 0;
 
         var subscribeOptions = new SubscribeOptionsBuilder()
-            .WithSubscription("tests/PerSubHandlerWithSingleLevelWildcard/+/msg", MQTT5.Types.QualityOfService.AtLeastOnceDelivery, messageReceivedHandler: (sender, args) =>
+            .WithSubscription(
+                "tests/PerSubHandlerWithMultiLevelWildcard/#",
+                MQTT5.Types.QualityOfService.AtLeastOnceDelivery,
+                messageReceivedHandler: (sender, args) =>
             {
                 messageCount++;
-                var pattern = @"^tests/PerSubHandlerWithSingleLevelWildcard/[0-2]/msg$";
+                var pattern = @"\Atests/PerSubHandlerWithMultiLevelWildcard/(/?|.+)\z";
                 var regex = new Regex(pattern);
                 Assert.Matches(regex, args.PublishMessage.Topic);
 
@@ -244,11 +247,10 @@ public class SubscribeBuilderTest
         var pubConnectResult = await pubClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(pubConnectResult.ReasonCode == ConnAckReasonCode.Success);
 
-        // Publish 3 messages that will match the single-level wildcard
-        for (var i = 0; i < 3; i++)
-        {
-            await pubClient.PublishAsync($"tests/PerSubHandlerWithSingleLevelWildcard/{i}/msg", "test").ConfigureAwait(false);
-        }
+        // Publish 3 messages that will match the multi-level wildcard
+        await pubClient.PublishAsync($"tests/PerSubHandlerWithMultiLevelWildcard/1", "test").ConfigureAwait(false);
+        await pubClient.PublishAsync($"tests/PerSubHandlerWithMultiLevelWildcard/1/2", "test").ConfigureAwait(false);
+        await pubClient.PublishAsync($"tests/PerSubHandlerWithMultiLevelWildcard/1/2/3/4/5", "test").ConfigureAwait(false);
 
         // Wait for the 3 messages to be received by the per-subscription handler
         var handlerResult = await tcs.Task.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
