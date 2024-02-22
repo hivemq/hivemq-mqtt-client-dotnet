@@ -97,6 +97,20 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             }
         }
 
+        if (pattern == "+")
+        {
+            // A subscription to “+” will not receive any messages published to a topic containing a $
+            if (candidate.StartsWith("$", System.StringComparison.CurrentCulture) ||
+                candidate.StartsWith("/", System.StringComparison.CurrentCulture))
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
         // If pattern contains a multi-level wildcard character, it must be the last character in the pattern
         // and it must be preceded by a topic level separator.
         var mlwcValidityRegex = new Regex(@"(?<!/)#");
@@ -109,11 +123,10 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         }
 
         // ^sport\/tennis\/player1(\/?|.+)$
-        var regexp = "^" + Regex.Escape(pattern).Replace(@"\+", "[^/]+");
-        Console.WriteLine(regexp);
+        var regexp = "\\A" + Regex.Escape(pattern).Replace(@"\+", @"?[/][^/]*") + "\\z";
 
-        regexp = regexp.Replace(@"/\#", @"(/?|.+)") + "$";
-        Console.WriteLine(regexp);
+        regexp = regexp.Replace(@"/\#", @"(/?|.+)");
+        regexp = regexp.EndsWith("\\z", System.StringComparison.CurrentCulture) ? regexp : regexp + "\\z";
 
         return Regex.IsMatch(candidate, regexp);
     }

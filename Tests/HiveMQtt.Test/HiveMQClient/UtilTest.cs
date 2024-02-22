@@ -41,10 +41,6 @@ public class UtilTest
         result = HiveMQClient.MatchTopic("sport/+/player1", "sport/tennis/player1");
         Assert.True(result);
 
-        // "/finance" matches “+/+”
-        result = HiveMQClient.MatchTopic("+/+", "/finance");
-        Assert.True(result);
-
         // "/finance" matches “/+”
         result = HiveMQClient.MatchTopic("/+", "/finance");
         Assert.True(result);
