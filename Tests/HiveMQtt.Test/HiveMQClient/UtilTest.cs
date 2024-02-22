@@ -56,6 +56,10 @@ public class UtilTest
         // A subscription to “$SYS/monitor/+” will receive messages published to “$SYS/monitor/Clients”
         result = HiveMQClient.MatchTopic("$SYS/monitor/+", "$SYS/monitor/Clients");
         Assert.True(result);
+
+        // https://github.com/hivemq/hivemq-mqtt-client-dotnet/issues/126
+        result = HiveMQClient.MatchTopic("hivemqtt/sendmessageonloop/+/test", "hivemqtt/sendmessageonloop/2938472/test");
+        Assert.True(result);
     }
 
     [Fact]
