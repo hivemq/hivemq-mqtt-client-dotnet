@@ -3,7 +3,7 @@
   <PropertyGroup Label="Build">
     <TargetFramework>net6.0</TargetFramework>
     <AssemblyName>HiveMQtt</AssemblyName>
-    <Description>HiveMQ MQTT Client that is a MQTT 5.0 compatible C# client library.</Description>
+    <Description>The HiveMQ MQTT Client is a MQTT 5.0 compatible C# library.</Description>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -11,8 +11,8 @@
   </PropertyGroup>
 
   <PropertyGroup Label="Package">
-    <Product>HiveMQtt: A Universal MQTT Client</Product>
-    <Description>HiveMQ MQTT Client that is a MQTT 5.0 compatible C# client library.</Description>
+    <Product>HiveMQtt</Product>
+    <Description>The HiveMQ MQTT Client is a MQTT 5.0 compatible C# library.</Description>
     <PackageTags>MQTT;HIVEMQ;IOT</PackageTags>
   </PropertyGroup>
 

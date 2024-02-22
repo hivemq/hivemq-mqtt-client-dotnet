@@ -10,21 +10,6 @@ using Xunit;
 public class LWTTest
 {
     [Fact]
-    public async Task Basic_Last_Will_Async()
-    {
-        var options = new HiveMQClientOptions
-        {
-            LastWillAndTestament = new LastWillAndTestament("last/will", "last will message"),
-        };
-
-        var client = new HiveMQClient(options);
-
-        var connectResult = await client.ConnectAsync().ConfigureAwait(false);
-        Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
-        Assert.True(client.IsConnected());
-    }
-
-    [Fact]
     public async Task Last_Will_With_Properties_Async()
     {
         // Setup & Connect a client to listen for LWT
@@ -41,7 +26,7 @@ public class LWTTest
         {
             messagesReceived++;
             Assert.Equal(QualityOfService.AtLeastOnceDelivery, args.PublishMessage.QoS);
-            Assert.Equal("last/will", args.PublishMessage.Topic);
+            Assert.Equal("last/will2", args.PublishMessage.Topic);
             Assert.Equal("last will message", args.PublishMessage.PayloadAsString);
             Assert.Equal("application/text", args.PublishMessage.ContentType);
             Assert.Equal("response/topic", args.PublishMessage.ResponseTopic);
@@ -58,20 +43,21 @@ public class LWTTest
             taskLWTReceived.SetResult(true);
         };
 
-        var result = await listenerClient.SubscribeAsync("last/will", QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
+        var result = await listenerClient.SubscribeAsync("last/will2", QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
         Assert.Single(result.Subscriptions);
         Assert.Equal(SubAckReasonCode.GrantedQoS1, result.Subscriptions[0].SubscribeReasonCode);
-        Assert.Equal("last/will", result.Subscriptions[0].TopicFilter.Topic);
+        Assert.Equal("last/will2", result.Subscriptions[0].TopicFilter.Topic);
 
         // Setup & Connect another client with a LWT
         var options = new HiveMQClientOptions
         {
-            LastWillAndTestament = new LastWillAndTestament("last/will", "last will message"),
+            LastWillAndTestament = new LastWillAndTestament("last/will2", "last will message"),
         };
 
-        options.LastWillAndTestament.WillDelayInterval = 1;
+        options.LastWillAndTestament.WillDelayInterval = 5;
         options.LastWillAndTestament.PayloadFormatIndicator = 1;
         options.LastWillAndTestament.MessageExpiryInterval = 100;
+        options.LastWillAndTestament.QoS = QualityOfService.AtLeastOnceDelivery;
         options.LastWillAndTestament.ContentType = "application/text";
         options.LastWillAndTestament.ResponseTopic = "response/topic";
         options.LastWillAndTestament.CorrelationData = new byte[] { 1, 2, 3, 4, 5 };
@@ -82,6 +68,8 @@ public class LWTTest
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
         Assert.True(client.IsConnected());
 
+        await Task.Delay(5000).ConfigureAwait(false);
+
         // Call DisconnectWithWillMessage.  listenerClient should receive the LWT message
         var disconnectOptions = new DisconnectOptions { ReasonCode = DisconnectReasonCode.DisconnectWithWillMessage };
         var disconnectResult = await client.DisconnectAsync(disconnectOptions).ConfigureAwait(false);
@@ -89,5 +77,8 @@ public class LWTTest
         // Wait until the LWT message is received
         var taskResult = await taskLWTReceived.Task.WaitAsync(TimeSpan.FromSeconds(25)).ConfigureAwait(false);
         Assert.True(taskResult);
+
+        Assert.Equal(1, messagesReceived);
+        await listenerClient.DisconnectAsync().ConfigureAwait(false);
     }
 }
