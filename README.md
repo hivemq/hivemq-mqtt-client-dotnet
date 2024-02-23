@@ -19,7 +19,7 @@ We'd appreciate any feedback you have.  Happy MQTT adventures!
 * **Extensive Event System**: Hook into all parts of the client down to the packet level with [built in events](https://hivemq.github.io/hivemq-mqtt-client-dotnet/docs/events).
 * **Globally Compatible**: Built to be a fully compliant MQTT 5.0 client compatible with all reputable MQTT brokers.
 * **Actively Maintained**: Built by the MQTT professionals that built HiveMQ (and do this for a living).
-* **Extensively Documented**: What good is it without excellent documentation?
+* **Extensively Documented**: What good is it without [excellent documentation](https://hivemq.github.io/hivemq-mqtt-client-dotnet/)?
 * **Supported**: Contact us anytime in [this repository](https://github.com/hivemq/hivemq-mqtt-client-dotnet/issues), in the [community forum](https://community.hivemq.com) or [through support](https://www.hivemq.com/support/).
 
 _Do you have a success story with this client?  [Let us know]().  We'd love to feature your story in a blog post or video and you'll get some sweet HiveMQ swag (and publicity) along the way._
