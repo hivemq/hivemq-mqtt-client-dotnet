@@ -12,11 +12,16 @@ _This .NET MQTT client was put together with love from the HiveMQ team but is st
 
 We'd appreciate any feedback you have.  Happy MQTT adventures!
 
-* **Easy-to-Install**: Available as a Nuget package.
+* **Easy-to-Install**: Available as a [Nuget package](https://www.nuget.org/packages/HiveMQtt).
 * **Opensource**: No blackbox code.  Only trusted, tested and reviewed opensource code.
 * **Works with Any MQTT 5.0 Broker**: Built by HiveMQ _but not only for_ HiveMQ.
 * **Easy to Use**: Smart defaults, excellent interfaces and intelligent automation makes implementing a breeze.
+* **Compliant**: Fully compliant with the [MQTT 5.0 specification](https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.html).
 * **Extensive Event System**: Hook into all parts of the client down to the packet level with [built in events](https://hivemq.github.io/hivemq-mqtt-client-dotnet/docs/events).
+* **Global and Per-Subscription Message Handling**: Use multiple targeted handlers for more targeted and specialized message processing.
+* **Full Last Will & Testament Support**: Reliable message delivery and notification of client disconnections.
+* **Observable**: Configure up to [TRACE level logging](https://hivemq.github.io/hivemq-mqtt-client-dotnet/docs/how-to/debug) for package internals.
+* **Secure Client Identification**: Full support for [X.509 client certificates](https://hivemq.github.io/hivemq-mqtt-client-dotnet/docs/how-to/client-certificates) and TLS connections.
 * **Globally Compatible**: Built to be a fully compliant MQTT 5.0 client compatible with all reputable MQTT brokers.
 * **Actively Maintained**: Built by the MQTT professionals that built HiveMQ (and do this for a living).
 * **Extensively Documented**: What good is it without [excellent documentation](https://hivemq.github.io/hivemq-mqtt-client-dotnet/)?
@@ -102,10 +107,12 @@ var publishResult = await client.PublishAsync("topic1/example", "Hello Payload")
 
 For a Quickstart, more examples and walkthroughs, see [the documentation](https://hivemq.github.io/hivemq-mqtt-client-dotnet/docs/quickstart).
 
-## Other MQTT Clients
+## Other Other MQTT Clients
 
 * [Java](https://github.com/hivemq/hivemq-mqtt-client)
 * [Javascript](https://github.com/hivemq/hivemq-mqtt-web-client)
+
+For a list of all known MQTT clients, see [MQTT.org](https://mqtt.org/software/).
 
 ## 🛡 License
 
