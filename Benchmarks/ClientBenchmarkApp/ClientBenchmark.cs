@@ -17,7 +17,7 @@ public class ClientBenchmarks
 {
     private HiveMQClient client;
 
-    private string smallPayload = new string(/*lang=json,strict*/ "{\"interference\": \"1029384\"}");
+    private readonly string smallPayload = new string(/*lang=json,strict*/ "{\"interference\": \"1029384\"}");
 
     [GlobalSetup]
     public void Setup()
