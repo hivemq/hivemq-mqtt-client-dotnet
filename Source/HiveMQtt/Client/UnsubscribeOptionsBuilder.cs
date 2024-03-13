@@ -22,10 +22,7 @@ public class UnsubscribeOptionsBuilder
 {
     private readonly UnsubscribeOptions options;
 
-    public UnsubscribeOptionsBuilder()
-    {
-        this.options = new UnsubscribeOptions();
-    }
+    public UnsubscribeOptionsBuilder() => this.options = new UnsubscribeOptions();
 
     /// <summary>
     /// Adds a single subscription to the UnsubscribeOption.

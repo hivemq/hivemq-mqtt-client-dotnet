@@ -23,10 +23,7 @@ public class SubscribeOptionsBuilder
 {
     private readonly SubscribeOptions options;
 
-    public SubscribeOptionsBuilder()
-    {
-        this.options = new SubscribeOptions();
-    }
+    public SubscribeOptionsBuilder() => this.options = new SubscribeOptions();
 
     /// <summary>
     /// Adds a subscription to the list of subscriptions to be sent in the subscribe call.
