@@ -99,7 +99,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         if (pattern == "+")
         {
-            // A subscription to “+” will not receive any messages published to a topic containing a $
+            // A subscription to “+” will not receive any messages published to a topic beginning with a $ or /
             if (candidate.StartsWith("$", System.StringComparison.CurrentCulture) ||
                 candidate.StartsWith("/", System.StringComparison.CurrentCulture))
             {

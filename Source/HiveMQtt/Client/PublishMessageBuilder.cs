@@ -25,10 +25,7 @@ public class PublishMessageBuilder
     /// </summary>
     private readonly MQTT5PublishMessage message;
 
-    public PublishMessageBuilder()
-    {
-        this.message = new MQTT5PublishMessage();
-    }
+    public PublishMessageBuilder() => this.message = new MQTT5PublishMessage();
 
     /// <summary>
     /// Sets the payload of the publish message.

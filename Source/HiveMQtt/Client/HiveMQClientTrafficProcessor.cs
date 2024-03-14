@@ -46,7 +46,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         {
             var stopWatch = new Stopwatch();
             var keepAlivePeriod = this.Options.KeepAlive / 2;
-            TimeSpan elapsed;
 
             stopWatch.Start();
 
@@ -54,9 +53,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
             while (this.connectState != ConnectState.Disconnected)
             {
-                elapsed = stopWatch.Elapsed;
-
-                if (elapsed > TimeSpan.FromSeconds(keepAlivePeriod))
+                if (stopWatch.Elapsed > TimeSpan.FromSeconds(keepAlivePeriod))
                 {
                     // Send PingReq
                     Logger.Trace("--> PingReq");
@@ -80,7 +77,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
                 Logger.Trace($"TrafficOutflowProcessor: {this.sendQueue.Count} packets waiting to be sent.");
 
-                // Batch load up to 20 queued packets
+                // Batch load up to 50 queued packets
                 List<ControlPacket> packetsToSend = new();
                 while (this.sendQueue.TryDequeue(out var p))
                 {

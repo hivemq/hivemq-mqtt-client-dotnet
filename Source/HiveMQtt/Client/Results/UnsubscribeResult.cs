@@ -19,10 +19,7 @@ using HiveMQtt.MQTT5.Types;
 
 public class UnsubscribeResult
 {
-    public UnsubscribeResult()
-    {
-        this.Subscriptions = new List<Subscription>();
-    }
+    public UnsubscribeResult() => this.Subscriptions = new List<Subscription>();
 
     public List<Subscription> Subscriptions { get; set; }
 }
