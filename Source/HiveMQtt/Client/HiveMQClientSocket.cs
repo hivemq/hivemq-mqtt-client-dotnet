@@ -35,14 +35,16 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     private PipeReader? reader;
     private PipeWriter? writer;
     private CancellationTokenSource cancellationSource;
-    private CancellationToken outFlowCancellationToken;
-    private CancellationToken inFlowCancellationToken;
+    private CancellationToken connWriterCancellationToken;
+    private CancellationToken connReaderCancellationToken;
     private CancellationToken receivedPacketsCancellationToken;
+    private CancellationToken connMonitorCancellationToken;
 
 #pragma warning disable IDE0052
-    private Task? trafficOutflowProcessorTask;
-    private Task? trafficInflowProcessorTask;
-    private Task? receivedPacketsProcessorAsync;
+    private Task? connectionWriterTask;
+    private Task? connectionReaderTask;
+    private Task? receivedPacketsHandlerAsync;
+    private Task? trafficMonitorTask;
 #pragma warning restore IDE0052
 
     /// <summary>
@@ -177,14 +179,16 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         this.cancellationSource = new CancellationTokenSource();
 
         // Setup the cancellation tokens
-        this.outFlowCancellationToken = this.cancellationSource.Token;
-        this.inFlowCancellationToken = this.cancellationSource.Token;
+        this.connWriterCancellationToken = this.cancellationSource.Token;
+        this.connReaderCancellationToken = this.cancellationSource.Token;
         this.receivedPacketsCancellationToken = this.cancellationSource.Token;
+        this.connMonitorCancellationToken = this.cancellationSource.Token;
 
         // Start the traffic processors
-        this.trafficOutflowProcessorTask = this.TrafficOutflowProcessorAsync(this.outFlowCancellationToken);
-        this.trafficInflowProcessorTask = this.TrafficInflowProcessorAsync(this.inFlowCancellationToken);
-        this.receivedPacketsProcessorAsync = this.ReceivedPacketsProcessorAsync(this.receivedPacketsCancellationToken);
+        this.connectionWriterTask = this.ConnectionWriterAsync(this.connWriterCancellationToken);
+        this.connectionReaderTask = this.ConnectionReaderAsync(this.connReaderCancellationToken);
+        this.receivedPacketsHandlerAsync = this.ReceivedPacketsHandlerAsync(this.receivedPacketsCancellationToken);
+        this.trafficMonitorTask = this.TrafficMonitorAsync(this.connMonitorCancellationToken);
 
         Logger.Trace($"Socket connected to {this.socket.RemoteEndPoint}");
         return socketConnected;
