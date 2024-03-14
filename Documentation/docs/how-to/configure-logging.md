@@ -24,8 +24,8 @@ Setting `minlevel` to `Trace` will output all activity in the HiveMQtt package d
 
 ```log
 2023-10-04 16:56:54.9373|TRACE|HiveMQtt.Client.HiveMQClient|BeforeConnectEventLauncher
-2023-10-04 16:56:55.0081|TRACE|HiveMQtt.Client.HiveMQClient|7: TrafficInflowProcessor Starting...Connecting
-2023-10-04 16:56:55.0081|TRACE|HiveMQtt.Client.HiveMQClient|9: TrafficOutflowProcessor Starting...Connecting
+2023-10-04 16:56:55.0081|TRACE|HiveMQtt.Client.HiveMQClient|7: ConnectionReader Starting...Connecting
+2023-10-04 16:56:55.0081|TRACE|HiveMQtt.Client.HiveMQClient|9: ConnectionWriter Starting...Connecting
 2023-10-04 16:56:55.0081|TRACE|HiveMQtt.Client.HiveMQClient|--> ConnectPacket
 2023-10-04 16:56:55.0128|TRACE|HiveMQtt.Client.HiveMQClient|OnConnectSentEventLauncher
 2023-10-04 16:56:55.0374|TRACE|HiveMQtt.Client.HiveMQClient|<-- ConnAck
