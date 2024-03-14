@@ -13,14 +13,14 @@ using HiveMQtt.MQTT5.ReasonCodes;
 using HiveMQtt.MQTT5.Types;
 
 [SimpleJob(RunStrategy.Monitoring, iterationCount: 10, id: "MonitoringJob")]
-public class ClientBenchmarks
+public class ClientBenchmarks : IDisposable
 {
-    private HiveMQClient client;
-
     private readonly string smallPayload = new string(/*lang=json,strict*/ "{\"interference\": \"1029384\"}");
 
+    private HiveMQClient client;
+
     [GlobalSetup]
-    public void Setup()
+    public async Task SetupAsync()
     {
         var options = new HiveMQClientOptions
         {
@@ -30,7 +30,7 @@ public class ClientBenchmarks
 
         this.client = new HiveMQClient(options);
         Console.WriteLine($"Connecting to {options.Host} on port {options.Port}...");
-        this.client.ConnectAsync().Wait();
+        await this.client.ConnectAsync().ConfigureAwait(false);
 
         if (this.client.IsConnected())
         {
@@ -43,41 +43,29 @@ public class ClientBenchmarks
     }
 
     [GlobalCleanup]
-    public void CleanUp()
+    public async Task CleanUpAsync()
     {
         Console.WriteLine("Disconnecting from HiveMQ...");
-        this.client.DisconnectAsync().Wait();
+        await this.client.DisconnectAsync().ConfigureAwait(false);
     }
-
-    // [Benchmark(Description = "Publish 100 QoS 0 messages to the broker.")]
-    // public void Publish100QoS0Messages()
-    // {
-    //     var msg = new string(/*lang=json,strict*/ "{\"interference\": \"1029384\"}");
-    //     for (var i = 0; i < 100; i++)
-    //     {
-    //         this.client.PublishAsync("benchmarks/Publish100QoS0Messages", msg).Wait();
-    //     }
-    // }
 
     [Benchmark(Description = "Publish a QoS 0 messages to the broker.")]
-    public void PublishQoS0Message()
+    public async Task PublishQoS0MessageAsync()
     {
-        var task = this.client.PublishAsync("benchmarks/PublishQoS0Messages", this.smallPayload);
-        task.Wait();
+        await this.client.PublishAsync("benchmarks/PublishQoS0Messages", this.smallPayload).ConfigureAwait(false);
     }
 
-
     [Benchmark(Description = "Publish a QoS 1 messages to the broker.")]
-    public void PublishQoS1Message()
+    public async Task PublishQoS1MessageAsync()
     {
-        var task = this.client.PublishAsync("benchmarks/PublishQoS1Messages", this.smallPayload, QualityOfService.AtLeastOnceDelivery);
-        task.Wait();
+        await this.client.PublishAsync("benchmarks/PublishQoS1Messages", this.smallPayload, QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
     }
 
     [Benchmark(Description = "Publish a QoS 2 messages to the broker.")]
-    public void PublishQoS2Message()
+    public async Task PublishQoS2MessageAsync()
     {
-        var task = this.client.PublishAsync("benchmarks/PublishQoS1Messages", this.smallPayload, QualityOfService.ExactlyOnceDelivery);
-        task.Wait();
+        await this.client.PublishAsync("benchmarks/PublishQoS1Messages", this.smallPayload, QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
     }
+
+    public void Dispose() => GC.SuppressFinalize(this);
 }
