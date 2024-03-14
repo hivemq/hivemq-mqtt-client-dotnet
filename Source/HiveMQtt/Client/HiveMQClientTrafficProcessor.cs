@@ -37,7 +37,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     // Transactional packets indexed by packet identifier
     private readonly ConcurrentDictionary<int, List<ControlPacket>> transactionQueue = new();
 
-    private readonly Stopwatch lastPacketSentAt = new Stopwatch();
+    private readonly Stopwatch lastCommunicationTimer = new Stopwatch();
 
     /// <summary>
     /// Asynchronous background task that monitors the connection state and sends PingReq packets when
@@ -45,33 +45,31 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     /// <param name="cancellationToken"></param>
     /// <returns>boolean</returns>
-    private Task<bool> TrafficMonitorAsync(CancellationToken cancellationToken) => Task.Run(
+    private Task<bool> ConnectionMonitorAsync(CancellationToken cancellationToken) => Task.Run(
         async () =>
         {
             var keepAlivePeriod = this.Options.KeepAlive / 2;
-            Logger.Trace($"{Environment.CurrentManagedThreadId}: TrafficMonitor Starting...{this.connectState}");
+            Logger.Trace($"-(CM)- Starting...{this.connectState}");
 
             while (this.connectState != ConnectState.Disconnected)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    Logger.Trace("TrafficMonitor Canceled");
+                    Logger.Trace("-(CM)- Canceled");
                     break;
                 }
 
-                if (this.lastPacketSentAt.Elapsed > TimeSpan.FromSeconds(keepAlivePeriod))
+                if (this.lastCommunicationTimer.Elapsed > TimeSpan.FromSeconds(keepAlivePeriod))
                 {
                     // Send PingReq
-                    Logger.Trace("--> PingReq");
-                    var writeResult = await this.WriteAsync(PingReqPacket.Encode()).ConfigureAwait(false);
-                    this.OnPingReqSentEventLauncher(new PingReqPacket());
-                    this.lastPacketSentAt.Restart();
+                    Logger.Trace("-(CM)- --> PingReq");
+                    this.sendQueue.Add(new PingReqPacket());
                 }
 
-                await Task.Delay(1000).ConfigureAwait(false);
+                await Task.Delay(2000).ConfigureAwait(false);
             }
 
-            Logger.Trace($"{Environment.CurrentManagedThreadId}: TrafficMonitor Exiting...{this.connectState}");
+            Logger.Trace($"-(CM)- Exiting...{this.connectState}");
 
             return true;
         }, cancellationToken);
@@ -82,19 +80,19 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     private Task<bool> ConnectionWriterAsync(CancellationToken cancellationToken) => Task.Run(
         async () =>
         {
-            this.lastPacketSentAt.Start();
-            Logger.Trace($"-(W)- ConnectionWriter Starting...{this.connectState}");
+            this.lastCommunicationTimer.Start();
+            Logger.Trace($"-(W)- Starting...{this.connectState}");
 
             while (true)
             {
                 while (this.connectState == ConnectState.Disconnected)
                 {
-                    Logger.Trace($"-(W)- ConnectionWriter: Not connected.  Waiting for connect...");
+                    Logger.Trace($"-(W)- Not connected.  Waiting for connect...");
                     await Task.Delay(2000).ConfigureAwait(false);
                     continue;
                 }
 
-                Logger.Trace($"-(W)- ConnectionWriter: {this.sendQueue.Count} packets waiting to be sent.");
+                Logger.Trace($"-(W)- {this.sendQueue.Count} packets waiting to be sent.");
 
                 var packet = this.sendQueue.Take();
                 FlushResult writeResult = default;
@@ -166,6 +164,12 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                         writeResult = await this.WriteAsync(pubCompPacket.Encode()).ConfigureAwait(false);
                         this.OnPubCompSentEventLauncher(pubCompPacket);
                         break;
+                    case PingReqPacket pingReqPacket:
+                        Logger.Trace($"-(W)- --> Sending PingReqPacket id={pingReqPacket.PacketIdentifier}");
+                        writeResult = await this.WriteAsync(PingReqPacket.Encode()).ConfigureAwait(false);
+                        this.OnPingReqSentEventLauncher(pingReqPacket);
+                        break;
+
                     /* case AuthPacket authPacket:
                     /*     writeResult = await this.writer.WriteAsync(authPacket.Encode()).ConfigureAwait(false);
                     /*     this.OnAuthSentEventLauncher(authPacket);
@@ -189,7 +193,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     break;
                 }
 
-                this.lastPacketSentAt.Restart();
+                this.lastCommunicationTimer.Restart();
             } // foreach
 
             Logger.Trace($"-(W)- ConnectionWriter Exiting...{this.connectState}");

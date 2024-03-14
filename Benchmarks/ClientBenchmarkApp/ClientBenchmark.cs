@@ -12,7 +12,7 @@ using HiveMQtt.MQTT5;
 using HiveMQtt.MQTT5.ReasonCodes;
 using HiveMQtt.MQTT5.Types;
 
-[SimpleJob(RunStrategy.Monitoring, iterationCount: 10, id: "MonitoringJob")]
+[SimpleJob(RunStrategy.Monitoring, iterationCount: 100, id: "MonitoringJob")]
 public class ClientBenchmarks : IDisposable
 {
     private readonly string smallPayload = new string(/*lang=json,strict*/ "{\"interference\": \"1029384\"}");

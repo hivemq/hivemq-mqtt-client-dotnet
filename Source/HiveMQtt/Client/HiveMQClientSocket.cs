@@ -44,7 +44,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     private Task? connectionWriterTask;
     private Task? connectionReaderTask;
     private Task? receivedPacketsHandlerAsync;
-    private Task? trafficMonitorTask;
+    private Task? connectionMonitorTask;
 #pragma warning restore IDE0052
 
     /// <summary>
@@ -188,7 +188,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         this.connectionWriterTask = this.ConnectionWriterAsync(this.connWriterCancellationToken);
         this.connectionReaderTask = this.ConnectionReaderAsync(this.connReaderCancellationToken);
         this.receivedPacketsHandlerAsync = this.ReceivedPacketsHandlerAsync(this.receivedPacketsCancellationToken);
-        this.trafficMonitorTask = this.TrafficMonitorAsync(this.connMonitorCancellationToken);
+        this.connectionMonitorTask = this.ConnectionMonitorAsync(this.connMonitorCancellationToken);
 
         Logger.Trace($"Socket connected to {this.socket.RemoteEndPoint}");
         return socketConnected;

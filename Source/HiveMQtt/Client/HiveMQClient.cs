@@ -47,6 +47,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         Logger.Trace("Trace Level Logging Legend:");
         Logger.Trace("    -(W)-   == ConnectionWriter");
         Logger.Trace("    -(R)-   == ConnectionReader");
+        Logger.Trace("    -(CM)-  == ConnectionMonitor");
         Logger.Trace("    -(RPH)- == ReceivedPacketsHandler");
 
         this.Options = options;
@@ -205,6 +206,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         // QoS 0: Fast Service
         if (message.QoS == QualityOfService.AtMostOnceDelivery)
         {
+            Logger.Trace($"Queuing packet for send: {publishPacket}");
             this.sendQueue.Add(publishPacket);
             return new PublishResult(publishPacket.Message);
         }
@@ -217,6 +219,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             publishPacket.OnPublishQoS1Complete += eventHandler;
 
             // Construct the MQTT Connect packet and queue to send
+            Logger.Trace($"Queuing packet for send: {publishPacket}");
             this.sendQueue.Add(publishPacket);
 
             var pubAckPacket = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(120)).ConfigureAwait(false);
