@@ -51,7 +51,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         Logger.Trace("    -(RPH)- == ReceivedPacketsHandler");
 
         this.Options = options;
-        this.cancellationSource = new CancellationTokenSource();
+        this.cancellationTokenSource = new CancellationTokenSource();
     }
 
     /// <inheritdoc />

@@ -34,7 +34,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     private Stream? stream;
     private PipeReader? reader;
     private PipeWriter? writer;
-    private CancellationTokenSource cancellationSource;
+    private CancellationTokenSource cancellationTokenSource;
     private CancellationToken connWriterCancellationToken;
     private CancellationToken connReaderCancellationToken;
     private CancellationToken receivedPacketsCancellationToken;
@@ -175,14 +175,14 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         this.writer = PipeWriter.Create(this.stream);
 
         // Reset the CancellationTokenSource in case this is a reconnect
-        this.cancellationSource.Dispose();
-        this.cancellationSource = new CancellationTokenSource();
+        this.cancellationTokenSource.Dispose();
+        this.cancellationTokenSource = new CancellationTokenSource();
 
         // Setup the cancellation tokens
-        this.connWriterCancellationToken = this.cancellationSource.Token;
-        this.connReaderCancellationToken = this.cancellationSource.Token;
-        this.receivedPacketsCancellationToken = this.cancellationSource.Token;
-        this.connMonitorCancellationToken = this.cancellationSource.Token;
+        this.connWriterCancellationToken = this.cancellationTokenSource.Token;
+        this.connReaderCancellationToken = this.cancellationTokenSource.Token;
+        this.receivedPacketsCancellationToken = this.cancellationTokenSource.Token;
+        this.connMonitorCancellationToken = this.cancellationTokenSource.Token;
 
         // Start the traffic processors
         this.connectionWriterTask = this.ConnectionWriterAsync(this.connWriterCancellationToken);
@@ -269,7 +269,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         this.socket?.Shutdown(SocketShutdown.Both);
         this.socket?.Close();
 
-        this.cancellationSource.Cancel();
+        this.cancellationTokenSource.Cancel();
 
         return true;
     }
