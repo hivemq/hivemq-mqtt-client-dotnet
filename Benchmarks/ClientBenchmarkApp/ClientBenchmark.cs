@@ -19,6 +19,12 @@ public class ClientBenchmarks : IDisposable
 
     private HiveMQClient client;
 
+    public ClientBenchmarks()
+    {
+        Console.WriteLine("Starting HiveMQ client benchmarks...");
+        this.client = null!;
+    }
+
     [GlobalSetup]
     public async Task SetupAsync()
     {
@@ -29,6 +35,7 @@ public class ClientBenchmarks : IDisposable
         };
 
         this.client = new HiveMQClient(options);
+
         Console.WriteLine($"Connecting to {options.Host} on port {options.Port}...");
         await this.client.ConnectAsync().ConfigureAwait(false);
 
@@ -50,22 +57,24 @@ public class ClientBenchmarks : IDisposable
     }
 
     [Benchmark(Description = "Publish a QoS 0 messages to the broker.")]
-    public async Task PublishQoS0MessageAsync()
-    {
-        await this.client.PublishAsync("benchmarks/PublishQoS0Messages", this.smallPayload).ConfigureAwait(false);
-    }
+    public async Task PublishQoS0MessageAsync() =>
+        await this.client.PublishAsync(
+            "benchmarks/PublishQoS0Messages",
+            this.smallPayload).ConfigureAwait(false);
 
     [Benchmark(Description = "Publish a QoS 1 messages to the broker.")]
-    public async Task PublishQoS1MessageAsync()
-    {
-        await this.client.PublishAsync("benchmarks/PublishQoS1Messages", this.smallPayload, QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
-    }
+    public async Task PublishQoS1MessageAsync() =>
+        await this.client.PublishAsync(
+            "benchmarks/PublishQoS1Messages",
+            this.smallPayload,
+            QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
 
     [Benchmark(Description = "Publish a QoS 2 messages to the broker.")]
-    public async Task PublishQoS2MessageAsync()
-    {
-        await this.client.PublishAsync("benchmarks/PublishQoS1Messages", this.smallPayload, QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
-    }
+    public async Task PublishQoS2MessageAsync() =>
+        await this.client.PublishAsync(
+            "benchmarks/PublishQoS2Messages",
+            this.smallPayload,
+            QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
 
     public void Dispose() => GC.SuppressFinalize(this);
 }
