@@ -85,6 +85,12 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
             while (true)
             {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    Logger.Trace("-(W)- Canceled");
+                    break;
+                }
+
                 while (this.connectState == ConnectState.Disconnected)
                 {
                     Logger.Trace($"-(W)- Not connected.  Waiting for connect...");
@@ -213,11 +219,17 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
             while (this.connectState is ConnectState.Connecting or ConnectState.Connected)
             {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    Logger.Trace("-(R)- Canceled");
+                    break;
+                }
+
                 readResult = await this.ReadAsync().ConfigureAwait(false);
 
-                if (cancellationToken.IsCancellationRequested || readResult.IsCanceled)
+                if (readResult.IsCanceled)
                 {
-                    Logger.Trace("-(R)- ConnectionReader exiting due to cancellation: {cancellationToken.IsCancellationRequested} {readResult.IsCanceled}");
+                    Logger.Trace("-(R)- Cancelled read result.");
                     break;
                 }
 
@@ -281,7 +293,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             } // while (this.connectState is ConnectState.Connecting or ConnectState.Connected)
 
             Logger.Trace($"-(R)- ConnectionReader Exiting...{this.connectState}");
-
             return true;
         }, cancellationToken);
 
@@ -297,6 +308,12 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
             while (true)
             {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    Logger.Trace("-(RPH)- Canceled");
+                    break;
+                }
+
                 Logger.Trace($"-(RPH)- {this.receivedQueue.Count} received packets currently waiting to be processed.");
 
                 var packet = this.receivedQueue.Take();
@@ -343,13 +360,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                         Logger.Error($"Unrecognized packet received.  Will discard. {packet}");
                         break;
                 } // switch (packet)
-
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    Logger.Trace("-(RPH)- ReceivedPacketsHandler Canceled");
-                    break;
-                }
-
             } // while
 
             Logger.Trace($"-(RPH)- ReceivedPacketsHandler Exiting...{this.connectState}");

@@ -174,6 +174,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <param name="disposing">True if called from user code.</param>
     protected virtual void Dispose(bool disposing)
     {
+        Logger.Trace("Disposing HiveMQClient");
+
         // Check to see if Dispose has already been called.
         if (!this.disposed)
         {
@@ -182,7 +184,11 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             if (disposing)
             {
                 // Dispose managed resources.
-                // { }
+                this.sendQueue.CompleteAdding();
+                this.receivedQueue.CompleteAdding();
+
+                this.cancellationTokenSource.Cancel();
+                this.cancellationTokenSource.Dispose();
             }
 
             // Call the appropriate methods to clean up
