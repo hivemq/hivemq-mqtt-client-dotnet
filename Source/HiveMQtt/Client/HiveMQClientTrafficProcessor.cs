@@ -43,8 +43,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// Asynchronous background task that monitors the connection state and sends PingReq packets when
     /// necessary.
     /// </summary>
-    /// <param name="cancellationToken"></param>
-    /// <returns>boolean</returns>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A boolean return indicating exit state.</returns>
     private Task<bool> ConnectionMonitorAsync(CancellationToken cancellationToken) => Task.Run(
         async () =>
         {
@@ -291,7 +291,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <param name="cancellationToken">The cancellation token to stop the task.</param>
     /// <returns>A fairly worthless boolean.</returns>
     private Task<bool> ReceivedPacketsHandlerAsync(CancellationToken cancellationToken) => Task.Run(
-        async () =>
+        () =>
         {
             Logger.Trace($"-(RPH)- Starting...{this.connectState}");
 
