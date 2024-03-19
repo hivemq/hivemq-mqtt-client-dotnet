@@ -44,6 +44,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         options ??= new HiveMQClientOptions();
         options.Validate();
 
+        Logger.Trace($"New client created: Client ID: {options.ClientId}");
+
         Logger.Trace("Trace Level Logging Legend:");
         Logger.Trace("    -(W)-   == ConnectionWriter");
         Logger.Trace("    -(R)-   == ConnectionReader");
@@ -133,6 +135,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         if (this.connectState != ConnectState.Connected)
         {
+            Logger.Warn("DisconnectAsync: Client is not connected.");
             return false;
         }
 

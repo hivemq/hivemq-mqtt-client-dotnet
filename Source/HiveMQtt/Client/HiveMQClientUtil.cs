@@ -132,6 +132,20 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     }
 
     /// <summary>
+    /// Generate a packet identifier.
+    /// </summary>
+    /// <returns>A valid packet identifier.</returns>
+    protected int GeneratePacketIdentifier()
+    {
+        if (this.lastPacketId == ushort.MaxValue)
+        {
+            this.lastPacketId = 0;
+        }
+
+        return Interlocked.Increment(ref this.lastPacketId);
+    }
+
+    /// <summary>
     /// https://learn.microsoft.com/en-us/dotnet/api/system.idisposable?view=net-6.0.
     /// </summary>
     public void Dispose()
@@ -145,20 +159,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
           from executing a second time.
         */
         GC.SuppressFinalize(this);
-    }
-
-    /// <summary>
-    /// Generate a packet identifier.
-    /// </summary>
-    /// <returns>A valid packet identifier.</returns>
-    protected int GeneratePacketIdentifier()
-    {
-        if (this.lastPacketId == ushort.MaxValue)
-        {
-            this.lastPacketId = 0;
-        }
-
-        return Interlocked.Increment(ref this.lastPacketId);
     }
 
     /// <summary>
@@ -183,6 +183,12 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             // and unmanaged resources.
             if (disposing)
             {
+                if (this.connectState == Internal.ConnectState.Connected)
+                {
+                    Logger.Trace("HiveMQClient Dispose: Disconnecting connected client.");
+                    _ = Task.Run(async () => await this.DisconnectAsync().ConfigureAwait(false));
+                }
+
                 // Dispose managed resources.
                 this.sendQueue.CompleteAdding();
                 this.receivedQueue.CompleteAdding();

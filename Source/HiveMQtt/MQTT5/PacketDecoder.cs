@@ -54,7 +54,7 @@ internal class PacketDecoder
             if (buffer.Length < packetLength)
             {
                 // Not all data for this packet has arrived yet.  Try again...
-                Logger.Trace("PacketDecoder.Decode: Not all data for this packet has arrived yet.  Returning PartialPacket.");
+                Logger.Trace($"PacketDecoder.TryDecode: Waiting on more data: {buffer.Length} < {packetLength} - Returning PartialPacket.");
                 decodedPacket = new PartialPacket();
                 consumed = default;
                 return false;
