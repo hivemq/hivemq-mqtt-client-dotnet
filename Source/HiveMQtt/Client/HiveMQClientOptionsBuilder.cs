@@ -192,7 +192,7 @@ public class HiveMQClientOptionsBuilder
         }
         else
         {
-            Logger.Error("File does not exist.");
+            Logger.Error("WithClientCertificate: The specified client certificate file does not exist.");
             throw new FileNotFoundException();
         }
     }

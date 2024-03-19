@@ -34,15 +34,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     private Stream? stream;
     private PipeReader? reader;
     private PipeWriter? writer;
-    private CancellationTokenSource cancellationSource;
-    private CancellationToken outFlowCancellationToken;
-    private CancellationToken inFlowCancellationToken;
-    private CancellationToken receivedPacketsCancellationToken;
+    private CancellationTokenSource cancellationTokenSource;
 
 #pragma warning disable IDE0052
-    private Task? trafficOutflowProcessorTask;
-    private Task? trafficInflowProcessorTask;
-    private Task? receivedPacketsProcessorAsync;
+    private Task? connectionWriterTask;
+    private Task? connectionReaderTask;
+    private Task? receivedPacketsHandlerAsync;
+    private Task? connectionMonitorTask;
 #pragma warning restore IDE0052
 
     /// <summary>
@@ -173,18 +171,14 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         this.writer = PipeWriter.Create(this.stream);
 
         // Reset the CancellationTokenSource in case this is a reconnect
-        this.cancellationSource.Dispose();
-        this.cancellationSource = new CancellationTokenSource();
-
-        // Setup the cancellation tokens
-        this.outFlowCancellationToken = this.cancellationSource.Token;
-        this.inFlowCancellationToken = this.cancellationSource.Token;
-        this.receivedPacketsCancellationToken = this.cancellationSource.Token;
+        this.cancellationTokenSource.Dispose();
+        this.cancellationTokenSource = new CancellationTokenSource();
 
         // Start the traffic processors
-        this.trafficOutflowProcessorTask = this.TrafficOutflowProcessorAsync(this.outFlowCancellationToken);
-        this.trafficInflowProcessorTask = this.TrafficInflowProcessorAsync(this.inFlowCancellationToken);
-        this.receivedPacketsProcessorAsync = this.ReceivedPacketsProcessorAsync(this.receivedPacketsCancellationToken);
+        this.connectionWriterTask = this.ConnectionWriterAsync(this.cancellationTokenSource.Token);
+        this.connectionReaderTask = this.ConnectionReaderAsync(this.cancellationTokenSource.Token);
+        this.receivedPacketsHandlerAsync = this.ReceivedPacketsHandlerAsync(this.cancellationTokenSource.Token);
+        this.connectionMonitorTask = this.ConnectionMonitorAsync(this.cancellationTokenSource.Token);
 
         Logger.Trace($"Socket connected to {this.socket.RemoteEndPoint}");
         return socketConnected;
@@ -254,6 +248,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
     internal bool CloseSocket(bool? shutdownPipeline = true)
     {
+        // Cancel the background traffic processing tasks
+        this.cancellationTokenSource.Cancel();
+
         if (shutdownPipeline == true)
         {
             // Shutdown the pipeline
@@ -264,8 +261,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         // Shutdown the socket
         this.socket?.Shutdown(SocketShutdown.Both);
         this.socket?.Close();
-
-        this.cancellationSource.Cancel();
 
         return true;
     }

@@ -132,6 +132,20 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     }
 
     /// <summary>
+    /// Generate a packet identifier.
+    /// </summary>
+    /// <returns>A valid packet identifier.</returns>
+    protected int GeneratePacketIdentifier()
+    {
+        if (this.lastPacketId == ushort.MaxValue)
+        {
+            this.lastPacketId = 0;
+        }
+
+        return Interlocked.Increment(ref this.lastPacketId);
+    }
+
+    /// <summary>
     /// https://learn.microsoft.com/en-us/dotnet/api/system.idisposable?view=net-6.0.
     /// </summary>
     public void Dispose()
@@ -148,20 +162,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     }
 
     /// <summary>
-    /// Generate a packet identifier.
-    /// </summary>
-    /// <returns>A valid packet identifier.</returns>
-    protected int GeneratePacketIdentifier()
-    {
-        if (this.lastPacketId == ushort.MaxValue)
-        {
-            this.lastPacketId = 0;
-        }
-
-        return Interlocked.Increment(ref this.lastPacketId);
-    }
-
-    /// <summary>
     /// https://learn.microsoft.com/en-us/dotnet/api/system.idisposable?view=net-6.0
     /// Dispose(bool disposing) executes in two distinct scenarios.
     /// If disposing equals true, the method has been called directly
@@ -174,6 +174,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <param name="disposing">True if called from user code.</param>
     protected virtual void Dispose(bool disposing)
     {
+        Logger.Trace("Disposing HiveMQClient");
+
         // Check to see if Dispose has already been called.
         if (!this.disposed)
         {
@@ -181,8 +183,18 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             // and unmanaged resources.
             if (disposing)
             {
+                if (this.connectState == Internal.ConnectState.Connected)
+                {
+                    Logger.Trace("HiveMQClient Dispose: Disconnecting connected client.");
+                    _ = Task.Run(async () => await this.DisconnectAsync().ConfigureAwait(false));
+                }
+
                 // Dispose managed resources.
-                // { }
+                this.sendQueue.CompleteAdding();
+                this.receivedQueue.CompleteAdding();
+
+                this.cancellationTokenSource.Cancel();
+                this.cancellationTokenSource.Dispose();
             }
 
             // Call the appropriate methods to clean up

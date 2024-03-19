@@ -34,7 +34,7 @@ public class OptionsTest
         Assert.Equal(0, options.SessionExpiryInterval);
 
         options.SessionExpiryInterval = long.MaxValue;
-        options.ValidateOptions();
+        options.Validate();
 
         Assert.Equal(uint.MaxValue, options.SessionExpiryInterval);
     }
