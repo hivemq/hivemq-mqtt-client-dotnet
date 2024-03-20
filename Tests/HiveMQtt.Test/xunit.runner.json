@@ -1,0 +1,16 @@
+{
+    "parallelizeAssembly": false,
+    "parallelizeTestCollections": false,
+    "execution": {
+        "maxParallelThreads": 1,
+        "maxParallelAssemblies": 1,
+        "maxParallelTestCollections": 1,
+        "parallelizeTestCollections": false,
+        "disableParallelization": true,
+        "stopOnFail": false
+    },
+    "timing": {
+        "before": 1000
+    }
+}
+

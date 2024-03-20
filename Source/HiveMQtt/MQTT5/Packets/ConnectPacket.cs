@@ -17,6 +17,7 @@ namespace HiveMQtt.MQTT5.Packets;
 
 using System.IO;
 using System.Text;
+using HiveMQtt.Client.Exceptions;
 using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.Types;
 
