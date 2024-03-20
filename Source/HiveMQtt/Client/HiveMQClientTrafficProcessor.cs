@@ -340,6 +340,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     case DisconnectPacket disconnectPacket:
                         Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received Disconnect id={disconnectPacket.PacketIdentifier}");
                         Logger.Warn($"Disconnect received: {disconnectPacket.DisconnectReasonCode} {disconnectPacket.Properties.ReasonString}");
+                        this.HandleDisconnection();
                         this.OnDisconnectReceivedEventLauncher(disconnectPacket);
                         break;
                     case PingRespPacket pingRespPacket:

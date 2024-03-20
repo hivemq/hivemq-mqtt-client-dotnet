@@ -176,26 +176,35 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             this.OnDisconnectSent -= eventHandler;
         }
 
-        // Close the socket
+        this.HandleDisconnection();
+
+        return true;
+    }
+
+    /// <summary>
+    /// Close the socket and set the connect state to disconnected.
+    /// </summary>
+    private void HandleDisconnection()
+    {
+        Logger.Debug("HandleDisconnection: Connection lost.  Handling Disconnection.");
+
         this.CloseSocket();
 
         // Fire the corresponding event
-        this.AfterDisconnectEventLauncher(true);
+        this.AfterDisconnectEventLauncher(false);
 
         this.connectState = ConnectState.Disconnected;
 
         // FIXME
         if (this.sendQueue.Count > 0)
         {
-            Logger.Warn("Disconnect: Send queue not empty.  Packets pending but we are disconnecting.");
+            Logger.Warn($"HandleDisconnection: Send queue not empty. {this.sendQueue.Count} packets pending but we are disconnecting (or were disconnected).");
         }
 
         // We only clear the send queue on explicit disconnect
         while (this.sendQueue.TryTake(out _))
         {
         }
-
-        return true;
     }
 
     /// <inheritdoc />
