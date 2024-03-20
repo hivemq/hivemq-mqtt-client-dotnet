@@ -253,14 +253,25 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         if (shutdownPipeline == true)
         {
-            // Shutdown the pipeline
-            this.reader = null;
-            this.writer = null;
+            if (this.reader != null && this.writer != null)
+            {
+                // Dispose of the PipeReader and PipeWriter
+                this.reader.Complete();
+                this.writer.Complete();
+
+                // Shutdown the pipeline
+                this.reader = null;
+                this.writer = null;
+            }
         }
 
-        // Shutdown the socket
-        this.socket?.Shutdown(SocketShutdown.Both);
-        this.socket?.Close();
+        // Check if the socket is initialized and open
+        if (this.socket != null && this.socket.Connected)
+        {
+            // Shutdown the socket
+            this.socket.Shutdown(SocketShutdown.Both);
+            this.socket.Close();
+        }
 
         return true;
     }
