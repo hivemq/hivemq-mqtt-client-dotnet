@@ -30,18 +30,23 @@ using HiveMQtt.Client.Exceptions;
 /// <inheritdoc />
 public partial class HiveMQClient : IDisposable, IHiveMQClient
 {
-    private Socket? socket;
-    private Stream? stream;
-    private PipeReader? reader;
-    private PipeWriter? writer;
+    internal Socket? Socket { get; set; }
+
+    internal Stream? Stream { get; set; }
+
+    internal PipeReader? Reader { get; set; }
+
+    internal PipeWriter? Writer { get; set; }
+
     private CancellationTokenSource cancellationTokenSource;
 
-#pragma warning disable IDE0052
-    private Task? connectionWriterTask;
-    private Task? connectionReaderTask;
-    private Task? receivedPacketsHandlerAsync;
-    private Task? connectionMonitorTask;
-#pragma warning restore IDE0052
+    internal Task? ConnectionWriterTask { get; set; }
+
+    internal Task? ConnectionReaderTask { get; set; }
+
+    internal Task? ReceivedPacketsHandlerTask { get; set; }
+
+    internal Task? ConnectionMonitorTask { get; set; }
 
     /// <summary>
     /// SSLStream Callback.  This is used to always allow invalid broker certificates.
@@ -137,29 +142,29 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         IPEndPoint ipEndPoint = new(ipAddress, this.Options.Port);
 
-        this.socket = new(ipEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+        this.Socket = new(ipEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
         try
         {
-            await this.socket.ConnectAsync(ipEndPoint).ConfigureAwait(false);
+            await this.Socket.ConnectAsync(ipEndPoint).ConfigureAwait(false);
         }
         catch (SocketException socketException)
         {
             throw new HiveMQttClientException("Failed to connect to broker", socketException);
         }
 
-        var socketConnected = this.socket.Connected;
-        if (!socketConnected || this.socket == null)
+        var socketConnected = this.Socket.Connected;
+        if (!socketConnected || this.Socket == null)
         {
             throw new HiveMQttClientException("Failed to connect socket");
         }
 
         // Setup the stream
-        this.stream = new NetworkStream(this.socket);
+        this.Stream = new NetworkStream(this.Socket);
 
         if (this.Options.UseTLS)
         {
-            var result = await this.CreateTLSConnectionAsync(this.stream).ConfigureAwait(false);
+            var result = await this.CreateTLSConnectionAsync(this.Stream).ConfigureAwait(false);
             if (!result)
             {
                 throw new HiveMQttClientException("Failed to create TLS connection");
@@ -167,20 +172,20 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         }
 
         // Setup the Pipeline
-        this.reader = PipeReader.Create(this.stream);
-        this.writer = PipeWriter.Create(this.stream);
+        this.Reader = PipeReader.Create(this.Stream);
+        this.Writer = PipeWriter.Create(this.Stream);
 
         // Reset the CancellationTokenSource in case this is a reconnect
         this.cancellationTokenSource.Dispose();
         this.cancellationTokenSource = new CancellationTokenSource();
 
         // Start the traffic processors
-        this.connectionWriterTask = this.ConnectionWriterAsync(this.cancellationTokenSource.Token);
-        this.connectionReaderTask = this.ConnectionReaderAsync(this.cancellationTokenSource.Token);
-        this.receivedPacketsHandlerAsync = this.ReceivedPacketsHandlerAsync(this.cancellationTokenSource.Token);
-        this.connectionMonitorTask = this.ConnectionMonitorAsync(this.cancellationTokenSource.Token);
+        this.ConnectionWriterTask = this.ConnectionWriterAsync(this.cancellationTokenSource.Token);
+        this.ConnectionReaderTask = this.ConnectionReaderAsync(this.cancellationTokenSource.Token);
+        this.ReceivedPacketsHandlerTask = this.ReceivedPacketsHandlerAsync(this.cancellationTokenSource.Token);
+        this.ConnectionMonitorTask = this.ConnectionMonitorAsync(this.cancellationTokenSource.Token);
 
-        Logger.Trace($"Socket connected to {this.socket.RemoteEndPoint}");
+        Logger.Trace($"Socket connected to {this.Socket.RemoteEndPoint}");
         return socketConnected;
     }
 
@@ -211,18 +216,18 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         try
         {
             Logger.Trace("Authenticating TLS connection");
-            this.stream = new SslStream(stream);
-            await ((SslStream)this.stream).AuthenticateAsClientAsync(tlsOptions).ConfigureAwait(false);
+            this.Stream = new SslStream(stream);
+            await ((SslStream)this.Stream).AuthenticateAsClientAsync(tlsOptions).ConfigureAwait(false);
 
-            Logger.Info($"Connected via TLS: {((SslStream)this.stream).IsEncrypted}");
-            Logger.Debug($"Cipher Algorithm: {((SslStream)this.stream).CipherAlgorithm}");
-            Logger.Debug($"Cipher Strength: {((SslStream)this.stream).CipherStrength}");
-            Logger.Debug($"Hash Algorithm: {((SslStream)this.stream).HashAlgorithm}");
-            Logger.Debug($"Hash Strength: {((SslStream)this.stream).HashStrength}");
-            Logger.Debug($"Key Exchange Algorithm: {((SslStream)this.stream).KeyExchangeAlgorithm}");
-            Logger.Debug($"Key Exchange Strength: {((SslStream)this.stream).KeyExchangeStrength}");
+            Logger.Info($"Connected via TLS: {((SslStream)this.Stream).IsEncrypted}");
+            Logger.Debug($"Cipher Algorithm: {((SslStream)this.Stream).CipherAlgorithm}");
+            Logger.Debug($"Cipher Strength: {((SslStream)this.Stream).CipherStrength}");
+            Logger.Debug($"Hash Algorithm: {((SslStream)this.Stream).HashAlgorithm}");
+            Logger.Debug($"Hash Strength: {((SslStream)this.Stream).HashStrength}");
+            Logger.Debug($"Key Exchange Algorithm: {((SslStream)this.Stream).KeyExchangeAlgorithm}");
+            Logger.Debug($"Key Exchange Strength: {((SslStream)this.Stream).KeyExchangeStrength}");
 
-            var remoteCertificate = ((SslStream)this.stream).RemoteCertificate;
+            var remoteCertificate = ((SslStream)this.Stream).RemoteCertificate;
             if (remoteCertificate != null)
             {
                 Logger.Info($"Remote Certificate Subject: {remoteCertificate.Subject}");
@@ -230,7 +235,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 Logger.Info($"Remote Certificate Serial Number: {remoteCertificate.GetSerialNumberString()}");
             }
 
-            Logger.Info($"TLS Protocol: {((SslStream)this.stream).SslProtocol}");
+            Logger.Info($"TLS Protocol: {((SslStream)this.Stream).SslProtocol}");
             return true;
         }
         catch (Exception e)
@@ -251,26 +256,42 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         // Cancel the background traffic processing tasks
         this.cancellationTokenSource.Cancel();
 
+        // Reset the tasks
+        this.ConnectionWriterTask = null;
+        this.ConnectionReaderTask = null;
+        this.ReceivedPacketsHandlerTask = null;
+        this.ConnectionMonitorTask = null;
+
         if (shutdownPipeline == true)
         {
-            if (this.reader != null && this.writer != null)
+            if (this.Reader != null && this.Writer != null)
             {
                 // Dispose of the PipeReader and PipeWriter
-                this.reader.Complete();
-                this.writer.Complete();
+                this.Reader.Complete();
+                this.Writer.Complete();
 
                 // Shutdown the pipeline
-                this.reader = null;
-                this.writer = null;
+                this.Reader = null;
+                this.Writer = null;
             }
         }
 
+        if (this.Stream != null)
+        {
+            // Dispose of the Stream
+            this.Stream.Close();
+            this.Stream.Dispose();
+            this.Stream = null;
+        }
+
         // Check if the socket is initialized and open
-        if (this.socket != null && this.socket.Connected)
+        if (this.Socket != null && this.Socket.Connected)
         {
             // Shutdown the socket
-            this.socket.Shutdown(SocketShutdown.Both);
-            this.socket.Close();
+            this.Socket.Shutdown(SocketShutdown.Both);
+            this.Socket.Close();
+            this.Socket.Dispose();
+            this.Socket = null;
         }
 
         return true;
