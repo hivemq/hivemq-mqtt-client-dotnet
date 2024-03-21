@@ -30,9 +30,9 @@ using HiveMQtt.MQTT5.ReasonCodes;
 /// <inheritdoc />
 public partial class HiveMQClient : IDisposable, IHiveMQClient
 {
-    private readonly BlockingCollection<ControlPacket> sendQueue = new();
+    internal BlockingCollection<ControlPacket> SendQueue { get; } = new();
 
-    private readonly BlockingCollection<ControlPacket> receivedQueue = new();
+    internal BlockingCollection<ControlPacket> ReceivedQueue { get; } = new();
 
     // Transactional packets indexed by packet identifier
     private readonly ConcurrentDictionary<int, List<ControlPacket>> transactionQueue = new();
@@ -49,7 +49,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         async () =>
         {
             var keepAlivePeriod = this.Options.KeepAlive / 2;
-            Logger.Trace($"{this.Options.ClientId}-(CM)- Starting...{this.connectState}");
+            Logger.Trace($"{this.Options.ClientId}-(CM)- Starting...{this.ConnectState}");
 
             while (true)
             {
@@ -60,13 +60,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 }
 
                 // If connected and no recent traffic, send a ping
-                if (this.connectState == ConnectState.Connected)
+                if (this.ConnectState == ConnectState.Connected)
                 {
                     if (this.lastCommunicationTimer.Elapsed > TimeSpan.FromSeconds(keepAlivePeriod))
                     {
                         // Send PingReq
                         Logger.Trace($"{this.Options.ClientId}-(CM)- --> PingReq");
-                        this.sendQueue.Add(new PingReqPacket());
+                        this.SendQueue.Add(new PingReqPacket());
                     }
                 }
 
@@ -81,7 +81,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 }
             }
 
-            Logger.Trace($"{this.Options.ClientId}-(CM)- Exiting...{this.connectState}");
+            Logger.Trace($"{this.Options.ClientId}-(CM)- Exiting...{this.ConnectState}");
 
             return true;
         }, cancellationToken);
@@ -93,26 +93,26 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         async () =>
         {
             this.lastCommunicationTimer.Start();
-            Logger.Trace($"{this.Options.ClientId}-(W)- Starting...{this.connectState}");
+            Logger.Trace($"{this.Options.ClientId}-(W)- Starting...{this.ConnectState}");
 
             while (true)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    Logger.Trace($"{this.Options.ClientId}-(W)- Cancelled with {this.sendQueue.Count} packets remaining.");
+                    Logger.Trace($"{this.Options.ClientId}-(W)- Cancelled with {this.SendQueue.Count} packets remaining.");
                     break;
                 }
 
-                while (this.connectState == ConnectState.Disconnected)
+                while (this.ConnectState == ConnectState.Disconnected)
                 {
                     Logger.Trace($"{this.Options.ClientId}-(W)- Not connected.  Waiting for connect...");
                     await Task.Delay(2000).ConfigureAwait(false);
                     continue;
                 }
 
-                Logger.Trace($"{this.Options.ClientId}-(W)- {this.sendQueue.Count} packets waiting to be sent.");
+                Logger.Trace($"{this.Options.ClientId}-(W)- {this.SendQueue.Count} packets waiting to be sent.");
 
-                var packet = this.sendQueue.Take();
+                var packet = this.SendQueue.Take();
                 FlushResult writeResult = default;
 
                 switch (packet)
@@ -189,7 +189,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                         break;
 
                     /* case AuthPacket authPacket:
-                    /*     writeResult = await this.writer.WriteAsync(authPacket.Encode()).ConfigureAwait(false);
+                    /*     writeResult = await this.Writer.WriteAsync(authPacket.Encode()).ConfigureAwait(false);
                     /*     this.OnAuthSentEventLauncher(authPacket);
                     /*     break;
                     */
@@ -199,11 +199,11 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
                 } // switch
 
-                // if (writeResult.IsCancelled)
-                // {
-                //     Logger.Trace($"{this.Options.ClientId}-(W)- ConnectionWriter Write Cancelled");
-                //     break;
-                // }
+                if (writeResult.IsCanceled)
+                {
+                    Logger.Trace($"{this.Options.ClientId}-(W)- ConnectionWriter Write Cancelled");
+                    break;
+                }
 
                 if (writeResult.IsCompleted)
                 {
@@ -214,22 +214,22 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 this.lastCommunicationTimer.Restart();
             } // foreach
 
-            Logger.Trace($"{this.Options.ClientId}-(W)- ConnectionWriter Exiting...{this.connectState}");
+            Logger.Trace($"{this.Options.ClientId}-(W)- ConnectionWriter Exiting...{this.ConnectState}");
             return true;
         }, cancellationToken);
 
     /// <summary>
     /// Asynchronous background task that handles the incoming traffic of packets.  Received packets
-    /// are queued into this.receivedQueue for processing by ReceivedPacketsHandlerAsync.
+    /// are queued into this.ReceivedQueue for processing by ReceivedPacketsHandlerAsync.
     /// </summary>
     private Task<bool> ConnectionReaderAsync(CancellationToken cancellationToken) => Task.Run(
         async () =>
         {
-            Logger.Trace($"{this.Options.ClientId}-(R)- ConnectionReader Starting...{this.connectState}");
+            Logger.Trace($"{this.Options.ClientId}-(R)- ConnectionReader Starting...{this.ConnectState}");
 
             ReadResult readResult;
 
-            while (this.connectState is ConnectState.Connecting or ConnectState.Connected)
+            while (this.ConnectState is ConnectState.Connecting or ConnectState.Connected)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -239,28 +239,28 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
                 readResult = await this.ReadAsync().ConfigureAwait(false);
 
-                // if (readResult.IsCancelled)
-                // {
-                //     Logger.Trace($"{this.Options.ClientId}-(R)- Cancelled read result.");
-                //     break;
-                // }
+                if (readResult.IsCanceled)
+                {
+                    Logger.Trace($"{this.Options.ClientId}-(R)- Cancelled read result.");
+                    break;
+                }
 
                 if (readResult.IsCompleted)
                 {
                     Logger.Trace($"{this.Options.ClientId}-(R)- ConnectionReader IsCompleted: end of the stream");
 
-                    if (this.connectState == ConnectState.Connected)
+                    if (this.ConnectState == ConnectState.Connected)
                     {
                         // This is an unexpected exit and may be due to a network failure.
                         Logger.Trace($"{this.Options.ClientId}-(R)- ConnectionReader IsCompleted: was unexpected");
-                        this.connectState = ConnectState.Disconnected;
+                        this.ConnectState = ConnectState.Disconnected;
 
                         // Launch the AfterDisconnect event with a clean disconnect set to false.
                         this.AfterDisconnectEventLauncher(false);
 
                         this.cancellationTokenSource.Cancel();
 
-                        Logger.Trace($"{this.Options.ClientId}-(R)- ConnectionReader Exiting...{this.connectState}");
+                        Logger.Trace($"{this.Options.ClientId}-(R)- ConnectionReader Exiting...{this.ConnectState}");
                         return false;
                     }
 
@@ -289,24 +289,24 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                         // Not enough data in the buffer to decode a packet
                         // Advance the reader to the end of the consumed data
                         buffer = buffer.Slice(0, consumed);
-                        this.reader?.AdvanceTo(buffer.Start, readResult.Buffer.End);
+                        this.Reader?.AdvanceTo(buffer.Start, readResult.Buffer.End);
                         Logger.Trace($"{this.Options.ClientId}-(R)- ConnectionReader: PacketDecoder.TryDecode returned false.  Waiting for more data...");
                         break;
                     }
 
                     // Advance the reader to indicate how much of the buffer has been consumed
                     buffer = buffer.Slice(consumed);
-                    this.reader?.AdvanceTo(buffer.Start);
+                    this.Reader?.AdvanceTo(buffer.Start);
 
                     // Add the packet to the received queue for processing later
                     // by ReceivedPacketsHandlerAsync
                     Logger.Trace($"{this.Options.ClientId}-(R)- <-- Received {decodedPacket.GetType().Name}.  Adding to receivedQueue.");
-                    this.receivedQueue.Add(decodedPacket);
+                    this.ReceivedQueue.Add(decodedPacket);
                 } // while (buffer.Length > 0
 
-            } // while (this.connectState is ConnectState.Connecting or ConnectState.Connected)
+            } // while (this.ConnectState is ConnectState.Connecting or ConnectState.Connected)
 
-            Logger.Trace($"{this.Options.ClientId}-(R)- ConnectionReader Exiting...{this.connectState}");
+            Logger.Trace($"{this.Options.ClientId}-(R)- ConnectionReader Exiting...{this.ConnectState}");
             return true;
         }, cancellationToken);
 
@@ -318,19 +318,19 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     private Task<bool> ReceivedPacketsHandlerAsync(CancellationToken cancellationToken) => Task.Run(
         () =>
         {
-            Logger.Trace($"{this.Options.ClientId}-(RPH)- Starting...{this.connectState}");
+            Logger.Trace($"{this.Options.ClientId}-(RPH)- Starting...{this.ConnectState}");
 
             while (true)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    Logger.Trace($"{this.Options.ClientId}-(RPH)- Cancelled with {this.receivedQueue.Count} received packets remaining.");
+                    Logger.Trace($"{this.Options.ClientId}-(RPH)- Cancelled with {this.ReceivedQueue.Count} received packets remaining.");
                     break;
                 }
 
-                Logger.Trace($"{this.Options.ClientId}-(RPH)- {this.receivedQueue.Count} received packets currently waiting to be processed.");
+                Logger.Trace($"{this.Options.ClientId}-(RPH)- {this.ReceivedQueue.Count} received packets currently waiting to be processed.");
 
-                var packet = this.receivedQueue.Take();
+                var packet = this.ReceivedQueue.Take();
                 switch (packet)
                 {
                     case ConnAckPacket connAckPacket:
@@ -340,6 +340,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     case DisconnectPacket disconnectPacket:
                         Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received Disconnect id={disconnectPacket.PacketIdentifier}");
                         Logger.Warn($"Disconnect received: {disconnectPacket.DisconnectReasonCode} {disconnectPacket.Properties.ReasonString}");
+                        this.HandleDisconnection();
                         this.OnDisconnectReceivedEventLauncher(disconnectPacket);
                         break;
                     case PingRespPacket pingRespPacket:
@@ -376,7 +377,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 } // switch (packet)
             } // while
 
-            Logger.Trace($"{this.Options.ClientId}-(RPH)- ReceivedPacketsHandler Exiting...{this.connectState}");
+            Logger.Trace($"{this.Options.ClientId}-(RPH)- ReceivedPacketsHandler Exiting...{this.ConnectState}");
 
             return true;
         }, cancellationToken);
@@ -394,7 +395,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         {
             // We've received a QoS 1 publish.  Send a PubAck.
             var pubAckResponse = new PubAckPacket(publishPacket.PacketIdentifier, PubAckReasonCode.Success);
-            this.sendQueue.Add(pubAckResponse);
+            this.SendQueue.Add(pubAckResponse);
         }
         else if (publishPacket.Message.QoS is MQTT5.Types.QualityOfService.ExactlyOnceDelivery)
         {
@@ -408,7 +409,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 pubRecResponse.ReasonCode = PubRecReasonCode.PacketIdentifierInUse;
             }
 
-            this.sendQueue.Add(pubRecResponse);
+            this.SendQueue.Add(pubRecResponse);
         }
     }
 
@@ -467,13 +468,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             }
 
             // Send the PUBREL response
-            this.sendQueue.Add(pubRelResponsePacket);
+            this.SendQueue.Add(pubRelResponsePacket);
         }
         else
         {
             // Send a PUBREL with PacketIdentifierNotFound
             var pubRelResponsePacket = new PubRelPacket(pubRecPacket.PacketIdentifier, PubRelReasonCode.PacketIdentifierNotFound);
-            this.sendQueue.Add(pubRelResponsePacket);
+            this.SendQueue.Add(pubRelResponsePacket);
         }
 
     }
@@ -509,7 +510,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 Logger.Warn($"QoS2: Couldn't remove PubRel --> PubComp QoS2 Chain for packet identifier {pubRelPacket.PacketIdentifier}.");
             }
 
-            this.sendQueue.Add(pubCompResponsePacket);
+            this.SendQueue.Add(pubCompResponsePacket);
         }
         else
         {
@@ -518,7 +519,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
             // Send a PUBCOMP with PacketIdentifierNotFound
             var pubCompResponsePacket = new PubCompPacket(pubRelPacket.PacketIdentifier, PubCompReasonCode.PacketIdentifierNotFound);
-            this.sendQueue.Add(pubCompResponsePacket);
+            this.SendQueue.Add(pubCompResponsePacket);
         }
     }
 
@@ -558,12 +559,12 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <exception cref="HiveMQttClientException">Raised if the writer is null.</exception>
     internal ValueTask<FlushResult> WriteAsync(ReadOnlyMemory<byte> source, CancellationToken cancellationToken = default)
     {
-        if (this.writer is null)
+        if (this.Writer is null)
         {
             throw new HiveMQttClientException("Writer is null");
         }
 
-        return this.writer.WriteAsync(source, cancellationToken);
+        return this.Writer.WriteAsync(source, cancellationToken);
     }
 
     /// <summary>
@@ -574,12 +575,12 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <exception cref="HiveMQttClientException">Raised if the reader is null.</exception>
     internal async ValueTask<ReadResult> ReadAsync(CancellationToken cancellationToken = default)
     {
-        if (this.reader is null)
+        if (this.Reader is null)
         {
             throw new HiveMQttClientException("Reader is null");
         }
 
-        var readResult = await this.reader.ReadAsync(cancellationToken).ConfigureAwait(false);
+        var readResult = await this.Reader.ReadAsync(cancellationToken).ConfigureAwait(false);
         Logger.Trace($"ReadAsync: Read Buffer Length {readResult.Buffer.Length}");
         return readResult;
     }

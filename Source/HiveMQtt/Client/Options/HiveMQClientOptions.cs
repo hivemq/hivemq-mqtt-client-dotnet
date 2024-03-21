@@ -224,6 +224,11 @@ public class HiveMQClientOptions
         if (this.ClientMaximumPacketSize != null)
         {
             this.ClientMaximumPacketSize = RangeValidateFourByteInteger((long)this.ClientMaximumPacketSize);
+
+            if (this.ClientMaximumPacketSize == 0)
+            {
+                throw new HiveMQttClientException("Client Maximum Packet Size must be greater than 0.");
+            }
         }
 
         if (this.ClientTopicAliasMaximum != null)

@@ -1,5 +1,6 @@
 namespace HiveMQtt.Test.HiveMQClient;
 
+using HiveMQtt.Client.Exceptions;
 using HiveMQtt.Client.Options;
 using Xunit;
 
@@ -61,8 +62,9 @@ public class OptionsTest
         {
             ClientMaximumPacketSize = -300,
         };
-        options.Validate();
-        Assert.Equal(0, options.ClientMaximumPacketSize);
+
+        var exception = Assert.Throws<HiveMQttClientException>(() => options.Validate());
+        Assert.Contains("Client Maximum Packet Size must be greater than 0.", exception.Message);
 
         options.ClientMaximumPacketSize = long.MaxValue;
         options.Validate();

@@ -147,30 +147,4 @@ public class ConnectOptionsTest
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
     }
-
-    [Fact]
-    public async Task Request_Problem_Information_Async()
-    {
-        var options = new HiveMQClientOptions
-        {
-            RequestProblemInformation = true,
-            ClientMaximumPacketSize = 0,
-        };
-
-        var client = new HiveMQClient(options);
-        Assert.Equal(true, client.Options.RequestProblemInformation);
-
-        var connectResult = await client.ConnectAsync().ConfigureAwait(false);
-        Assert.True(connectResult.ReasonCode == ConnAckReasonCode.ProtocolError);
-
-        // FIXME: Broker doesn't return ReasonString for successful connections
-        // Make a better test with a failure scenario
-        Assert.NotNull(connectResult.ReasonString);
-        Assert.Equal("Sent CONNECT with packet size set to '0'. This is a protocol violation.", connectResult.ReasonString);
-
-        Assert.False(client.IsConnected());
-    }
-
-    // FIXME: Add Authentication Tests
-    // AuthenticationMethod/Data
 }

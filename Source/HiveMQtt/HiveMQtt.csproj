@@ -39,11 +39,13 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.1" />
     <PackageReference Include="NLog" Version="5.2.3" />
   </ItemGroup>
+
   <ItemGroup>
-    <InternalsVisibleTo Include="HiveMQtt.Test" PublicKey="fc5550082a9c642c" />
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>HiveMQtt.Test</_Parameter1>
+    </AssemblyAttribute>
   </ItemGroup>
-  <ItemGroup>
-</ItemGroup>
+
   <ItemGroup>
     <Content Include="NLog.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
