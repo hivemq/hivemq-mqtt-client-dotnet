@@ -1,6 +1,7 @@
 namespace ClientBenchmarkApp;
 
 using System;
+using System.Text;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 using BenchmarkDotNet.Jobs;
@@ -19,10 +20,15 @@ public class ClientBenchmarks : IDisposable
 
     private HiveMQClient client;
 
+    private string payload256k;
+
+    private string payload256b;
+
     public ClientBenchmarks()
     {
         Console.WriteLine("Starting HiveMQ client benchmarks...");
         this.client = null!;
+        this.SetupPayloads();
     }
 
     [GlobalSetup]
@@ -76,5 +82,97 @@ public class ClientBenchmarks : IDisposable
             this.smallPayload,
             QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
 
+    [Benchmark(Description = "Publish 100 256b length payload QoS 0 messages to the broker.")]
+    public async Task Publish100256bQoS0MessageAsync()
+    {
+        for (var i = 0; i < 100; i++)
+        {
+            await this.client.PublishAsync(
+                this.payload256b,
+                this.smallPayload).ConfigureAwait(false);
+        }
+    }
+
+    [Benchmark(Description = "Publish 100 256b length payload QoS 1 messages to the broker.")]
+    public async Task Publish100256bQoS1MessageAsync()
+    {
+        for (var i = 0; i < 100; i++)
+        {
+            await this.client.PublishAsync(
+                "benchmarks/PublishQoS1Messages",
+                this.payload256b,
+                QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
+        }
+    }
+
+    [Benchmark(Description = "Publish 100 256b length payload QoS 2 messages to the broker.")]
+    public async Task Publish100256bQoS2MessageAsync()
+    {
+        for (var i = 0; i < 100; i++)
+        {
+            await this.client.PublishAsync(
+                "benchmarks/PublishQoS2Messages",
+                this.payload256b,
+                QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
+        }
+    }
+
+    [Benchmark(Description = "Publish 100 256k length payload QoS 0 messages to the broker.")]
+    public async Task Publish100256kQoS0MessageAsync()
+    {
+        for (var i = 0; i < 100; i++)
+        {
+            await this.client.PublishAsync(
+                this.payload256k,
+                this.smallPayload).ConfigureAwait(false);
+        }
+    }
+
+    [Benchmark(Description = "Publish 100 256k length payload QoS 1 messages to the broker.")]
+    public async Task Publish100256kQoS1MessageAsync()
+    {
+        for (var i = 0; i < 100; i++)
+        {
+            await this.client.PublishAsync(
+                "benchmarks/PublishQoS1Messages",
+                this.payload256k,
+                QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
+        }
+    }
+
+    [Benchmark(Description = "Publish 100 256k length payload QoS 2 messages to the broker.")]
+    public async Task Publish100256kQoS2MessageAsync()
+    {
+        for (var i = 0; i < 100; i++)
+        {
+            await this.client.PublishAsync(
+                "benchmarks/PublishQoS2Messages",
+                this.payload256k,
+                QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
+        }
+    }
+
     public void Dispose() => GC.SuppressFinalize(this);
+
+    private void SetupPayloads()
+    {
+        // Generate a 256 byte payload
+        var sb = new StringBuilder();
+        for (var i = 0; i < 256; i++)
+        {
+            sb.Append('a');
+        }
+
+        this.payload256b = sb.ToString();
+
+        // Generate a 256k payload
+        sb = new StringBuilder();
+        for (var i = 0; i < 256 * 1024; i++)
+        {
+            sb.Append('a');
+        }
+
+        this.payload256k = sb.ToString();
+    }
+
 }
