@@ -17,6 +17,7 @@ Happy MQTT adventures!
 * **Works with Any MQTT 5.0 Broker**: Built by HiveMQ _but not only for_ HiveMQ.
 * **Easy to Use**: Smart defaults, excellent interfaces and intelligent automation makes implementing a breeze.
 * **Compliant**: Fully compliant with the [MQTT 5.0 specification](https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.html).
+* **Fast**: Optimized & benchmarked.  See the benchmark results [here](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Benchmarks/ClientBenchmarkApp/README.md).
 * **Extensive Event System**: Hook into all parts of the client down to the packet level with [built in events](https://hivemq.github.io/hivemq-mqtt-client-dotnet/docs/events).
 * **Global and Per-Subscription Message Handling**: Use multiple targeted handlers for more targeted and specialized message processing.
 * **Full Last Will & Testament Support**: Reliable message delivery and notification of client disconnections.
