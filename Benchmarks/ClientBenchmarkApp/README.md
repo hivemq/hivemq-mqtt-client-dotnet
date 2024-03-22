@@ -22,9 +22,9 @@ The following results are from benchmarks run on my local MBP against a HiveMQ v
 
 | Method                                           | Mean          | Error       | StdDev       | Median         |
 |------------------------------------------------- |--------------:|------------:|-------------:|---------------:|
-| 'Publish a QoS 0 messages'                       |      57.27 us |   158.55 us |    467.50 us |       9.084 us |
-| 'Publish a QoS 1 messages'                       |   2,291.28 us |   903.01 us |  2,662.56 us |   1,357.063 us |
-| 'Publish a QoS 2 messages'                       |   2,058.05 us | 1,048.91 us |  3,092.73 us |   1,292.396 us |
+| 'Publish a QoS 0 message'                       |      57.27 us |   158.55 us |    467.50 us |       9.084 us |
+| 'Publish a QoS 1 message'                       |   2,291.28 us |   903.01 us |  2,662.56 us |   1,357.063 us |
+| 'Publish a QoS 2 message'                       |   2,058.05 us | 1,048.91 us |  3,092.73 us |   1,292.396 us |
 | 'Publish 100 256b length payload QoS 0 messages' |     138.29 us |   183.38 us |    540.69 us |      79.604 us |
 | 'Publish 100 256b length payload QoS 1 messages' |  45,813.98 us | 4,838.62 us | 14,266.78 us |  42,482.520 us |
 | 'Publish 100 256b length payload QoS 2 messages' |  88,589.38 us | 3,877.02 us | 11,431.48 us |  85,640.167 us |
