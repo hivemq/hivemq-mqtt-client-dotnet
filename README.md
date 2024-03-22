@@ -107,7 +107,7 @@ var publishResult = await client.PublishAsync("topic1/example", "Hello Payload")
 
 For a Quickstart, more examples and walkthroughs, see [the documentation](https://hivemq.github.io/hivemq-mqtt-client-dotnet/docs/quickstart).
 
-## Other Other MQTT Clients
+## Other MQTT Clients
 
 * [Java](https://github.com/hivemq/hivemq-mqtt-client)
 * [Javascript](https://github.com/hivemq/hivemq-mqtt-web-client)
