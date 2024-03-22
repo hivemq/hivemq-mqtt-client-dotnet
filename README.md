@@ -79,16 +79,16 @@ using HiveMQtt.MQTT5.Types;
 
 // Setup Client options and instantiate
 var options = new HiveMQClientOptionsBuilder().
-                    WithBroker('candy.x39.eu.hivemq.cloud').
+                    WithBroker("candy.x39.eu.hivemq.cloud").
                     WithPort(8883).
-                    WithUseTLS(true).
+                    WithUseTls(true).
                     Build();
 var client = new HiveMQClient(options);
 
 // Setup an application message handlers BEFORE subscribing to a topic
 client.OnMessageReceived += (sender, args) =>
 {
-    Console.WriteLine("Message Received: {}", args.PublishMessage.PayloadAsString)
+    Console.WriteLine("Message Received: {}", args.PublishMessage.PayloadAsString);
 };
 
 // Connect to the MQTT broker
@@ -102,7 +102,7 @@ var subscribeOptions = builder.Build();
 var subscribeResult = await client.SubscribeAsync(subscribeOptions);
 
 // Publish a message
-var publishResult = await client.PublishAsync("topic1/example", "Hello Payload")
+var publishResult = await client.PublishAsync("topic1/example", "Hello Payload");
 ```
 
 For a Quickstart, more examples and walkthroughs, see [the documentation](https://hivemq.github.io/hivemq-mqtt-client-dotnet/docs/quickstart).
