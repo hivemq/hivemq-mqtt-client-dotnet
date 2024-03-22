@@ -62,27 +62,27 @@ public class ClientBenchmarks : IDisposable
         await this.client.DisconnectAsync().ConfigureAwait(false);
     }
 
-    [Benchmark(Description = "Publish a QoS 0 messages to the broker.")]
+    [Benchmark(Description = "Publish a QoS 0 message")]
     public async Task PublishQoS0MessageAsync() =>
         await this.client.PublishAsync(
             "benchmarks/PublishQoS0Messages",
             this.smallPayload).ConfigureAwait(false);
 
-    [Benchmark(Description = "Publish a QoS 1 messages to the broker.")]
+    [Benchmark(Description = "Publish a QoS 1 message")]
     public async Task PublishQoS1MessageAsync() =>
         await this.client.PublishAsync(
             "benchmarks/PublishQoS1Messages",
             this.smallPayload,
             QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
 
-    [Benchmark(Description = "Publish a QoS 2 messages to the broker.")]
+    [Benchmark(Description = "Publish a QoS 2 message")]
     public async Task PublishQoS2MessageAsync() =>
         await this.client.PublishAsync(
             "benchmarks/PublishQoS2Messages",
             this.smallPayload,
             QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
 
-    [Benchmark(Description = "Publish 100 256b length payload QoS 0 messages to the broker.")]
+    [Benchmark(Description = "Publish 100 256b length payload QoS 0 messages")]
     public async Task Publish100256bQoS0MessageAsync()
     {
         for (var i = 0; i < 100; i++)
@@ -93,7 +93,7 @@ public class ClientBenchmarks : IDisposable
         }
     }
 
-    [Benchmark(Description = "Publish 100 256b length payload QoS 1 messages to the broker.")]
+    [Benchmark(Description = "Publish 100 256b length payload QoS 1 messages")]
     public async Task Publish100256bQoS1MessageAsync()
     {
         for (var i = 0; i < 100; i++)
@@ -105,7 +105,7 @@ public class ClientBenchmarks : IDisposable
         }
     }
 
-    [Benchmark(Description = "Publish 100 256b length payload QoS 2 messages to the broker.")]
+    [Benchmark(Description = "Publish 100 256b length payload QoS 2 messages")]
     public async Task Publish100256bQoS2MessageAsync()
     {
         for (var i = 0; i < 100; i++)
@@ -117,7 +117,7 @@ public class ClientBenchmarks : IDisposable
         }
     }
 
-    [Benchmark(Description = "Publish 100 256k length payload QoS 0 messages to the broker.")]
+    [Benchmark(Description = "Publish 100 256k length payload QoS 0 messages")]
     public async Task Publish100256kQoS0MessageAsync()
     {
         for (var i = 0; i < 100; i++)
@@ -128,7 +128,7 @@ public class ClientBenchmarks : IDisposable
         }
     }
 
-    [Benchmark(Description = "Publish 100 256k length payload QoS 1 messages to the broker.")]
+    [Benchmark(Description = "Publish 100 256k length payload QoS 1 messages")]
     public async Task Publish100256kQoS1MessageAsync()
     {
         for (var i = 0; i < 100; i++)
@@ -140,7 +140,7 @@ public class ClientBenchmarks : IDisposable
         }
     }
 
-    [Benchmark(Description = "Publish 100 256k length payload QoS 2 messages to the broker.")]
+    [Benchmark(Description = "Publish 100 256k length payload QoS 2 messages")]
     public async Task Publish100256kQoS2MessageAsync()
     {
         for (var i = 0; i < 100; i++)
