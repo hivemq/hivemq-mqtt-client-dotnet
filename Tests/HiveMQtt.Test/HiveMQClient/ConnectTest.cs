@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Threading.Tasks;
 using HiveMQtt.Client;
 using HiveMQtt.Client.Events;
+using HiveMQtt.Client.Exceptions;
 using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.ReasonCodes;
 using Xunit;
@@ -11,7 +12,7 @@ using Xunit;
 public class ConnectTest
 {
     [Fact]
-    public async Task Basic_Connect_And_Disconnect_Async()
+    public async Task BasicConnectAndDisconnectAsync()
     {
         var client = new HiveMQClient();
         Assert.NotNull(client);
@@ -30,7 +31,20 @@ public class ConnectTest
     }
 
     [Fact]
-    public async Task Test_Connect_Events_Async()
+    public async Task RaiseOnFailureToConnectAsync()
+    {
+        // Bad port number
+        var clientOptions = new HiveMQClientOptionsBuilder().WithPort(0).Build();
+        var client = new HiveMQClient(clientOptions);
+
+        await Assert.ThrowsAsync<HiveMQttClientException>(async () =>
+        {
+            await client.ConnectAsync().ConfigureAwait(false);
+        }).ConfigureAwait(false);
+    }
+
+    [Fact]
+    public async Task TestConnectEventsAsync()
     {
         var client = new HiveMQClient();
 
