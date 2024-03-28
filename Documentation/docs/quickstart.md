@@ -33,37 +33,34 @@ The example presented below illustrates the prevalent usage pattern for our clie
 
 ```csharp
 using HiveMQtt.Client;
-using HiveMQtt.MQTT5.Types; // For QualityOfService enum
+using HiveMQtt.MQTT5.Types;
 
+// Setup Client options and instantiate
 var options = new HiveMQClientOptionsBuilder().
-                    WithBroker('candy.x39.eu.hivemq.cloud').
+                    WithBroker("candy.x39.eu.hivemq.cloud").
                     WithPort(8883).
-                    WithUseTLS(true).
+                    WithUseTls(true).
                     Build();
-
-// Instantiate the HiveMQtt client
 var client = new HiveMQClient(options);
 
-// Setup application message handlers FIRST
+// Setup an application message handlers BEFORE subscribing to a topic
 client.OnMessageReceived += (sender, args) =>
 {
-    Console.WriteLine("Message Received: {}", args.PublishMessage.PayloadAsString)
+    Console.WriteLine("Message Received: {}", args.PublishMessage.PayloadAsString);
 };
 
-// Connect
+// Connect to the MQTT broker
 var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 
-// Create subscribe options for topics we want to subscribe to
+// Configure the subscriptions we want and subscribe
 var builder = new SubscribeOptionsBuilder();
 builder.WithSubscription("topic1", QualityOfService.AtLeastOnceDelivery)
        .WithSubscription("topic2", QualityOfService.ExactlyOnceDelivery);
 var subscribeOptions = builder.Build();
-
-// Subscribe
 var subscribeResult = await client.SubscribeAsync(subscribeOptions);
 
-// Publish
-var publishResult = await client.PublishAsync("topic1/example", "Hello Payload")
+// Publish a message
+var publishResult = await client.PublishAsync("topic1/example", "Hello Payload");
 ```
 
 

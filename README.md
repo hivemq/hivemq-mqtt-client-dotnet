@@ -8,7 +8,7 @@
 [![Nuget](https://img.shields.io/nuget/dt/HiveMQtt?style=for-the-badge)](https://www.nuget.org/packages/HiveMQtt)
 [![GitHub](https://img.shields.io/github/license/hivemq/hivemq-mqtt-client-dotnet?style=for-the-badge)](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/LICENSE)
 
-_This .NET MQTT client was put together with love from the HiveMQ team but is still in BETA.  While it's mostly stable, it is still under active development as we add new features.  If you have a feature request, [let us know](https://github.com/hivemq/hivemq-mqtt-client-dotnet/issues/new/choose)!._
+_This .NET MQTT client was put together with love from the HiveMQ team.  It is currently in a mature BETA state. While it's mostly stable, it is still under development as we add new features.  If you have a feature request, [let us know](https://github.com/hivemq/hivemq-mqtt-client-dotnet/issues/new/choose)!._
 
 Happy MQTT adventures!
 
