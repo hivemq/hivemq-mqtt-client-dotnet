@@ -7,9 +7,7 @@ export default function HomepageIntro() {
     <section className={styles.intro}>
       <div className="container">
         <div className="row">
-          This .NET MQTT client was put together with love from the HiveMQ team but is still in BETA. As such some things may not work completely until it matures and although unlikely, APIs may change slightly before version 1.0.
-
-          We'd appreciate any feedback you have. Happy MQTT adventures!
+          <p> This .NET MQTT client was put together with love from the HiveMQ team.  It is currently in a mature BETA state. While it's mostly stable, it is still under development as we add new features.  We'd appreciate any feedback you have. Happy MQTT adventures!  </p>
         </div>
       </div>
     </section>
