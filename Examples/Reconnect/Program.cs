@@ -1,8 +1,8 @@
+using System.Text.Json;
+using System.Diagnostics;
 using HiveMQtt.Client;
 using HiveMQtt.Client.Exceptions;
 using HiveMQtt.Client.Options;
-using System.Text.Json;
-using System.Diagnostics;
 
 var topic = "hivemqtt/waiting/game";
 
@@ -122,11 +122,7 @@ await Task.Delay(1000).ConfigureAwait(false);
 Console.WriteLine("Publishing a test message...");
 var resultPublish = await client.PublishAsync(
     topic,
-    JsonSerializer.Serialize(new
-    {
-        Command = "Hello",
-    })
-).ConfigureAwait(false);
+    JsonSerializer.Serialize(new { Command = "Hello", })).ConfigureAwait(false);
 
 while (true)
 {

@@ -18,17 +18,34 @@ public class ClientBenchmarks : IDisposable
 {
     private readonly string smallPayload = new string(/*lang=json,strict*/ "{\"interference\": \"1029384\"}");
 
+    private readonly string payload256k;
+
+    private readonly string payload256b;
+
     private HiveMQClient client;
-
-    private string payload256k;
-
-    private string payload256b;
 
     public ClientBenchmarks()
     {
         Console.WriteLine("Starting HiveMQ client benchmarks...");
         this.client = null!;
-        this.SetupPayloads();
+
+        // Generate a 256 byte payload
+        var sb = new StringBuilder();
+        for (var i = 0; i < 256; i++)
+        {
+            sb.Append('a');
+        }
+
+        this.payload256b = sb.ToString();
+
+        // Generate a 256k payload
+        sb = new StringBuilder();
+        for (var i = 0; i < 256 * 1024; i++)
+        {
+            sb.Append('a');
+        }
+
+        this.payload256k = sb.ToString();
     }
 
     [GlobalSetup]
@@ -153,26 +170,4 @@ public class ClientBenchmarks : IDisposable
     }
 
     public void Dispose() => GC.SuppressFinalize(this);
-
-    private void SetupPayloads()
-    {
-        // Generate a 256 byte payload
-        var sb = new StringBuilder();
-        for (var i = 0; i < 256; i++)
-        {
-            sb.Append('a');
-        }
-
-        this.payload256b = sb.ToString();
-
-        // Generate a 256k payload
-        sb = new StringBuilder();
-        for (var i = 0; i < 256 * 1024; i++)
-        {
-            sb.Append('a');
-        }
-
-        this.payload256k = sb.ToString();
-    }
-
 }
