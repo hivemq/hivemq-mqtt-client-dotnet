@@ -22,7 +22,7 @@ using System.Text;
 
 public class LastWillAndTestamentBuilder
 {
-    private readonly Dictionary<string, string> userProperties = new Dictionary<string, string>();
+    private readonly Dictionary<string, string> userProperties = new();
     private string? topic;
     private byte[]? payload;
     private QualityOfService qos = QualityOfService.AtMostOnceDelivery;

@@ -37,7 +37,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     // Transactional packets indexed by packet identifier
     private readonly ConcurrentDictionary<int, List<ControlPacket>> transactionQueue = new();
 
-    private readonly Stopwatch lastCommunicationTimer = new Stopwatch();
+    private readonly Stopwatch lastCommunicationTimer = new();
 
     /// <summary>
     /// Asynchronous background task that monitors the connection state and sends PingReq packets when
@@ -196,7 +196,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     default:
                         Logger.Trace($"{this.Options.ClientId}-(W)- --> Unknown packet type {packet}");
                         break;
-
                 } // switch
 
                 if (writeResult.IsCanceled)
@@ -303,7 +302,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     Logger.Trace($"{this.Options.ClientId}-(R)- <-- Received {decodedPacket.GetType().Name}.  Adding to receivedQueue.");
                     this.ReceivedQueue.Add(decodedPacket);
                 } // while (buffer.Length > 0
-
             } // while (this.ConnectState is ConnectState.Connecting or ConnectState.Connected)
 
             Logger.Trace($"{this.Options.ClientId}-(R)- ConnectionReader Exiting...{this.ConnectState}");
@@ -435,7 +433,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         {
             Logger.Warn($"QoS1: Received PubAck with an unknown packet identifier {pubAckPacket.PacketIdentifier}. Discarded.");
         }
-
     }
 
     /// <summary>
@@ -478,7 +475,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             var pubRelResponsePacket = new PubRelPacket(pubRecPacket.PacketIdentifier, PubRelReasonCode.PacketIdentifierNotFound);
             this.SendQueue.Add(pubRelResponsePacket);
         }
-
     }
 
     /// <summary>

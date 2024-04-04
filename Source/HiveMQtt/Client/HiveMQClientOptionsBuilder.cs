@@ -59,7 +59,7 @@ using HiveMQtt.Client.Options;
 public class HiveMQClientOptionsBuilder
 {
     private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
-    private readonly HiveMQClientOptions options = new HiveMQClientOptions();
+    private readonly HiveMQClientOptions options = new();
 
     /// <summary>
     /// Sets the address of the broker to connect to.

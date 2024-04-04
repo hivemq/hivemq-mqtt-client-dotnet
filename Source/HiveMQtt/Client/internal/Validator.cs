@@ -81,7 +81,6 @@ public class Validator
         {
             throw new HiveMQttClientException("A topic name cannot contain any null characters.");
         }
-
     }
 
     /// <summary>
@@ -110,5 +109,4 @@ public class Validator
             throw new HiveMQttClientException("A topic name cannot contain any null characters.");
         }
     }
-
 }

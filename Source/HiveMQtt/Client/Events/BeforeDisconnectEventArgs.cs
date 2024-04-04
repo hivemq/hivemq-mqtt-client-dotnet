@@ -24,5 +24,4 @@ public class BeforeDisconnectEventArgs : EventArgs
     public BeforeDisconnectEventArgs()
     {
     }
-
 }
