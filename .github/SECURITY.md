@@ -6,4 +6,4 @@ This project supports only the latest version with security updates. However, we
 
 ## Reporting a Vulnerability
 
-Contact [support@hivemq.com|@pglombardo] to report a security vulnerability.  Reports will be greatly appreciated!
+Contact the HiveMQ [Support Team](mailto:support@hivemq.com) to report a security vulnerability.  Reports will be greatly appreciated!
