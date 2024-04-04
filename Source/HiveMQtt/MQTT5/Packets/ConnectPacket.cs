@@ -393,6 +393,14 @@ public class ConnectPacket : ControlPacket
                 }
 
                 break;
+            case MQTT5DataType.Byte:
+                break;
+            case MQTT5DataType.UTF8EncodedString:
+                break;
+            case MQTT5DataType.UTF8EncodedStringPair:
+                break;
+            case MQTT5DataType.BinaryData:
+                break;
             default:
                 result = value;
                 break;
@@ -400,5 +408,4 @@ public class ConnectPacket : ControlPacket
 
         return result;
     }
-
 }

@@ -186,15 +186,7 @@ csharp_style_unused_value_expression_statement_preference = discard_variable:sug
 dotnet_diagnostic.IDE0058.severity = suggestion
 csharp_style_unused_value_assignment_preference = discard_variable:suggestion
 dotnet_diagnostic.IDE0059.severity = suggestion
-dotnet_diagnostic.IDE0002.severity = none
-dotnet_diagnostic.IDE0010.severity = none
-dotnet_diagnostic.IDE0028.severity = none
-dotnet_diagnostic.IDE0049.severity = none
-dotnet_diagnostic.IDE0053.severity = none
-dotnet_diagnostic.IDE0090.severity = none
-dotnet_diagnostic.IDE0300.severity = none
-dotnet_diagnostic.IDE0290.severity = none
-dotnet_diagnostic.SA1508.severity = none
+# dotnet_diagnostic.IDE0290.severity = none
 
 # FIXME: CLS Compliance
 dotnet_diagnostic.CS3001.severity = none

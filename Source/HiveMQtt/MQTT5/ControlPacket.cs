@@ -666,5 +666,4 @@ public abstract class ControlPacket
 
         return true;
     }
-
 }
