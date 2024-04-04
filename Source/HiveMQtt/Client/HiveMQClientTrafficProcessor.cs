@@ -456,10 +456,12 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             var pubRelResponsePacket = new PubRelPacket(pubRecPacket.PacketIdentifier, PubRelReasonCode.Success);
 
             // Create an updated transaction chain
-            var newPublishQoS2Chain = new List<ControlPacket>();
-            newPublishQoS2Chain.Add(originalPublishPacket);
-            newPublishQoS2Chain.Add(pubRecPacket);
-            newPublishQoS2Chain.Add(pubRelResponsePacket);
+            var newPublishQoS2Chain = new List<ControlPacket>
+            {
+                originalPublishPacket,
+                pubRecPacket,
+                pubRelResponsePacket,
+            };
 
             // Update the chain in the queue
             if (this.transactionQueue.TryUpdate(pubRecPacket.PacketIdentifier, newPublishQoS2Chain, originalPublishQoS2Chain) == false)
