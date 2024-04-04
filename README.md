@@ -3,10 +3,18 @@
 
 # The Spectacular (BETA) C# MQTT Client for .NET
 
+[![NuGet Version](https://img.shields.io/nuget/v/HiveMQtt?style=for-the-badge)](https://www.nuget.org/packages/HiveMQtt)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/hivemq/hivemq-mqtt-client-dotnet?style=for-the-badge)](https://github.com/hivemq/hivemq-mqtt-client-dotnet/releases)
 [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/hivemq/hivemq-mqtt-client-dotnet/build.yml?style=for-the-badge)](https://github.com/hivemq/hivemq-mqtt-client-dotnet/actions)
 [![Nuget](https://img.shields.io/nuget/dt/HiveMQtt?style=for-the-badge)](https://www.nuget.org/packages/HiveMQtt)
 [![GitHub](https://img.shields.io/github/license/hivemq/hivemq-mqtt-client-dotnet?style=for-the-badge)](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/LICENSE)
+
+
+![Static Badge](https://img.shields.io/badge/.NET%20Core-6-%23512BD4?style=for-the-badge)
+![Static Badge](https://img.shields.io/badge/.NET%20Core-7-%23512BD4?style=for-the-badge)
+![Static Badge](https://img.shields.io/badge/.NET%20Core-8-%23512BD4?style=for-the-badge)
+
+
 
 _This .NET MQTT client was put together with love from the HiveMQ team.  It is currently in a mature BETA state. While it's mostly stable, it is still under development as we add new features.  If you have a feature request, [let us know](https://github.com/hivemq/hivemq-mqtt-client-dotnet/issues/new/choose)!._
 
