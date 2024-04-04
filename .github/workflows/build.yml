@@ -41,7 +41,9 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
+        # Docker containers not supported on windows and macOS in Github runners.
+        # os: [ubuntu-latest, windows-latest, macOS-latest]
+        os: [ubuntu-latest]
         dotnet-version: ['6.0.28', '7.0.17', '8.0.3']
     steps:
       - name: "Checkout"
