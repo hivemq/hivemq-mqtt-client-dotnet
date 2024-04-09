@@ -15,23 +15,21 @@
 ![Static Badge](https://img.shields.io/badge/.NET%20Core-8-%23512BD4?style=for-the-badge)
 
 
-Happy MQTT adventures!
-
 * **Easy-to-Install**: Available as a [Nuget package](https://www.nuget.org/packages/HiveMQtt).
-* **Opensource**: No blackbox code.  Only trusted, tested and reviewed opensource code.
-* **Works with Any MQTT 5.0 Broker**: Built by HiveMQ _but not only for_ HiveMQ.
-* **Easy to Use**: Smart defaults, excellent interfaces and intelligent automation makes implementing a breeze.
 * **Compliant**: Fully compliant with the [MQTT 5.0 specification](https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.html).
+* **Works with Any MQTT 5.0 Broker**: Built by HiveMQ _but not only for_ HiveMQ.
+* **Opensource**: No blackbox code.  Only trusted, tested and reviewed opensource code.
+* **Easy to Use**: Smart defaults, excellent interfaces and intelligent automation makes implementing a breeze.
 * **Fast**: Optimized & benchmarked.  See the benchmark results [here](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Benchmarks/ClientBenchmarkApp/README.md).
+* **Actively Maintained**: Built by the MQTT professionals that built HiveMQ (and do this for a living).
+* **Extensively Documented**: What good is it without [excellent documentation](https://hivemq.github.io/hivemq-mqtt-client-dotnet/)?
+* **Supported**: Contact us anytime in [this repository](https://github.com/hivemq/hivemq-mqtt-client-dotnet/issues), in the [community forum](https://community.hivemq.com) or [through support](https://www.hivemq.com/support/).
 * **Extensive Event System**: Hook into all parts of the client down to the packet level with [built in events](https://hivemq.github.io/hivemq-mqtt-client-dotnet/docs/events).
 * **Global and Per-Subscription Message Handling**: Use multiple targeted handlers for more targeted and specialized message processing.
 * **Full Last Will & Testament Support**: Reliable message delivery and notification of client disconnections.
 * **Observable**: Configure up to [TRACE level logging](https://hivemq.github.io/hivemq-mqtt-client-dotnet/docs/how-to/debug) for package internals.
 * **Secure Client Identification**: Full support for [X.509 client certificates](https://hivemq.github.io/hivemq-mqtt-client-dotnet/docs/how-to/client-certificates) and TLS connections.
 * **Globally Compatible**: Built to be a fully compliant MQTT 5.0 client compatible with all reputable MQTT brokers.
-* **Actively Maintained**: Built by the MQTT professionals that built HiveMQ (and do this for a living).
-* **Extensively Documented**: What good is it without [excellent documentation](https://hivemq.github.io/hivemq-mqtt-client-dotnet/)?
-* **Supported**: Contact us anytime in [this repository](https://github.com/hivemq/hivemq-mqtt-client-dotnet/issues), in the [community forum](https://community.hivemq.com) or [through support](https://www.hivemq.com/support/).
 
 _Do you have a success story with this client?  [Let us know]().  We'd love to feature your story in a blog post or video and you'll get some sweet HiveMQ swag (and publicity) along the way._
 
