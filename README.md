@@ -15,9 +15,6 @@
 ![Static Badge](https://img.shields.io/badge/.NET%20Core-8-%23512BD4?style=for-the-badge)
 
 
-
-_This .NET MQTT client was put together with love from the HiveMQ team.  It is currently in a mature BETA state. While it's mostly stable, it is still under development as we add new features.  If you have a feature request, [let us know](https://github.com/hivemq/hivemq-mqtt-client-dotnet/issues/new/choose)!._
-
 Happy MQTT adventures!
 
 * **Easy-to-Install**: Available as a [Nuget package](https://www.nuget.org/packages/HiveMQtt).
