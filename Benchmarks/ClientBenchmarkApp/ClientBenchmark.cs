@@ -16,7 +16,7 @@ using HiveMQtt.MQTT5.Types;
 [SimpleJob(RunStrategy.Monitoring, iterationCount: 100, id: "MonitoringJob")]
 public class ClientBenchmarks : IDisposable
 {
-    private readonly string smallPayload = new string(/*lang=json,strict*/ "{\"interference\": \"1029384\"}");
+    private readonly string smallPayload = "{\"interference\": \"1029384\"}";
 
     private readonly string payload256k;
 

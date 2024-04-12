@@ -112,6 +112,8 @@ dotnet_diagnostic.IDE0046.severity = suggestion
 dotnet_style_prefer_compound_assignment = true:warning
 dotnet_style_prefer_simplified_interpolation = true:warning
 dotnet_style_prefer_simplified_boolean_expressions = true:warning
+dotnet_diagnostic.IDE0028.severity = suggestion
+dotnet_diagnostic.IDE0290.severity = suggestion
 # Null-checking preferences
 dotnet_style_coalesce_expression = true:warning
 dotnet_style_null_propagation = true:warning
