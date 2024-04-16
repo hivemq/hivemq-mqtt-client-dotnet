@@ -387,7 +387,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     internal void HandleIncomingPublishPacket(PublishPacket publishPacket)
     {
         Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received Publish id={publishPacket.PacketIdentifier}");
-        this.OnMessageReceivedEventLauncher(publishPacket);
+        this.OnPublishReceivedEventLauncher(publishPacket);
 
         if (publishPacket.Message.QoS is MQTT5.Types.QualityOfService.AtLeastOnceDelivery)
         {
@@ -409,6 +409,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
             this.SendQueue.Add(pubRecResponse);
         }
+        this.OnMessageReceivedEventLauncher(publishPacket);
+
     }
 
     /// <summary>
