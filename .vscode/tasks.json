@@ -2,7 +2,39 @@
     "version": "2.0.0",
     "tasks": [
       {
-        "label": "build",
+        "label": "build HiveMQtt",
+        "command": "dotnet",
+        "type": "process",
+        "args": [
+          "build",
+          "${workspaceFolder}/Source/HiveMQtt/HiveMQtt.csproj",
+          "/property:GenerateFullPaths=true",
+          "/consoleloggerparameters:NoSummary"
+        ],
+        "problemMatcher": "$msCompile",
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        }
+      },
+      {
+        "label": "clean HiveMQtt",
+        "command": "dotnet",
+        "type": "process",
+        "args": [
+          "clean",
+          "${workspaceFolder}/Source/HiveMQtt/HiveMQtt.csproj",
+          "/property:GenerateFullPaths=true",
+          "/consoleloggerparameters:NoSummary"
+        ],
+        "problemMatcher": "$msCompile",
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        }
+      },
+      {
+        "label": "build HiveMQtt.Test",
         "command": "dotnet",
         "type": "process",
         "args": [
@@ -11,31 +43,8 @@
           "/property:GenerateFullPaths=true",
           "/consoleloggerparameters:NoSummary"
         ],
-        "problemMatcher": "$msCompile"
-      },
-      {
-        "label": "publish",
-        "command": "dotnet",
-        "type": "process",
-        "args": [
-          "publish",
-          "${workspaceFolder}/Tests/HiveMQtt.Test/HiveMQtt.Test.csproj",
-          "/property:GenerateFullPaths=true",
-          "/consoleloggerparameters:NoSummary"
-        ],
-        "problemMatcher": "$msCompile"
-      },
-      {
-        "label": "watch",
-        "command": "dotnet",
-        "type": "process",
-        "args": [
-          "watch",
-          "run",
-          "--project",
-          "${workspaceFolder}/Tests/HiveMQtt.Test/HiveMQtt.Test.csproj"
-        ],
-        "problemMatcher": "$msCompile"
+        "problemMatcher": "$msCompile",
+        "group": "build"
       },
       {
         "label": "build ClientBenchmarkApp",
@@ -44,6 +53,31 @@
         "args": [
           "build",
           "${workspaceFolder}/Benchmarks/ClientBenchmarkApp/ClientBenchmarkApp.csproj"
+        ],
+        "problemMatcher": "$msCompile",
+        "group": "build"
+      },
+      {
+        "label": "build SubscriberWithEvents",
+        "command": "dotnet",
+        "type": "process",
+        "args": [
+          "build",
+          "${workspaceFolder}/Examples/SubscriberWithEvents/SubscriberWithEvents.csproj"
+        ],
+        "problemMatcher": "$msCompile",
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        }
+      },
+      {
+        "label": "clean SubscriberWithEvents",
+        "command": "dotnet",
+        "type": "process",
+        "args": [
+          "clean",
+          "${workspaceFolder}/Examples/SubscriberWithEvents/SubscriberWithEvents.csproj"
         ],
         "problemMatcher": "$msCompile",
         "group": {
