@@ -100,6 +100,11 @@ public abstract class ControlPacket
     internal ushort PacketIdentifier { get; set; }
 
     /// <summary>
+    /// Gets or sets the size of the encoded packet.
+    /// </summary>
+    internal long PacketSize { get; set; }
+
+    /// <summary>
     /// Decodes a MQTT packet identifier as a two byte integer from the given <c>MemoryStream</c>.  It then
     /// does basic validation and range checking on the decoded value.
     /// </summary>

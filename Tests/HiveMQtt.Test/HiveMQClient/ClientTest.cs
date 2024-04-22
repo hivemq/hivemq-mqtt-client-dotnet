@@ -9,7 +9,6 @@ public class ClientTest
     [Fact]
     public void Client_Initializes_With_Defaults()
     {
-        // var clientOptions = new HiveMQClientOptions();
         var client = new HiveMQClient();
 
         Assert.NotNull(client.Options.ClientId);
@@ -29,7 +28,9 @@ public class ClientTest
     [Fact]
     public async Task Client_Has_Default_Connect_Async()
     {
-        var client = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().
+                    WithClientId("Client_Has_Default_Connect_Async").Build();
+        var client = new HiveMQClient(options);
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 
         Assert.NotNull(connectResult);
@@ -43,7 +44,9 @@ public class ClientTest
     [Fact]
     public async Task ClientStateAsync()
     {
-        var client = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().
+                    WithClientId("ClientTest.ClientStateAsync").Build();
+        var client = new HiveMQClient(options);
 
         // Validate private internals of the HiveMQtt client
 
@@ -89,7 +92,7 @@ public class ClientTest
 
         Assert.Equal(TaskStatus.WaitingForActivation, client.ConnectionWriterTask.Status);
         Assert.Equal(TaskStatus.WaitingForActivation, client.ConnectionReaderTask.Status);
-        Assert.Equal(TaskStatus.Running, client.ReceivedPacketsHandlerTask.Status);
+        Assert.Equal(TaskStatus.WaitingForActivation, client.ReceivedPacketsHandlerTask.Status);
         Assert.Equal(TaskStatus.WaitingForActivation, client.ConnectionMonitorTask.Status);
 
         // Queues
@@ -130,7 +133,7 @@ public class ClientTest
 
         Assert.Equal(TaskStatus.WaitingForActivation, client.ConnectionWriterTask.Status);
         Assert.Equal(TaskStatus.WaitingForActivation, client.ConnectionReaderTask.Status);
-        Assert.Equal(TaskStatus.Running, client.ReceivedPacketsHandlerTask.Status);
+        Assert.Equal(TaskStatus.WaitingForActivation, client.ReceivedPacketsHandlerTask.Status);
         Assert.Equal(TaskStatus.WaitingForActivation, client.ConnectionMonitorTask.Status);
 
         // Queues

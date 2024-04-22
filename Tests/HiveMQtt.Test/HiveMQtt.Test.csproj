@@ -1,12 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup Label="Build">
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ReleaseVersion>0.1.0</ReleaseVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DefineConstants>DEBUG;NET;NET6_0;NETCOREAPP</DefineConstants>
+    <DefineConstants>DEBUG;NET;NET8_0;NETCOREAPP</DefineConstants>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup Label="Project References">

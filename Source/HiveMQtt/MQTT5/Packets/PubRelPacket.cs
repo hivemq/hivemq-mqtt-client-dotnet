@@ -72,8 +72,8 @@ public class PubRelPacket : ControlPacket
     /// <param name="packetData">The packet data as a ReadOnlySequence of bytes.</param>
     public void Decode(ReadOnlySequence<byte> packetData)
     {
-        var packetLength = packetData.Length;
         var reader = new SequenceReader<byte>(packetData);
+        this.PacketSize = packetData.Length;
 
         reader.Advance(1);
 

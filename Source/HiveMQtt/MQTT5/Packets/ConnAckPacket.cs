@@ -44,8 +44,8 @@ public class ConnAckPacket : ControlPacket
     /// <param name="packetData">The raw packet data off the wire.</param>
     public void Decode(ReadOnlySequence<byte> packetData)
     {
-        var packetLength = packetData.Length;
         var reader = new SequenceReader<byte>(packetData);
+        this.PacketSize = packetData.Length;
 
         // The first byte is the MQTT Control Packet type and flags.
         reader.Advance(1);

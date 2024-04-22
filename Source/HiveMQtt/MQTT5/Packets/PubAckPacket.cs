@@ -79,6 +79,7 @@ public class PubAckPacket : ControlPacket
     public void Decode(ReadOnlySequence<byte> packetData)
     {
         var reader = new SequenceReader<byte>(packetData);
+        this.PacketSize = packetData.Length;
 
         // Skip past the fixed header MQTT Control Packet type
         reader.Advance(1);
