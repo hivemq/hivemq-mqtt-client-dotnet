@@ -314,7 +314,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <param name="cancellationToken">The cancellation token to stop the task.</param>
     /// <returns>A fairly worthless boolean.</returns>
     private Task<bool> ReceivedPacketsHandlerAsync(CancellationToken cancellationToken) => Task.Run(
-        () =>
+        async () =>
         {
             Logger.Trace($"{this.Options.ClientId}-(RPH)- Starting...{this.ConnectState}");
 
@@ -329,6 +329,24 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 Logger.Trace($"{this.Options.ClientId}-(RPH)- {this.ReceivedQueue.Count} received packets currently waiting to be processed.");
 
                 var packet = this.ReceivedQueue.Take();
+
+                if (this.Options.ClientMaximumPacketSize != null)
+                {
+                    if (packet.PacketSize > this.Options.ClientMaximumPacketSize)
+                    {
+                        Logger.Warn($"Packet size {packet.PacketSize} exceeds maximum packet size {this.Options.ClientMaximumPacketSize}.  Disconnecting.");
+                        Logger.Debug($"{this.Options.ClientId}-(RPH)- Packet size {packet.PacketSize} exceeds maximum packet size {this.Options.ClientMaximumPacketSize}.  Disconnecting.");
+
+                        var opts = new DisconnectOptions
+                        {
+                            ReasonCode = DisconnectReasonCode.PacketTooLarge,
+                            ReasonString = "Packet Too Large",
+                        };
+                        await this.DisconnectAsync(opts).ConfigureAwait(false);
+                        return false;
+                    }
+                }
+
                 switch (packet)
                 {
                     case ConnAckPacket connAckPacket:
@@ -409,8 +427,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
             this.SendQueue.Add(pubRecResponse);
         }
-        this.OnMessageReceivedEventLauncher(publishPacket);
 
+        this.OnMessageReceivedEventLauncher(publishPacket);
     }
 
     /// <summary>

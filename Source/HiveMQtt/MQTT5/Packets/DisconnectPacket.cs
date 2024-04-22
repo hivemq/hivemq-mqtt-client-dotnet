@@ -68,6 +68,7 @@ public class DisconnectPacket : ControlPacket
     public void Decode(ReadOnlySequence<byte> packetData)
     {
         var reader = new SequenceReader<byte>(packetData);
+        this.PacketSize = packetData.Length;
 
         // Skip past the MQTT control packet type
         reader.Advance(1);

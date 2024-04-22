@@ -11,7 +11,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/Tests/HiveMQtt.Test/bin/Debug/net6.0/HiveMQtt.Test.dll",
+            "program": "${workspaceFolder}/Tests/HiveMQtt.Test/bin/Debug/net8.0/HiveMQtt.Test.dll",
             "args": [],
             "cwd": "${workspaceFolder}/Tests/HiveMQtt.Test",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console

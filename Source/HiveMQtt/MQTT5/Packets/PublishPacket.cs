@@ -90,6 +90,7 @@ public class PublishPacket : ControlPacket
     public void Decode(ReadOnlySequence<byte> packetData)
     {
         var reader = new SequenceReader<byte>(packetData);
+        this.PacketSize = packetData.Length;
 
         if (reader.TryRead(out var fixedHeaderFlags))
         {
