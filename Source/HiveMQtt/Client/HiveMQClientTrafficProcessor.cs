@@ -257,7 +257,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                         // Launch the AfterDisconnect event with a clean disconnect set to false.
                         this.AfterDisconnectEventLauncher(false);
 
-                        this.cancellationTokenSource.Cancel();
+                        await this.cancellationTokenSource.CancelAsync().ConfigureAwait(false);
 
                         Logger.Trace($"{this.Options.ClientId}-(R)- ConnectionReader Exiting...{this.ConnectState}");
                         return false;
