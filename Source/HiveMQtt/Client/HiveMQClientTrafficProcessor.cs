@@ -247,22 +247,14 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 if (readResult.IsCompleted)
                 {
                     Logger.Trace($"{this.Options.ClientId}-(R)- ConnectionReader IsCompleted: end of the stream");
-
                     if (this.ConnectState == ConnectState.Connected)
                     {
                         // This is an unexpected exit and may be due to a network failure.
-                        Logger.Trace($"{this.Options.ClientId}-(R)- ConnectionReader IsCompleted: was unexpected");
-                        this.ConnectState = ConnectState.Disconnected;
-
-                        // Launch the AfterDisconnect event with a clean disconnect set to false.
-                        this.AfterDisconnectEventLauncher(false);
-
-                        await this.cancellationTokenSource.CancelAsync().ConfigureAwait(false);
-
-                        Logger.Trace($"{this.Options.ClientId}-(R)- ConnectionReader Exiting...{this.ConnectState}");
-                        return false;
+                        Logger.Trace($"{this.Options.ClientId}-(R)- ConnectionReader IsCompleted: this was unexpected");
+                        await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
                     }
 
+                    Logger.Trace($"{this.Options.ClientId}-(R)- ConnectionReader Exiting...{this.ConnectState}");
                     return true;
                 }
 
@@ -356,7 +348,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     case DisconnectPacket disconnectPacket:
                         Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received Disconnect id={disconnectPacket.PacketIdentifier}");
                         Logger.Warn($"Disconnect received: {disconnectPacket.DisconnectReasonCode} {disconnectPacket.Properties.ReasonString}");
-                        this.HandleDisconnection();
+                        await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
                         this.OnDisconnectReceivedEventLauncher(disconnectPacket);
                         break;
                     case PingRespPacket pingRespPacket:
@@ -422,6 +414,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             var pubRecResponse = new PubRecPacket(publishPacket.PacketIdentifier, PubRecReasonCode.Success);
             var publishQoS2Chain = new List<ControlPacket> { publishPacket, pubRecResponse };
 
+            // FIXME:  Wait for QoS 2 transaction to complete before calling OnMessageReceivedEventLauncher???
             if (this.transactionQueue.TryAdd(publishPacket.PacketIdentifier, publishQoS2Chain) == false)
             {
                 Logger.Warn($"Duplicate packet ID detected {publishPacket.PacketIdentifier} while queueing to transaction queue for an incoming QoS {publishPacket.Message.QoS} publish .");
