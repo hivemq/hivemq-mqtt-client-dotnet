@@ -146,7 +146,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                             // QoS > 0 - Add to transaction queue
                             if (this.transactionQueue.TryAdd(publishPacket.PacketIdentifier, new List<ControlPacket> { publishPacket }) == false)
                             {
-                                Logger.Warn("Duplicate packet ID detected.");
+                                Logger.Warn($"Duplicate packet ID detected {publishPacket.PacketIdentifier} while queueing to transaction queue for an outgoing QoS {publishPacket.Message.QoS} publish .");
                                 continue;
                             }
                         }
@@ -334,8 +334,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     if (packet.PacketSize > this.Options.ClientMaximumPacketSize)
                     {
-                        Logger.Warn($"Packet size {packet.PacketSize} exceeds maximum packet size {this.Options.ClientMaximumPacketSize}.  Disconnecting.");
-                        Logger.Debug($"{this.Options.ClientId}-(RPH)- Packet size {packet.PacketSize} exceeds maximum packet size {this.Options.ClientMaximumPacketSize}.  Disconnecting.");
+                        Logger.Warn($"Received packet size {packet.PacketSize} exceeds maximum packet size {this.Options.ClientMaximumPacketSize}.  Disconnecting.");
+                        Logger.Debug($"{this.Options.ClientId}-(RPH)- Received packet size {packet.PacketSize} exceeds maximum packet size {this.Options.ClientMaximumPacketSize}.  Disconnecting.");
 
                         var opts = new DisconnectOptions
                         {
@@ -411,6 +411,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         {
             // We've received a QoS 1 publish.  Send a PubAck.
             var pubAckResponse = new PubAckPacket(publishPacket.PacketIdentifier, PubAckReasonCode.Success);
+
+            // FIXME We should wait until puback is sent before launching event
+            // FIXME Check DUP flag setting
             this.SendQueue.Add(pubAckResponse);
         }
         else if (publishPacket.Message.QoS is MQTT5.Types.QualityOfService.ExactlyOnceDelivery)
@@ -421,7 +424,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
             if (this.transactionQueue.TryAdd(publishPacket.PacketIdentifier, publishQoS2Chain) == false)
             {
-                Logger.Warn("QoS2: Duplicate packet ID detected.");
+                Logger.Warn($"Duplicate packet ID detected {publishPacket.PacketIdentifier} while queueing to transaction queue for an incoming QoS {publishPacket.Message.QoS} publish .");
                 pubRecResponse.ReasonCode = PubRecReasonCode.PacketIdentifierInUse;
             }
 
