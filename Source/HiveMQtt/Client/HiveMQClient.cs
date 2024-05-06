@@ -93,17 +93,17 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         Logger.Trace($"Queuing packet for send: {connPacket}");
         this.SendQueue.Add(connPacket);
 
-        // FIXME: Cancellation token and better timeout value
         ConnAckPacket connAck;
         ConnectResult connectResult;
         try
         {
-            connAck = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(120)).ConfigureAwait(false);
+            connAck = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromMilliseconds(this.Options.ConnectTimeoutInMs)).ConfigureAwait(false);
         }
         catch (TimeoutException)
         {
             this.ConnectState = ConnectState.Disconnected;
-            throw new HiveMQttClientException("Connect timeout.  No response received in time.");
+            Logger.Error($"Connect timeout.  No response received in {this.Options.ConnectTimeoutInMs} milliseconds.");
+            throw new HiveMQttClientException($"Connect timeout.  No response received in {this.Options.ConnectTimeoutInMs} milliseconds.");
         }
         finally
         {
@@ -178,40 +178,19 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             this.OnDisconnectSent -= eventHandler;
         }
 
-        this.HandleDisconnection();
+        await this.HandleDisconnectionAsync().ConfigureAwait(false);
 
         return true;
-    }
-
-    /// <summary>
-    /// Close the socket and set the connect state to disconnected.
-    /// </summary>
-    private void HandleDisconnection()
-    {
-        Logger.Debug("HandleDisconnection: Connection lost.  Handling Disconnection.");
-
-        this.CloseSocket();
-
-        // Fire the corresponding event
-        this.AfterDisconnectEventLauncher(false);
-
-        this.ConnectState = ConnectState.Disconnected;
-
-        // FIXME
-        if (this.SendQueue.Count > 0)
-        {
-            Logger.Warn($"HandleDisconnection: Send queue not empty. {this.SendQueue.Count} packets pending but we are disconnecting (or were disconnected).");
-        }
-
-        // We only clear the send queue on explicit disconnect
-        while (this.SendQueue.TryTake(out _))
-        {
-        }
     }
 
     /// <inheritdoc />
     public async Task<PublishResult> PublishAsync(MQTT5PublishMessage message)
     {
+        if (this.IsConnected() == false)
+        {
+            throw new HiveMQttClientException("PublishAsync: Client is not connected.  Check client.IsConnected() before calling PublishAsync.");
+        }
+
         message.Validate();
 
         var packetIdentifier = this.GeneratePacketIdentifier();
@@ -244,6 +223,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         else if (message.QoS == QualityOfService.ExactlyOnceDelivery)
         {
             // QoS 2: Assured Delivery
+            PublishResult? publishResult = null;
             var taskCompletionSource = new TaskCompletionSource<List<ControlPacket>>();
             void TaskHandler(object? sender, OnPublishQoS2CompleteEventArgs args) => taskCompletionSource.SetResult(args.PacketList);
             EventHandler<OnPublishQoS2CompleteEventArgs> eventHandler = TaskHandler;
@@ -252,10 +232,21 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             // Construct the MQTT Connect packet and queue to send
             this.SendQueue.Add(publishPacket);
 
-            // Wait on the QoS 2 handshake
-            var packetList = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(120)).ConfigureAwait(false);
+            List<ControlPacket> packetList;
+            try
+            {
+                // Wait on the QoS 2 handshake
+                packetList = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            }
+            catch (TimeoutException)
+            {
+                Logger.Error("PublishAsync: QoS 2 timeout.  No response received in time.");
+                publishResult = new PublishResult(publishPacket.Message);
+                publishResult.QoS2ReasonCode = null;
+                publishPacket.OnPublishQoS2Complete -= eventHandler;
+                return publishResult;
+            }
 
-            PublishResult? publishResult = null;
             foreach (var packet in packetList)
             {
                 if (packet is PubRecPacket pubRecPacket)
@@ -318,6 +309,11 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <inheritdoc />
     public async Task<SubscribeResult> SubscribeAsync(SubscribeOptions options)
     {
+        if (this.IsConnected() == false)
+        {
+            throw new HiveMQttClientException("SubscribeAsync: Client is not connected.  Check client.IsConnected() before calling SubscribeAsync.");
+        }
+
         // Fire the corresponding event
         this.BeforeSubscribeEventLauncher(options);
 
@@ -426,6 +422,11 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
     public async Task<UnsubscribeResult> UnsubscribeAsync(UnsubscribeOptions unsubOptions)
     {
+        if (this.IsConnected() == false)
+        {
+            throw new HiveMQttClientException("UnsubscribeAsync: Client is not connected.  Check client.IsConnected() before calling UnsubscribeAsync.");
+        }
+
         // Fire the corresponding event
         this.BeforeUnsubscribeEventLauncher(unsubOptions.Subscriptions);
 
@@ -479,5 +480,36 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         // Fire the corresponding event and return
         this.AfterUnsubscribeEventLauncher(unsubscribeResult);
         return unsubscribeResult;
+    }
+
+    /// <summary>
+    /// Close the socket and set the connect state to disconnected.
+    /// </summary>
+    /// <param name="clean">Indicates whether the disconnect was intended or not.</param>
+    private async Task<bool> HandleDisconnectionAsync(bool clean = true)
+    {
+        Logger.Debug($"HandleDisconnection: Handling disconnection. clean={clean}.");
+
+        // Cancel all background tasks and close the socket
+        this.ConnectState = ConnectState.Disconnected;
+        await this.cancellationTokenSource.CancelAsync().ConfigureAwait(false);
+        this.CloseSocket();
+
+        if (clean)
+        {
+            if (this.SendQueue.Count > 0)
+            {
+                Logger.Warn($"HandleDisconnection: Send queue not empty. {this.SendQueue.Count} packets pending but we are disconnecting.");
+            }
+
+            // We only clear the send queue on explicit disconnect
+            while (this.SendQueue.TryTake(out _))
+            {
+            }
+        }
+
+        // Fire the corresponding after event
+        this.AfterDisconnectEventLauncher(clean);
+        return true;
     }
 }

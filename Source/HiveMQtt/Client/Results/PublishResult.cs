@@ -40,23 +40,25 @@ public class PublishResult
     {
         this.Message = message;
         this.pubAckPacket = pubAckPacket;
+        this.QoS1ReasonCode = pubAckPacket.ReasonCode;
     }
 
     public PublishResult(MQTT5PublishMessage message, PubRecPacket pubRecPacket)
     {
         this.Message = message;
         this.pubRecPacket = pubRecPacket;
+        this.QoS2ReasonCode = pubRecPacket.ReasonCode;
     }
 
     /// <summary>
-    /// Gets the reason code of the PubAck packet for QoS 1 publishes.
+    /// Gets or sets the reason code of the PubAck packet for QoS 1 publishes.
     /// </summary>
-    public PubAckReasonCode? QoS1ReasonCode => this.pubAckPacket?.ReasonCode;
+    public PubAckReasonCode? QoS1ReasonCode { get; set; }
 
     /// <summary>
-    /// Gets the reason code of the PubRec packet for QoS 2 publishes.
+    /// Gets or sets the reason code of the PubRec packet for QoS 2 publishes.
     /// </summary>
-    public PubRecReasonCode? QoS2ReasonCode => this.pubRecPacket?.ReasonCode;
+    public PubRecReasonCode? QoS2ReasonCode { get; set; }
 
     /// <summary>
     /// Gets the message that was published.

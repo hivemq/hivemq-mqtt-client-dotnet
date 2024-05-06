@@ -7,17 +7,12 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <!-- Use the HiveMQtt project as a local source.  Otherwise, fetch from nuget. -->
-  <PropertyGroup>
-    <RestoreSources>$(RestoreSources);../../Source/HiveMQtt/bin/Debug/;https://api.nuget.org/v3/index.json</RestoreSources>
-  </PropertyGroup>
-
-  <!-- Update the version to match -->
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="HiveMQtt" Version="0.11.1" />
+    <ProjectReference Include="..\..\Source\HiveMQtt\HiveMQtt.csproj" />
   </ItemGroup>
 
   <ItemGroup>

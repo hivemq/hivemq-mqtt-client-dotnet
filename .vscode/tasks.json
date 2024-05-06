@@ -44,6 +44,20 @@
           "/consoleloggerparameters:NoSummary"
         ],
         "problemMatcher": "$msCompile",
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        }
+      },
+      {
+        "label": "build SendMessageOnLoop",
+        "command": "dotnet",
+        "type": "process",
+        "args": [
+          "build",
+          "${workspaceFolder}/Examples/SendMessageOnLoop/SendMessageOnLoop.csproj",
+        ],
+        "problemMatcher": "$msCompile",
         "group": "build"
       },
       {
@@ -80,10 +94,7 @@
           "${workspaceFolder}/Examples/SubscriberWithEvents/SubscriberWithEvents.csproj"
         ],
         "problemMatcher": "$msCompile",
-        "group": {
-          "kind": "build",
-          "isDefault": true
-        }
+        "group": "build"
       }
     ]
 }
