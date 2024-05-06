@@ -137,7 +137,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         if (this.ConnectState != ConnectState.Connected)
         {
-            Logger.Warn("DisconnectAsync: Client is not connected.");
+            Logger.Warn("DisconnectAsync called but this client is not connected.  State is ${this.ConnectState}.");
             return false;
         }
 
@@ -343,7 +343,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         }
         catch (TimeoutException)
         {
-            Logger.Error("Subscribe timeout.  No response received in time.");
+            Logger.Error("Subscribe timeout.  No SUBACK response received in time.");
             throw;
         }
         finally

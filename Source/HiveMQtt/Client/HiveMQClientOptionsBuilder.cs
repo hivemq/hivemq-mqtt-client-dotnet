@@ -181,12 +181,12 @@ public class HiveMQClientOptionsBuilder
             }
             catch (UnauthorizedAccessException)
             {
-                Logger.Error("File exists but is not readable due to access permissions.");
+                Logger.Error("WithClientCertificate: File exists but is not readable due to access permissions.");
                 throw;
             }
             catch (IOException)
             {
-                Logger.Error("An I/O error occurred while trying to read the file.");
+                Logger.Error("WithClientCertificate: An I/O error occurred while trying to read the file.");
                 throw;
             }
         }
