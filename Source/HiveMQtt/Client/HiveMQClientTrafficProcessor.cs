@@ -411,6 +411,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         {
             // We've received a QoS 1 publish.  Send a PubAck.
             var pubAckResponse = new PubAckPacket(publishPacket.PacketIdentifier, PubAckReasonCode.Success);
+
             // FIXME We should wait until puback is sent before launching event
             // FIXME Check DUP flag setting
             this.SendQueue.Add(pubAckResponse);
