@@ -19,6 +19,8 @@ General events are triggered by high-level operations such as connecting, subscr
 | BeforeUnsubscribe | `BeforeUnsubscribeEventArgs` | `UnsubscribeOptions`  |
 | AfterUnsubscribe  | `AfterUnsubscribeEventArgs` |  `UnsubscribeResult` |
 | OnMessageReceived | `OnMessageReceivedEventArgs` |  `MQTT5PublishMessage` |
+| BeforeDisconnect | `BeforeDisconnectEventArgs` |  None |
+| AfterDisconnect | `AfterDisconnectEventArgs` |  `CleanDisconnect` |
 
 ## Packet Level Events
 
