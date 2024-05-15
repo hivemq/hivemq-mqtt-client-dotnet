@@ -35,7 +35,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     internal BlockingCollection<ControlPacket> ReceivedQueue { get; } = new();
 
     // Transactional packets indexed by packet identifier
-    private readonly ConcurrentDictionary<int, List<ControlPacket>> transactionQueue = new();
+    internal readonly ConcurrentDictionary<int, List<ControlPacket>> transactionQueue = new();
 
     private readonly Stopwatch lastCommunicationTimer = new();
 
