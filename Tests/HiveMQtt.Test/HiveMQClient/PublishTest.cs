@@ -225,7 +225,7 @@ public class PublishTest
 
         client3.OnMessageReceived += Client3MessageHandler;
 
-        // client 1 Publish 10 messages
+        // client 1 Publish 1000 messages
         for (var i = 1; i <= 1000; i++)
         {
             var publishResult = await client1.PublishAsync("HMQ/FirstTopic", "Hello World", QualityOfService.AtMostOnceDelivery).ConfigureAwait(false);
@@ -311,7 +311,7 @@ public class PublishTest
 
         client3.OnMessageReceived += Client3MessageHandler;
 
-        // client 1 Publish 10 messages
+        // client 1 Publish 1000 messages
         for (var i = 1; i <= 1000; i++)
         {
             var publishResult = await client1.PublishAsync("HMQ/FirstTopic", "Hello World", QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
@@ -397,7 +397,7 @@ public class PublishTest
 
         client3.OnMessageReceived += Client3MessageHandler;
 
-        // client 1 Publish 10 messages
+        // client 1 Publish 1000 messages
         for (var i = 1; i <= 1000; i++)
         {
             var publishResult = await client1.PublishAsync("HMQ/FirstTopic", "Hello World", QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
