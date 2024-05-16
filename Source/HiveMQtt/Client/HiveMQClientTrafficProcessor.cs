@@ -172,12 +172,11 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     {
                         break;
                     }
-                    await Task.Yield();
                 }
                 else
                 {
                     // Queue is empty
-                    await Task.Delay(100).ConfigureAwait(false);
+                    await Task.Delay(1).ConfigureAwait(false);
                 } // TryDequeue
             } // while(true)
 
@@ -295,7 +294,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 else
                 {
                     // Queue is empty
-                    await Task.Delay(100).ConfigureAwait(false);
+                    await Task.Delay(1).ConfigureAwait(false);
                 } // TryDequeue
             } // while(true)
 
@@ -416,7 +415,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     break;
                 }
 
-                Logger.Trace($"{this.Options.ClientId}-(RPH)- {this.ReceivedQueue.Count} received packets currently waiting to be processed.");
+                // Logger.Trace($"{this.Options.ClientId}-(RPH)- {this.ReceivedQueue.Count} received packets currently waiting to be processed.");
 
                 if (this.ReceivedQueue.TryDequeue(out var packet))
                 {
@@ -488,7 +487,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 else
                 {
                     // Queue is empty
-                    await Task.Delay(100).ConfigureAwait(false);
+                    await Task.Delay(1).ConfigureAwait(false);
                 } // TryDequeue
             } // while (true)
 
