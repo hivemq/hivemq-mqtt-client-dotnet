@@ -38,7 +38,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         var eventArgs = new BeforeConnectEventArgs(options);
         Logger.Trace("BeforeConnectEventLauncher");
-        this.BeforeConnect?.Invoke(this, eventArgs);
+        _ = Task.Run(() => this.BeforeConnect?.Invoke(this, eventArgs)).ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Error("BeforeConnectEventLauncher exception: " + t.Exception.Message);
+                }
+            });
     }
 
     /// <summary>
@@ -50,7 +56,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         var eventArgs = new AfterConnectEventArgs(results);
         Logger.Trace("AfterConnectEventLauncher");
-        this.AfterConnect?.Invoke(this, eventArgs);
+        _ = Task.Run(() => this.AfterConnect?.Invoke(this, eventArgs)).ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Error("AfterConnectEventLauncher exception: " + t.Exception.Message);
+                }
+            });
     }
 
     /// <summary>
@@ -62,7 +74,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         var eventArgs = new BeforeDisconnectEventArgs();
         Logger.Trace("BeforeDisconnectEventLauncher");
-        this.BeforeDisconnect?.Invoke(this, eventArgs);
+        _ = Task.Run(() => this.BeforeDisconnect?.Invoke(this, eventArgs)).ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Error("BeforeDisconnectEventLauncher exception: " + t.Exception.Message);
+                }
+            });
     }
 
     /// <summary>
@@ -74,7 +92,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         var eventArgs = new AfterDisconnectEventArgs(clean);
         Logger.Trace("AfterDisconnectEventLauncher");
-        this.AfterDisconnect?.Invoke(this, eventArgs);
+        _ = Task.Run(() => this.AfterDisconnect?.Invoke(this, eventArgs)).ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Error("AfterDisconnectEventLauncher exception: " + t.Exception.Message);
+                }
+            });
     }
 
     /// <summary>
@@ -86,7 +110,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         var eventArgs = new BeforeSubscribeEventArgs(options);
         Logger.Trace("BeforeSubscribeEventLauncher");
-        this.BeforeSubscribe?.Invoke(this, eventArgs);
+        _ = Task.Run(() => this.BeforeSubscribe?.Invoke(this, eventArgs)).ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Error("BeforeSubscribeEventLauncher exception: " + t.Exception.Message);
+                }
+            });
     }
 
     /// <summary>
@@ -98,7 +128,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         var eventArgs = new AfterSubscribeEventArgs(results);
         Logger.Trace("AfterSubscribeEventLauncher");
-        this.AfterSubscribe?.Invoke(this, eventArgs);
+        _ = Task.Run(() => this.AfterSubscribe?.Invoke(this, eventArgs)).ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Error("AfterSubscribeEventLauncher exception: " + t.Exception.Message);
+                }
+            });
     }
 
     /// <summary>
@@ -110,7 +146,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         var eventArgs = new BeforeUnsubscribeEventArgs(subscriptions);
         Logger.Trace("BeforeUnsubscribeEventLauncher");
-        this.BeforeUnsubscribe?.Invoke(this, eventArgs);
+        _ = Task.Run(() => this.BeforeUnsubscribe?.Invoke(this, eventArgs)).ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Error("BeforeUnsubscribeEventLauncher exception: " + t.Exception.Message);
+                }
+            });
     }
 
     /// <summary>
@@ -122,7 +164,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         var eventArgs = new AfterUnsubscribeEventArgs(results);
         Logger.Trace("AfterUnsubscribeEventLauncher");
-        this.AfterUnsubscribe?.Invoke(this, eventArgs);
+        _ = Task.Run(() => this.AfterUnsubscribe?.Invoke(this, eventArgs)).ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Error("AfterUnsubscribeEventLauncher exception: " + t.Exception.Message);
+                }
+            });
     }
 
     /// <summary>
@@ -136,14 +184,26 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         Logger.Trace("OnMessageReceivedEventLauncher");
 
         // Global Event Handler
-        this.OnMessageReceived?.Invoke(this, eventArgs);
+        _ = Task.Run(() => this.OnMessageReceived?.Invoke(this, eventArgs)).ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Error("OnMessageReceivedEventLauncher exception: " + t.Exception.Message);
+                }
+            });
 
         // Per Subscription Event Handler
         foreach (var subscription in this.Subscriptions)
         {
             if (packet.Message.Topic != null && MatchTopic(subscription.TopicFilter.Topic, packet.Message.Topic))
             {
-                subscription.MessageReceivedHandler?.Invoke(this, eventArgs);
+                _ = Task.Run(() => subscription.MessageReceivedHandler?.Invoke(this, eventArgs)).ContinueWith(t =>
+                    {
+                        if (t.IsFaulted)
+                        {
+                            Logger.Error("per-subscription OnMessageReceivedEventLauncher exception: " + t.Exception.Message);
+                        }
+                    });
             }
         }
     }
@@ -161,7 +221,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         var eventArgs = new OnConnectSentEventArgs(packet);
         Logger.Trace("OnConnectSentEventLauncher");
-        this.OnConnectSent?.Invoke(this, eventArgs);
+        _ = Task.Run(() => this.OnConnectSent?.Invoke(this, eventArgs)).ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Error("OnConnectSentEventLauncher exception: " + t.Exception.Message);
+                }
+            });
     }
 
     /// <summary>
@@ -173,7 +239,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         var eventArgs = new OnConnAckReceivedEventArgs(packet);
         Logger.Trace("OnConnAckReceivedEventLauncher");
-        this.OnConnAckReceived?.Invoke(this, eventArgs);
+        _ = Task.Run(() => this.OnConnAckReceived?.Invoke(this, eventArgs)).ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Error("OnConnAckReceivedEventLauncher exception: " + t.Exception.Message);
+                }
+            });
     }
 
     /// <summary>
@@ -185,7 +257,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         var eventArgs = new OnDisconnectSentEventArgs(packet);
         Logger.Trace("OnDisconnectSentEventLauncher");
-        this.OnDisconnectSent?.Invoke(this, eventArgs);
+        _ = Task.Run(() => this.OnDisconnectSent?.Invoke(this, eventArgs)).ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Error("OnDisconnectSentEventLauncher exception: " + t.Exception.Message);
+                }
+            });
     }
 
     /// <summary>
@@ -197,7 +275,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         var eventArgs = new OnDisconnectReceivedEventArgs(packet);
         Logger.Trace("OnDisconnectReceivedEventLauncher: ReasonCode: " + packet.DisconnectReasonCode + " ReasonString: " + packet.Properties.ReasonString);
-        this.OnDisconnectReceived?.Invoke(this, eventArgs);
+        _ = Task.Run(() => this.OnDisconnectReceived?.Invoke(this, eventArgs)).ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Error("OnDisconnectReceivedEventLauncher exception: " + t.Exception.Message);
+                }
+            });
     }
 
     /// <summary>
@@ -209,7 +293,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         var eventArgs = new OnPingReqSentEventArgs(packet);
         Logger.Trace("OnPingReqSentEventLauncher");
-        this.OnPingReqSent?.Invoke(this, eventArgs);
+        _ = Task.Run(() => this.OnPingReqSent?.Invoke(this, eventArgs)).ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Error("OnPingReqSentEventLauncher exception: " + t.Exception.Message);
+                }
+            });
     }
 
     /// <summary>
@@ -221,7 +311,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         var eventArgs = new OnPingRespReceivedEventArgs(packet);
         Logger.Trace("OnPingRespReceivedEventLauncher");
-        this.OnPingRespReceived?.Invoke(this, eventArgs);
+        _ = Task.Run(() => this.OnPingRespReceived?.Invoke(this, eventArgs)).ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Error("OnPingRespReceivedEventLauncher exception: " + t.Exception.Message);
+                }
+            });
     }
 
     /// <summary>
@@ -233,7 +329,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         var eventArgs = new OnSubscribeSentEventArgs(packet);
         Logger.Trace("OnSubscribeSentEventLauncher");
-        this.OnSubscribeSent?.Invoke(this, eventArgs);
+        _ = Task.Run(() => this.OnSubscribeSent?.Invoke(this, eventArgs)).ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Error("OnSubscribeSentEventLauncher exception: " + t.Exception.Message);
+                }
+            });
     }
 
     /// <summary>
@@ -245,7 +347,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         var eventArgs = new OnSubAckReceivedEventArgs(packet);
         Logger.Trace("OnSubAckReceivedEventLauncher");
-        this.OnSubAckReceived?.Invoke(this, eventArgs);
+        _ = Task.Run(() => this.OnSubAckReceived?.Invoke(this, eventArgs)).ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Error("OnSubAckReceivedEventLauncher exception: " + t.Exception.Message);
+                }
+            });
     }
 
     /// <summary>
@@ -257,7 +365,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         var eventArgs = new OnUnsubscribeSentEventArgs(packet);
         Logger.Trace("OnUnsubscribeSentEventLauncher");
-        this.OnUnsubscribeSent?.Invoke(this, eventArgs);
+        _ = Task.Run(() => this.OnUnsubscribeSent?.Invoke(this, eventArgs)).ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Error("OnUnsubscribeSentEventLauncher exception: " + t.Exception.Message);
+                }
+            });
     }
 
     /// <summary>
@@ -269,7 +383,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         var eventArgs = new OnUnsubAckReceivedEventArgs(packet);
         Logger.Trace("OnUnsubAckReceivedEventLauncher");
-        this.OnUnsubAckReceived?.Invoke(this, eventArgs);
+        _ = Task.Run(() => this.OnUnsubAckReceived?.Invoke(this, eventArgs)).ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Error("OnUnsubAckReceivedEventLauncher exception: " + t.Exception.Message);
+                }
+            });
     }
 
     /// <summary>
@@ -281,7 +401,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         var eventArgs = new OnPublishReceivedEventArgs(packet);
         Logger.Trace("OnPublishReceivedEventLauncher");
-        this.OnPublishReceived?.Invoke(this, eventArgs);
+        _ = Task.Run(() => this.OnPublishReceived?.Invoke(this, eventArgs)).ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Error("OnPublishReceivedEventLauncher exception: " + t.Exception.Message);
+                }
+            });
     }
 
     /// <summary>
@@ -293,7 +419,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         var eventArgs = new OnPublishSentEventArgs(packet);
         Logger.Trace("OnPublishSentEventLauncher");
-        this.OnPublishSent?.Invoke(this, eventArgs);
+        _ = Task.Run(() => this.OnPublishSent?.Invoke(this, eventArgs)).ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Error("OnPublishSentEventLauncher exception: " + t.Exception.Message);
+                }
+            });
     }
 
     /// <summary>
@@ -305,7 +437,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         var eventArgs = new OnPubAckReceivedEventArgs(packet);
         Logger.Trace("OnPubAckReceivedEventLauncher");
-        this.OnPubAckReceived?.Invoke(this, eventArgs);
+        _ = Task.Run(() => this.OnPubAckReceived?.Invoke(this, eventArgs)).ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Error("OnPubAckReceivedEventLauncher exception: " + t.Exception.Message);
+                }
+            });
     }
 
     /// <summary>
@@ -317,7 +455,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         var eventArgs = new OnPubAckSentEventArgs(packet);
         Logger.Trace("OnPubAckSentEventLauncher");
-        this.OnPubAckSent?.Invoke(this, eventArgs);
+        _ = Task.Run(() => this.OnPubAckSent?.Invoke(this, eventArgs)).ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Error("OnPubAckSentEventLauncher exception: " + t.Exception.Message);
+                }
+            });
     }
 
     /// <summary>
@@ -329,7 +473,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         var eventArgs = new OnPubRecReceivedEventArgs(packet);
         Logger.Trace("OnPubRecReceivedEventLauncher");
-        this.OnPubRecReceived?.Invoke(this, eventArgs);
+        _ = Task.Run(() => this.OnPubRecReceived?.Invoke(this, eventArgs)).ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Error("OnPubRecReceivedEventLauncher exception: " + t.Exception.Message);
+                }
+            });
     }
 
     /// <summary>
@@ -341,7 +491,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         var eventArgs = new OnPubRecSentEventArgs(packet);
         Logger.Trace("OnPubRecSentEventLauncher");
-        this.OnPubRecSent?.Invoke(this, eventArgs);
+        _ = Task.Run(() => this.OnPubRecSent?.Invoke(this, eventArgs)).ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Error("OnPubRecSentEventLauncher exception: " + t.Exception.Message);
+                }
+            });
     }
 
     /// <summary>
@@ -353,7 +509,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         var eventArgs = new OnPubRelReceivedEventArgs(packet);
         Logger.Trace("OnPubRelReceivedEventLauncher");
-        this.OnPubRelReceived?.Invoke(this, eventArgs);
+        _ = Task.Run(() => this.OnPubRelReceived?.Invoke(this, eventArgs)).ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Error("OnPubRelReceivedEventLauncher exception: " + t.Exception.Message);
+                }
+            });
     }
 
     /// <summary>
@@ -365,7 +527,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         var eventArgs = new OnPubRelSentEventArgs(packet);
         Logger.Trace("OnPubRelSentEventLauncher");
-        this.OnPubRelSent?.Invoke(this, eventArgs);
+        _ = Task.Run(() => this.OnPubRelSent?.Invoke(this, eventArgs)).ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Error("OnPubRelSentEventLauncher exception: " + t.Exception.Message);
+                }
+            });
     }
 
     /// <summary>
@@ -377,7 +545,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         var eventArgs = new OnPubCompReceivedEventArgs(packet);
         Logger.Trace("PubCompReceivedEventLauncher");
-        this.OnPubCompReceived?.Invoke(this, eventArgs);
+        _ = Task.Run(() => this.OnPubCompReceived?.Invoke(this, eventArgs)).ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Error("PubCompReceivedEventLauncher exception: " + t.Exception.Message);
+                }
+            });
     }
 
     /// <summary>
@@ -389,6 +563,12 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         var eventArgs = new OnPubCompSentEventArgs(packet);
         Logger.Trace("PubCompSentEventLauncher");
-        this.OnPubCompSent?.Invoke(this, eventArgs);
+        _ = Task.Run(() => this.OnPubCompSent?.Invoke(this, eventArgs)).ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Error("PubCompSentEventLauncher exception: " + t.Exception.Message);
+                }
+            });
     }
 }
