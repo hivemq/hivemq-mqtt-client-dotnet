@@ -172,6 +172,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     {
                         break;
                     }
+
                 }
                 else
                 {
