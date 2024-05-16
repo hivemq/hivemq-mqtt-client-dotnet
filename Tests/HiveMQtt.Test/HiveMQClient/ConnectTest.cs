@@ -68,6 +68,7 @@ public class ConnectTest
 
         // Wait for event handlers to finish
         await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        await Task.Delay(1000).ConfigureAwait(false);
 
         // Assert that all Events were called
         Assert.True(client.LocalStore.ContainsKey("BeforeConnectHandlerCalled"));
@@ -107,6 +108,7 @@ public class ConnectTest
 
         // Wait for event handlers to finish
         await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        await Task.Delay(1000).ConfigureAwait(false);
 
         // Assert that all Events were called
         Assert.True(client.LocalStore.ContainsKey("AfterDisconnectHandlerCalled"));

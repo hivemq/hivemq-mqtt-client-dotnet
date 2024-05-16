@@ -25,6 +25,7 @@ Setting `minlevel` to `Trace` will output all activity in the HiveMQtt package d
 ```log
 2024-03-14 15:40:18.2252|TRACE|HiveMQtt.Client.HiveMQClient|Trace Level Logging Legend:
 2024-03-14 15:40:18.2312|TRACE|HiveMQtt.Client.HiveMQClient|    -(W)-   == ConnectionWriter
+2024-03-14 15:40:18.2312|TRACE|HiveMQtt.Client.HiveMQClient|    -(PW)-   == ConnectionPublishWriter
 2024-03-14 15:40:18.2312|TRACE|HiveMQtt.Client.HiveMQClient|    -(R)-   == ConnectionReader
 2024-03-14 15:40:18.2312|TRACE|HiveMQtt.Client.HiveMQClient|    -(RPH)- == ReceivedPacketsHandler
 2024-03-14 15:40:18.2320|INFO|HiveMQtt.Client.HiveMQClient|Connecting to broker at 127.0.0.1:1883

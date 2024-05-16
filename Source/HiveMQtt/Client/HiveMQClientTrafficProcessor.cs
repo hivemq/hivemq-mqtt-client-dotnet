@@ -26,16 +26,21 @@ using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5;
 using HiveMQtt.MQTT5.Packets;
 using HiveMQtt.MQTT5.ReasonCodes;
+using HiveMQtt.MQTT5.Types;
 
 /// <inheritdoc />
 public partial class HiveMQClient : IDisposable, IHiveMQClient
 {
-    internal BlockingCollection<ControlPacket> SendQueue { get; } = new();
+    internal MQTT5Properties ConnectionProperties { get; set; } = new();
 
-    internal BlockingCollection<ControlPacket> ReceivedQueue { get; } = new();
+    internal ConcurrentQueue<PublishPacket> OutgoingPublishQueue { get; } = new();
+
+    internal ConcurrentQueue<ControlPacket> SendQueue { get; } = new();
+
+    internal ConcurrentQueue<ControlPacket> ReceivedQueue { get; } = new();
 
     // Transactional packets indexed by packet identifier
-    private readonly ConcurrentDictionary<int, List<ControlPacket>> transactionQueue = new();
+    internal readonly ConcurrentDictionary<int, List<ControlPacket>> transactionQueue = new();
 
     private readonly Stopwatch lastCommunicationTimer = new();
 
@@ -66,9 +71,19 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     {
                         // Send PingReq
                         Logger.Trace($"{this.Options.ClientId}-(CM)- --> PingReq");
-                        this.SendQueue.Add(new PingReqPacket());
+                        this.SendQueue.Enqueue(new PingReqPacket());
                     }
                 }
+
+                // Dumping Client State
+                Logger.Trace($"{this.Options.ClientId}-(CM)- {this.ConnectState} lastCommunicationTimer:{this.lastCommunicationTimer.Elapsed}");
+                Logger.Trace($"{this.Options.ClientId}-(CM)- SendQueue:{this.SendQueue.Count} ReceivedQueue:{this.ReceivedQueue.Count} OutgoingPublishQueue:{this.OutgoingPublishQueue.Count}");
+                Logger.Trace($"{this.Options.ClientId}-(CM)- TransactionQueue:{this.transactionQueue.Count}");
+                Logger.Trace($"{this.Options.ClientId}-(CM)- - ConnectionMonitor:{this.ConnectionMonitorTask?.Status}");
+                Logger.Trace($"{this.Options.ClientId}-(CM)- - ConnectionPublishWriter:{this.ConnectionPublishWriterTask?.Status}");
+                Logger.Trace($"{this.Options.ClientId}-(CM)- - ConnectionWriter:{this.ConnectionWriterTask?.Status}");
+                Logger.Trace($"{this.Options.ClientId}-(CM)- - ConnectionReader:{this.ConnectionReaderTask?.Status}");
+                Logger.Trace($"{this.Options.ClientId}-(CM)- - ReceivedPacketsHandler:{this.ReceivedPacketsHandlerTask?.Status}");
 
                 try
                 {
@@ -83,6 +98,90 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
             Logger.Trace($"{this.Options.ClientId}-(CM)- Exiting...{this.ConnectState}");
 
+            return true;
+        }, cancellationToken);
+
+    /// <summary>
+    /// Asynchronous background task that handles the outgoing publish packets queued in OutgoingPublishQueue.
+    /// </summary>
+    private Task<bool> ConnectionPublishWriterAsync(CancellationToken cancellationToken) => Task.Run(
+        async () =>
+        {
+            this.lastCommunicationTimer.Start();
+            Logger.Trace($"{this.Options.ClientId}-(PW)- Starting...{this.ConnectState}");
+
+            while (true)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    Logger.Trace($"{this.Options.ClientId}-(PW)- Cancelled with {this.OutgoingPublishQueue.Count} publish packets remaining.");
+                    break;
+                }
+
+                while (this.ConnectState == ConnectState.Disconnected)
+                {
+                    Logger.Trace($"{this.Options.ClientId}-(PW)- Not connected.  Waiting for connect...");
+                    await Task.Delay(2000).ConfigureAwait(false);
+                    continue;
+                }
+
+                // Logger.Trace($"{this.Options.ClientId}-(PW)- {this.OutgoingPublishQueue.Count} publish packets waiting to be sent.");
+
+                var receiveMaximum = this.ConnectionProperties.ReceiveMaximum ?? 65535;
+                if (this.transactionQueue.Count >= receiveMaximum)
+                {
+                    Logger.Debug($"The Maximum number of publishes have been sent to broker.  Waiting for existing transactions to complete.");
+                    await Task.Delay(2000).ConfigureAwait(false);
+                    continue;
+                }
+
+                if (this.OutgoingPublishQueue.TryDequeue(out var publishPacket))
+                {
+                    FlushResult writeResult = default;
+
+                    Logger.Trace($"{this.Options.ClientId}-(PW)- --> Sending PublishPacket id={publishPacket.PacketIdentifier}");
+                    if (publishPacket.Message.QoS is QualityOfService.AtLeastOnceDelivery ||
+                        publishPacket.Message.QoS is QualityOfService.ExactlyOnceDelivery)
+                    {
+                        // QoS > 0 - Add to transaction queue
+                        if (this.transactionQueue.TryAdd(publishPacket.PacketIdentifier, new List<ControlPacket> { publishPacket }) == false)
+                        {
+                            Logger.Warn($"Duplicate packet ID detected {publishPacket.PacketIdentifier} while queueing to transaction queue for an outgoing QoS {publishPacket.Message.QoS} publish .");
+                            continue;
+                        }
+                    }
+
+                    writeResult = await this.WriteAsync(publishPacket.Encode()).ConfigureAwait(false);
+                    this.OnPublishSentEventLauncher(publishPacket);
+
+                    if (writeResult.IsCanceled)
+                    {
+                        Logger.Trace($"{this.Options.ClientId}-(PW)- ConnectionPublishWriter Write Cancelled");
+                        break;
+                    }
+
+                    if (writeResult.IsCompleted)
+                    {
+                        Logger.Trace($"{this.Options.ClientId}-(PW)- ConnectionPublishWriter IsCompleted: end of the stream");
+                        break;
+                    }
+
+                    this.lastCommunicationTimer.Restart();
+
+                    if (this.transactionQueue.Count >= (this.ConnectionProperties.ReceiveMaximum ?? 65535))
+                    {
+                        break;
+                    }
+
+                }
+                else
+                {
+                    // Queue is empty
+                    await Task.Delay(1).ConfigureAwait(false);
+                } // TryDequeue
+            } // while(true)
+
+            Logger.Trace($"{this.Options.ClientId}-(PW)- ConnectionPublishWriter Exiting...{this.ConnectState}");
             return true;
         }, cancellationToken);
 
@@ -110,108 +209,95 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     continue;
                 }
 
-                Logger.Trace($"{this.Options.ClientId}-(W)- {this.SendQueue.Count} packets waiting to be sent.");
+                // Logger.Trace($"{this.Options.ClientId}-(W)- {this.SendQueue.Count} packets waiting to be sent.");
 
-                var packet = this.SendQueue.Take();
-                FlushResult writeResult = default;
-
-                switch (packet)
+                if (this.SendQueue.TryDequeue(out var packet))
                 {
-                    // FIXME: Only one connect, subscribe or unsubscribe packet can be sent at a time.
-                    case ConnectPacket connectPacket:
-                        Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending ConnectPacket id={connectPacket.PacketIdentifier}");
-                        writeResult = await this.WriteAsync(connectPacket.Encode()).ConfigureAwait(false);
-                        this.OnConnectSentEventLauncher(connectPacket);
-                        break;
-                    case DisconnectPacket disconnectPacket:
-                        Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending DisconnectPacket id={disconnectPacket.PacketIdentifier}");
-                        writeResult = await this.WriteAsync(disconnectPacket.Encode()).ConfigureAwait(false);
-                        this.OnDisconnectSentEventLauncher(disconnectPacket);
-                        break;
-                    case SubscribePacket subscribePacket:
-                        Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending SubscribePacket id={subscribePacket.PacketIdentifier}");
-                        writeResult = await this.WriteAsync(subscribePacket.Encode()).ConfigureAwait(false);
-                        this.OnSubscribeSentEventLauncher(subscribePacket);
-                        break;
-                    case UnsubscribePacket unsubscribePacket:
-                        Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending UnsubscribePacket id={unsubscribePacket.PacketIdentifier}");
-                        writeResult = await this.WriteAsync(unsubscribePacket.Encode()).ConfigureAwait(false);
-                        this.OnUnsubscribeSentEventLauncher(unsubscribePacket);
-                        break;
-                    case PublishPacket publishPacket:
-                        Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PublishPacket id={publishPacket.PacketIdentifier}");
-                        if (publishPacket.Message.QoS is MQTT5.Types.QualityOfService.AtLeastOnceDelivery ||
-                            publishPacket.Message.QoS is MQTT5.Types.QualityOfService.ExactlyOnceDelivery)
-                        {
-                            // QoS > 0 - Add to transaction queue
-                            if (this.transactionQueue.TryAdd(publishPacket.PacketIdentifier, new List<ControlPacket> { publishPacket }) == false)
-                            {
-                                Logger.Warn($"Duplicate packet ID detected {publishPacket.PacketIdentifier} while queueing to transaction queue for an outgoing QoS {publishPacket.Message.QoS} publish .");
-                                continue;
-                            }
-                        }
+                    FlushResult writeResult = default;
 
-                        writeResult = await this.WriteAsync(publishPacket.Encode()).ConfigureAwait(false);
-                        this.OnPublishSentEventLauncher(publishPacket);
-                        break;
-                    case PubAckPacket pubAckPacket:
-                        // This is in response to a received Publish packet.  Communication chain management
-                        // was done in the receiver code.  Just send the response.
-                        Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PubAckPacket id={pubAckPacket.PacketIdentifier} reason={pubAckPacket.ReasonCode}");
-                        writeResult = await this.WriteAsync(pubAckPacket.Encode()).ConfigureAwait(false);
-                        this.OnPubAckSentEventLauncher(pubAckPacket);
-                        break;
-                    case PubRecPacket pubRecPacket:
-                        // This is in response to a received Publish packet.  Communication chain management
-                        // was done in the receiver code.  Just send the response.
-                        Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PubRecPacket id={pubRecPacket.PacketIdentifier} reason={pubRecPacket.ReasonCode}");
-                        writeResult = await this.WriteAsync(pubRecPacket.Encode()).ConfigureAwait(false);
-                        this.OnPubRecSentEventLauncher(pubRecPacket);
-                        break;
-                    case PubRelPacket pubRelPacket:
-                        // This is in response to a received PubRec packet.  Communication chain management
-                        // was done in the receiver code.  Just send the response.
-                        Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PubRelPacket id={pubRelPacket.PacketIdentifier} reason={pubRelPacket.ReasonCode}");
-                        writeResult = await this.WriteAsync(pubRelPacket.Encode()).ConfigureAwait(false);
-                        this.OnPubRelSentEventLauncher(pubRelPacket);
-                        break;
-                    case PubCompPacket pubCompPacket:
-                        // This is in response to a received PubRel packet.  Communication chain management
-                        // was done in the receiver code.  Just send the response.
-                        Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PubCompPacket id={pubCompPacket.PacketIdentifier} reason={pubCompPacket.ReasonCode}");
-                        writeResult = await this.WriteAsync(pubCompPacket.Encode()).ConfigureAwait(false);
-                        this.OnPubCompSentEventLauncher(pubCompPacket);
-                        break;
-                    case PingReqPacket pingReqPacket:
-                        Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PingReqPacket id={pingReqPacket.PacketIdentifier}");
-                        writeResult = await this.WriteAsync(PingReqPacket.Encode()).ConfigureAwait(false);
-                        this.OnPingReqSentEventLauncher(pingReqPacket);
-                        break;
+                    switch (packet)
+                    {
+                        // FIXME: Only one connect, subscribe or unsubscribe packet can be sent at a time.
+                        case ConnectPacket connectPacket:
+                            Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending ConnectPacket id={connectPacket.PacketIdentifier}");
+                            writeResult = await this.WriteAsync(connectPacket.Encode()).ConfigureAwait(false);
+                            this.OnConnectSentEventLauncher(connectPacket);
+                            break;
+                        case DisconnectPacket disconnectPacket:
+                            Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending DisconnectPacket id={disconnectPacket.PacketIdentifier}");
+                            writeResult = await this.WriteAsync(disconnectPacket.Encode()).ConfigureAwait(false);
+                            this.OnDisconnectSentEventLauncher(disconnectPacket);
+                            break;
+                        case SubscribePacket subscribePacket:
+                            Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending SubscribePacket id={subscribePacket.PacketIdentifier}");
+                            writeResult = await this.WriteAsync(subscribePacket.Encode()).ConfigureAwait(false);
+                            this.OnSubscribeSentEventLauncher(subscribePacket);
+                            break;
+                        case UnsubscribePacket unsubscribePacket:
+                            Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending UnsubscribePacket id={unsubscribePacket.PacketIdentifier}");
+                            writeResult = await this.WriteAsync(unsubscribePacket.Encode()).ConfigureAwait(false);
+                            this.OnUnsubscribeSentEventLauncher(unsubscribePacket);
+                            break;
+                        case PublishPacket publishPacket:
+                            throw new HiveMQttClientException("PublishPacket should be sent via ConnectionPublishWriterAsync.");
+                        case PubAckPacket pubAckPacket:
+                            // This is in response to a received Publish packet.  Communication chain management
+                            // was done in the receiver code.  Just send the response.
+                            Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PubAckPacket id={pubAckPacket.PacketIdentifier} reason={pubAckPacket.ReasonCode}");
+                            writeResult = await this.WriteAsync(pubAckPacket.Encode()).ConfigureAwait(false);
+                            this.OnPubAckSentEventLauncher(pubAckPacket);
+                            break;
+                        case PubRecPacket pubRecPacket:
+                            // This is in response to a received Publish packet.  Communication chain management
+                            // was done in the receiver code.  Just send the response.
+                            Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PubRecPacket id={pubRecPacket.PacketIdentifier} reason={pubRecPacket.ReasonCode}");
+                            writeResult = await this.WriteAsync(pubRecPacket.Encode()).ConfigureAwait(false);
+                            this.OnPubRecSentEventLauncher(pubRecPacket);
+                            break;
+                        case PubRelPacket pubRelPacket:
+                            // This is in response to a received PubRec packet.  Communication chain management
+                            // was done in the receiver code.  Just send the response.
+                            Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PubRelPacket id={pubRelPacket.PacketIdentifier} reason={pubRelPacket.ReasonCode}");
+                            writeResult = await this.WriteAsync(pubRelPacket.Encode()).ConfigureAwait(false);
+                            this.OnPubRelSentEventLauncher(pubRelPacket);
+                            break;
+                        case PubCompPacket pubCompPacket:
+                            // This is in response to a received PubRel packet.  Communication chain management
+                            // was done in the receiver code.  Just send the response.
+                            Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PubCompPacket id={pubCompPacket.PacketIdentifier} reason={pubCompPacket.ReasonCode}");
+                            writeResult = await this.WriteAsync(pubCompPacket.Encode()).ConfigureAwait(false);
+                            this.OnPubCompSentEventLauncher(pubCompPacket);
+                            break;
+                        case PingReqPacket pingReqPacket:
+                            Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PingReqPacket id={pingReqPacket.PacketIdentifier}");
+                            writeResult = await this.WriteAsync(PingReqPacket.Encode()).ConfigureAwait(false);
+                            this.OnPingReqSentEventLauncher(pingReqPacket);
+                            break;
+                        default:
+                            Logger.Trace($"{this.Options.ClientId}-(W)- --> Unknown packet type {packet}");
+                            break;
+                    } // switch
 
-                    /* case AuthPacket authPacket:
-                    /*     writeResult = await this.Writer.WriteAsync(authPacket.Encode()).ConfigureAwait(false);
-                    /*     this.OnAuthSentEventLauncher(authPacket);
-                    /*     break;
-                    */
-                    default:
-                        Logger.Trace($"{this.Options.ClientId}-(W)- --> Unknown packet type {packet}");
+                    if (writeResult.IsCanceled)
+                    {
+                        Logger.Trace($"{this.Options.ClientId}-(W)- ConnectionWriter Write Cancelled");
                         break;
-                } // switch
+                    }
 
-                if (writeResult.IsCanceled)
-                {
-                    Logger.Trace($"{this.Options.ClientId}-(W)- ConnectionWriter Write Cancelled");
-                    break;
+                    if (writeResult.IsCompleted)
+                    {
+                        Logger.Trace($"{this.Options.ClientId}-(W)- ConnectionWriter IsCompleted: end of the stream");
+                        break;
+                    }
+
+                    this.lastCommunicationTimer.Restart();
                 }
-
-                if (writeResult.IsCompleted)
+                else
                 {
-                    Logger.Trace($"{this.Options.ClientId}-(W)- ConnectionWriter IsCompleted: end of the stream");
-                    break;
-                }
-
-                this.lastCommunicationTimer.Restart();
-            } // foreach
+                    // Queue is empty
+                    await Task.Delay(1).ConfigureAwait(false);
+                } // TryDequeue
+            } // while(true)
 
             Logger.Trace($"{this.Options.ClientId}-(W)- ConnectionWriter Exiting...{this.ConnectState}");
             return true;
@@ -289,11 +375,23 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     buffer = buffer.Slice(consumed);
                     this.Reader?.AdvanceTo(buffer.Start);
 
-                    // Add the packet to the received queue for processing later
-                    // by ReceivedPacketsHandlerAsync
-                    Logger.Trace($"{this.Options.ClientId}-(R)- <-- Received {decodedPacket.GetType().Name}.  Adding to receivedQueue.");
-                    this.ReceivedQueue.Add(decodedPacket);
+                    // We handle disconnects immediately
+                    if (decodedPacket is DisconnectPacket disconnectPacket)
+                    {
+                        Logger.Warn($"-(R)- <-- Disconnect received: {disconnectPacket.DisconnectReasonCode} {disconnectPacket.Properties.ReasonString}");
+                        await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
+                        this.OnDisconnectReceivedEventLauncher(disconnectPacket);
+                        break;
+                    }
+                    else
+                    {
+                        Logger.Trace($"{this.Options.ClientId}-(R)- <-- Received {decodedPacket.GetType().Name}.  Adding to receivedQueue.");
+                        // Add the packet to the received queue for processing later by ReceivedPacketsHandlerAsync
+                        this.ReceivedQueue.Enqueue(decodedPacket);
+                    }
                 } // while (buffer.Length > 0
+
+                await Task.Yield();
             } // while (this.ConnectState is ConnectState.Connecting or ConnectState.Connected)
 
             Logger.Trace($"{this.Options.ClientId}-(R)- ConnectionReader Exiting...{this.ConnectState}");
@@ -318,75 +416,83 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     break;
                 }
 
-                Logger.Trace($"{this.Options.ClientId}-(RPH)- {this.ReceivedQueue.Count} received packets currently waiting to be processed.");
+                // Logger.Trace($"{this.Options.ClientId}-(RPH)- {this.ReceivedQueue.Count} received packets currently waiting to be processed.");
 
-                var packet = this.ReceivedQueue.Take();
-
-                if (this.Options.ClientMaximumPacketSize != null)
+                if (this.ReceivedQueue.TryDequeue(out var packet))
                 {
-                    if (packet.PacketSize > this.Options.ClientMaximumPacketSize)
+                    if (this.Options.ClientMaximumPacketSize != null)
                     {
-                        Logger.Warn($"Received packet size {packet.PacketSize} exceeds maximum packet size {this.Options.ClientMaximumPacketSize}.  Disconnecting.");
-                        Logger.Debug($"{this.Options.ClientId}-(RPH)- Received packet size {packet.PacketSize} exceeds maximum packet size {this.Options.ClientMaximumPacketSize}.  Disconnecting.");
-
-                        var opts = new DisconnectOptions
+                        if (packet.PacketSize > this.Options.ClientMaximumPacketSize)
                         {
-                            ReasonCode = DisconnectReasonCode.PacketTooLarge,
-                            ReasonString = "Packet Too Large",
-                        };
-                        await this.DisconnectAsync(opts).ConfigureAwait(false);
-                        return false;
-                    }
-                }
+                            Logger.Warn($"Received packet size {packet.PacketSize} exceeds maximum packet size {this.Options.ClientMaximumPacketSize}.  Disconnecting.");
+                            Logger.Debug($"{this.Options.ClientId}-(RPH)- Received packet size {packet.PacketSize} exceeds maximum packet size {this.Options.ClientMaximumPacketSize}.  Disconnecting.");
 
-                switch (packet)
+                            var opts = new DisconnectOptions
+                            {
+                                ReasonCode = DisconnectReasonCode.PacketTooLarge,
+                                ReasonString = "Packet Too Large",
+                            };
+                            await this.DisconnectAsync(opts).ConfigureAwait(false);
+                            return false;
+                        }
+                    }
+
+                    switch (packet)
+                    {
+                        case ConnAckPacket connAckPacket:
+                            Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received ConnAck id={connAckPacket.PacketIdentifier}");
+                            this.ConnectionProperties = connAckPacket.Properties;
+                            this.OnConnAckReceivedEventLauncher(connAckPacket);
+                            break;
+                        case DisconnectPacket disconnectPacket:
+                            Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received Disconnect id={disconnectPacket.PacketIdentifier} {disconnectPacket.DisconnectReasonCode} {disconnectPacket.Properties.ReasonString}");
+                            Logger.Warn($"We shouldn't get the disconnect here - Disconnect received: {disconnectPacket.DisconnectReasonCode} {disconnectPacket.Properties.ReasonString}");
+                            throw new HiveMQttClientException("Received Disconnect packet in ReceivedPacketsHandlerAsync");
+                            // Logger.Warn($"Disconnect received: {disconnectPacket.DisconnectReasonCode} {disconnectPacket.Properties.ReasonString}");
+                            // await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
+                            // this.OnDisconnectReceivedEventLauncher(disconnectPacket);
+                            break;
+                        case PingRespPacket pingRespPacket:
+                            Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received PingResp id={pingRespPacket.PacketIdentifier}");
+                            this.OnPingRespReceivedEventLauncher(pingRespPacket);
+                            break;
+                        case SubAckPacket subAckPacket:
+                            Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received SubAck id={subAckPacket.PacketIdentifier}");
+                            this.OnSubAckReceivedEventLauncher(subAckPacket);
+                            break;
+                        case UnsubAckPacket unsubAckPacket:
+                            Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received UnsubAck id={unsubAckPacket.PacketIdentifier}");
+                            this.OnUnsubAckReceivedEventLauncher(unsubAckPacket);
+                            break;
+                        case PublishPacket publishPacket:
+                            this.HandleIncomingPublishPacket(publishPacket);
+                            break;
+                        case PubAckPacket pubAckPacket:
+                            this.HandleIncomingPubAckPacket(pubAckPacket);
+                            break;
+                        case PubRecPacket pubRecPacket:
+                            this.HandleIncomingPubRecPacket(pubRecPacket);
+                            break;
+                        case PubRelPacket pubRelPacket:
+                            this.HandleIncomingPubRelPacket(pubRelPacket);
+                            break;
+                        case PubCompPacket pubCompPacket:
+                            this.HandleIncomingPubCompPacket(pubCompPacket);
+                            break;
+                        default:
+                            Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received Unknown packet type.  Will discard.");
+                            Logger.Error($"Unrecognized packet received.  Will discard. {packet}");
+                            break;
+                    } // switch (packet)
+                }
+                else
                 {
-                    case ConnAckPacket connAckPacket:
-                        Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received ConnAck id={connAckPacket.PacketIdentifier}");
-                        this.OnConnAckReceivedEventLauncher(connAckPacket);
-                        break;
-                    case DisconnectPacket disconnectPacket:
-                        Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received Disconnect id={disconnectPacket.PacketIdentifier}");
-                        Logger.Warn($"Disconnect received: {disconnectPacket.DisconnectReasonCode} {disconnectPacket.Properties.ReasonString}");
-                        await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
-                        this.OnDisconnectReceivedEventLauncher(disconnectPacket);
-                        break;
-                    case PingRespPacket pingRespPacket:
-                        Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received PingResp id={pingRespPacket.PacketIdentifier}");
-                        this.OnPingRespReceivedEventLauncher(pingRespPacket);
-                        break;
-                    case SubAckPacket subAckPacket:
-                        Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received SubAck id={subAckPacket.PacketIdentifier}");
-                        this.OnSubAckReceivedEventLauncher(subAckPacket);
-                        break;
-                    case UnsubAckPacket unsubAckPacket:
-                        Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received UnsubAck id={unsubAckPacket.PacketIdentifier}");
-                        this.OnUnsubAckReceivedEventLauncher(unsubAckPacket);
-                        break;
-                    case PublishPacket publishPacket:
-                        this.HandleIncomingPublishPacket(publishPacket);
-                        break;
-                    case PubAckPacket pubAckPacket:
-                        this.HandleIncomingPubAckPacket(pubAckPacket);
-                        break;
-                    case PubRecPacket pubRecPacket:
-                        this.HandleIncomingPubRecPacket(pubRecPacket);
-                        break;
-                    case PubRelPacket pubRelPacket:
-                        this.HandleIncomingPubRelPacket(pubRelPacket);
-                        break;
-                    case PubCompPacket pubCompPacket:
-                        this.HandleIncomingPubCompPacket(pubCompPacket);
-                        break;
-                    default:
-                        Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received Unknown packet type.  Will discard.");
-                        Logger.Error($"Unrecognized packet received.  Will discard. {packet}");
-                        break;
-                } // switch (packet)
-            } // while
+                    // Queue is empty
+                    await Task.Delay(1).ConfigureAwait(false);
+                } // TryDequeue
+            } // while (true)
 
             Logger.Trace($"{this.Options.ClientId}-(RPH)- ReceivedPacketsHandler Exiting...{this.ConnectState}");
-
             return true;
         }, cancellationToken);
 
@@ -399,16 +505,17 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received Publish id={publishPacket.PacketIdentifier}");
         this.OnPublishReceivedEventLauncher(publishPacket);
 
-        if (publishPacket.Message.QoS is MQTT5.Types.QualityOfService.AtLeastOnceDelivery)
+        if (publishPacket.Message.QoS is QualityOfService.AtLeastOnceDelivery)
         {
             // We've received a QoS 1 publish.  Send a PubAck.
             var pubAckResponse = new PubAckPacket(publishPacket.PacketIdentifier, PubAckReasonCode.Success);
 
             // FIXME We should wait until puback is sent before launching event
             // FIXME Check DUP flag setting
-            this.SendQueue.Add(pubAckResponse);
+            this.SendQueue.Enqueue(pubAckResponse);
+            publishPacket.OnPublishQoS1CompleteEventLauncher(pubAckResponse);
         }
-        else if (publishPacket.Message.QoS is MQTT5.Types.QualityOfService.ExactlyOnceDelivery)
+        else if (publishPacket.Message.QoS is QualityOfService.ExactlyOnceDelivery)
         {
             // We've received a QoS 2 publish.  Send a PubRec and add to QoS2 transaction register.
             var pubRecResponse = new PubRecPacket(publishPacket.PacketIdentifier, PubRecReasonCode.Success);
@@ -421,7 +528,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 pubRecResponse.ReasonCode = PubRecReasonCode.PacketIdentifierInUse;
             }
 
-            this.SendQueue.Add(pubRecResponse);
+            this.SendQueue.Enqueue(pubRecResponse);
         }
 
         this.OnMessageReceivedEventLauncher(publishPacket);
@@ -483,13 +590,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             }
 
             // Send the PUBREL response
-            this.SendQueue.Add(pubRelResponsePacket);
+            this.SendQueue.Enqueue(pubRelResponsePacket);
         }
         else
         {
             // Send a PUBREL with PacketIdentifierNotFound
             var pubRelResponsePacket = new PubRelPacket(pubRecPacket.PacketIdentifier, PubRelReasonCode.PacketIdentifierNotFound);
-            this.SendQueue.Add(pubRelResponsePacket);
+            this.SendQueue.Enqueue(pubRelResponsePacket);
         }
     }
 
@@ -524,7 +631,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 Logger.Warn($"QoS2: Couldn't remove PubRel --> PubComp QoS2 Chain for packet identifier {pubRelPacket.PacketIdentifier}.");
             }
 
-            this.SendQueue.Add(pubCompResponsePacket);
+            this.SendQueue.Enqueue(pubCompResponsePacket);
         }
         else
         {
@@ -533,7 +640,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
             // Send a PUBCOMP with PacketIdentifierNotFound
             var pubCompResponsePacket = new PubCompPacket(pubRelPacket.PacketIdentifier, PubCompReasonCode.PacketIdentifierNotFound);
-            this.SendQueue.Add(pubCompResponsePacket);
+            this.SendQueue.Enqueue(pubCompResponsePacket);
         }
     }
 

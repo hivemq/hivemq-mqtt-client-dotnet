@@ -190,9 +190,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 }
 
                 // Dispose managed resources.
-                this.SendQueue.CompleteAdding();
-                this.ReceivedQueue.CompleteAdding();
-
                 this.cancellationTokenSource.Cancel();
                 this.cancellationTokenSource.Dispose();
             }
