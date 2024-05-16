@@ -103,5 +103,4 @@ public class UnsubscribeBuilderTest
         var disconnectResult = await subClient.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
     }
-
 }
