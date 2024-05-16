@@ -197,13 +197,16 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         {
             if (packet.Message.Topic != null && MatchTopic(subscription.TopicFilter.Topic, packet.Message.Topic))
             {
-                _ = Task.Run(() => subscription.MessageReceivedHandler?.Invoke(this, eventArgs)).ContinueWith(t =>
-                    {
-                        if (t.IsFaulted)
+                if (subscription.MessageReceivedHandler != null)
+                {
+                    _ = Task.Run(() => subscription.MessageReceivedHandler?.Invoke(this, eventArgs)).ContinueWith(t =>
                         {
-                            Logger.Error("per-subscription OnMessageReceivedEventLauncher exception: " + t.Exception.Message);
-                        }
-                    });
+                            if (t.IsFaulted)
+                            {
+                                Logger.Error("per-subscription OnMessageReceivedEventLauncher exception: " + t.Exception.Message);
+                            }
+                        });
+                }
             }
         }
     }

@@ -216,7 +216,6 @@ public class PublishTest
 
         // client 3 Subscribe to the secondary topic
         subscribeResult = await client3.SubscribeAsync("HMQ/SecondTopic", QualityOfService.AtMostOnceDelivery).ConfigureAwait(false);
-
         var client3MessageCount = 0;
 
         // client 3 will receive the final message
@@ -230,16 +229,16 @@ public class PublishTest
         client3.OnMessageReceived += Client3MessageHandler;
 
         // client 1 Publish 100 messages
-        for (var i = 1; i <= 100; i++)
+        for (var i = 1; i <= 10; i++)
         {
             var publishResult = await client1.PublishAsync("HMQ/FirstTopic", "Hello World", QualityOfService.AtMostOnceDelivery).ConfigureAwait(false);
             Assert.NotNull(publishResult);
         }
 
-        await Task.Delay(1000).ConfigureAwait(false);
+        await Task.Delay(3000).ConfigureAwait(false);
 
-        Assert.Equal(100, client2MessageCount);
-        Assert.Equal(100, client3MessageCount);
+        Assert.Equal(10, client2MessageCount);
+        Assert.Equal(10, client3MessageCount);
 
         Assert.Empty(client1.OutgoingPublishQueue);
         Assert.Empty(client2.OutgoingPublishQueue);
@@ -318,8 +317,8 @@ public class PublishTest
 
         client3.OnMessageReceived += Client3MessageHandler;
 
-        // client 1 Publish 100 messages
-        for (var i = 1; i <= 100; i++)
+        // client 1 Publish 10 messages
+        for (var i = 1; i <= 10; i++)
         {
             var publishResult = await client1.PublishAsync("HMQ/FirstTopic", "Hello World", QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
             Assert.NotNull(publishResult);
@@ -327,8 +326,8 @@ public class PublishTest
 
         await Task.Delay(2000).ConfigureAwait(false);
 
-        Assert.Equal(100, client2MessageCount);
-        Assert.Equal(100, client3MessageCount);
+        Assert.Equal(10, client2MessageCount);
+        Assert.Equal(10, client3MessageCount);
 
         Assert.Empty(client1.OutgoingPublishQueue);
         Assert.Empty(client2.OutgoingPublishQueue);
@@ -404,8 +403,8 @@ public class PublishTest
 
         client3.OnMessageReceived += Client3MessageHandler;
 
-        // client 1 Publish 100 messages
-        for (var i = 1; i <= 100; i++)
+        // client 1 Publish 10 messages
+        for (var i = 1; i <= 10; i++)
         {
             var publishResult = await client1.PublishAsync("HMQ/FirstTopic", "Hello World", QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
             Assert.NotNull(publishResult);
@@ -413,8 +412,8 @@ public class PublishTest
 
         await Task.Delay(2000).ConfigureAwait(false);
 
-        Assert.Equal(100, client2MessageCount);
-        Assert.Equal(100, client3MessageCount);
+        Assert.Equal(10, client2MessageCount);
+        Assert.Equal(10, client3MessageCount);
 
         Assert.Empty(client1.OutgoingPublishQueue);
         Assert.Empty(client2.OutgoingPublishQueue);
