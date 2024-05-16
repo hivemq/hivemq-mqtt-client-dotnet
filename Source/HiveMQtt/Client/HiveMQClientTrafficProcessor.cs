@@ -95,7 +95,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             this.lastCommunicationTimer.Start();
             Logger.Trace($"{this.Options.ClientId}-(W)- Starting...{this.ConnectState}");
 
-            while (true)
+            foreach (var packet in this.SendQueue.GetConsumingEnumerable(cancellationToken))
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -112,7 +112,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
                 Logger.Trace($"{this.Options.ClientId}-(W)- {this.SendQueue.Count} packets waiting to be sent.");
 
-                var packet = this.SendQueue.Take();
                 FlushResult writeResult = default;
 
                 switch (packet)
@@ -211,7 +210,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 }
 
                 this.lastCommunicationTimer.Restart();
-            } // foreach
+            }
 
             Logger.Trace($"{this.Options.ClientId}-(W)- ConnectionWriter Exiting...{this.ConnectState}");
             return true;
@@ -310,80 +309,85 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         {
             Logger.Trace($"{this.Options.ClientId}-(RPH)- Starting...{this.ConnectState}");
 
-            while (true)
+            try
             {
-                if (cancellationToken.IsCancellationRequested)
+                foreach (var packet in this.ReceivedQueue.GetConsumingEnumerable(cancellationToken))
                 {
-                    Logger.Trace($"{this.Options.ClientId}-(RPH)- Cancelled with {this.ReceivedQueue.Count} received packets remaining.");
-                    break;
-                }
-
-                Logger.Trace($"{this.Options.ClientId}-(RPH)- {this.ReceivedQueue.Count} received packets currently waiting to be processed.");
-
-                var packet = this.ReceivedQueue.Take();
-
-                if (this.Options.ClientMaximumPacketSize != null)
-                {
-                    if (packet.PacketSize > this.Options.ClientMaximumPacketSize)
+                    if (cancellationToken.IsCancellationRequested)
                     {
-                        Logger.Warn($"Received packet size {packet.PacketSize} exceeds maximum packet size {this.Options.ClientMaximumPacketSize}.  Disconnecting.");
-                        Logger.Debug($"{this.Options.ClientId}-(RPH)- Received packet size {packet.PacketSize} exceeds maximum packet size {this.Options.ClientMaximumPacketSize}.  Disconnecting.");
-
-                        var opts = new DisconnectOptions
-                        {
-                            ReasonCode = DisconnectReasonCode.PacketTooLarge,
-                            ReasonString = "Packet Too Large",
-                        };
-                        await this.DisconnectAsync(opts).ConfigureAwait(false);
-                        return false;
+                        Logger.Trace($"{this.Options.ClientId}-(RPH)- Cancelled with {this.ReceivedQueue.Count} received packets remaining.");
+                        break;
                     }
-                }
 
-                switch (packet)
-                {
-                    case ConnAckPacket connAckPacket:
-                        Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received ConnAck id={connAckPacket.PacketIdentifier}");
-                        this.OnConnAckReceivedEventLauncher(connAckPacket);
-                        break;
-                    case DisconnectPacket disconnectPacket:
-                        Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received Disconnect id={disconnectPacket.PacketIdentifier}");
-                        Logger.Warn($"Disconnect received: {disconnectPacket.DisconnectReasonCode} {disconnectPacket.Properties.ReasonString}");
-                        await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
-                        this.OnDisconnectReceivedEventLauncher(disconnectPacket);
-                        break;
-                    case PingRespPacket pingRespPacket:
-                        Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received PingResp id={pingRespPacket.PacketIdentifier}");
-                        this.OnPingRespReceivedEventLauncher(pingRespPacket);
-                        break;
-                    case SubAckPacket subAckPacket:
-                        Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received SubAck id={subAckPacket.PacketIdentifier}");
-                        this.OnSubAckReceivedEventLauncher(subAckPacket);
-                        break;
-                    case UnsubAckPacket unsubAckPacket:
-                        Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received UnsubAck id={unsubAckPacket.PacketIdentifier}");
-                        this.OnUnsubAckReceivedEventLauncher(unsubAckPacket);
-                        break;
-                    case PublishPacket publishPacket:
-                        this.HandleIncomingPublishPacket(publishPacket);
-                        break;
-                    case PubAckPacket pubAckPacket:
-                        this.HandleIncomingPubAckPacket(pubAckPacket);
-                        break;
-                    case PubRecPacket pubRecPacket:
-                        this.HandleIncomingPubRecPacket(pubRecPacket);
-                        break;
-                    case PubRelPacket pubRelPacket:
-                        this.HandleIncomingPubRelPacket(pubRelPacket);
-                        break;
-                    case PubCompPacket pubCompPacket:
-                        this.HandleIncomingPubCompPacket(pubCompPacket);
-                        break;
-                    default:
-                        Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received Unknown packet type.  Will discard.");
-                        Logger.Error($"Unrecognized packet received.  Will discard. {packet}");
-                        break;
-                } // switch (packet)
-            } // while
+                    Logger.Trace($"{this.Options.ClientId}-(RPH)- {this.ReceivedQueue.Count} received packets currently waiting to be processed.");
+
+                    if (this.Options.ClientMaximumPacketSize != null)
+                    {
+                        if (packet.PacketSize > this.Options.ClientMaximumPacketSize)
+                        {
+                            Logger.Warn($"Received packet size {packet.PacketSize} exceeds maximum packet size {this.Options.ClientMaximumPacketSize}.  Disconnecting.");
+                            Logger.Debug($"{this.Options.ClientId}-(RPH)- Received packet size {packet.PacketSize} exceeds maximum packet size {this.Options.ClientMaximumPacketSize}.  Disconnecting.");
+
+                            var opts = new DisconnectOptions
+                            {
+                                ReasonCode = DisconnectReasonCode.PacketTooLarge,
+                                ReasonString = "Packet Too Large",
+                            };
+                            await this.DisconnectAsync(opts).ConfigureAwait(false);
+                            return false;
+                        }
+                    }
+
+                    switch (packet)
+                    {
+                        case ConnAckPacket connAckPacket:
+                            Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received ConnAck id={connAckPacket.PacketIdentifier}");
+                            this.OnConnAckReceivedEventLauncher(connAckPacket);
+                            break;
+                        case DisconnectPacket disconnectPacket:
+                            Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received Disconnect id={disconnectPacket.PacketIdentifier} {disconnectPacket.DisconnectReasonCode} {disconnectPacket.Properties.ReasonString}");
+                            Logger.Error($"Disconnect received: {disconnectPacket.DisconnectReasonCode} {disconnectPacket.Properties.ReasonString}");
+                            await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
+                            this.OnDisconnectReceivedEventLauncher(disconnectPacket);
+                            break;
+                        case PingRespPacket pingRespPacket:
+                            Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received PingResp id={pingRespPacket.PacketIdentifier}");
+                            this.OnPingRespReceivedEventLauncher(pingRespPacket);
+                            break;
+                        case SubAckPacket subAckPacket:
+                            Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received SubAck id={subAckPacket.PacketIdentifier}");
+                            this.OnSubAckReceivedEventLauncher(subAckPacket);
+                            break;
+                        case UnsubAckPacket unsubAckPacket:
+                            Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received UnsubAck id={unsubAckPacket.PacketIdentifier}");
+                            this.OnUnsubAckReceivedEventLauncher(unsubAckPacket);
+                            break;
+                        case PublishPacket publishPacket:
+                            this.HandleIncomingPublishPacket(publishPacket);
+                            break;
+                        case PubAckPacket pubAckPacket:
+                            this.HandleIncomingPubAckPacket(pubAckPacket);
+                            break;
+                        case PubRecPacket pubRecPacket:
+                            this.HandleIncomingPubRecPacket(pubRecPacket);
+                            break;
+                        case PubRelPacket pubRelPacket:
+                            this.HandleIncomingPubRelPacket(pubRelPacket);
+                            break;
+                        case PubCompPacket pubCompPacket:
+                            this.HandleIncomingPubCompPacket(pubCompPacket);
+                            break;
+                        default:
+                            Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received Unknown packet type.  Will discard.");
+                            Logger.Error($"Unrecognized packet received.  Will discard. {packet}");
+                            break;
+                    } // switch (packet)
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"{this.Options.ClientId}-(RPH)- Exception in ReceivedPacketsHandlerAsync: {ex.Message}");
+            }
 
             Logger.Trace($"{this.Options.ClientId}-(RPH)- ReceivedPacketsHandler Exiting...{this.ConnectState}");
 
