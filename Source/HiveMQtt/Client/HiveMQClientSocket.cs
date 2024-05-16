@@ -40,6 +40,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
     private CancellationTokenSource cancellationTokenSource;
 
+    internal Task? ConnectionPublishWriterTask { get; set; }
+
     internal Task? ConnectionWriterTask { get; set; }
 
     internal Task? ConnectionReaderTask { get; set; }
@@ -180,6 +182,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         this.cancellationTokenSource = new CancellationTokenSource();
 
         // Start the traffic processors
+        this.ConnectionPublishWriterTask = this.ConnectionPublishWriterAsync(this.cancellationTokenSource.Token);
         this.ConnectionWriterTask = this.ConnectionWriterAsync(this.cancellationTokenSource.Token);
         this.ConnectionReaderTask = this.ConnectionReaderAsync(this.cancellationTokenSource.Token);
         this.ReceivedPacketsHandlerTask = this.ReceivedPacketsHandlerAsync(this.cancellationTokenSource.Token);
@@ -257,6 +260,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         this.cancellationTokenSource.Cancel();
 
         // Reset the tasks
+        this.ConnectionPublishWriterTask = null;
         this.ConnectionWriterTask = null;
         this.ConnectionReaderTask = null;
         this.ReceivedPacketsHandlerTask = null;
