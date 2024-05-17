@@ -251,9 +251,9 @@ public class PublishTest
         Assert.Empty(client2.SendQueue);
         Assert.Empty(client3.SendQueue);
 
-        Assert.Empty(client1.transactionQueue);
-        Assert.Empty(client2.transactionQueue);
-        Assert.Empty(client3.transactionQueue);
+        Assert.Empty(client1.TransactionQueue);
+        Assert.Empty(client2.TransactionQueue);
+        Assert.Empty(client3.TransactionQueue);
 
         // All done, disconnect all clients
         var disconnectResult = await client1.DisconnectAsync().ConfigureAwait(false);
@@ -340,9 +340,9 @@ public class PublishTest
         Assert.Empty(client2.SendQueue);
         Assert.Empty(client3.SendQueue);
 
-        Assert.Empty(client1.transactionQueue);
-        Assert.Empty(client2.transactionQueue);
-        Assert.Empty(client3.transactionQueue);
+        Assert.Empty(client1.TransactionQueue);
+        Assert.Empty(client2.TransactionQueue);
+        Assert.Empty(client3.TransactionQueue);
 
         // All done, disconnect all clients
         var disconnectResult = await client1.DisconnectAsync().ConfigureAwait(false);
@@ -426,9 +426,9 @@ public class PublishTest
         Assert.Empty(client2.SendQueue);
         Assert.Empty(client3.SendQueue);
 
-        Assert.Empty(client1.transactionQueue);
-        Assert.Empty(client2.transactionQueue);
-        Assert.Empty(client3.transactionQueue);
+        Assert.Empty(client1.TransactionQueue);
+        Assert.Empty(client2.TransactionQueue);
+        Assert.Empty(client3.TransactionQueue);
 
         // All done, disconnect all clients
         var disconnectResult = await client1.DisconnectAsync().ConfigureAwait(false);

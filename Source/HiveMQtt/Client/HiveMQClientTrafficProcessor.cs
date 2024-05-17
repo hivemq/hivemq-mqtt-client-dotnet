@@ -40,7 +40,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     internal ConcurrentQueue<ControlPacket> ReceivedQueue { get; } = new();
 
     // Transactional packets indexed by packet identifier
-    internal readonly ConcurrentDictionary<int, List<ControlPacket>> transactionQueue = new();
+    internal ConcurrentDictionary<int, List<ControlPacket>> TransactionQueue { get; } = new();
 
     private readonly Stopwatch lastCommunicationTimer = new();
 
@@ -78,7 +78,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 // Dumping Client State
                 Logger.Trace($"{this.Options.ClientId}-(CM)- {this.ConnectState} lastCommunicationTimer:{this.lastCommunicationTimer.Elapsed}");
                 Logger.Trace($"{this.Options.ClientId}-(CM)- SendQueue:{this.SendQueue.Count} ReceivedQueue:{this.ReceivedQueue.Count} OutgoingPublishQueue:{this.OutgoingPublishQueue.Count}");
-                Logger.Trace($"{this.Options.ClientId}-(CM)- TransactionQueue:{this.transactionQueue.Count}");
+                Logger.Trace($"{this.Options.ClientId}-(CM)- TransactionQueue:{this.TransactionQueue.Count}");
                 Logger.Trace($"{this.Options.ClientId}-(CM)- - ConnectionMonitor:{this.ConnectionMonitorTask?.Status}");
                 Logger.Trace($"{this.Options.ClientId}-(CM)- - ConnectionPublishWriter:{this.ConnectionPublishWriterTask?.Status}");
                 Logger.Trace($"{this.Options.ClientId}-(CM)- - ConnectionWriter:{this.ConnectionWriterTask?.Status}");
@@ -126,9 +126,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 }
 
                 // Logger.Trace($"{this.Options.ClientId}-(PW)- {this.OutgoingPublishQueue.Count} publish packets waiting to be sent.");
-
                 var receiveMaximum = this.ConnectionProperties.ReceiveMaximum ?? 65535;
-                if (this.transactionQueue.Count >= receiveMaximum)
+                if (this.TransactionQueue.Count >= receiveMaximum)
                 {
                     Logger.Debug($"The Maximum number of publishes have been sent to broker.  Waiting for existing transactions to complete.");
                     await Task.Delay(2000).ConfigureAwait(false);
@@ -144,7 +143,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                         publishPacket.Message.QoS is QualityOfService.ExactlyOnceDelivery)
                     {
                         // QoS > 0 - Add to transaction queue
-                        if (this.transactionQueue.TryAdd(publishPacket.PacketIdentifier, new List<ControlPacket> { publishPacket }) == false)
+                        if (this.TransactionQueue.TryAdd(publishPacket.PacketIdentifier, new List<ControlPacket> { publishPacket }) == false)
                         {
                             Logger.Warn($"Duplicate packet ID detected {publishPacket.PacketIdentifier} while queueing to transaction queue for an outgoing QoS {publishPacket.Message.QoS} publish .");
                             continue;
@@ -168,11 +167,10 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
                     this.lastCommunicationTimer.Restart();
 
-                    if (this.transactionQueue.Count >= (this.ConnectionProperties.ReceiveMaximum ?? 65535))
+                    if (this.TransactionQueue.Count >= (this.ConnectionProperties.ReceiveMaximum ?? 65535))
                     {
                         break;
                     }
-
                 }
                 else
                 {
@@ -210,7 +208,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 }
 
                 // Logger.Trace($"{this.Options.ClientId}-(W)- {this.SendQueue.Count} packets waiting to be sent.");
-
                 if (this.SendQueue.TryDequeue(out var packet))
                 {
                     FlushResult writeResult = default;
@@ -385,7 +382,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     }
                     else
                     {
-                        Logger.Trace($"{this.Options.ClientId}-(R)- <-- Received {decodedPacket.GetType().Name}.  Adding to receivedQueue.");
+                        Logger.Trace($"{this.Options.ClientId}-(R)- <-- Received {decodedPacket.GetType().Name} id: {decodedPacket.PacketIdentifier}.  Adding to receivedQueue.");
+
                         // Add the packet to the received queue for processing later by ReceivedPacketsHandlerAsync
                         this.ReceivedQueue.Enqueue(decodedPacket);
                     }
@@ -417,7 +415,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 }
 
                 // Logger.Trace($"{this.Options.ClientId}-(RPH)- {this.ReceivedQueue.Count} received packets currently waiting to be processed.");
-
                 if (this.ReceivedQueue.TryDequeue(out var packet))
                 {
                     if (this.Options.ClientMaximumPacketSize != null)
@@ -448,10 +445,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                             Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received Disconnect id={disconnectPacket.PacketIdentifier} {disconnectPacket.DisconnectReasonCode} {disconnectPacket.Properties.ReasonString}");
                             Logger.Warn($"We shouldn't get the disconnect here - Disconnect received: {disconnectPacket.DisconnectReasonCode} {disconnectPacket.Properties.ReasonString}");
                             throw new HiveMQttClientException("Received Disconnect packet in ReceivedPacketsHandlerAsync");
-                            // Logger.Warn($"Disconnect received: {disconnectPacket.DisconnectReasonCode} {disconnectPacket.Properties.ReasonString}");
-                            // await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
-                            // this.OnDisconnectReceivedEventLauncher(disconnectPacket);
-                            break;
                         case PingRespPacket pingRespPacket:
                             Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received PingResp id={pingRespPacket.PacketIdentifier}");
                             this.OnPingRespReceivedEventLauncher(pingRespPacket);
@@ -522,7 +515,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             var publishQoS2Chain = new List<ControlPacket> { publishPacket, pubRecResponse };
 
             // FIXME:  Wait for QoS 2 transaction to complete before calling OnMessageReceivedEventLauncher???
-            if (this.transactionQueue.TryAdd(publishPacket.PacketIdentifier, publishQoS2Chain) == false)
+            if (this.TransactionQueue.TryAdd(publishPacket.PacketIdentifier, publishQoS2Chain) == false)
             {
                 Logger.Warn($"Duplicate packet ID detected {publishPacket.PacketIdentifier} while queueing to transaction queue for an incoming QoS {publishPacket.Message.QoS} publish .");
                 pubRecResponse.ReasonCode = PubRecReasonCode.PacketIdentifierInUse;
@@ -545,7 +538,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         this.OnPubAckReceivedEventLauncher(pubAckPacket);
 
         // Remove the transaction chain from the transaction queue
-        if (this.transactionQueue.Remove(pubAckPacket.PacketIdentifier, out var publishQoS1Chain))
+        if (this.TransactionQueue.Remove(pubAckPacket.PacketIdentifier, out var publishQoS1Chain))
         {
             var publishPacket = (PublishPacket)publishQoS1Chain.First();
 
@@ -568,7 +561,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         this.OnPubRecReceivedEventLauncher(pubRecPacket);
 
         // Find the QoS2 transaction chain for this packet identifier
-        if (this.transactionQueue.TryGetValue(pubRecPacket.PacketIdentifier, out var originalPublishQoS2Chain))
+        if (this.TransactionQueue.TryGetValue(pubRecPacket.PacketIdentifier, out var originalPublishQoS2Chain))
         {
             var originalPublishPacket = (PublishPacket)originalPublishQoS2Chain.First();
 
@@ -584,7 +577,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             };
 
             // Update the chain in the queue
-            if (this.transactionQueue.TryUpdate(pubRecPacket.PacketIdentifier, newPublishQoS2Chain, originalPublishQoS2Chain) == false)
+            if (this.TransactionQueue.TryUpdate(pubRecPacket.PacketIdentifier, newPublishQoS2Chain, originalPublishQoS2Chain) == false)
             {
                 Logger.Warn($"QoS2: Couldn't update PubRec --> PubRel QoS2 Chain for packet identifier {pubRecPacket.PacketIdentifier}.");
             }
@@ -609,7 +602,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received PubRel id={pubRelPacket.PacketIdentifier} reason={pubRelPacket.ReasonCode}");
         this.OnPubRelReceivedEventLauncher(pubRelPacket);
 
-        if (this.transactionQueue.TryGetValue(pubRelPacket.PacketIdentifier, out var originalPublishQoS2Chain))
+        if (this.TransactionQueue.TryGetValue(pubRelPacket.PacketIdentifier, out var originalPublishQoS2Chain))
         {
             var originalPublishPacket = (PublishPacket)originalPublishQoS2Chain.First();
 
@@ -617,7 +610,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             var pubCompResponsePacket = new PubCompPacket(pubRelPacket.PacketIdentifier, PubCompReasonCode.Success);
 
             // This QoS2 transaction chain is done.  Remove it from the transaction queue.
-            if (this.transactionQueue.TryRemove(pubRelPacket.PacketIdentifier, out var publishQoS2Chain))
+            if (this.TransactionQueue.TryRemove(pubRelPacket.PacketIdentifier, out var publishQoS2Chain))
             {
                 // Update the chain with the latest packets for the event launcher
                 publishQoS2Chain.Add(pubRelPacket);
@@ -655,7 +648,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         this.OnPubCompReceivedEventLauncher(pubCompPacket);
 
         // Remove the QoS 2 transaction chain from the queue
-        if (this.transactionQueue.Remove(pubCompPacket.PacketIdentifier, out var publishQoS2Chain))
+        if (this.TransactionQueue.Remove(pubCompPacket.PacketIdentifier, out var publishQoS2Chain))
         {
             var originalPublishPacket = (PublishPacket)publishQoS2Chain.First();
 
