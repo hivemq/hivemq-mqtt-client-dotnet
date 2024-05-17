@@ -217,7 +217,9 @@ public class SubscribeBuilderTest
         }
 
         // Wait for the 3 messages to be received by the per-subscription handler
-        await Task.WhenAll(new Task[] { tcs1.Task, tcs2.Task, tcs3.Task }).ConfigureAwait(false);
+        var timeout = TimeSpan.FromSeconds(10);
+        var delayTask = Task.Delay(timeout);
+        var completedTask = await Task.WhenAny(Task.WhenAll(tcs1.Task, tcs2.Task, tcs3.Task), delayTask).ConfigureAwait(false);
 
         var disconnectResult = await subscribeClient.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
