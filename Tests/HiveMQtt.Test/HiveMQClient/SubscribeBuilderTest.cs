@@ -164,7 +164,13 @@ public class SubscribeBuilderTest
         var connectResult = await subscribeClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
-        var tcs = new TaskCompletionSource<bool>();
+        // This is the fix for:
+        // per-subscription OnMessageReceivedEventLauncher exception: One or more errors occurred. (An attempt was
+        // made to transition a task to a final state when it had already completed.)
+        var tcs1 = new TaskCompletionSource<bool>();
+        var tcs2 = new TaskCompletionSource<bool>();
+        var tcs3 = new TaskCompletionSource<bool>();
+
         var messageCount = 0;
 
         var subscribeOptions = new SubscribeOptionsBuilder()
@@ -179,7 +185,18 @@ public class SubscribeBuilderTest
 
                 if (messageCount == 3)
                 {
-                    tcs.SetResult(true);
+                    if (args.PublishMessage.Topic == "tests/PerSubHandlerWithSingleLevelWildcard/0/msg")
+                    {
+                        tcs1.SetResult(true);
+                    }
+                    else if (args.PublishMessage.Topic == "tests/PerSubHandlerWithSingleLevelWildcard/1/msg")
+                    {
+                        tcs2.SetResult(true);
+                    }
+                    else if (args.PublishMessage.Topic == "tests/PerSubHandlerWithSingleLevelWildcard/2/msg")
+                    {
+                        tcs3.SetResult(true);
+                    }
                 }
             })
             .Build();
@@ -200,10 +217,12 @@ public class SubscribeBuilderTest
         }
 
         // Wait for the 3 messages to be received by the per-subscription handler
-        var handlerResult = await tcs.Task.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
-        Assert.True(handlerResult);
+        await Task.WhenAll(new Task[] { tcs1.Task, tcs2.Task, tcs3.Task }).ConfigureAwait(false);
 
         var disconnectResult = await subscribeClient.DisconnectAsync().ConfigureAwait(false);
+        Assert.True(disconnectResult);
+
+        disconnectResult = await pubClient.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
     }
 
