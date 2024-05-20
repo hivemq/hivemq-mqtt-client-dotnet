@@ -221,6 +221,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     protected virtual void OnMessageReceivedEventLauncher(PublishPacket packet)
     {
         var eventArgs = new OnMessageReceivedEventArgs(packet.Message);
+        var messageHandled = false;
 
         if (this.OnMessageReceived != null && this.OnMessageReceived.GetInvocationList().Length > 0)
         {
@@ -236,6 +237,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     }
                 },
                 TaskScheduler.Default);
+
+            messageHandled = true;
         }
 
         // Per Subscription Event Handler
@@ -243,18 +246,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         {
             if (packet.Message.Topic != null && MatchTopic(subscription.TopicFilter.Topic, packet.Message.Topic))
             {
-                // If no per-subscription message handler
-                if (subscription.MessageReceivedHandler == null || subscription.MessageReceivedHandler.GetInvocationList().Length == 0)
-                {
-                    if (this.OnMessageReceived == null || this.OnMessageReceived.GetInvocationList().Length == 0)
-                    {
-                        // We received an application message for a subscription without a MessageReceivedHandler
-                        // AND there is also no global OnMessageReceived event handler.  This publish is thus lost and unhandled.
-                        // We warn here about the lost message, but we don't throw an exception.
-                        Logger.Warn("Lost Publish: No global or subscription message handler.  Register an event handler (before Subscribing) to receive messages.");
-                    }
-                }
-                else
+                if (this.OnMessageReceived != null && this.OnMessageReceived.GetInvocationList().Length > 0)
                 {
                     // We have a per-subscription message handler.
                     _ = Task.Run(() => subscription.MessageReceivedHandler?.Invoke(this, eventArgs)).ContinueWith(
@@ -266,8 +258,18 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                             }
                         },
                         TaskScheduler.Default);
+
+                    messageHandled = true;
                 }
             }
+        }
+
+        if (!messageHandled)
+        {
+            // We received an application message for a subscription without a MessageReceivedHandler
+            // AND there is also no global OnMessageReceived event handler.  This publish is thus lost and unhandled.
+            // We warn here about the lost message, but we don't throw an exception.
+            Logger.Warn($"Lost Application Message ({packet.Message.Topic}): No global or subscription message handler found.  Register an event handler (before Subscribing) to receive all messages incoming.");
         }
     }
 
