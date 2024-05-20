@@ -143,7 +143,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                         publishPacket.Message.QoS is QualityOfService.ExactlyOnceDelivery)
                     {
                         // QoS > 0 - Add to transaction queue
-                        if (this.TransactionQueue.TryAdd(publishPacket.PacketIdentifier, new List<ControlPacket> { publishPacket }) == false)
+                        if (!this.TransactionQueue.TryAdd(publishPacket.PacketIdentifier, new List<ControlPacket> { publishPacket }))
                         {
                             Logger.Warn($"Duplicate packet ID detected {publishPacket.PacketIdentifier} while queueing to transaction queue for an outgoing QoS {publishPacket.Message.QoS} publish .");
                             continue;
@@ -345,7 +345,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
                 while (buffer.Length > 0)
                 {
-                    if (PacketDecoder.TryDecode(buffer, out var decodedPacket, out var consumed) == false)
+                    if (!PacketDecoder.TryDecode(buffer, out var decodedPacket, out var consumed))
                     {
                         if (decodedPacket is MalformedPacket)
                         {
@@ -515,7 +515,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             var publishQoS2Chain = new List<ControlPacket> { publishPacket, pubRecResponse };
 
             // FIXME:  Wait for QoS 2 transaction to complete before calling OnMessageReceivedEventLauncher???
-            if (this.TransactionQueue.TryAdd(publishPacket.PacketIdentifier, publishQoS2Chain) == false)
+            if (!this.TransactionQueue.TryAdd(publishPacket.PacketIdentifier, publishQoS2Chain))
             {
                 Logger.Warn($"Duplicate packet ID detected {publishPacket.PacketIdentifier} while queueing to transaction queue for an incoming QoS {publishPacket.Message.QoS} publish .");
                 pubRecResponse.ReasonCode = PubRecReasonCode.PacketIdentifierInUse;
@@ -577,7 +577,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             };
 
             // Update the chain in the queue
-            if (this.TransactionQueue.TryUpdate(pubRecPacket.PacketIdentifier, newPublishQoS2Chain, originalPublishQoS2Chain) == false)
+            if (!this.TransactionQueue.TryUpdate(pubRecPacket.PacketIdentifier, newPublishQoS2Chain, originalPublishQoS2Chain))
             {
                 Logger.Warn($"QoS2: Couldn't update PubRec --> PubRel QoS2 Chain for packet identifier {pubRecPacket.PacketIdentifier}.");
             }

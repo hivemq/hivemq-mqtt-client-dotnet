@@ -187,7 +187,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <inheritdoc />
     public async Task<PublishResult> PublishAsync(MQTT5PublishMessage message)
     {
-        if (this.IsConnected() == false)
+        if (!this.IsConnected())
         {
             throw new HiveMQttClientException("PublishAsync: Client is not connected.  Check client.IsConnected() before calling PublishAsync.");
         }
@@ -320,7 +320,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <inheritdoc />
     public async Task<SubscribeResult> SubscribeAsync(SubscribeOptions options)
     {
-        if (this.IsConnected() == false)
+        if (!this.IsConnected())
         {
             throw new HiveMQttClientException("SubscribeAsync: Client is not connected.  Check client.IsConnected() before calling SubscribeAsync.");
         }
@@ -433,7 +433,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
     public async Task<UnsubscribeResult> UnsubscribeAsync(UnsubscribeOptions unsubOptions)
     {
-        if (this.IsConnected() == false)
+        if (!this.IsConnected())
         {
             throw new HiveMQttClientException("UnsubscribeAsync: Client is not connected.  Check client.IsConnected() before calling UnsubscribeAsync.");
         }
