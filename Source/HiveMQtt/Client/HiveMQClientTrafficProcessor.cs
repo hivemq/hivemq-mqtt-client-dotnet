@@ -130,7 +130,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 if (this.TransactionQueue.Count >= receiveMaximum)
                 {
                     Logger.Debug($"The Maximum number of publishes have been sent to broker.  Waiting for existing transactions to complete.");
-                    await Task.Delay(2000).ConfigureAwait(false);
+                    await Task.Delay(10).ConfigureAwait(false);
                     continue;
                 }
 
@@ -166,11 +166,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     }
 
                     this.lastCommunicationTimer.Restart();
-
-                    if (this.TransactionQueue.Count >= (this.ConnectionProperties.ReceiveMaximum ?? 65535))
-                    {
-                        break;
-                    }
                 }
                 else
                 {

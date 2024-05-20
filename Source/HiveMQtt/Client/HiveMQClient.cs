@@ -329,7 +329,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         this.BeforeSubscribeEventLauncher(options);
 
         // FIXME: We should only ever have one subscribe in flight at any time (for now)
-        // Construct the MQTT Connect packet
+        // Construct the MQTT Subscribe packet
         var packetIdentifier = this.GeneratePacketIdentifier();
         var subscribePacket = new SubscribePacket(options, (ushort)packetIdentifier);
 
