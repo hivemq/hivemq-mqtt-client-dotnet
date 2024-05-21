@@ -117,6 +117,5 @@ public class UtilTest
         // A subscription to “$SYS/#” will receive messages published to topics beginning with “$SYS/”
         result = HiveMQClient.MatchTopic("$SYS/#", "$SYS/broker/clients/total");
         Assert.True(result);
-
     }
 }

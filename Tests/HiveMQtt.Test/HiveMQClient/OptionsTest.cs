@@ -63,7 +63,7 @@ public class OptionsTest
             ClientMaximumPacketSize = -300,
         };
 
-        var exception = Assert.Throws<HiveMQttClientException>(() => options.Validate());
+        var exception = Assert.Throws<HiveMQttClientException>(options.Validate);
         Assert.Contains("Client Maximum Packet Size must be greater than 0.", exception.Message);
 
         options.ClientMaximumPacketSize = long.MaxValue;

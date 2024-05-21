@@ -201,6 +201,7 @@ public class PublishTest
         var client2MessageCount = 0;
 
         // client 2 will receive the message and republish it to another topic
+#pragma warning disable VSTHRD100 // Avoid async void methods
         async void Client2MessageHandler(object? sender, OnMessageReceivedEventArgs eventArgs)
         {
             client2MessageCount++;
@@ -210,6 +211,7 @@ public class PublishTest
                 Assert.NotNull(publishResult);
             }
         }
+#pragma warning restore VSTHRD100 // Avoid async void methods
 
         client2.OnMessageReceived += Client2MessageHandler;
 
@@ -218,12 +220,14 @@ public class PublishTest
         var client3MessageCount = 0;
 
         // client 3 will receive the final message
+#pragma warning disable VSTHRD100 // Avoid async void methods
         async void Client3MessageHandler(object? sender, OnMessageReceivedEventArgs eventArgs)
         {
             client3MessageCount++;
             Assert.NotNull(eventArgs.PublishMessage);
             Assert.Equal("Hello World", eventArgs.PublishMessage.PayloadAsString);
         }
+#pragma warning restore VSTHRD100 // Avoid async void methods
 
         client3.OnMessageReceived += Client3MessageHandler;
 
@@ -288,6 +292,7 @@ public class PublishTest
         var client2MessageCount = 0;
 
         // client 2 will receive the message and republish it to another topic
+#pragma warning disable VSTHRD100 // Avoid async void methods
         async void Client2MessageHandler(object? sender, OnMessageReceivedEventArgs eventArgs)
         {
             client2MessageCount++;
@@ -298,6 +303,7 @@ public class PublishTest
                 Assert.Equal(publishResult.QoS1ReasonCode, PubAckReasonCode.Success);
             }
         }
+#pragma warning restore VSTHRD100 // Avoid async void methods
 
         client2.OnMessageReceived += Client2MessageHandler;
 
@@ -307,7 +313,7 @@ public class PublishTest
         var client3MessageCount = 0;
 
         // client 3 will receive the final message
-        async void Client3MessageHandler(object? sender, OnMessageReceivedEventArgs eventArgs)
+        void Client3MessageHandler(object? sender, OnMessageReceivedEventArgs eventArgs)
         {
             client3MessageCount++;
             Assert.NotNull(eventArgs.PublishMessage);
@@ -377,23 +383,27 @@ public class PublishTest
         var client2MessageCount = 0;
 
         // client 2 will receive the message and republish it to another topic
+#pragma warning disable VSTHRD100 // Avoid async void methods
         async void Client2MessageHandler(object? sender, OnMessageReceivedEventArgs eventArgs)
         {
             client2MessageCount++;
             var client = sender as HiveMQClient;
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
             var publishResult = await client.PublishAsync("HMQ/SecondTopic", eventArgs.PublishMessage.PayloadAsString, QualityOfService.ExactlyOnceDelivery).ConfigureAwait(true);
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
             Assert.NotNull(publishResult);
             Assert.Equal(publishResult.QoS2ReasonCode, PubRecReasonCode.Success);
         }
+#pragma warning restore VSTHRD100 // Avoid async void methods
 
         client2.OnMessageReceived += Client2MessageHandler;
 
         // client 3 Subscribe to the secondary topic
         subscribeResult = await client3.SubscribeAsync("HMQ/SecondTopic", QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
 
-        var client3MessageCount = 0;
         // client 3 will receive the final message
-        async void Client3MessageHandler(object? sender, OnMessageReceivedEventArgs eventArgs)
+        var client3MessageCount = 0;
+        void Client3MessageHandler(object? sender, OnMessageReceivedEventArgs eventArgs)
         {
             client3MessageCount++;
             Assert.NotNull(eventArgs.PublishMessage);

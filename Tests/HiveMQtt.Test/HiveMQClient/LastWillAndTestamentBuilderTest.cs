@@ -41,7 +41,9 @@ public class LastWillAndTestamentBuilderTest
 
         var messagesReceived = 0;
         var taskLWTReceived = new TaskCompletionSource<bool>();
+#pragma warning disable SA1010 // Opening square brackets should be spaced correctly
         byte[] correlationDataBytes = [1, 2, 3, 4, 5];
+#pragma warning restore SA1010 // Opening square brackets should be spaced correctly
 
         // Set the event handler for the message received event
         listenerClient.OnMessageReceived += (sender, args) =>

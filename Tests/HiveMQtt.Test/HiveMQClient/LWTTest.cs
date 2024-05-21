@@ -30,7 +30,9 @@ public class LWTTest
             Assert.Equal("last will message", args.PublishMessage.PayloadAsString);
             Assert.Equal("application/text", args.PublishMessage.ContentType);
             Assert.Equal("response/topic", args.PublishMessage.ResponseTopic);
+#pragma warning disable SA1010 // Opening square brackets should be spaced correctly
             byte[] correlationData = [1, 2, 3, 4, 5];
+#pragma warning restore SA1010 // Opening square brackets should be spaced correctly
             Assert.Equal(correlationData, args.PublishMessage.CorrelationData);
             Assert.Equal(MQTT5PayloadFormatIndicator.UTF8Encoded, args.PublishMessage.PayloadFormatIndicator);
             Assert.Equal(100, args.PublishMessage.MessageExpiryInterval);
@@ -61,7 +63,9 @@ public class LWTTest
         options.LastWillAndTestament.QoS = QualityOfService.AtLeastOnceDelivery;
         options.LastWillAndTestament.ContentType = "application/text";
         options.LastWillAndTestament.ResponseTopic = "response/topic";
+#pragma warning disable SA1010 // Opening square brackets should be spaced correctly
         byte[] correlationData = [1, 2, 3, 4, 5];
+#pragma warning restore SA1010 // Opening square brackets should be spaced correctly
         options.LastWillAndTestament.CorrelationData = correlationData;
         options.LastWillAndTestament.UserProperties.Add("userPropertyKey", "userPropertyValue");
 
