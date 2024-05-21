@@ -80,7 +80,7 @@ internal class PacketDecoder
             consumed = buffer.GetPosition(packetLength);
             decodedPacket = packet;
 
-            Logger.Trace($"PacketDecoder: Decoded Packet: consumed={consumed.GetInteger()}, packet={packet} id={packet.PacketIdentifier}");
+            // Logger.Trace($"PacketDecoder: Decoded Packet: consumed={consumed.GetInteger()}, packet={packet} id={packet.PacketIdentifier}");
             return true;
         }
         catch (Exception ex)

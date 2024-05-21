@@ -177,7 +177,7 @@ public class PublishTest
         Assert.True(disconnectResult);
     }
 
-    [Fact (Skip = "Inconsistent on Github Actions")]
+    [Fact]
     public async Task ThreeNodeQoS0ChainedPublishesAsync()
     {
         var client1 = new HiveMQClient(); // publish message
@@ -251,9 +251,9 @@ public class PublishTest
         Assert.Empty(client2.SendQueue);
         Assert.Empty(client3.SendQueue);
 
-        Assert.Empty(client1.transactionQueue);
-        Assert.Empty(client2.transactionQueue);
-        Assert.Empty(client3.transactionQueue);
+        Assert.Empty(client1.TransactionQueue);
+        Assert.Empty(client2.TransactionQueue);
+        Assert.Empty(client3.TransactionQueue);
 
         // All done, disconnect all clients
         var disconnectResult = await client1.DisconnectAsync().ConfigureAwait(false);
@@ -264,7 +264,7 @@ public class PublishTest
         Assert.True(disconnectResult);
     }
 
-    [Fact (Skip = "Inconsistent on Github Actions")]
+    [Fact]
     public async Task ThreeNodeQoS1ChainedPublishesAsync()
     {
         var client1 = new HiveMQClient(); // publish message
@@ -340,9 +340,9 @@ public class PublishTest
         Assert.Empty(client2.SendQueue);
         Assert.Empty(client3.SendQueue);
 
-        Assert.Empty(client1.transactionQueue);
-        Assert.Empty(client2.transactionQueue);
-        Assert.Empty(client3.transactionQueue);
+        Assert.Empty(client1.TransactionQueue);
+        Assert.Empty(client2.TransactionQueue);
+        Assert.Empty(client3.TransactionQueue);
 
         // All done, disconnect all clients
         var disconnectResult = await client1.DisconnectAsync().ConfigureAwait(false);
@@ -426,9 +426,9 @@ public class PublishTest
         Assert.Empty(client2.SendQueue);
         Assert.Empty(client3.SendQueue);
 
-        Assert.Empty(client1.transactionQueue);
-        Assert.Empty(client2.transactionQueue);
-        Assert.Empty(client3.transactionQueue);
+        Assert.Empty(client1.TransactionQueue);
+        Assert.Empty(client2.TransactionQueue);
+        Assert.Empty(client3.TransactionQueue);
 
         // All done, disconnect all clients
         var disconnectResult = await client1.DisconnectAsync().ConfigureAwait(false);
