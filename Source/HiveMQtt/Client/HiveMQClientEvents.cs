@@ -246,7 +246,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         {
             if (packet.Message.Topic != null && MatchTopic(subscription.TopicFilter.Topic, packet.Message.Topic))
             {
-                if (this.OnMessageReceived != null && this.OnMessageReceived.GetInvocationList().Length > 0)
+                if (subscription.MessageReceivedHandler != null && subscription.MessageReceivedHandler.GetInvocationList().Length > 0)
                 {
                     // We have a per-subscription message handler.
                     _ = Task.Run(() => subscription.MessageReceivedHandler?.Invoke(this, eventArgs)).ContinueWith(
@@ -254,7 +254,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                         {
                             if (t.IsFaulted)
                             {
-                                Logger.Error("per-subscription OnMessageReceivedEventLauncher exception: " + t.Exception.Message);
+                                Logger.Error("per-subscription MessageReceivedEventLauncher exception: " + t.Exception.Message);
                             }
                         },
                         TaskScheduler.Default);

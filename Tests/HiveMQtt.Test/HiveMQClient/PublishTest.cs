@@ -177,7 +177,7 @@ public class PublishTest
         Assert.True(disconnectResult);
     }
 
-    [Fact (Skip = "Inconsistent on Github Actions")]
+    [Fact]
     public async Task ThreeNodeQoS0ChainedPublishesAsync()
     {
         var client1 = new HiveMQClient(); // publish message
@@ -264,7 +264,7 @@ public class PublishTest
         Assert.True(disconnectResult);
     }
 
-    [Fact (Skip = "Inconsistent on Github Actions")]
+    [Fact]
     public async Task ThreeNodeQoS1ChainedPublishesAsync()
     {
         var client1 = new HiveMQClient(); // publish message
