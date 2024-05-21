@@ -37,10 +37,7 @@ public class ConnectTest
         var clientOptions = new HiveMQClientOptionsBuilder().WithPort(0).Build();
         var client = new HiveMQClient(clientOptions);
 
-        await Assert.ThrowsAsync<HiveMQttClientException>(async () =>
-        {
-            await client.ConnectAsync().ConfigureAwait(false);
-        }).ConfigureAwait(false);
+        await Assert.ThrowsAsync<HiveMQttClientException>(client.ConnectAsync).ConfigureAwait(false);
     }
 
     [Fact]
