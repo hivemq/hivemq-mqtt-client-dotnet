@@ -81,7 +81,6 @@ public class AwaitableQueueX<T> : IDisposable
     {
         while (this.queue.TryDequeue(out _))
         {
-            this.semaphore.Release();
         }
     }
 
