@@ -243,17 +243,17 @@ public class PublishTest
         Assert.Equal(10, client2MessageCount);
         Assert.Equal(10, client3MessageCount);
 
-        Assert.Empty(client1.OutgoingPublishQueue);
-        Assert.Empty(client2.OutgoingPublishQueue);
-        Assert.Empty(client3.OutgoingPublishQueue);
+        Assert.Equal(0, client1.OutgoingPublishQueue.Count);
+        Assert.Equal(0, client2.OutgoingPublishQueue.Count);
+        Assert.Equal(0, client3.OutgoingPublishQueue.Count);
 
-        Assert.Empty(client1.ReceivedQueue);
-        Assert.Empty(client2.ReceivedQueue);
-        Assert.Empty(client3.ReceivedQueue);
+        Assert.Equal(0, client1.ReceivedQueue.Count);
+        Assert.Equal(0, client2.ReceivedQueue.Count);
+        Assert.Equal(0, client3.ReceivedQueue.Count);
 
-        Assert.Empty(client1.SendQueue);
-        Assert.Empty(client2.SendQueue);
-        Assert.Empty(client3.SendQueue);
+        Assert.Equal(0, client1.SendQueue.Count);
+        Assert.Equal(0, client2.SendQueue.Count);
+        Assert.Equal(0, client3.SendQueue.Count);
 
         Assert.Empty(client1.TransactionQueue);
         Assert.Empty(client2.TransactionQueue);
@@ -334,17 +334,17 @@ public class PublishTest
         Assert.Equal(10, client2MessageCount);
         Assert.Equal(10, client3MessageCount);
 
-        Assert.Empty(client1.OutgoingPublishQueue);
-        Assert.Empty(client2.OutgoingPublishQueue);
-        Assert.Empty(client3.OutgoingPublishQueue);
+        Assert.Equal(0, client1.OutgoingPublishQueue.Count);
+        Assert.Equal(0, client2.OutgoingPublishQueue.Count);
+        Assert.Equal(0, client3.OutgoingPublishQueue.Count);
 
-        Assert.Empty(client1.ReceivedQueue);
-        Assert.Empty(client2.ReceivedQueue);
-        Assert.Empty(client3.ReceivedQueue);
+        Assert.Equal(0, client1.ReceivedQueue.Count);
+        Assert.Equal(0, client2.ReceivedQueue.Count);
+        Assert.Equal(0, client3.ReceivedQueue.Count);
 
-        Assert.Empty(client1.SendQueue);
-        Assert.Empty(client2.SendQueue);
-        Assert.Empty(client3.SendQueue);
+        Assert.Equal(0, client1.SendQueue.Count);
+        Assert.Equal(0, client2.SendQueue.Count);
+        Assert.Equal(0, client3.SendQueue.Count);
 
         Assert.Empty(client1.TransactionQueue);
         Assert.Empty(client2.TransactionQueue);
@@ -424,17 +424,17 @@ public class PublishTest
         Assert.Equal(10, client2MessageCount);
         Assert.Equal(10, client3MessageCount);
 
-        Assert.Empty(client1.OutgoingPublishQueue);
-        Assert.Empty(client2.OutgoingPublishQueue);
-        Assert.Empty(client3.OutgoingPublishQueue);
+        Assert.Equal(0, client1.OutgoingPublishQueue.Count);
+        Assert.Equal(0, client2.OutgoingPublishQueue.Count);
+        Assert.Equal(0, client3.OutgoingPublishQueue.Count);
 
-        Assert.Empty(client1.ReceivedQueue);
-        Assert.Empty(client2.ReceivedQueue);
-        Assert.Empty(client3.ReceivedQueue);
+        Assert.Equal(0, client1.ReceivedQueue.Count);
+        Assert.Equal(0, client2.ReceivedQueue.Count);
+        Assert.Equal(0, client3.ReceivedQueue.Count);
 
-        Assert.Empty(client1.SendQueue);
-        Assert.Empty(client2.SendQueue);
-        Assert.Empty(client3.SendQueue);
+        Assert.Equal(0, client1.SendQueue.Count);
+        Assert.Equal(0, client2.SendQueue.Count);
+        Assert.Equal(0, client3.SendQueue.Count);
 
         Assert.Empty(client1.TransactionQueue);
         Assert.Empty(client2.TransactionQueue);
