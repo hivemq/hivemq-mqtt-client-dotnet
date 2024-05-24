@@ -207,28 +207,17 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         else if (message.QoS == QualityOfService.AtLeastOnceDelivery)
         {
             // QoS 1: Acknowledged Delivery
-            var taskCompletionSource = new TaskCompletionSource<PubAckPacket>();
-            void TaskHandler(object? sender, OnPublishQoS1CompleteEventArgs args) => taskCompletionSource.SetResult(args.PubAckPacket);
-            EventHandler<OnPublishQoS1CompleteEventArgs> eventHandler = TaskHandler;
-            publishPacket.OnPublishQoS1Complete += eventHandler;
-
             Logger.Trace($"Queuing packet for send: {publishPacket.GetType().Name} id={publishPacket.PacketIdentifier}");
             this.OutgoingPublishQueue.Enqueue(publishPacket);
 
-            var pubAckPacket = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(60)).ConfigureAwait(false);
-
-            publishPacket.OnPublishQoS1Complete -= eventHandler;
+            // Wait on the QoS 1 handshake
+            var pubAckPacket = await publishPacket.OnPublishQoS1CompleteTCS.Task.WaitAsync(TimeSpan.FromSeconds(60)).ConfigureAwait(false);
             return new PublishResult(publishPacket.Message, pubAckPacket);
         }
         else if (message.QoS == QualityOfService.ExactlyOnceDelivery)
         {
             // QoS 2: Assured Delivery
             PublishResult? publishResult = null;
-            var taskCompletionSource = new TaskCompletionSource<List<ControlPacket>>();
-            void TaskHandler(object? sender, OnPublishQoS2CompleteEventArgs args) => taskCompletionSource.SetResult(args.PacketList);
-            EventHandler<OnPublishQoS2CompleteEventArgs> eventHandler = TaskHandler;
-            publishPacket.OnPublishQoS2Complete += eventHandler;
-
             Logger.Trace($"Queuing packet for send: {publishPacket.GetType().Name} id={publishPacket.PacketIdentifier}");
             this.OutgoingPublishQueue.Enqueue(publishPacket);
 
@@ -236,8 +225,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             try
             {
                 // Wait on the QoS 2 handshake
-                // FIXME: Timeout value
-                packetList = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(60)).ConfigureAwait(false);
+                packetList = await publishPacket.OnPublishQoS2CompleteTCS.Task.WaitAsync(TimeSpan.FromSeconds(60)).ConfigureAwait(false);
             }
             catch (TimeoutException)
             {
@@ -254,7 +242,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     QoS2ReasonCode = null,
                 };
-                publishPacket.OnPublishQoS2Complete -= eventHandler;
                 return publishResult;
             }
 
@@ -271,8 +258,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 throw new HiveMQttClientException("PublishAsync: QoS 2 complete but no PubRec packet received.");
             }
 
-            // Remove our wait handler
-            publishPacket.OnPublishQoS2Complete -= eventHandler;
             return publishResult;
         }
 
