@@ -118,10 +118,10 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     break;
                 }
 
-                while (this.ConnectState == ConnectState.Disconnected)
+                while (this.ConnectState != ConnectState.Connected)
                 {
                     Logger.Trace($"{this.Options.ClientId}-(PW)- Not connected.  Waiting for connect...");
-                    await Task.Delay(2000).ConfigureAwait(false);
+                    await Task.Delay(1000).ConfigureAwait(false);
                     continue;
                 }
 
@@ -188,6 +188,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     break;
                 }
 
+                // We allow this task to run in Connecting, Connected, and Disconnecting states
+                // because it is the one that has to send the CONNECT and DISCONNECT packets.
                 while (this.ConnectState == ConnectState.Disconnected)
                 {
                     Logger.Trace($"{this.Options.ClientId}-(W)- Not connected.  Waiting for connect...");
