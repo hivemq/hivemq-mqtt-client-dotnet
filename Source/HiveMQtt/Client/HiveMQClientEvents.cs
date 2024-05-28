@@ -45,7 +45,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("BeforeConnectEventLauncher exception: " + t.Exception.Message);
+                        Logger.Error("BeforeConnectEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
@@ -68,7 +68,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("AfterConnectEventLauncher exception: " + t.Exception.Message);
+                        Logger.Error("AfterConnectEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
@@ -91,7 +91,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("BeforeDisconnectEventLauncher exception: " + t.Exception.Message);
+                        Logger.Error("BeforeDisconnectEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
@@ -114,7 +114,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("AfterDisconnectEventLauncher exception: " + t.Exception.Message);
+                        Logger.Error("AfterDisconnectEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
@@ -137,7 +137,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("BeforeSubscribeEventLauncher exception: " + t.Exception.Message);
+                        Logger.Error("BeforeSubscribeEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
@@ -160,7 +160,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("AfterSubscribeEventLauncher exception: " + t.Exception.Message);
+                        Logger.Error("AfterSubscribeEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
@@ -183,7 +183,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("BeforeUnsubscribeEventLauncher exception: " + t.Exception.Message);
+                        Logger.Error("BeforeUnsubscribeEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
@@ -206,7 +206,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("AfterUnsubscribeEventLauncher exception: " + t.Exception.Message);
+                        Logger.Error("AfterUnsubscribeEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
@@ -233,7 +233,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("OnMessageReceivedEventLauncher exception: " + t.Exception.Message);
+                        Logger.Error("OnMessageReceivedEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
@@ -254,7 +254,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                         {
                             if (t.IsFaulted)
                             {
-                                Logger.Error($"per-subscription MessageReceivedEventLauncher faulted ({packet.Message.Topic}): " + t.Exception.Message);
+                                Logger.Error($"per-subscription MessageReceivedEventLauncher faulted ({packet.Message.Topic}): " + t.Exception?.Message);
                             }
                         },
                         TaskScheduler.Default);
@@ -293,7 +293,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("OnConnectSentEventLauncher exception: " + t.Exception.Message);
+                        Logger.Error("OnConnectSentEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
@@ -316,7 +316,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("OnConnAckReceivedEventLauncher exception: " + t.Exception.Message);
+                        Logger.Error("OnConnAckReceivedEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
@@ -339,7 +339,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("OnDisconnectSentEventLauncher exception: " + t.Exception.Message);
+                        Logger.Error("OnDisconnectSentEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
@@ -362,7 +362,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("OnDisconnectReceivedEventLauncher exception: " + t.Exception.Message);
+                        Logger.Error("OnDisconnectReceivedEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
@@ -385,7 +385,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("OnPingReqSentEventLauncher exception: " + t.Exception.Message);
+                        Logger.Error("OnPingReqSentEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
@@ -408,7 +408,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("OnPingRespReceivedEventLauncher exception: " + t.Exception.Message);
+                        Logger.Error("OnPingRespReceivedEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
@@ -431,7 +431,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("OnSubscribeSentEventLauncher exception: " + t.Exception.Message);
+                        Logger.Error("OnSubscribeSentEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
@@ -454,7 +454,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("OnSubAckReceivedEventLauncher exception: " + t.Exception.Message);
+                        Logger.Error("OnSubAckReceivedEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
@@ -477,7 +477,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("OnUnsubscribeSentEventLauncher exception: " + t.Exception.Message);
+                        Logger.Error("OnUnsubscribeSentEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
@@ -500,7 +500,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("OnUnsubAckReceivedEventLauncher exception: " + t.Exception.Message);
+                        Logger.Error("OnUnsubAckReceivedEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
@@ -523,7 +523,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("OnPublishReceivedEventLauncher exception: " + t.Exception.Message);
+                        Logger.Error("OnPublishReceivedEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
@@ -546,7 +546,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("OnPublishSentEventLauncher exception: " + t.Exception.Message);
+                        Logger.Error("OnPublishSentEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
@@ -569,7 +569,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("OnPubAckReceivedEventLauncher exception: " + t.Exception.Message);
+                        Logger.Error("OnPubAckReceivedEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
@@ -592,7 +592,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("OnPubAckSentEventLauncher exception: " + t.Exception.Message);
+                        Logger.Error("OnPubAckSentEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
@@ -615,7 +615,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("OnPubRecReceivedEventLauncher exception: " + t.Exception.Message);
+                        Logger.Error("OnPubRecReceivedEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
@@ -638,7 +638,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("OnPubRecSentEventLauncher exception: " + t.Exception.Message);
+                        Logger.Error("OnPubRecSentEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
@@ -661,7 +661,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("OnPubRelReceivedEventLauncher exception: " + t.Exception.Message);
+                        Logger.Error("OnPubRelReceivedEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
@@ -684,7 +684,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("OnPubRelSentEventLauncher exception: " + t.Exception.Message);
+                        Logger.Error("OnPubRelSentEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
@@ -707,7 +707,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("PubCompReceivedEventLauncher exception: " + t.Exception.Message);
+                        Logger.Error("PubCompReceivedEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
@@ -730,7 +730,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("PubCompSentEventLauncher exception: " + t.Exception.Message);
+                        Logger.Error("PubCompSentEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
