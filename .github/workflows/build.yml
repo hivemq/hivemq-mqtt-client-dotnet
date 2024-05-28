@@ -67,12 +67,21 @@ jobs:
       - name: "Dotnet Cake Pack"
         run: dotnet cake --target=Pack
         shell: pwsh
+      - name: "Upload NuGet packages"
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages
+          path: ./Artifacts/*.nupkg
+
   publish:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4.1.6
+      - name: "Download NuGet packages"
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-packages
+          path: ./Artifacts
 
       - name: Push to NuGet
         if: github.event_name == 'release'
