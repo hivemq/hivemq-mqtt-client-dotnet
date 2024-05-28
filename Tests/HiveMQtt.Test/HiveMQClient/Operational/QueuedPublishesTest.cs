@@ -10,9 +10,26 @@ public class QueuedPublishesTest
     [Fact]
     public async Task Queued_Messages_Chain_Async()
     {
-        var firstTopic = "hmq-tests-qmc/q1";
-        var secondTopic = "hmq-tests-qmc/q2";
+
         var batchSize = 1000;
+
+        var tasks = new[]
+        {
+            Task.Run(this.RelayClientAsync),
+            Task.Run(this.ReceiverClientAsync),
+            Task.Run(this.PublisherClientAsync),
+        };
+
+        var results = await Task.WhenAll(tasks).ConfigureAwait(false);
+        Assert.Equal(batchSize, results[0]);
+        Assert.Equal(batchSize, results[1]);
+        Assert.Equal(batchSize, results[2]);
+    }
+
+    private async Task<int> PublisherClientAsync()
+    {
+        var batchSize = 1000;
+        var firstTopic = "hmq-tests-qmc/q1";
 
         ///////////////////////////////////////////////////////////////
         // Publish 1000 messages with an incrementing payload
@@ -25,6 +42,9 @@ public class QueuedPublishesTest
         var publishClient = new HiveMQClient(publisherOptions);
         await publishClient.ConnectAsync().ConfigureAwait(false);
 
+        // Wait for 1 second to allow other tasks to subscribe
+        await Task.Delay(1000).ConfigureAwait(false);
+
         for (var i = 0; i < batchSize; i++)
         {
             // Make a JSON string payload with the current number
@@ -34,8 +54,13 @@ public class QueuedPublishesTest
             await publishClient.PublishAsync(firstTopic, payload, QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
         }
 
-        // DON'T disconnect the publishing client
-        // await publishClient.DisconnectAsync().ConfigureAwait(false);
+        return batchSize;
+    }
+
+    private async Task<int> RelayClientAsync()
+    {
+        var firstTopic = "hmq-tests-qmc/q1";
+        var secondTopic = "hmq-tests-qmc/q2";
 
         ////////////////////////////////////////////////////////////////////////////
         // Subscribe to the first topic and relay the messages to a second topic
@@ -62,9 +87,14 @@ public class QueuedPublishesTest
         await subscribeClient.ConnectAsync().ConfigureAwait(false);
         await subscribeClient.SubscribeAsync(firstTopic, QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
 
-        // Wait until relayCount is batchSize
+        // Wait until all messages are relayed
         await Task.Delay(5000).ConfigureAwait(false);
-        Assert.Equal(batchSize, relayCount);
+        return relayCount;
+    }
+
+    private async Task<int> ReceiverClientAsync()
+    {
+        var secondTopic = "hmq-tests-qmc/q2";
 
         ////////////////////////////////////////////////////////////////////////////
         // Subscribe to the second topic and count the received messages
@@ -84,6 +114,6 @@ public class QueuedPublishesTest
 
         // Wait for the receiver to receive all messages
         await Task.Delay(5000).ConfigureAwait(false);
-        Assert.Equal(batchSize, receivedCount);
+        return receivedCount;
     }
 }
