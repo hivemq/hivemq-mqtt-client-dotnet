@@ -67,6 +67,14 @@ jobs:
       - name: "Dotnet Cake Pack"
         run: dotnet cake --target=Pack
         shell: pwsh
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.6
+
       - name: Push to NuGet
         if: github.event_name == 'release'
         run: dotnet nuget push ./Artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+        shell: pwsh
