@@ -254,7 +254,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                         {
                             if (t.IsFaulted)
                             {
-                                Logger.Error("per-subscription MessageReceivedEventLauncher exception: " + t.Exception.Message);
+                                Logger.Error($"per-subscription MessageReceivedEventLauncher faulted ({packet.Message.Topic}): " + t.Exception.Message);
                             }
                         },
                         TaskScheduler.Default);
