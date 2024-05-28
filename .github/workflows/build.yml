@@ -70,7 +70,7 @@ jobs:
       - name: "Upload NuGet packages"
         uses: actions/upload-artifact@v4
         with:
-          name: nuget-packages
+          name: nuget-packages-${{ matrix.dotnet-version }}
           path: ./Artifacts/*.nupkg
 
   publish:
@@ -80,7 +80,17 @@ jobs:
       - name: "Download NuGet packages"
         uses: actions/download-artifact@v4
         with:
-          name: nuget-packages
+          name: nuget-packages-6.0.x
+          path: ./Artifacts
+      - name: "Download NuGet packages"
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-packages-7.0.x
+          path: ./Artifacts
+      - name: "Download NuGet packages"
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-packages-8.0.x
           path: ./Artifacts
 
       - name: Push to NuGet
