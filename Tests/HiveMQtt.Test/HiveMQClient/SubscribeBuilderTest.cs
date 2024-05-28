@@ -176,26 +176,35 @@ public class SubscribeBuilderTest
         var subscribeOptions = new SubscribeOptionsBuilder()
             .WithSubscription("tests/PerSubHandlerWithSingleLevelWildcard/+/msg", MQTT5.Types.QualityOfService.AtLeastOnceDelivery, messageReceivedHandler: (sender, args) =>
             {
-                messageCount++;
                 var pattern = @"^tests/PerSubHandlerWithSingleLevelWildcard/[0-2]/msg$";
                 var regex = new Regex(pattern);
                 Assert.Matches(regex, args.PublishMessage.Topic);
 
                 Assert.Equal("test", args.PublishMessage.PayloadAsString);
 
+                Interlocked.Increment(ref messageCount);
                 if (messageCount == 3)
                 {
                     if (args.PublishMessage.Topic == "tests/PerSubHandlerWithSingleLevelWildcard/0/msg")
                     {
-                        tcs1.SetResult(true);
+                        if (!tcs1.Task.IsCompleted)
+                        {
+                            tcs1.SetResult(true);
+                        }
                     }
                     else if (args.PublishMessage.Topic == "tests/PerSubHandlerWithSingleLevelWildcard/1/msg")
                     {
-                        tcs2.SetResult(true);
+                        if (!tcs2.Task.IsCompleted)
+                        {
+                            tcs2.SetResult(true);
+                        }
                     }
                     else if (args.PublishMessage.Topic == "tests/PerSubHandlerWithSingleLevelWildcard/2/msg")
                     {
-                        tcs3.SetResult(true);
+                        if (!tcs3.Task.IsCompleted)
+                        {
+                            tcs3.SetResult(true);
+                        }
                     }
                 }
             })
@@ -245,14 +254,14 @@ public class SubscribeBuilderTest
                 MQTT5.Types.QualityOfService.AtLeastOnceDelivery,
                 messageReceivedHandler: (sender, args) =>
             {
-                messageCount++;
                 var pattern = @"\Atests/PerSubHandlerWithMultiLevelWildcard/(/?|.+)\z";
                 var regex = new Regex(pattern);
                 Assert.Matches(regex, args.PublishMessage.Topic);
 
                 Assert.Equal("test", args.PublishMessage.PayloadAsString);
 
-                if (messageCount == 3)
+                Interlocked.Increment(ref messageCount);
+                if (messageCount == 3 && !tcs.Task.IsCompleted)
                 {
                     tcs.SetResult(true);
                 }

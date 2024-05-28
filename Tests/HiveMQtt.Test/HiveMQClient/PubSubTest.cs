@@ -69,12 +69,12 @@ public class PubSubTest
         // Set the event handler for the message received event
         client.OnMessageReceived += (sender, args) =>
         {
-            messagesReceived++;
             Assert.Equal(QualityOfService.AtLeastOnceDelivery, args.PublishMessage.QoS);
             Assert.Equal(testTopic, args.PublishMessage.Topic);
             Assert.Equal(testPayload, args.PublishMessage.PayloadAsString);
 
-            if (messagesReceived >= 5)
+            Interlocked.Increment(ref messagesReceived);
+            if (messagesReceived == 10 && taskCompletionSource.Task.IsCompleted == false)
             {
                 taskCompletionSource.SetResult(true);
             }
@@ -83,7 +83,7 @@ public class PubSubTest
         Client.Results.PublishResult result;
 
         // Publish 10 messages
-        for (var i = 0; i < 5; i++)
+        for (var i = 0; i < 10; i++)
         {
             result = await client.PublishAsync(testTopic, testPayload, QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
             Assert.IsType<Client.Results.PublishResult>(result);
@@ -115,7 +115,7 @@ public class PubSubTest
         // Set the event handler for the message received event
         client.OnMessageReceived += (sender, args) =>
         {
-            messagesReceived++;
+            Interlocked.Increment(ref messagesReceived);
             Assert.Equal(QualityOfService.ExactlyOnceDelivery, args.PublishMessage.QoS);
             Assert.Equal(testTopic, args.PublishMessage.Topic);
             Assert.Equal(testPayload, args.PublishMessage.PayloadAsString);
