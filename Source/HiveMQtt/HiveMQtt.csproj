@@ -1,9 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup Label="Build">
-    <TargetFramework>net8.0</TargetFramework>
     <AssemblyName>HiveMQtt</AssemblyName>
     <Description>The HiveMQ MQTT Client is a MQTT 5.0 compatible C# library.</Description>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <PropertyGroup>
