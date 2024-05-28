@@ -24,7 +24,7 @@ public class LWTTest
         // Set the event handler for the message received event
         listenerClient.OnMessageReceived += (sender, args) =>
         {
-            messagesReceived++;
+            Interlocked.Increment(ref messagesReceived);
             Assert.Equal(QualityOfService.AtLeastOnceDelivery, args.PublishMessage.QoS);
             Assert.Equal("last/will2", args.PublishMessage.Topic);
             Assert.Equal("last will message", args.PublishMessage.PayloadAsString);

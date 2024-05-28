@@ -204,7 +204,7 @@ public class PublishTest
 #pragma warning disable VSTHRD100 // Avoid async void methods
         async void Client2MessageHandler(object? sender, OnMessageReceivedEventArgs eventArgs)
         {
-            client2MessageCount++;
+            Interlocked.Increment(ref client2MessageCount);
             if (sender is HiveMQClient client)
             {
                 var publishResult = await client.PublishAsync("HMQ/SecondTopic", eventArgs.PublishMessage.PayloadAsString, QualityOfService.AtMostOnceDelivery).ConfigureAwait(true);
@@ -223,7 +223,7 @@ public class PublishTest
 #pragma warning disable VSTHRD100 // Avoid async void methods
         async void Client3MessageHandler(object? sender, OnMessageReceivedEventArgs eventArgs)
         {
-            client3MessageCount++;
+            Interlocked.Increment(ref client3MessageCount);
             Assert.NotNull(eventArgs.PublishMessage);
             Assert.Equal("Hello World", eventArgs.PublishMessage.PayloadAsString);
         }
@@ -295,7 +295,7 @@ public class PublishTest
 #pragma warning disable VSTHRD100 // Avoid async void methods
         async void Client2MessageHandler(object? sender, OnMessageReceivedEventArgs eventArgs)
         {
-            client2MessageCount++;
+            Interlocked.Increment(ref client2MessageCount);
             if (sender is HiveMQClient client)
             {
                 var publishResult = await client.PublishAsync("HMQ/SecondTopic", eventArgs.PublishMessage.PayloadAsString, QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
@@ -315,7 +315,7 @@ public class PublishTest
         // client 3 will receive the final message
         void Client3MessageHandler(object? sender, OnMessageReceivedEventArgs eventArgs)
         {
-            client3MessageCount++;
+            Interlocked.Increment(ref client3MessageCount);
             Assert.NotNull(eventArgs.PublishMessage);
             Assert.Equal("Hello World", eventArgs.PublishMessage.PayloadAsString);
         }
@@ -386,7 +386,7 @@ public class PublishTest
 #pragma warning disable VSTHRD100 // Avoid async void methods
         async void Client2MessageHandler(object? sender, OnMessageReceivedEventArgs eventArgs)
         {
-            client2MessageCount++;
+            Interlocked.Increment(ref client2MessageCount);
             var client = sender as HiveMQClient;
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
             var publishResult = await client.PublishAsync("HMQ/SecondTopic", eventArgs.PublishMessage.PayloadAsString, QualityOfService.ExactlyOnceDelivery).ConfigureAwait(true);
@@ -405,7 +405,7 @@ public class PublishTest
         var client3MessageCount = 0;
         void Client3MessageHandler(object? sender, OnMessageReceivedEventArgs eventArgs)
         {
-            client3MessageCount++;
+            Interlocked.Increment(ref client3MessageCount);
             Assert.NotNull(eventArgs.PublishMessage);
             Assert.Equal("Hello World", eventArgs.PublishMessage.PayloadAsString);
         }
