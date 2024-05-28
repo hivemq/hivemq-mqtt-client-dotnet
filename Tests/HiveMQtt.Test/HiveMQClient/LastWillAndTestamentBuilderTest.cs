@@ -39,7 +39,6 @@ public class LastWillAndTestamentBuilderTest
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
         Assert.True(listenerClient.IsConnected());
 
-        var messagesReceived = 0;
         var taskLWTReceived = new TaskCompletionSource<bool>();
 #pragma warning disable SA1010 // Opening square brackets should be spaced correctly
         byte[] correlationDataBytes = [1, 2, 3, 4, 5];
@@ -48,7 +47,6 @@ public class LastWillAndTestamentBuilderTest
         // Set the event handler for the message received event
         listenerClient.OnMessageReceived += (sender, args) =>
         {
-            messagesReceived++;
             Assert.Equal(QualityOfService.AtLeastOnceDelivery, args.PublishMessage.QoS);
             Assert.Equal("last/will7", args.PublishMessage.Topic);
             Assert.Equal("last will message", args.PublishMessage.PayloadAsString);

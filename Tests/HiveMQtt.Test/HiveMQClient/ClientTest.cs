@@ -109,6 +109,8 @@ public class ClientTest
         // Publish QoS 0 (At most once delivery)
         _ = await client.PublishAsync("tests/ClientTest", new string("♚ ♛ ♜ ♝ ♞ ♟ ♔ ♕ ♖ ♗ ♘ ♙")).ConfigureAwait(false);
 
+        client.OnMessageReceived += (sender, args) => { };
+
         var subResult = await client.SubscribeAsync(
                                         "tests/ClientTest",
                                         MQTT5.Types.QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
