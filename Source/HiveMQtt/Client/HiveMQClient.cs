@@ -488,7 +488,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         // Cancel all background tasks and close the socket
         this.ConnectState = ConnectState.Disconnected;
-        await this.cancellationTokenSource.CancelAsync().ConfigureAwait(false);
+        this.cancellationTokenSource.Cancel();
         this.CloseSocket();
 
         if (clean)

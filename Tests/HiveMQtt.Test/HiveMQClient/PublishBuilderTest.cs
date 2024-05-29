@@ -1,6 +1,5 @@
 namespace HiveMQtt.Test.HiveMQClient;
 
-using System.Text;
 using System.Threading.Tasks;
 using HiveMQtt.Client;
 using HiveMQtt.MQTT5.ReasonCodes;
@@ -9,6 +8,9 @@ using Xunit;
 
 public class PublishBuilderTest
 {
+
+    private readonly byte[] payload = { 0x01, 0x02, 0x03 };
+
     [Fact]
     public async Task MostBasicPublishWithQoS0Async()
     {
@@ -18,15 +20,15 @@ public class PublishBuilderTest
 
         var message = new PublishMessageBuilder()
             .WithTopic("tests/MostBasicPublishWithQoS0Async")
-            .WithPayload(new byte[] { 0x01, 0x02, 0x03 })
-            .WithQualityOfService(MQTT5.Types.QualityOfService.AtMostOnceDelivery)
+            .WithPayload(this.payload)
+            .WithQualityOfService(QualityOfService.AtMostOnceDelivery)
             .Build();
 
         var result = await client.PublishAsync(message).ConfigureAwait(false);
         Assert.IsType<Client.Results.PublishResult>(result);
         Assert.Null(result.QoS1ReasonCode);
         Assert.Null(result.QoS2ReasonCode);
-        Assert.Equal(MQTT5.Types.QualityOfService.AtMostOnceDelivery, result.Message.QoS);
+        Assert.Equal(QualityOfService.AtMostOnceDelivery, result.Message.QoS);
 
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
@@ -41,14 +43,14 @@ public class PublishBuilderTest
 
         var message = new PublishMessageBuilder()
             .WithTopic("tests/MostBasicPublishWithQoS1Async")
-            .WithPayload(new byte[] { 0x01, 0x02, 0x03 })
-            .WithQualityOfService(MQTT5.Types.QualityOfService.AtLeastOnceDelivery)
+            .WithPayload(this.payload)
+            .WithQualityOfService(QualityOfService.AtLeastOnceDelivery)
             .Build();
         var result = await client.PublishAsync(message).ConfigureAwait(false);
         Assert.IsType<Client.Results.PublishResult>(result);
         Assert.NotNull(result.QoS1ReasonCode);
         Assert.Null(result.QoS2ReasonCode);
-        Assert.Equal(MQTT5.Types.QualityOfService.AtLeastOnceDelivery, result.Message.QoS);
+        Assert.Equal(QualityOfService.AtLeastOnceDelivery, result.Message.QoS);
 
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
@@ -63,14 +65,14 @@ public class PublishBuilderTest
 
         var message = new PublishMessageBuilder()
             .WithTopic("tests/MostBasicPublishWithQoS1Async")
-            .WithPayload(new byte[] { 0x01, 0x02, 0x03 })
-            .WithQualityOfService(MQTT5.Types.QualityOfService.ExactlyOnceDelivery)
+            .WithPayload(this.payload)
+            .WithQualityOfService(QualityOfService.ExactlyOnceDelivery)
             .Build();
         var result = await client.PublishAsync(message).ConfigureAwait(false);
         Assert.IsType<Client.Results.PublishResult>(result);
         Assert.NotNull(result.QoS2ReasonCode);
         Assert.Null(result.QoS1ReasonCode);
-        Assert.Equal(MQTT5.Types.QualityOfService.ExactlyOnceDelivery, result.Message.QoS);
+        Assert.Equal(QualityOfService.ExactlyOnceDelivery, result.Message.QoS);
 
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
@@ -85,8 +87,8 @@ public class PublishBuilderTest
 
         var message = new PublishMessageBuilder()
             .WithTopic("tests/MultiPublishWithQoS0Async")
-            .WithPayload(new byte[] { 0x01, 0x02, 0x03 })
-            .WithQualityOfService(MQTT5.Types.QualityOfService.AtMostOnceDelivery)
+            .WithPayload(this.payload)
+            .WithQualityOfService(QualityOfService.AtMostOnceDelivery)
             .Build();
 
         Client.Results.PublishResult result;
@@ -97,7 +99,7 @@ public class PublishBuilderTest
             Assert.IsType<Client.Results.PublishResult>(result);
             Assert.Null(result.QoS1ReasonCode);
             Assert.Null(result.QoS2ReasonCode);
-            Assert.Equal(MQTT5.Types.QualityOfService.AtMostOnceDelivery, result.Message.QoS);
+            Assert.Equal(QualityOfService.AtMostOnceDelivery, result.Message.QoS);
         }
 
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
@@ -113,8 +115,8 @@ public class PublishBuilderTest
 
         var message = new PublishMessageBuilder()
             .WithTopic("tests/MultiPublishWithQoS1Async")
-            .WithPayload(new byte[] { 0x01, 0x02, 0x03 })
-            .WithQualityOfService(MQTT5.Types.QualityOfService.AtLeastOnceDelivery)
+            .WithPayload(this.payload)
+            .WithQualityOfService(QualityOfService.AtLeastOnceDelivery)
             .Build();
         Client.Results.PublishResult result;
 
@@ -139,8 +141,8 @@ public class PublishBuilderTest
 
         var message = new PublishMessageBuilder()
             .WithTopic("tests/MultiPublishWithQoS2Async")
-            .WithPayload(new byte[] { 0x01, 0x02, 0x03 })
-            .WithQualityOfService(MQTT5.Types.QualityOfService.ExactlyOnceDelivery)
+            .WithPayload(this.payload)
+            .WithQualityOfService(QualityOfService.ExactlyOnceDelivery)
             .Build();
         Client.Results.PublishResult result;
 
@@ -164,8 +166,8 @@ public class PublishBuilderTest
 
         var message = new PublishMessageBuilder()
             .WithTopic("tests/PublishWithOptionsAsync")
-            .WithPayload(new byte[] { 0x01, 0x02, 0x03 })
-            .WithQualityOfService(MQTT5.Types.QualityOfService.AtMostOnceDelivery)
+            .WithPayload(this.payload)
+            .WithQualityOfService(QualityOfService.AtMostOnceDelivery)
             .WithUserProperty("test", "test")
             .Build();
 
@@ -189,8 +191,8 @@ public class PublishBuilderTest
 
         var message = new PublishMessageBuilder()
             .WithTopic("tests/PublishPayloadFormatIndicatorAsync")
-            .WithPayload(new byte[] { 0x01, 0x02, 0x03 })
-            .WithQualityOfService(MQTT5.Types.QualityOfService.AtMostOnceDelivery)
+            .WithPayload(this.payload)
+            .WithQualityOfService(QualityOfService.AtMostOnceDelivery)
             .WithPayloadFormatIndicator(MQTT5PayloadFormatIndicator.UTF8Encoded)
             .Build();
 
