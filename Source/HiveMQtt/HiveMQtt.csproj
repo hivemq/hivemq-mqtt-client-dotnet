@@ -1,23 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup Label="Build">
-    <AssemblyName>HiveMQtt</AssemblyName>
-    <Description>The HiveMQ MQTT Client is a MQTT 5.0 compatible C# library.</Description>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
+    <TargetFrameworks>net6.0;net7.0;net8.0;</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-  </PropertyGroup>
 
-  <PropertyGroup>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
     <MinVerTagPrefix>v</MinVerTagPrefix>
   </PropertyGroup>
 
   <PropertyGroup Label="Package">
     <Product>HiveMQtt</Product>
     <Description>The HiveMQ MQTT Client is a MQTT 5.0 compatible C# library.</Description>
-    <PackageTags>MQTT;HIVEMQ;IOT</PackageTags>
+    <PackageTags>MQTT;HIVEMQ;IOT;MQTTClient;MQTT5;QoS;MQTTTopics;IndustrialIoT;ConnectedDevices;EdgeComputing;IoTDevices;Queue;Message;EmbeddedSystems;M2M;SensorNetwork</PackageTags>
+    <Copyright>Copyright (c) HiveMQ GmbH</Copyright>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
