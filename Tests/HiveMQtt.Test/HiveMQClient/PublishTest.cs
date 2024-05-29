@@ -221,7 +221,7 @@ public class PublishTest
 
         // client 3 will receive the final message
 #pragma warning disable VSTHRD100 // Avoid async void methods
-        async void Client3MessageHandler(object? sender, OnMessageReceivedEventArgs eventArgs)
+        void Client3MessageHandler(object? sender, OnMessageReceivedEventArgs eventArgs)
         {
             Interlocked.Increment(ref client3MessageCount);
             Assert.NotNull(eventArgs.PublishMessage);

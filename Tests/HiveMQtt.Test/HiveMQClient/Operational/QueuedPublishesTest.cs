@@ -10,7 +10,6 @@ public class QueuedPublishesTest
     [Fact]
     public async Task Queued_Messages_Chain_Async()
     {
-
         var batchSize = 1000;
 
         var tasks = new[]
@@ -78,7 +77,7 @@ public class QueuedPublishesTest
             // Republish the Message to the second topic
             var payload = args.PublishMessage.Payload;
             var publishResult = await subscribeClient.PublishAsync(secondTopic, payload, QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
-            Assert.NotNull(publishResult.QoS2ReasonCode);
+            Assert.NotNull(publishResult?.QoS2ReasonCode);
 
             // Atomically increment the relayCount
             Interlocked.Increment(ref relayCount);

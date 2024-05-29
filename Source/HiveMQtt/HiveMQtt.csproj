@@ -3,6 +3,7 @@
   <PropertyGroup Label="Build">
     <TargetFrameworks>net6.0;net7.0;net8.0;</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
