@@ -1,7 +1,7 @@
 ![](https://i.imgur.com/YmafvGk.png)
 ![](https://i.imgur.com/Tnl78V6.png)
 
-# The Spectacular (BETA) C# MQTT Client for .NET
+# The Spectacular C# MQTT Client for .NET
 
 [![NuGet Version](https://img.shields.io/nuget/v/HiveMQtt?style=for-the-badge)](https://www.nuget.org/packages/HiveMQtt)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/hivemq/hivemq-mqtt-client-dotnet?style=for-the-badge)](https://github.com/hivemq/hivemq-mqtt-client-dotnet/releases)
@@ -17,7 +17,7 @@
 
 * **Easy-to-Install**: Available as a [Nuget package](https://www.nuget.org/packages/HiveMQtt).
 * **Compliant**: Fully compliant with the [MQTT 5.0 specification](https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.html).
-* **Works with Any MQTT 5.0 Broker**: Built by HiveMQ _but not only for_ HiveMQ.
+* **Works with Any MQTT 5.0 Broker**: Built by HiveMQ but not only for HiveMQ.
 * **Opensource**: No blackbox code.  Only trusted, tested and reviewed opensource code.
 * **Easy to Use**: Smart defaults, excellent interfaces and intelligent automation makes implementing a breeze.
 * **Fast**: Optimized & benchmarked.  See the benchmark results [here](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Benchmarks/ClientBenchmarkApp/README.md).
