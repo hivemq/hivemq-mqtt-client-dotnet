@@ -39,6 +39,20 @@ public class PublishPacket : ControlPacket
     {
         this.PacketIdentifier = (ushort)packetIdentifier;
         this.Message = message;
+
+        // Setup the QoS 1 TaskCompletionSource so users can simply call
+        //
+        //   await PublishPacket.OnPublishQoS1CompleteTCS
+        //
+        // to wait for the QoS 1 publish to complete.
+        this.OnPublishQoS1Complete += (sender, args) => this.OnPublishQoS1CompleteTCS.SetResult(args.PubAckPacket);
+
+        // Setup the QoS 2 TaskCompletionSource so users can simply call
+        //
+        //   await PublishPacket.OnPublishQoS2CompleteTCS
+        //
+        // to wait for the QoS 2 publish to complete.
+        this.OnPublishQoS2Complete += (sender, args) => this.OnPublishQoS2CompleteTCS.SetResult(args.PacketList);
     }
 
     /// <summary>
@@ -66,10 +80,29 @@ public class PublishPacket : ControlPacket
 
     internal virtual void OnPublishQoS1CompleteEventLauncher(PubAckPacket packet)
     {
-        var eventArgs = new OnPublishQoS1CompleteEventArgs(packet);
-        Logger.Trace("OnPublishQoS1CompleteEventLauncher");
-        this.OnPublishQoS1Complete?.Invoke(this, eventArgs);
+        if (this.OnPublishQoS1Complete != null && this.OnPublishQoS1Complete.GetInvocationList().Length > 0)
+        {
+            var eventArgs = new OnPublishQoS1CompleteEventArgs(packet);
+            Logger.Trace("OnPublishQoS1CompleteEventLauncher");
+            _ = Task.Run(() => this.OnPublishQoS1Complete?.Invoke(this, eventArgs)).ContinueWith(
+                t =>
+                {
+                    if (t.IsFaulted)
+                    {
+                        Logger.Error("OnPublishQoS1CompleteEventLauncher exception: " + t.Exception.Message);
+                    }
+                },
+                TaskScheduler.Default);
+        }
     }
+
+    /// <summary>
+    /// Gets the awaitable TaskCompletionSource for the QoS 1 publish transaction.
+    /// <para>
+    /// Valid for outgoing Publish messages QoS 1.  A TaskCompletionSource that is set when the QoS 1 publish transaction is complete.
+    /// </para>
+    /// </summary>
+    public TaskCompletionSource<PubAckPacket> OnPublishQoS1CompleteTCS { get; } = new();
 
     /// <summary>
     /// Valid for outgoing Publish messages QoS 2.  An event that is fired after the the QoS 2 PubComp is received.
@@ -78,10 +111,29 @@ public class PublishPacket : ControlPacket
 
     internal virtual void OnPublishQoS2CompleteEventLauncher(List<ControlPacket> packetList)
     {
-        var eventArgs = new OnPublishQoS2CompleteEventArgs(packetList);
-        Logger.Trace("OnPublishQoS2CompleteEventLauncher");
-        this.OnPublishQoS2Complete?.Invoke(this, eventArgs);
+        if (this.OnPublishQoS2Complete != null && this.OnPublishQoS2Complete.GetInvocationList().Length > 0)
+        {
+            var eventArgs = new OnPublishQoS2CompleteEventArgs(packetList);
+            Logger.Trace("OnPublishQoS2CompleteEventLauncher");
+            _ = Task.Run(() => this.OnPublishQoS2Complete?.Invoke(this, eventArgs)).ContinueWith(
+                t =>
+                {
+                    if (t.IsFaulted)
+                    {
+                        Logger.Error("OnPublishQoS2CompleteEventLauncher exception: " + t.Exception.Message);
+                    }
+                },
+                TaskScheduler.Default);
+        }
     }
+
+    /// <summary>
+    /// Gets the awaitable TaskCompletionSource for the QoS 2 publish transaction.
+    /// <para>
+    /// Valid for outgoing Publish messages QoS 2.  A TaskCompletionSource that is set when the QoS 2 publish transaction is complete.
+    /// </para>
+    /// </summary>
+    public TaskCompletionSource<List<ControlPacket>> OnPublishQoS2CompleteTCS { get; } = new();
 
     /// <summary>
     /// Decode the received MQTT Publish packet.
