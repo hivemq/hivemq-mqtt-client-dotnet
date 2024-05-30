@@ -30,6 +30,7 @@
 * **Observable**: Configure up to [TRACE level logging](https://hivemq.github.io/hivemq-mqtt-client-dotnet/docs/how-to/debug) for package internals.
 * **Secure Client Identification**: Full support for [X.509 client certificates](https://hivemq.github.io/hivemq-mqtt-client-dotnet/docs/how-to/client-certificates) and TLS connections.
 * **Globally Compatible**: Built to be a fully compliant MQTT 5.0 client compatible with all reputable MQTT brokers.
+* **Multi-Targeted**: Supports .NET 6.0, 7.0 & 8.0
 
 _Do you have a success story with this client?  [Let us know]().  We'd love to feature your story in a blog post or video and you'll get some sweet HiveMQ swag (and publicity) along the way._
 
