@@ -276,9 +276,10 @@ public class HiveMQClientOptions
         {
             this.GenerateClientID();
         }
-        else if (this.ClientId.Length > 23)
+
+        if (this.ClientId.Length > 23)
         {
-            // FIXME: Warn on exceeded length; can use but it may not work...
+            Logger.Info($"Client ID {this.ClientId} is longer than 23 characters.  This may cause issues with some brokers.");
         }
     }
 
