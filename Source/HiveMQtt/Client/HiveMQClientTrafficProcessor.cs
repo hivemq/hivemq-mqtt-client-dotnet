@@ -49,11 +49,18 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     private async Task RunTaskHealthCheckAsync(Task? task, string taskName)
     {
-        if (task is not null && task.IsFaulted)
+        if (task is null)
         {
-            Logger.Error($"{this.Options.ClientId}-(CM)- {taskName} Faulted: {task.Exception}");
-            Logger.Error($"{this.Options.ClientId}-(CM)- {taskName} died.  Disconnecting.: {task.Exception}");
-            _ = await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
+            Logger.Info($"{this.Options.ClientId}-(CM)- {taskName} is not running.");
+        }
+        else
+        {
+            if (task.IsFaulted)
+            {
+                Logger.Error($"{this.Options.ClientId}-(CM)- {taskName} Faulted: {task.Exception}");
+                Logger.Error($"{this.Options.ClientId}-(CM)- {taskName} died.  Disconnecting.");
+                _ = await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
+            }
         }
     }
 
