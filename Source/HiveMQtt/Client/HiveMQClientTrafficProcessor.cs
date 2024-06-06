@@ -20,6 +20,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO.Pipelines;
 using System.Threading.Tasks;
+using HiveMQtt.Client.Events;
 using HiveMQtt.Client.Exceptions;
 using HiveMQtt.Client.Internal;
 using HiveMQtt.Client.Options;
@@ -216,7 +217,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     continue;
                 }
 
-                // Logger.Trace($"{this.Options.ClientId}-(W)- {this.SendQueue.Count} packets waiting to be sent.");
                 var packet = await this.SendQueue.DequeueAsync(cancellationToken).ConfigureAwait(false);
                 FlushResult writeResult = default;
 
@@ -246,29 +246,21 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     case PublishPacket publishPacket:
                         throw new HiveMQttClientException("PublishPacket should be sent via ConnectionPublishWriterAsync.");
                     case PubAckPacket pubAckPacket:
-                        // This is in response to a received Publish packet.  Communication chain management
-                        // was done in the receiver code.  Just send the response.
                         Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PubAckPacket id={pubAckPacket.PacketIdentifier} reason={pubAckPacket.ReasonCode}");
                         writeResult = await this.WriteAsync(pubAckPacket.Encode()).ConfigureAwait(false);
                         this.OnPubAckSentEventLauncher(pubAckPacket);
                         break;
                     case PubRecPacket pubRecPacket:
-                        // This is in response to a received Publish packet.  Communication chain management
-                        // was done in the receiver code.  Just send the response.
                         Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PubRecPacket id={pubRecPacket.PacketIdentifier} reason={pubRecPacket.ReasonCode}");
                         writeResult = await this.WriteAsync(pubRecPacket.Encode()).ConfigureAwait(false);
                         this.OnPubRecSentEventLauncher(pubRecPacket);
                         break;
                     case PubRelPacket pubRelPacket:
-                        // This is in response to a received PubRec packet.  Communication chain management
-                        // was done in the receiver code.  Just send the response.
                         Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PubRelPacket id={pubRelPacket.PacketIdentifier} reason={pubRelPacket.ReasonCode}");
                         writeResult = await this.WriteAsync(pubRelPacket.Encode()).ConfigureAwait(false);
                         this.OnPubRelSentEventLauncher(pubRelPacket);
                         break;
                     case PubCompPacket pubCompPacket:
-                        // This is in response to a received PubRel packet.  Communication chain management
-                        // was done in the receiver code.  Just send the response.
                         Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PubCompPacket id={pubCompPacket.PacketIdentifier} reason={pubCompPacket.ReasonCode}");
                         writeResult = await this.WriteAsync(pubCompPacket.Encode()).ConfigureAwait(false);
                         this.OnPubCompSentEventLauncher(pubCompPacket);
@@ -492,23 +484,24 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received Publish id={publishPacket.PacketIdentifier}");
         this.OnPublishReceivedEventLauncher(publishPacket);
 
-        if (publishPacket.Message.QoS is QualityOfService.AtLeastOnceDelivery)
+        if (publishPacket.Message.QoS is QualityOfService.AtMostOnceDelivery)
         {
-            // We've received a QoS 1 publish.  Send a PubAck.
+            this.OnMessageReceivedEventLauncher(publishPacket);
+        }
+        else if (publishPacket.Message.QoS is QualityOfService.AtLeastOnceDelivery)
+        {
+            // We've received a QoS 1 publish.  Send a PubAck and notify subscribers.
             var pubAckResponse = new PubAckPacket(publishPacket.PacketIdentifier, PubAckReasonCode.Success);
-
-            // FIXME We should wait until puback is sent before launching event
-            // FIXME Check DUP flag setting
             this.SendQueue.Enqueue(pubAckResponse);
-            publishPacket.OnPublishQoS1CompleteEventLauncher(pubAckResponse);
+            this.OnMessageReceivedEventLauncher(publishPacket);
         }
         else if (publishPacket.Message.QoS is QualityOfService.ExactlyOnceDelivery)
         {
             // We've received a QoS 2 publish.  Send a PubRec and add to QoS2 transaction register.
+            // When we get the PubRel, we'll notify subscribers and send the PubComp in HandleIncomingPubRelPacket
             var pubRecResponse = new PubRecPacket(publishPacket.PacketIdentifier, PubRecReasonCode.Success);
             var publishQoS2Chain = new List<ControlPacket> { publishPacket, pubRecResponse };
 
-            // FIXME:  Wait for QoS 2 transaction to complete before calling OnMessageReceivedEventLauncher???
             if (!this.TransactionQueue.TryAdd(publishPacket.PacketIdentifier, publishQoS2Chain))
             {
                 Logger.Warn($"Duplicate packet ID detected {publishPacket.PacketIdentifier} while queueing to transaction queue for an incoming QoS {publishPacket.Message.QoS} publish .");
@@ -517,12 +510,10 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
             this.SendQueue.Enqueue(pubRecResponse);
         }
-
-        this.OnMessageReceivedEventLauncher(publishPacket);
     }
 
     /// <summary>
-    /// Handle an incoming ConnAck packet.
+    /// Handle an incoming PubAck packet.
     /// </summary>
     /// <param name="pubAckPacket">The received PubAck packet.</param>
     /// <exception cref="HiveMQttClientException">Raised if the packet identifier is unknown.</exception>
@@ -536,6 +527,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         {
             var publishPacket = (PublishPacket)publishQoS1Chain.First();
 
+            // We sent a QoS1 publish and received a PubAck.  The transaction is complete.
             // Trigger the packet specific event
             publishPacket.OnPublishQoS1CompleteEventLauncher(pubAckPacket);
         }
@@ -612,6 +604,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
                 // Trigger the packet specific event
                 originalPublishPacket.OnPublishQoS2CompleteEventLauncher(publishQoS2Chain);
+                this.OnMessageReceivedEventLauncher(originalPublishPacket);
             }
             else
             {

@@ -181,9 +181,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             this.OnDisconnectSent -= eventHandler;
         }
 
-        await this.HandleDisconnectionAsync().ConfigureAwait(false);
-
-        return true;
+        return await this.HandleDisconnectionAsync().ConfigureAwait(false);
     }
 
     /// <inheritdoc />
