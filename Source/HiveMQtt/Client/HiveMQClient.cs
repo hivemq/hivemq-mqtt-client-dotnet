@@ -167,7 +167,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         try
         {
-            disconnectPacket = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(60)).ConfigureAwait(false);
+            disconnectPacket = await taskCompletionSource.Task
+                                                .WaitAsync( TimeSpan.FromMilliseconds(this.Options.ResponseTimeoutInMs))
+                                                .ConfigureAwait(false);
         }
         catch (TimeoutException)
         {
@@ -225,7 +227,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             try
             {
                 // Wait on the QoS 2 handshake
-                packetList = await publishPacket.OnPublishQoS2CompleteTCS.Task.WaitAsync(TimeSpan.FromSeconds(60)).ConfigureAwait(false);
+                packetList = await publishPacket.OnPublishQoS2CompleteTCS.Task
+                                                        .WaitAsync(TimeSpan.FromMilliseconds(this.Options.ResponseTimeoutInMs))
+                                                        .ConfigureAwait(false);
             }
             catch (TimeoutException)
             {
@@ -242,6 +246,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     QoS2ReasonCode = null,
                 };
+
+                // FIXME: throw instead
                 return publishResult;
             }
 
@@ -331,7 +337,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         SubscribeResult subscribeResult;
         try
         {
-            subAck = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(60)).ConfigureAwait(false);
+            subAck = await taskCompletionSource.Task
+                                .WaitAsync(TimeSpan.FromMilliseconds(this.Options.ResponseTimeoutInMs))
+                                .ConfigureAwait(false);
         }
         catch (TimeoutException)
         {
@@ -441,7 +449,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         UnsubscribeResult unsubscribeResult;
         try
         {
-            unsubAck = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(60)).ConfigureAwait(false);
+            unsubAck = await taskCompletionSource.Task
+                                            .WaitAsync(TimeSpan.FromMilliseconds(this.Options.ResponseTimeoutInMs))
+                                            .ConfigureAwait(false);
 
             // FIXME: Validate that the packet identifier matches
         }

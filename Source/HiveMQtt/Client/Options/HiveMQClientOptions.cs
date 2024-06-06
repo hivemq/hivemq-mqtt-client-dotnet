@@ -45,6 +45,7 @@ public class HiveMQClientOptions
         this.AllowInvalidBrokerCertificates = false;
         this.ClientCertificates = new X509CertificateCollection();
         this.ConnectTimeoutInMs = 5000;
+        this.ResponseTimeoutInMs = 5000;
     }
 
     // Client Identifier to be used in the Client.  Will be set automatically if not specified.
@@ -177,6 +178,12 @@ public class HiveMQClientOptions
     /// Gets or sets the time in milliseconds to wait for a connection to be established.
     /// </summary>
     public int ConnectTimeoutInMs { get; set; }
+
+    /// <summary>
+    /// Gets or sets the time in milliseconds to wait for a response in a transactional operation.
+    /// This could be a Publish, Subscribe, Unsubscribe, or Disconnect operation.
+    /// </summary>
+    public int ResponseTimeoutInMs { get; set; }
 
     /// <summary>
     /// Generate a semi-random client identifier to be used in <c>Client</c> connections.
