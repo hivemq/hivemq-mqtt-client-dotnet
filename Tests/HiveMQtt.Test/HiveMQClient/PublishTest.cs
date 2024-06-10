@@ -197,7 +197,7 @@ public class PublishTest
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
         // client 2 Subscribe to the topic
-        var subscribeResult = await client2.SubscribeAsync("HMQ/FirstTopic", QualityOfService.AtMostOnceDelivery).ConfigureAwait(false);
+        var subscribeResult = await client2.SubscribeAsync("HMQ/3NodeQoS0FirstTopic", QualityOfService.AtMostOnceDelivery).ConfigureAwait(false);
         var client2MessageCount = 0;
 
         // client 2 will receive the message and republish it to another topic
@@ -207,7 +207,7 @@ public class PublishTest
             Interlocked.Increment(ref client2MessageCount);
             if (sender is HiveMQClient client)
             {
-                var publishResult = await client.PublishAsync("HMQ/SecondTopic", eventArgs.PublishMessage.PayloadAsString, QualityOfService.AtMostOnceDelivery).ConfigureAwait(true);
+                var publishResult = await client.PublishAsync("HMQ/3NodeQoS0SecondTopic", eventArgs.PublishMessage.PayloadAsString, QualityOfService.AtMostOnceDelivery).ConfigureAwait(true);
                 Assert.NotNull(publishResult);
             }
         }
@@ -216,7 +216,7 @@ public class PublishTest
         client2.OnMessageReceived += Client2MessageHandler;
 
         // client 3 Subscribe to the secondary topic
-        subscribeResult = await client3.SubscribeAsync("HMQ/SecondTopic", QualityOfService.AtMostOnceDelivery).ConfigureAwait(false);
+        subscribeResult = await client3.SubscribeAsync("HMQ/3NodeQoS0SecondTopic", QualityOfService.AtMostOnceDelivery).ConfigureAwait(false);
         var client3MessageCount = 0;
 
         // client 3 will receive the final message
@@ -234,7 +234,7 @@ public class PublishTest
         // client 1 Publish 100 messages
         for (var i = 1; i <= 10; i++)
         {
-            var publishResult = await client1.PublishAsync("HMQ/FirstTopic", "Hello World", QualityOfService.AtMostOnceDelivery).ConfigureAwait(false);
+            var publishResult = await client1.PublishAsync("HMQ/3NodeQoS0FirstTopic", "Hello World", QualityOfService.AtMostOnceDelivery).ConfigureAwait(false);
             Assert.NotNull(publishResult);
         }
 
@@ -255,9 +255,13 @@ public class PublishTest
         Assert.Equal(0, client2.SendQueue.Count);
         Assert.Equal(0, client3.SendQueue.Count);
 
-        Assert.Empty(client1.TransactionQueue);
-        Assert.Empty(client2.TransactionQueue);
-        Assert.Empty(client3.TransactionQueue);
+        Assert.Empty(client1.OPubTransactionQueue);
+        Assert.Empty(client2.OPubTransactionQueue);
+        Assert.Empty(client3.OPubTransactionQueue);
+
+        Assert.Empty(client1.IPubTransactionQueue);
+        Assert.Empty(client2.IPubTransactionQueue);
+        Assert.Empty(client3.IPubTransactionQueue);
 
         // All done, disconnect all clients
         var disconnectResult = await client1.DisconnectAsync().ConfigureAwait(false);
@@ -288,7 +292,7 @@ public class PublishTest
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
         // client 2 Subscribe to the topic
-        var subscribeResult = await client2.SubscribeAsync("HMQ/FirstTopic", QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
+        var subscribeResult = await client2.SubscribeAsync("HMQ/3NodeQoS1FirstTopic", QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
         var client2MessageCount = 0;
 
         // client 2 will receive the message and republish it to another topic
@@ -298,7 +302,7 @@ public class PublishTest
             Interlocked.Increment(ref client2MessageCount);
             if (sender is HiveMQClient client)
             {
-                var publishResult = await client.PublishAsync("HMQ/SecondTopic", eventArgs.PublishMessage.PayloadAsString, QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
+                var publishResult = await client.PublishAsync("HMQ/3NodeQoS1SecondTopic", eventArgs.PublishMessage.PayloadAsString, QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
                 Assert.NotNull(publishResult);
                 Assert.Equal(publishResult.QoS1ReasonCode, PubAckReasonCode.Success);
             }
@@ -308,7 +312,7 @@ public class PublishTest
         client2.OnMessageReceived += Client2MessageHandler;
 
         // client 3 Subscribe to the secondary topic
-        subscribeResult = await client3.SubscribeAsync("HMQ/SecondTopic", QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
+        subscribeResult = await client3.SubscribeAsync("HMQ/3NodeQoS1SecondTopic", QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
 
         var client3MessageCount = 0;
 
@@ -325,7 +329,7 @@ public class PublishTest
         // client 1 Publish 10 messages
         for (var i = 1; i <= 10; i++)
         {
-            var publishResult = await client1.PublishAsync("HMQ/FirstTopic", "Hello World", QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
+            var publishResult = await client1.PublishAsync("HMQ/3NodeQoS1FirstTopic", "Hello World", QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
             Assert.NotNull(publishResult);
         }
 
@@ -346,9 +350,13 @@ public class PublishTest
         Assert.Equal(0, client2.SendQueue.Count);
         Assert.Equal(0, client3.SendQueue.Count);
 
-        Assert.Empty(client1.TransactionQueue);
-        Assert.Empty(client2.TransactionQueue);
-        Assert.Empty(client3.TransactionQueue);
+        Assert.Empty(client1.OPubTransactionQueue);
+        Assert.Empty(client2.OPubTransactionQueue);
+        Assert.Empty(client3.OPubTransactionQueue);
+
+        Assert.Empty(client1.IPubTransactionQueue);
+        Assert.Empty(client2.IPubTransactionQueue);
+        Assert.Empty(client3.IPubTransactionQueue);
 
         // All done, disconnect all clients
         var disconnectResult = await client1.DisconnectAsync().ConfigureAwait(false);
@@ -379,7 +387,7 @@ public class PublishTest
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
         // client 2 Subscribe to the topic
-        var subscribeResult = await client2.SubscribeAsync("HMQ/FirstTopic", QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
+        var subscribeResult = await client2.SubscribeAsync("HMQ/3NodeQoS2FirstTopic", QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
         var client2MessageCount = 0;
 
         // client 2 will receive the message and republish it to another topic
@@ -389,7 +397,7 @@ public class PublishTest
             Interlocked.Increment(ref client2MessageCount);
             var client = sender as HiveMQClient;
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
-            var publishResult = await client.PublishAsync("HMQ/SecondTopic", eventArgs.PublishMessage.PayloadAsString, QualityOfService.ExactlyOnceDelivery).ConfigureAwait(true);
+            var publishResult = await client.PublishAsync("HMQ/3NodeQoS2SecondTopic", eventArgs.PublishMessage.PayloadAsString, QualityOfService.ExactlyOnceDelivery).ConfigureAwait(true);
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
             Assert.NotNull(publishResult);
             Assert.Equal(publishResult.QoS2ReasonCode, PubRecReasonCode.Success);
@@ -399,7 +407,7 @@ public class PublishTest
         client2.OnMessageReceived += Client2MessageHandler;
 
         // client 3 Subscribe to the secondary topic
-        subscribeResult = await client3.SubscribeAsync("HMQ/SecondTopic", QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
+        subscribeResult = await client3.SubscribeAsync("HMQ/3NodeQoS2SecondTopic", QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
 
         // client 3 will receive the final message
         var client3MessageCount = 0;
@@ -415,7 +423,7 @@ public class PublishTest
         // client 1 Publish 10 messages
         for (var i = 1; i <= 10; i++)
         {
-            var publishResult = await client1.PublishAsync("HMQ/FirstTopic", "Hello World", QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
+            var publishResult = await client1.PublishAsync("HMQ/3NodeQoS2FirstTopic", "Hello World", QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
             Assert.NotNull(publishResult);
         }
 
@@ -436,9 +444,13 @@ public class PublishTest
         Assert.Equal(0, client2.SendQueue.Count);
         Assert.Equal(0, client3.SendQueue.Count);
 
-        Assert.Empty(client1.TransactionQueue);
-        Assert.Empty(client2.TransactionQueue);
-        Assert.Empty(client3.TransactionQueue);
+        Assert.Empty(client1.OPubTransactionQueue);
+        Assert.Empty(client2.OPubTransactionQueue);
+        Assert.Empty(client3.OPubTransactionQueue);
+
+        Assert.Empty(client1.IPubTransactionQueue);
+        Assert.Empty(client2.IPubTransactionQueue);
+        Assert.Empty(client3.IPubTransactionQueue);
 
         // All done, disconnect all clients
         var disconnectResult = await client1.DisconnectAsync().ConfigureAwait(false);

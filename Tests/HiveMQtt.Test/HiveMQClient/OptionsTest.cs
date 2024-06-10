@@ -48,7 +48,7 @@ public class OptionsTest
             ClientReceiveMaximum = -300,
         };
         options.Validate();
-        Assert.Equal(0, options.ClientReceiveMaximum);
+        Assert.Equal(65535, options.ClientReceiveMaximum);
 
         options.ClientReceiveMaximum = int.MaxValue;
         options.Validate();

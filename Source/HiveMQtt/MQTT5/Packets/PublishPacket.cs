@@ -89,7 +89,7 @@ public class PublishPacket : ControlPacket
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("OnPublishQoS1CompleteEventLauncher exception: " + t.Exception.Message);
+                        Logger.Error("OnPublishQoS1CompleteEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
@@ -120,7 +120,7 @@ public class PublishPacket : ControlPacket
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("OnPublishQoS2CompleteEventLauncher exception: " + t.Exception.Message);
+                        Logger.Error("OnPublishQoS2CompleteEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
