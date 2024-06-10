@@ -600,6 +600,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 Logger.Error($"QoS2: Couldn't update PubRec --> PubRel QoS2 Chain for packet identifier {pubRecPacket.PacketIdentifier}.");
                 this.OPubTransactionQueue.Remove(pubRecPacket.PacketIdentifier, out _);
                 this.BrokerReceiveSemaphore.Release();
+
                 // FIXME: Send an appropriate disconnect packet
                 await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
             }
