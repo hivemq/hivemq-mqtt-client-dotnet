@@ -255,9 +255,13 @@ public class PublishTest
         Assert.Equal(0, client2.SendQueue.Count);
         Assert.Equal(0, client3.SendQueue.Count);
 
-        Assert.Empty(client1.TransactionQueue);
-        Assert.Empty(client2.TransactionQueue);
-        Assert.Empty(client3.TransactionQueue);
+        Assert.Empty(client1.OPubTransactionQueue);
+        Assert.Empty(client2.OPubTransactionQueue);
+        Assert.Empty(client3.OPubTransactionQueue);
+
+        Assert.Empty(client1.IPubTransactionQueue);
+        Assert.Empty(client2.IPubTransactionQueue);
+        Assert.Empty(client3.IPubTransactionQueue);
 
         // All done, disconnect all clients
         var disconnectResult = await client1.DisconnectAsync().ConfigureAwait(false);
@@ -346,9 +350,13 @@ public class PublishTest
         Assert.Equal(0, client2.SendQueue.Count);
         Assert.Equal(0, client3.SendQueue.Count);
 
-        Assert.Empty(client1.TransactionQueue);
-        Assert.Empty(client2.TransactionQueue);
-        Assert.Empty(client3.TransactionQueue);
+        Assert.Empty(client1.OPubTransactionQueue);
+        Assert.Empty(client2.OPubTransactionQueue);
+        Assert.Empty(client3.OPubTransactionQueue);
+
+        Assert.Empty(client1.IPubTransactionQueue);
+        Assert.Empty(client2.IPubTransactionQueue);
+        Assert.Empty(client3.IPubTransactionQueue);
 
         // All done, disconnect all clients
         var disconnectResult = await client1.DisconnectAsync().ConfigureAwait(false);
@@ -436,9 +444,13 @@ public class PublishTest
         Assert.Equal(0, client2.SendQueue.Count);
         Assert.Equal(0, client3.SendQueue.Count);
 
-        Assert.Empty(client1.TransactionQueue);
-        Assert.Empty(client2.TransactionQueue);
-        Assert.Empty(client3.TransactionQueue);
+        Assert.Empty(client1.OPubTransactionQueue);
+        Assert.Empty(client2.OPubTransactionQueue);
+        Assert.Empty(client3.OPubTransactionQueue);
+
+        Assert.Empty(client1.IPubTransactionQueue);
+        Assert.Empty(client2.IPubTransactionQueue);
+        Assert.Empty(client3.IPubTransactionQueue);
 
         // All done, disconnect all clients
         var disconnectResult = await client1.DisconnectAsync().ConfigureAwait(false);

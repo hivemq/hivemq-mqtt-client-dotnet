@@ -44,6 +44,7 @@ public class HiveMQClientOptions
         this.UseTLS = false;
         this.AllowInvalidBrokerCertificates = false;
         this.ClientCertificates = new X509CertificateCollection();
+        this.ClientReceiveMaximum = 10;
         this.ConnectTimeoutInMs = 5000;
         this.ResponseTimeoutInMs = 5000;
     }
@@ -106,7 +107,7 @@ public class HiveMQClientOptions
     /// value is absent then its value defaults to 65,535.
     /// </para>
     /// </summary>
-    public int? ClientReceiveMaximum { get; set; }
+    public int ClientReceiveMaximum { get; set; }
 
     /// <summary>
     /// Gets or sets a value that indicates the maximum packet size that the MQTT client is willing
@@ -229,11 +230,6 @@ public class HiveMQClientOptions
             this.UseTLS = true;
         }
 
-        if (this.ClientReceiveMaximum != null)
-        {
-            this.ClientReceiveMaximum = RangeValidateTwoByteInteger((int)this.ClientReceiveMaximum);
-        }
-
         if (this.ClientMaximumPacketSize != null)
         {
             this.ClientMaximumPacketSize = RangeValidateFourByteInteger((long)this.ClientMaximumPacketSize);
@@ -242,6 +238,12 @@ public class HiveMQClientOptions
             {
                 throw new HiveMQttClientException("Client Maximum Packet Size must be greater than 0.");
             }
+        }
+
+        this.ClientReceiveMaximum = RangeValidateTwoByteInteger(this.ClientReceiveMaximum);
+        if (this.ClientReceiveMaximum == 0)
+        {
+            this.ClientReceiveMaximum = 65535;
         }
 
         if (this.ClientTopicAliasMaximum != null)

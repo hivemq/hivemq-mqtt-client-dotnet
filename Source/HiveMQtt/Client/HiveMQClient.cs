@@ -57,6 +57,10 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         this.Options = options;
         this.cancellationTokenSource = new CancellationTokenSource();
+        this.ClientReceiveSemaphore = new SemaphoreSlim(this.Options.ClientReceiveMaximum);
+
+        // Set protocol default until ConnAck is received
+        this.BrokerReceiveSemaphore = new SemaphoreSlim(65535);
     }
 
     /// <inheritdoc />
@@ -210,8 +214,25 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             Logger.Trace($"Queuing packet for send: {publishPacket.GetType().Name} id={publishPacket.PacketIdentifier}");
             this.OutgoingPublishQueue.Enqueue(publishPacket);
 
-            // Wait on the QoS 1 handshake
-            var pubAckPacket = await publishPacket.OnPublishQoS1CompleteTCS.Task.WaitAsync(TimeSpan.FromSeconds(60)).ConfigureAwait(false);
+            PubAckPacket pubAckPacket;
+            try
+            {
+                // Wait on the QoS 1 handshake
+                pubAckPacket = await publishPacket.OnPublishQoS1CompleteTCS.Task
+                                                                .WaitAsync(TimeSpan.FromMilliseconds(this.Options.ResponseTimeoutInMs))
+                                                                .ConfigureAwait(false);
+            }
+            catch (TimeoutException)
+            {
+                Logger.Error("PublishAsync: QoS 1 timeout.  No PUBACK response received in time.");
+                var disconnectOptions = new DisconnectOptions
+                {
+                    ReasonCode = DisconnectReasonCode.UnspecifiedError,
+                };
+                await this.DisconnectAsync(disconnectOptions).ConfigureAwait(false);
+                throw;
+            }
+
             return new PublishResult(publishPacket.Message, pubAckPacket);
         }
         else if (message.QoS == QualityOfService.ExactlyOnceDelivery)
@@ -233,20 +254,12 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             {
                 Logger.Error("PublishAsync: QoS 2 timeout.  No response received in time.");
 
-                // Remove the transaction chain
-                if (this.TransactionQueue.Remove(publishPacket.PacketIdentifier, out var publishQoS2Chain))
+                var disconnectOptions = new DisconnectOptions
                 {
-                    Logger.Debug($"PublishAsync: QoS 2 timeout.  Removing transaction chain for packet identifier {publishPacket.PacketIdentifier}.");
-                }
-
-                // Prepare PublishResult
-                publishResult = new PublishResult(publishPacket.Message)
-                {
-                    QoS2ReasonCode = null,
+                    ReasonCode = DisconnectReasonCode.UnspecifiedError,
                 };
-
-                // FIXME: throw instead
-                return publishResult;
+                await this.DisconnectAsync(disconnectOptions).ConfigureAwait(false);
+                throw;
             }
 
             foreach (var packet in packetList)
