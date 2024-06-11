@@ -292,7 +292,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                         case PubCompPacket pubCompPacket:
                             Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PubCompPacket id={pubCompPacket.PacketIdentifier} reason={pubCompPacket.ReasonCode}");
                             writeResult = await this.WriteAsync(pubCompPacket.Encode()).ConfigureAwait(false);
-                            this.OnPubCompSentEventLauncher(pubCompPacket);
+                            this.HandleSentPubCompPacket(pubCompPacket);
                             break;
                         case PingReqPacket pingReqPacket:
                             Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PingReqPacket id={pingReqPacket.PacketIdentifier}");
@@ -715,31 +715,22 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received PubRel id={pubRelPacket.PacketIdentifier} reason={pubRelPacket.ReasonCode}");
         this.OnPubRelReceivedEventLauncher(pubRelPacket);
 
+        PubCompPacket pubCompResponsePacket;
+
         // This is in response to a publish that we received and already sent a pubrec
-        if (this.IPubTransactionQueue.TryGetValue(pubRelPacket.PacketIdentifier, out var originalPublishQoS2Chain))
+        if (this.IPubTransactionQueue.TryGetValue(pubRelPacket.PacketIdentifier, out var publishQoS2Chain))
         {
-            var originalPublishPacket = (PublishPacket)originalPublishQoS2Chain.First();
-
             // Send a PUBCOMP in response
-            var pubCompResponsePacket = new PubCompPacket(pubRelPacket.PacketIdentifier, PubCompReasonCode.Success);
+            pubCompResponsePacket = new PubCompPacket(pubRelPacket.PacketIdentifier, PubCompReasonCode.Success);
 
-            // This QoS2 transaction chain is done.  Remove it from the transaction queue.
-            if (this.IPubTransactionQueue.Remove(pubRelPacket.PacketIdentifier, out var publishQoS2Chain))
+            // Update the chain with the latest packets for the event launcher
+            publishQoS2Chain.Add(pubRelPacket);
+            publishQoS2Chain.Add(pubCompResponsePacket);
+
+            if (!this.IPubTransactionQueue.TryUpdate(pubRelPacket.PacketIdentifier, publishQoS2Chain, publishQoS2Chain))
             {
-                // Update the chain with the latest packets for the event launcher
-                publishQoS2Chain.Add(pubRelPacket);
-                publishQoS2Chain.Add(pubCompResponsePacket);
-
-                // Trigger the packet specific event
-                originalPublishPacket.OnPublishQoS2CompleteEventLauncher(publishQoS2Chain);
-                this.OnMessageReceivedEventLauncher(originalPublishPacket);
+                Logger.Warn($"QoS2: Couldn't update PubRel --> PubComp QoS2 Chain for packet identifier {pubRelPacket.PacketIdentifier}.");
             }
-            else
-            {
-                Logger.Warn($"QoS2: Couldn't remove PubRel --> PubComp QoS2 Chain for packet identifier {pubRelPacket.PacketIdentifier}.");
-            }
-
-            this.SendQueue.Enqueue(pubCompResponsePacket);
         }
         else
         {
@@ -747,9 +738,40 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                          "Responding with PubComp PacketIdentifierNotFound.");
 
             // Send a PUBCOMP with PacketIdentifierNotFound
-            var pubCompResponsePacket = new PubCompPacket(pubRelPacket.PacketIdentifier, PubCompReasonCode.PacketIdentifierNotFound);
-            this.SendQueue.Enqueue(pubCompResponsePacket);
+            pubCompResponsePacket = new PubCompPacket(pubRelPacket.PacketIdentifier, PubCompReasonCode.PacketIdentifierNotFound);
         }
+
+        this.SendQueue.Enqueue(pubCompResponsePacket);
+
+    }
+
+    /// <summary>
+    /// Action to take once a PubComp packet is sent.
+    /// </summary>
+    /// <param name="pubCompPacket">The sent PubComp packet.</param>
+    internal void HandleSentPubCompPacket(PubCompPacket pubCompPacket)
+    {
+        Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Sent PubComp id={pubCompPacket.PacketIdentifier} reason={pubCompPacket.ReasonCode}");
+
+        // PubCompReasonCode is either Success or PacketIdentifierNotFound.  If the latter,
+        // there won't be a transaction chain to remove.
+        if (pubCompPacket.ReasonCode == PubCompReasonCode.Success)
+        {
+            // QoS 2 Transaction is done.  Remove the transaction chain from the queue
+            if (this.IPubTransactionQueue.Remove(pubCompPacket.PacketIdentifier, out var publishQoS2Chain))
+            {
+                var originalPublishPacket = (PublishPacket)publishQoS2Chain.First();
+
+                // Trigger the packet specific event
+                originalPublishPacket.OnPublishQoS2CompleteEventLauncher(publishQoS2Chain);
+
+                // Trigger the application message event
+                this.OnMessageReceivedEventLauncher(originalPublishPacket);
+            }
+        }
+
+        // Trigger the general event
+        this.OnPubCompSentEventLauncher(pubCompPacket);
     }
 
     /// <summary>
