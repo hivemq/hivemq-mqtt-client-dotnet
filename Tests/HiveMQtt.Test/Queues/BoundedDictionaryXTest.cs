@@ -101,6 +101,14 @@ public class BoundedDictionaryXTest
     }
 
     [Fact]
+    public void ExposesCapacity()
+    {
+        var dictionary = new BoundedDictionaryX<int, ControlPacket>(3);
+        Assert.True(dictionary.IsEmpty);
+        Assert.Equal(3, dictionary.Capacity);
+    }
+
+    [Fact]
     public async Task CanBeClearedAsync()
     {
         var dictionary = new BoundedDictionaryX<int, ControlPacket>(3);

@@ -101,12 +101,12 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
                     // Dumping Client State
                     Logger.Debug($"{this.Options.ClientId}-(CM)- {this.ConnectState} lastCommunicationTimer:{this.lastCommunicationTimer.Elapsed}");
-                    Logger.Debug($"{this.Options.ClientId}-(CM)- SendQueue:............{this.SendQueue.Count}");
-                    Logger.Debug($"{this.Options.ClientId}-(CM)- ReceivedQueue:........{this.ReceivedQueue.Count}");
-                    Logger.Debug($"{this.Options.ClientId}-(CM)- OutgoingPublishQueue:.{this.OutgoingPublishQueue.Count}");
-                    Logger.Debug($"{this.Options.ClientId}-(CM)- OPubTransactionQueue:.{this.OPubTransactionQueue.Count}");
-                    Logger.Debug($"{this.Options.ClientId}-(CM)- IPubTransactionQueue:.{this.IPubTransactionQueue.Count}");
-                    Logger.Debug($"{this.Options.ClientId}-(CM)- # of Subscriptions:...{this.Subscriptions.Count}");
+                    Logger.Debug($"{this.Options.ClientId}-(CM)- SendQueue:...............{this.SendQueue.Count}");
+                    Logger.Debug($"{this.Options.ClientId}-(CM)- ReceivedQueue:...........{this.ReceivedQueue.Count}");
+                    Logger.Debug($"{this.Options.ClientId}-(CM)- OutgoingPublishQueue:....{this.OutgoingPublishQueue.Count}");
+                    Logger.Debug($"{this.Options.ClientId}-(CM)- OPubTransactionQueue:....{this.OPubTransactionQueue.Count}/{this.OPubTransactionQueue.Capacity}");
+                    Logger.Debug($"{this.Options.ClientId}-(CM)- IPubTransactionQueue:....{this.IPubTransactionQueue.Count}/{this.IPubTransactionQueue.Capacity}");
+                    Logger.Debug($"{this.Options.ClientId}-(CM)- # of Subscriptions:......{this.Subscriptions.Count}");
 
                     await this.RunTaskHealthCheckAsync(this.ConnectionWriterTask, "ConnectionWriter").ConfigureAwait(false);
                     await this.RunTaskHealthCheckAsync(this.ConnectionReaderTask, "ConnectionReader").ConfigureAwait(false);
@@ -275,8 +275,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                         case PubAckPacket pubAckPacket:
                             Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PubAckPacket id={pubAckPacket.PacketIdentifier} reason={pubAckPacket.ReasonCode}");
                             writeResult = await this.WriteAsync(pubAckPacket.Encode()).ConfigureAwait(false);
-                            this.IPubTransactionQueue.Remove(pubAckPacket.PacketIdentifier, out _);
-                            this.OnPubAckSentEventLauncher(pubAckPacket);
+                            this.HandleSentPubAckPacket(pubAckPacket);
                             break;
 
                         case PubRecPacket pubRecPacket:
@@ -657,6 +656,30 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         {
             Logger.Warn($"QoS1: Received PubAck with an unknown packet identifier {pubAckPacket.PacketIdentifier}. Discarded.");
         }
+    }
+
+    /// <summary>
+    /// Handle an incoming PubComp packet.
+    /// </summary>
+    /// <param name="pubAckPacket">The received PubComp packet.</param>
+    internal void HandleSentPubAckPacket(PubAckPacket pubAckPacket)
+    {
+        // Remove the transaction chain from the transaction queue
+        var success = this.IPubTransactionQueue.Remove(pubAckPacket.PacketIdentifier, out var publishQoS1Chain);
+
+        if (success)
+        {
+            var publishPacket = (PublishPacket)publishQoS1Chain.First();
+
+            // Trigger the packet specific event
+            publishPacket.OnPublishQoS1CompleteEventLauncher(pubAckPacket);
+        }
+        else
+        {
+            Logger.Warn($"QoS1: Couldn't remove PubAck --> Publish QoS1 Chain for packet identifier {pubAckPacket.PacketIdentifier}.");
+        }
+
+        this.OnPubAckSentEventLauncher(pubAckPacket);
     }
 
     /// <summary>

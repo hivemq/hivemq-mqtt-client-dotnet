@@ -26,11 +26,17 @@ public class BoundedDictionaryX<TKey, TVal> : IDisposable
     private readonly ConcurrentDictionary<TKey, TVal> dictionary;
 
     /// <summary>
+    /// Gets the capacity of the queue.
+    /// </summary>
+    public int Capacity { get; private set; }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="BoundedDictionaryX{I, T}"/> class.
     /// </summary>
     /// <param name="capacity">The capacity of the queue.</param>
     public BoundedDictionaryX(int capacity)
     {
+        this.Capacity = capacity;
         this.semaphore = new SemaphoreSlim(capacity);
         this.dictionary = new ConcurrentDictionary<TKey, TVal>();
     }
