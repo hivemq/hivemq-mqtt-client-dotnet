@@ -16,7 +16,6 @@
 namespace HiveMQtt.Client;
 
 using System;
-using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO.Pipelines;
 using System.Threading.Tasks;
@@ -40,12 +39,10 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     internal AwaitableQueueX<ControlPacket> ReceivedQueue { get; } = new();
 
     // Incoming Publish QoS > 0 in-flight transactions indexed by packet identifier
-    internal ConcurrentDictionary<int, List<ControlPacket>> IPubTransactionQueue { get; } = new();
+    internal BoundedDictionaryX<int, List<ControlPacket>> IPubTransactionQueue { get; set; }
 
     // Outgoing Publish QoS > 0 in-flight transactions indexed by packet identifier
     internal BoundedDictionaryX<int, List<ControlPacket>> OPubTransactionQueue { get; set; }
-
-    internal SemaphoreSlim ClientReceiveSemaphore { get; }
 
     private readonly Stopwatch lastCommunicationTimer = new();
 
@@ -274,11 +271,14 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                             break;
                         case PublishPacket publishPacket:
                             throw new HiveMQttClientException("PublishPacket should be sent via ConnectionPublishWriterAsync.");
+
                         case PubAckPacket pubAckPacket:
                             Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PubAckPacket id={pubAckPacket.PacketIdentifier} reason={pubAckPacket.ReasonCode}");
                             writeResult = await this.WriteAsync(pubAckPacket.Encode()).ConfigureAwait(false);
+                            this.IPubTransactionQueue.Remove(pubAckPacket.PacketIdentifier, out _);
                             this.OnPubAckSentEventLauncher(pubAckPacket);
                             break;
+
                         case PubRecPacket pubRecPacket:
                             Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PubRecPacket id={pubRecPacket.PacketIdentifier} reason={pubRecPacket.ReasonCode}");
                             writeResult = await this.WriteAsync(pubRecPacket.Encode()).ConfigureAwait(false);
@@ -425,18 +425,17 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                             if (publishPacket.Message.QoS is QualityOfService.ExactlyOnceDelivery ||
                                 publishPacket.Message.QoS is QualityOfService.AtLeastOnceDelivery)
                             {
-                                while (true)
+                                var success = await this.IPubTransactionQueue.AddAsync(
+                                    publishPacket.PacketIdentifier,
+                                    new List<ControlPacket> { publishPacket }).ConfigureAwait(false);
+
+                                if (!success)
                                 {
-                                    if (this.IPubTransactionQueue.Count >= this.Options.ClientReceiveMaximum)
-                                    {
-                                        Logger.Trace($"-(R)- The Maximum number of concurrent publishes have been received from broker.  Applying back-pressure and waiting for existing transactions to complete.");
-                                        await Task.Delay(500).ConfigureAwait(false);
-                                    }
-                                    else
-                                    {
-                                        break;
-                                    }
-                                } // while (true)
+                                    Logger.Warn($"Duplicate packet ID detected {publishPacket.PacketIdentifier} while queueing to transaction queue for an incoming QoS {publishPacket.Message.QoS} publish .");
+
+                                    // FIXME: We should potentially disconnect here
+                                    continue;
+                                }
                             }
                         }
 
@@ -492,6 +491,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     var packet = await this.ReceivedQueue.DequeueAsync(cancellationToken).ConfigureAwait(false);
                     if (this.Options.ClientMaximumPacketSize != null)
                     {
+                        // FIXME: Move this to ConnectionReaderAsync/closer to the source instead of after the queue
                         if (packet.PacketSize > this.Options.ClientMaximumPacketSize)
                         {
                             Logger.Warn($"Received packet size {packet.PacketSize} exceeds maximum packet size {this.Options.ClientMaximumPacketSize}.  Disconnecting.");
@@ -585,7 +585,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// Handle an incoming Publish packet.
     /// </summary>
     /// <param name="publishPacket">The received publish packet.</param>
-    internal void HandleIncomingPublishPacket(PublishPacket publishPacket)
+    internal async void HandleIncomingPublishPacket(PublishPacket publishPacket)
     {
         Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received Publish id={publishPacket.PacketIdentifier}");
         this.OnPublishReceivedEventLauncher(publishPacket);
@@ -598,20 +598,35 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         {
             // We've received a QoS 1 publish.  Send a PubAck and notify subscribers.
             var pubAckResponse = new PubAckPacket(publishPacket.PacketIdentifier, PubAckReasonCode.Success);
+
             this.SendQueue.Enqueue(pubAckResponse);
             this.OnMessageReceivedEventLauncher(publishPacket);
         }
         else if (publishPacket.Message.QoS is QualityOfService.ExactlyOnceDelivery)
         {
+
             // We've received a QoS 2 publish.  Send a PubRec and add to QoS2 transaction register.
             // When we get the PubRel, we'll notify subscribers and send the PubComp in HandleIncomingPubRelPacket
+            bool success;
             var pubRecResponse = new PubRecPacket(publishPacket.PacketIdentifier, PubRecReasonCode.Success);
-            var publishQoS2Chain = new List<ControlPacket> { publishPacket, pubRecResponse };
 
-            if (!this.IPubTransactionQueue.TryAdd(publishPacket.PacketIdentifier, publishQoS2Chain))
+            // Get the QoS2 transaction chain for this packet identifier and add the PubRec to it
+            success = this.IPubTransactionQueue.TryGetValue(publishPacket.PacketIdentifier, out var publishQoS2Chain);
+            publishQoS2Chain.Add(pubRecResponse);
+
+            if (success)
             {
-                Logger.Warn($"Duplicate packet ID detected {publishPacket.PacketIdentifier} while queueing to transaction queue for an incoming QoS {publishPacket.Message.QoS} publish .");
-                pubRecResponse.ReasonCode = PubRecReasonCode.PacketIdentifierInUse;
+                // Update the chain in the queue
+                if (!this.IPubTransactionQueue.TryUpdate(publishPacket.PacketIdentifier, publishQoS2Chain, publishQoS2Chain))
+                {
+                    Logger.Error($"QoS2: Couldn't update Publish --> PubRec QoS2 Chain for packet identifier {publishPacket.PacketIdentifier}. Discarded.");
+                    this.IPubTransactionQueue.Remove(publishPacket.PacketIdentifier, out _);
+                }
+            }
+            else
+            {
+                Logger.Error($"QoS2: Received Publish with an unknown packet identifier {publishPacket.PacketIdentifier}. Discarded.");
+                return;
             }
 
             this.SendQueue.Enqueue(pubRecResponse);
@@ -709,7 +724,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             var pubCompResponsePacket = new PubCompPacket(pubRelPacket.PacketIdentifier, PubCompReasonCode.Success);
 
             // This QoS2 transaction chain is done.  Remove it from the transaction queue.
-            if (this.IPubTransactionQueue.TryRemove(pubRelPacket.PacketIdentifier, out var publishQoS2Chain))
+            if (this.IPubTransactionQueue.Remove(pubRelPacket.PacketIdentifier, out var publishQoS2Chain))
             {
                 // Update the chain with the latest packets for the event launcher
                 publishQoS2Chain.Add(pubRelPacket);

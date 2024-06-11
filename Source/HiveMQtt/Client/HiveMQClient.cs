@@ -57,7 +57,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         this.Options = options;
         this.cancellationTokenSource = new CancellationTokenSource();
-        this.ClientReceiveSemaphore = new SemaphoreSlim(this.Options.ClientReceiveMaximum);
+
+        // In-flight transaction queues
+        this.IPubTransactionQueue = new BoundedDictionaryX<int, List<ControlPacket>>(this.Options.ClientReceiveMaximum);
 
         // Set protocol default until ConnAck is received
         this.OPubTransactionQueue = new BoundedDictionaryX<int, List<ControlPacket>>(65535);

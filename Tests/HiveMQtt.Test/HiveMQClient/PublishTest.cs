@@ -259,9 +259,9 @@ public class PublishTest
         Assert.Equal(0, client2.OPubTransactionQueue.Count);
         Assert.Equal(0, client3.OPubTransactionQueue.Count);
 
-        Assert.Empty(client1.IPubTransactionQueue);
-        Assert.Empty(client2.IPubTransactionQueue);
-        Assert.Empty(client3.IPubTransactionQueue);
+        Assert.Equal(0, client1.IPubTransactionQueue.Count);
+        Assert.Equal(0, client2.IPubTransactionQueue.Count);
+        Assert.Equal(0, client3.IPubTransactionQueue.Count);
 
         // All done, disconnect all clients
         var disconnectResult = await client1.DisconnectAsync().ConfigureAwait(false);
@@ -354,9 +354,9 @@ public class PublishTest
         Assert.Equal(0, client2.OPubTransactionQueue.Count);
         Assert.Equal(0, client3.OPubTransactionQueue.Count);
 
-        Assert.Empty(client1.IPubTransactionQueue);
-        Assert.Empty(client2.IPubTransactionQueue);
-        Assert.Empty(client3.IPubTransactionQueue);
+        Assert.Equal(0, client1.IPubTransactionQueue.Count);
+        Assert.Equal(0, client2.IPubTransactionQueue.Count);
+        Assert.Equal(0, client3.IPubTransactionQueue.Count);
 
         // All done, disconnect all clients
         var disconnectResult = await client1.DisconnectAsync().ConfigureAwait(false);
@@ -448,9 +448,9 @@ public class PublishTest
         Assert.Equal(0, client2.OPubTransactionQueue.Count);
         Assert.Equal(0, client3.OPubTransactionQueue.Count);
 
-        Assert.Empty(client1.IPubTransactionQueue);
-        Assert.Empty(client2.IPubTransactionQueue);
-        Assert.Empty(client3.IPubTransactionQueue);
+        Assert.Equal(0, client1.IPubTransactionQueue.Count);
+        Assert.Equal(0, client2.IPubTransactionQueue.Count);
+        Assert.Equal(0, client3.IPubTransactionQueue.Count);
 
         // All done, disconnect all clients
         var disconnectResult = await client1.DisconnectAsync().ConfigureAwait(false);
