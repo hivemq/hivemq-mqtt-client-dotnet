@@ -60,7 +60,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         this.ClientReceiveSemaphore = new SemaphoreSlim(this.Options.ClientReceiveMaximum);
 
         // Set protocol default until ConnAck is received
-        this.BrokerReceiveSemaphore = new SemaphoreSlim(65535);
+        this.OPubTransactionQueue = new BoundedDictionaryX<int, List<ControlPacket>>(65535);
     }
 
     /// <inheritdoc />

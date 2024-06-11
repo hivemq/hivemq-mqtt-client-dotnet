@@ -39,13 +39,11 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
     internal AwaitableQueueX<ControlPacket> ReceivedQueue { get; } = new();
 
-    // Incoming Publish QoS > 0 packets indexed by packet identifier
+    // Incoming Publish QoS > 0 in-flight transactions indexed by packet identifier
     internal ConcurrentDictionary<int, List<ControlPacket>> IPubTransactionQueue { get; } = new();
 
-    // Outgoing Publish QoS > 0 packets indexed by packet identifier
-    internal ConcurrentDictionary<int, List<ControlPacket>> OPubTransactionQueue { get; } = new();
-
-    private SemaphoreSlim BrokerReceiveSemaphore { get; set; }
+    // Outgoing Publish QoS > 0 in-flight transactions indexed by packet identifier
+    internal BoundedDictionaryX<int, List<ControlPacket>> OPubTransactionQueue { get; set; }
 
     internal SemaphoreSlim ClientReceiveSemaphore { get; }
 
@@ -109,7 +107,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     Logger.Debug($"{this.Options.ClientId}-(CM)- SendQueue:............{this.SendQueue.Count}");
                     Logger.Debug($"{this.Options.ClientId}-(CM)- ReceivedQueue:........{this.ReceivedQueue.Count}");
                     Logger.Debug($"{this.Options.ClientId}-(CM)- OutgoingPublishQueue:.{this.OutgoingPublishQueue.Count}");
-                    Logger.Debug($"{this.Options.ClientId}-(CM)- BrokerReceiveMaxSem...{this.BrokerReceiveSemaphore.CurrentCount}");
                     Logger.Debug($"{this.Options.ClientId}-(CM)- OPubTransactionQueue:.{this.OPubTransactionQueue.Count}");
                     Logger.Debug($"{this.Options.ClientId}-(CM)- IPubTransactionQueue:.{this.IPubTransactionQueue.Count}");
                     Logger.Debug($"{this.Options.ClientId}-(CM)- # of Subscriptions:...{this.Subscriptions.Count}");
@@ -173,15 +170,16 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     if (publishPacket.Message.QoS is QualityOfService.AtLeastOnceDelivery ||
                         publishPacket.Message.QoS is QualityOfService.ExactlyOnceDelivery)
                     {
-                        // We have the next qos>0 publish packet to send
-                        // Respect the broker's ReceiveMaximum
-                        await this.BrokerReceiveSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+                        // QoS > 0 - Add to transaction queue.  OPubTransactionQueue will block when necessary
+                        // to respect the broker's ReceiveMaximum
+                        var success = await this.OPubTransactionQueue.AddAsync(
+                            publishPacket.PacketIdentifier,
+                            new List<ControlPacket> { publishPacket },
+                            cancellationToken).ConfigureAwait(false);
 
-                        // QoS > 0 - Add to transaction queue
-                        if (!this.OPubTransactionQueue.TryAdd(publishPacket.PacketIdentifier, new List<ControlPacket> { publishPacket }))
+                        if (!success)
                         {
                             Logger.Warn($"Duplicate packet ID detected {publishPacket.PacketIdentifier} while queueing to transaction queue for an outgoing QoS {publishPacket.Message.QoS} publish .");
-                            this.BrokerReceiveSemaphore.Release();
                             continue;
                         }
                     }
@@ -517,8 +515,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                             {
                                 Logger.Debug($"{this.Options.ClientId}-(RPH)- <-- Broker says limit concurrent incoming QoS 1 and QoS 2 publishes to {connAckPacket.Properties.ReceiveMaximum}.");
 
-                                // Replace the BrokerReceiveSemaphore with a new one with the broker's ReceiveMaximum
-                                this.BrokerReceiveSemaphore = new SemaphoreSlim((int)connAckPacket.Properties.ReceiveMaximum);
+                                // Replace the OPubTransactionQueue BoundedDictionary with a new one with the broker's ReceiveMaximum
+                                this.OPubTransactionQueue = new BoundedDictionaryX<int, List<ControlPacket>>((int)connAckPacket.Properties.ReceiveMaximum);
                             }
 
                             this.ConnectionProperties = connAckPacket.Properties;
@@ -637,10 +635,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             var publishPacket = (PublishPacket)publishQoS1Chain.First();
 
             // We sent a QoS1 publish and received a PubAck.  The transaction is complete.
-
-            // Release the semaphore
-            this.BrokerReceiveSemaphore.Release();
-
             // Trigger the packet specific event
             publishPacket.OnPublishQoS1CompleteEventLauncher(pubAckPacket);
         }
@@ -681,9 +675,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             {
                 Logger.Error($"QoS2: Couldn't update PubRec --> PubRel QoS2 Chain for packet identifier {pubRecPacket.PacketIdentifier}.");
                 this.OPubTransactionQueue.Remove(pubRecPacket.PacketIdentifier, out _);
-                this.BrokerReceiveSemaphore.Release();
 
-                // FIXME: Send an appropriate disconnect packet
+                // FIXME: Send an appropriate disconnect packet?
                 await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
             }
 
@@ -762,9 +755,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
             // Update the chain with this PubComp packet for the event launcher
             publishQoS2Chain.Add(pubCompPacket);
-
-            // Release the semaphore
-            this.BrokerReceiveSemaphore.Release();
 
             // Trigger the packet specific event with the entire chain
             originalPublishPacket.OnPublishQoS2CompleteEventLauncher(publishQoS2Chain);
