@@ -144,7 +144,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         if (this.ConnectState != ConnectState.Connected)
         {
-            Logger.Warn("DisconnectAsync called but this client is not connected.  State is ${this.ConnectState}.");
+            Logger.Warn($"DisconnectAsync called but this client is not connected.  State is {this.ConnectState}.");
             return false;
         }
 

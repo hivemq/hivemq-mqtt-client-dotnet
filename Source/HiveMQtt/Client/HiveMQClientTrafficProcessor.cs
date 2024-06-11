@@ -412,7 +412,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                         // We handle disconnects immediately
                         if (decodedPacket is DisconnectPacket disconnectPacket)
                         {
-                            Logger.Warn($"-(R)- <-- Disconnect received: {disconnectPacket.DisconnectReasonCode} {disconnectPacket.Properties.ReasonString}");
+                            // FIXME: If we received disconnect another client with the same id connected else where, should we
+                            // Call the OnDisconnectReceivedEventLauncher?
+                            Logger.Error($"--> Disconnect received <--: {disconnectPacket.DisconnectReasonCode} {disconnectPacket.Properties.ReasonString}");
                             await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
                             this.OnDisconnectReceivedEventLauncher(disconnectPacket);
                             break;
