@@ -44,7 +44,10 @@ public class BoundedDictionaryX<TKey, TVal> : IDisposable
     /// <returns><c>true</c> if the item was added; otherwise, <c>false</c>.</returns>
     public async Task<bool> AddAsync(TKey key, TVal value, CancellationToken cancellationToken = default)
     {
-        var errorDetected = false;
+        bool errorDetected;
+
+        Logger.Trace("Adding item {0}", key);
+        Logger.Trace("Open slots: {0}  Dictionary Count: {1}", this.semaphore.CurrentCount, this.dictionary.Count);
 
         // Wait for an available slot
         await this.semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -59,9 +62,7 @@ public class BoundedDictionaryX<TKey, TVal> : IDisposable
             {
                 Logger.Warn("Duplicate key: {0}", key);
 
-                // We failed to add the item, release the slot
-                this.semaphore.Release();
-                return false;
+                errorDetected = true;
             }
         }
         catch (ArgumentNullException ex)
@@ -92,6 +93,9 @@ public class BoundedDictionaryX<TKey, TVal> : IDisposable
     /// <returns><c>true</c> if the item was removed; otherwise, <c>false</c>.</returns>
     public bool Remove(TKey key, out TVal value)
     {
+        Logger.Trace("Removing item {0}", key);
+        Logger.Trace("Open slots: {0}  Dictionary Count: {1}", this.semaphore.CurrentCount, this.dictionary.Count);
+
         try
         {
             if (this.dictionary.TryRemove(key, out value))
@@ -125,11 +129,15 @@ public class BoundedDictionaryX<TKey, TVal> : IDisposable
     /// <param name="newValue">The new value.</param>
     /// <param name="comparisonValue">The value to compare against.</param>
     /// <returns><c>true</c> if the item was updated; otherwise, <c>false</c>.</returns>
-    public bool TryUpdate(TKey key, TVal newValue, TVal comparisonValue)
-    {
-        // This is just a pass-through for the underlying ConcurrentDictionary
-        return this.dictionary.TryUpdate(key, newValue, comparisonValue);
-    }
+    public bool TryUpdate(TKey key, TVal newValue, TVal comparisonValue) => this.dictionary.TryUpdate(key, newValue, comparisonValue);
+
+    /// <summary>
+    /// Attempts to get a value from the dictionary.
+    /// </summary>
+    /// <param name="key">The key to get.</param>
+    /// <param name="value">The value retrieved.</param>
+    /// <returns><c>true</c> if the item was retrieved; otherwise, <c>false</c>.</returns>
+    public bool TryGetValue(TKey key, out TVal value) => this.dictionary.TryGetValue(key, out value);
 
     /// <summary>
     /// Removes all items from the dictionary.

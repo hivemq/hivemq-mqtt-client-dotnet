@@ -48,6 +48,59 @@ public class BoundedDictionaryXTest
     }
 
     [Fact]
+    public async Task SlotsCanBeUpdatedAsync()
+    {
+        var dictionary = new BoundedDictionaryX<int, ControlPacket>(3);
+        Assert.True(dictionary.IsEmpty);
+
+        var options = new HiveMQClientOptions();
+        Assert.NotNull(options);
+
+        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        var packet = new ConnectPacket(options);
+        var result = false;
+
+        // Add the first
+        result = await dictionary.AddAsync(1, packet, cts.Token).ConfigureAwait(false);
+        Assert.True(result);
+        Assert.False(dictionary.IsEmpty);
+        Assert.Equal(1, dictionary.Count);
+
+        // Add the second
+        result = await dictionary.AddAsync(2, packet, cts.Token).ConfigureAwait(false);
+        Assert.True(result);
+        Assert.False(dictionary.IsEmpty);
+        Assert.Equal(2, dictionary.Count);
+
+        // Add the third
+        result = await dictionary.AddAsync(3, packet, cts.Token).ConfigureAwait(false);
+        Assert.True(result);
+        Assert.False(dictionary.IsEmpty);
+        Assert.Equal(3, dictionary.Count);
+
+        // Get the first
+        result = dictionary.TryGetValue(2, out var origValue);
+        Assert.True(result);
+        Assert.False(dictionary.IsEmpty);
+        Assert.Equal(packet, origValue);
+
+        var cPacket = new PingReqPacket();
+
+        // Update the second
+        result = dictionary.TryUpdate(2, cPacket, packet);
+        Assert.True(result);
+
+        Assert.False(dictionary.IsEmpty);
+        Assert.Equal(3, dictionary.Count);
+
+        // Re-retrieve the second item to verify the update
+        result = dictionary.TryGetValue(2, out var newValue);
+        Assert.True(result);
+        Assert.False(dictionary.IsEmpty);
+        Assert.Equal(cPacket, newValue);
+    }
+
+    [Fact]
     public async Task CanBeClearedAsync()
     {
         var dictionary = new BoundedDictionaryX<int, ControlPacket>(3);
