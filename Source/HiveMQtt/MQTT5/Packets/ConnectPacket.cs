@@ -160,11 +160,7 @@ public class ConnectPacket : ControlPacket
 
         // Properties
         this.Properties.SessionExpiryInterval = (uint)this.clientOptions.SessionExpiryInterval;
-
-        if (this.clientOptions.ClientReceiveMaximum != null)
-        {
-            this.Properties.ReceiveMaximum = (ushort)this.clientOptions.ClientReceiveMaximum;
-        }
+        this.Properties.ReceiveMaximum = (ushort)this.clientOptions.ClientReceiveMaximum;
 
         if (this.clientOptions.ClientMaximumPacketSize != null)
         {

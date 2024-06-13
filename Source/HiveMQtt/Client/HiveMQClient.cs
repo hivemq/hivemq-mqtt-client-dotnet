@@ -57,6 +57,12 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         this.Options = options;
         this.cancellationTokenSource = new CancellationTokenSource();
+
+        // In-flight transaction queues
+        this.IPubTransactionQueue = new BoundedDictionaryX<int, List<ControlPacket>>(this.Options.ClientReceiveMaximum);
+
+        // Set protocol default until ConnAck is received
+        this.OPubTransactionQueue = new BoundedDictionaryX<int, List<ControlPacket>>(65535);
     }
 
     /// <inheritdoc />
@@ -136,9 +142,15 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <inheritdoc />
     public async Task<bool> DisconnectAsync(DisconnectOptions? options = null)
     {
+        if (this.ConnectState == ConnectState.Disconnecting)
+        {
+            // We're already disconnecting in another task.
+            return true;
+        }
+
         if (this.ConnectState != ConnectState.Connected)
         {
-            Logger.Warn("DisconnectAsync called but this client is not connected.  State is ${this.ConnectState}.");
+            Logger.Warn($"DisconnectAsync called but this client is not connected.  State is {this.ConnectState}.");
             return false;
         }
 
@@ -167,7 +179,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         try
         {
-            disconnectPacket = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(60)).ConfigureAwait(false);
+            disconnectPacket = await taskCompletionSource.Task
+                                                .WaitAsync(TimeSpan.FromMilliseconds(this.Options.ResponseTimeoutInMs))
+                                                .ConfigureAwait(false);
         }
         catch (TimeoutException)
         {
@@ -179,9 +193,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             this.OnDisconnectSent -= eventHandler;
         }
 
-        await this.HandleDisconnectionAsync().ConfigureAwait(false);
-
-        return true;
+        return await this.HandleDisconnectionAsync().ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -210,8 +222,25 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             Logger.Trace($"Queuing packet for send: {publishPacket.GetType().Name} id={publishPacket.PacketIdentifier}");
             this.OutgoingPublishQueue.Enqueue(publishPacket);
 
-            // Wait on the QoS 1 handshake
-            var pubAckPacket = await publishPacket.OnPublishQoS1CompleteTCS.Task.WaitAsync(TimeSpan.FromSeconds(60)).ConfigureAwait(false);
+            PubAckPacket pubAckPacket;
+            try
+            {
+                // Wait on the QoS 1 handshake
+                pubAckPacket = await publishPacket.OnPublishQoS1CompleteTCS.Task
+                                                                .WaitAsync(TimeSpan.FromMilliseconds(this.Options.ResponseTimeoutInMs))
+                                                                .ConfigureAwait(false);
+            }
+            catch (TimeoutException)
+            {
+                Logger.Error("PublishAsync: QoS 1 timeout.  No PUBACK response received in time.");
+                var disconnectOptions = new DisconnectOptions
+                {
+                    ReasonCode = DisconnectReasonCode.UnspecifiedError,
+                };
+                await this.DisconnectAsync(disconnectOptions).ConfigureAwait(false);
+                throw;
+            }
+
             return new PublishResult(publishPacket.Message, pubAckPacket);
         }
         else if (message.QoS == QualityOfService.ExactlyOnceDelivery)
@@ -225,24 +254,20 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             try
             {
                 // Wait on the QoS 2 handshake
-                packetList = await publishPacket.OnPublishQoS2CompleteTCS.Task.WaitAsync(TimeSpan.FromSeconds(60)).ConfigureAwait(false);
+                packetList = await publishPacket.OnPublishQoS2CompleteTCS.Task
+                                                        .WaitAsync(TimeSpan.FromMilliseconds(this.Options.ResponseTimeoutInMs))
+                                                        .ConfigureAwait(false);
             }
             catch (TimeoutException)
             {
                 Logger.Error("PublishAsync: QoS 2 timeout.  No response received in time.");
 
-                // Remove the transaction chain
-                if (this.TransactionQueue.Remove(publishPacket.PacketIdentifier, out var publishQoS2Chain))
+                var disconnectOptions = new DisconnectOptions
                 {
-                    Logger.Debug($"PublishAsync: QoS 2 timeout.  Removing transaction chain for packet identifier {publishPacket.PacketIdentifier}.");
-                }
-
-                // Prepare PublishResult
-                publishResult = new PublishResult(publishPacket.Message)
-                {
-                    QoS2ReasonCode = null,
+                    ReasonCode = DisconnectReasonCode.UnspecifiedError,
                 };
-                return publishResult;
+                await this.DisconnectAsync(disconnectOptions).ConfigureAwait(false);
+                throw;
             }
 
             foreach (var packet in packetList)
@@ -331,7 +356,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         SubscribeResult subscribeResult;
         try
         {
-            subAck = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(60)).ConfigureAwait(false);
+            subAck = await taskCompletionSource.Task
+                                .WaitAsync(TimeSpan.FromMilliseconds(this.Options.ResponseTimeoutInMs))
+                                .ConfigureAwait(false);
         }
         catch (TimeoutException)
         {
@@ -441,7 +468,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         UnsubscribeResult unsubscribeResult;
         try
         {
-            unsubAck = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(60)).ConfigureAwait(false);
+            unsubAck = await taskCompletionSource.Task
+                                            .WaitAsync(TimeSpan.FromMilliseconds(this.Options.ResponseTimeoutInMs))
+                                            .ConfigureAwait(false);
 
             // FIXME: Validate that the packet identifier matches
         }
@@ -488,8 +517,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         // Cancel all background tasks and close the socket
         this.ConnectState = ConnectState.Disconnected;
-        this.cancellationTokenSource.Cancel();
-        this.CloseSocket();
+
+        await this.CloseSocketAsync().ConfigureAwait(false);
 
         if (clean)
         {

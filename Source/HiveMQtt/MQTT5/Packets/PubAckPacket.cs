@@ -53,7 +53,7 @@ public class PubAckPacket : ControlPacket
         using (var vhStream = new MemoryStream())
         {
             // Variable Header
-            ControlPacket.EncodeTwoByteInteger(vhStream, this.PacketIdentifier);
+            EncodeTwoByteInteger(vhStream, this.PacketIdentifier);
             vhStream.WriteByte((byte)this.ReasonCode);
             this.EncodeProperties(vhStream);
 
