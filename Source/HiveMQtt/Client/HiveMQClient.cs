@@ -142,6 +142,12 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <inheritdoc />
     public async Task<bool> DisconnectAsync(DisconnectOptions? options = null)
     {
+        if (this.ConnectState == ConnectState.Disconnecting)
+        {
+            // We're already disconnecting in another task.
+            return true;
+        }
+
         if (this.ConnectState != ConnectState.Connected)
         {
             Logger.Warn($"DisconnectAsync called but this client is not connected.  State is {this.ConnectState}.");
@@ -512,10 +518,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         // Cancel all background tasks and close the socket
         this.ConnectState = ConnectState.Disconnected;
 
-        // Don't use CancelAsync here to maintain backwards compatibility
-        // with >=.net6.0.  CancelAsync was introduced in .net8.0
-        this.cancellationTokenSource.Cancel();
-        this.CloseSocket();
+        await this.CloseSocketAsync().ConfigureAwait(false);
 
         if (clean)
         {

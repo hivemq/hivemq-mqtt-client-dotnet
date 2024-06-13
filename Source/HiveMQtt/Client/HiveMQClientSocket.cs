@@ -254,25 +254,17 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         }
     }
 
-    internal bool CloseSocket(bool? shutdownPipeline = true)
+    internal async Task<bool> CloseSocketAsync(bool? shutdownPipeline = true)
     {
-        // Cancel the background traffic processing tasks
-        this.cancellationTokenSource.Cancel();
-
-        // Reset the tasks
-        this.ConnectionPublishWriterTask = null;
-        this.ConnectionWriterTask = null;
-        this.ConnectionReaderTask = null;
-        this.ReceivedPacketsHandlerTask = null;
-        this.ConnectionMonitorTask = null;
+        await this.CancelBackgroundTasksAsync().ConfigureAwait(false);
 
         if (shutdownPipeline == true)
         {
             if (this.Reader != null && this.Writer != null)
             {
                 // Dispose of the PipeReader and PipeWriter
-                this.Reader.Complete();
-                this.Writer.Complete();
+                await this.Reader.CompleteAsync().ConfigureAwait(false);
+                await this.Writer.CompleteAsync().ConfigureAwait(false);
 
                 // Shutdown the pipeline
                 this.Reader = null;
@@ -284,7 +276,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         {
             // Dispose of the Stream
             this.Stream.Close();
-            this.Stream.Dispose();
+            await this.Stream.DisposeAsync().ConfigureAwait(false);
             this.Stream = null;
         }
 
@@ -299,5 +291,65 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Cancel all background tasks.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    internal async Task CancelBackgroundTasksAsync()
+    {
+        // Don't use CancelAsync here to maintain backwards compatibility
+        // with >=.net6.0.  CancelAsync was introduced in .net8.0
+        this.cancellationTokenSource.Cancel();
+
+        // Delay for a short period to allow the tasks to cancel
+        await Task.Delay(1000).ConfigureAwait(false);
+
+        // Reset the tasks
+        if (this.ConnectionPublishWriterTask is not null && this.ConnectionPublishWriterTask.IsCompleted)
+        {
+            this.ConnectionPublishWriterTask = null;
+        }
+        else
+        {
+            Logger.Error("ConnectionPublishWriterTask did not complete");
+        }
+
+        if (this.ConnectionWriterTask is not null && this.ConnectionWriterTask.IsCompleted)
+        {
+            this.ConnectionWriterTask = null;
+        }
+        else
+        {
+            Logger.Error("ConnectionWriterTask did not complete");
+        }
+
+        if (this.ConnectionReaderTask is not null && this.ConnectionReaderTask.IsCompleted)
+        {
+            this.ConnectionReaderTask = null;
+        }
+        else
+        {
+            Logger.Error("ConnectionReaderTask did not complete");
+        }
+
+        if (this.ReceivedPacketsHandlerTask is not null && this.ReceivedPacketsHandlerTask.IsCompleted)
+        {
+            this.ReceivedPacketsHandlerTask = null;
+        }
+        else
+        {
+            Logger.Error("ReceivedPacketsHandlerTask did not complete");
+        }
+
+        if (this.ConnectionMonitorTask is not null && this.ConnectionMonitorTask.IsCompleted)
+        {
+            this.ConnectionMonitorTask = null;
+        }
+        else
+        {
+            Logger.Error("ConnectionMonitorTask did not complete");
+        }
     }
 }
