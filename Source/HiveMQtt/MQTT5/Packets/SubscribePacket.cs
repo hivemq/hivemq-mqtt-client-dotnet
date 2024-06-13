@@ -16,7 +16,7 @@
 namespace HiveMQtt.MQTT5.Packets;
 
 using System.IO;
-
+using HiveMQtt.Client.Events;
 using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.Types;
 
@@ -43,6 +43,14 @@ public class SubscribePacket : ControlPacket
         {
             this.Properties.UserProperties = userProperties;
         }
+
+        // Setup the TaskCompletionSource so users can simply call
+        //
+        //   await SubscribePacket.OnCompleteTCS
+        //
+        // to wait for the subscribe transaction to complete.
+        this.OnComplete += (sender, args) => this.OnCompleteTCS.SetResult(args.SubAckPacket);
+
     }
 
     /// <summary>
@@ -52,6 +60,46 @@ public class SubscribePacket : ControlPacket
 
     /// <inheritdoc/>
     public override ControlPacketType ControlPacketType => ControlPacketType.Subscribe;
+
+
+    /// <summary>
+    /// Valid for outgoing Subscribe packets.  An event that is fired after the the subscribe transaction is complete.
+    /// </summary>
+    public event EventHandler<OnSubAckReceivedEventArgs> OnComplete = new((client, e) => { });
+
+    internal virtual void OnCompleteEventLauncher(SubAckPacket packet)
+    {
+        if (this.OnComplete != null && this.OnComplete.GetInvocationList().Length > 0)
+        {
+            var eventArgs = new OnSubAckReceivedEventArgs(packet);
+            Logger.Trace("SubscribePacket.OnCompleteEventLauncher");
+            _ = Task.Run(() => this.OnComplete?.Invoke(this, eventArgs)).ContinueWith(
+                t =>
+                {
+                    if (t.IsFaulted)
+                    {
+                        if (t.Exception is not null)
+                        {
+                            Logger.Error("SubscribePacket.OnCompleteEventLauncher exception: " + t.Exception.Message);
+                            foreach (var ex in t.Exception.InnerExceptions)
+                            {
+                                Logger.Error("SubscribePacket.OnCompleteEventLauncher inner exception: " + ex.Message);
+                            }
+                        }
+                    }
+                },
+                TaskScheduler.Default);
+        }
+    }
+
+    /// <summary>
+    /// Gets the awaitable TaskCompletionSource for the subscribe transaction.
+    /// <para>
+    /// Valid for outgoing subscribe packets.  A TaskCompletionSource that is set when the subscribe transaction is complete.
+    /// </para>
+    /// </summary>
+    public TaskCompletionSource<SubAckPacket> OnCompleteTCS { get; } = new();
+
 
     /// <summary>
     /// Encode this packet to be sent on the wire.
