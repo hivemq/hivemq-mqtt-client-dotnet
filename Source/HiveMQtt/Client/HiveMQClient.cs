@@ -513,6 +513,12 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <param name="clean">Indicates whether the disconnect was intended or not.</param>
     private async Task<bool> HandleDisconnectionAsync(bool clean = true)
     {
+        if (this.ConnectState == ConnectState.Disconnected)
+        {
+            Logger.Trace("HandleDisconnection: Already disconnected.");
+            return false;
+        }
+
         Logger.Debug($"HandleDisconnection: Handling disconnection. clean={clean}.");
 
         // Cancel all background tasks and close the socket
