@@ -197,13 +197,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     }
 
     /// <inheritdoc />
-    public async Task<PublishResult> PublishAsync(MQTT5PublishMessage message)
+    public async Task<PublishResult> PublishAsync(MQTT5PublishMessage message, CancellationToken cancellationToken = default)
     {
-        if (!this.IsConnected())
-        {
-            throw new HiveMQttClientException("PublishAsync: Client is not connected.  Check client.IsConnected() before calling PublishAsync.");
-        }
-
         message.Validate();
 
         var packetIdentifier = this.GeneratePacketIdentifier();
@@ -227,17 +222,12 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             {
                 // Wait on the QoS 1 handshake
                 pubAckPacket = await publishPacket.OnPublishQoS1CompleteTCS.Task
-                                                                .WaitAsync(TimeSpan.FromMilliseconds(this.Options.ResponseTimeoutInMs))
+                                                                .WaitAsync(cancellationToken)
                                                                 .ConfigureAwait(false);
             }
-            catch (TimeoutException)
+            catch (OperationCanceledException)
             {
-                Logger.Error("PublishAsync: QoS 1 timeout.  No PUBACK response received in time.");
-                var disconnectOptions = new DisconnectOptions
-                {
-                    ReasonCode = DisconnectReasonCode.UnspecifiedError,
-                };
-                await this.DisconnectAsync(disconnectOptions).ConfigureAwait(false);
+                Logger.Debug("PublishAsync: Operation cancelled by user.");
                 throw;
             }
 
@@ -255,18 +245,12 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             {
                 // Wait on the QoS 2 handshake
                 packetList = await publishPacket.OnPublishQoS2CompleteTCS.Task
-                                                        .WaitAsync(TimeSpan.FromMilliseconds(this.Options.ResponseTimeoutInMs))
+                                                        .WaitAsync(cancellationToken)
                                                         .ConfigureAwait(false);
             }
-            catch (TimeoutException)
+            catch (OperationCanceledException)
             {
-                Logger.Error("PublishAsync: QoS 2 timeout.  No response received in time.");
-
-                var disconnectOptions = new DisconnectOptions
-                {
-                    ReasonCode = DisconnectReasonCode.UnspecifiedError,
-                };
-                await this.DisconnectAsync(disconnectOptions).ConfigureAwait(false);
+                Logger.Debug("PublishAsync: Operation cancelled by user.");
                 throw;
             }
 
@@ -276,11 +260,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     publishResult = new PublishResult(publishPacket.Message, pubRecPacket);
                 }
-            }
-
-            if (publishResult is null)
-            {
-                throw new HiveMQttClientException("PublishAsync: QoS 2 complete but no PubRec packet received.");
             }
 
             return publishResult;
@@ -330,11 +309,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <inheritdoc />
     public async Task<SubscribeResult> SubscribeAsync(SubscribeOptions options)
     {
-        if (!this.IsConnected())
-        {
-            throw new HiveMQttClientException("SubscribeAsync: Client is not connected.  Check client.IsConnected() before calling SubscribeAsync.");
-        }
-
         // Fire the corresponding event
         this.BeforeSubscribeEventLauncher(options);
 
@@ -445,11 +419,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
     public async Task<UnsubscribeResult> UnsubscribeAsync(UnsubscribeOptions unsubOptions)
     {
-        if (!this.IsConnected())
-        {
-            throw new HiveMQttClientException("UnsubscribeAsync: Client is not connected.  Check client.IsConnected() before calling UnsubscribeAsync.");
-        }
-
         // Fire the corresponding event
         this.BeforeUnsubscribeEventLauncher(unsubOptions.Subscriptions);
 
@@ -542,6 +511,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             this.SendQueue.Clear();
             this.OutgoingPublishQueue.Clear();
         }
+
+        // Delay for 1 seconds before launching the AfterDisconnect event
+        await Task.Delay(1000).ConfigureAwait(false);
 
         // Fire the corresponding after event
         this.AfterDisconnectEventLauncher(clean);

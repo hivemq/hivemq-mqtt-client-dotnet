@@ -71,8 +71,9 @@ public interface IHiveMQClient : IDisposable
     /// Publish a message to an MQTT topic.
     /// </summary>
     /// <param name="message">The <seealso cref="MQTT5PublishMessage"/> for the Publish.</param>
+    /// <param name="cancellationToken">A <seealso cref="CancellationToken"/> to cancel the operation.</param>
     /// <returns>A <seealso cref="PublishResult"/> representing the result of the publish operation.</returns>
-    Task<PublishResult> PublishAsync(MQTT5PublishMessage message);
+    Task<PublishResult> PublishAsync(MQTT5PublishMessage message, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Publish a message to an MQTT topic.
