@@ -327,6 +327,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                             Logger.Debug($"{this.Options.ClientId}-(W)- ConnectionWriter IsCompleted: this was unexpected");
                             await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
                         }
+
                         Logger.Info($"{this.Options.ClientId}-(W)- ConnectionWriter Exiting...{this.ConnectState}");
                         return;
                     }
@@ -428,8 +429,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                         // We handle disconnects immediately
                         if (decodedPacket is DisconnectPacket disconnectPacket)
                         {
-                            // FIXME: If we received disconnect another client with the same id connected else where, should we
-                            // Call the OnDisconnectReceivedEventLauncher?
                             Logger.Error($"--> Disconnect received <--: {disconnectPacket.DisconnectReasonCode} {disconnectPacket.Properties.ReasonString}");
                             await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
                             this.OnDisconnectReceivedEventLauncher(disconnectPacket);
@@ -461,9 +460,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                         // Add the packet to the received queue for processing later by ReceivedPacketsHandlerAsync
                         this.ReceivedQueue.Enqueue(decodedPacket);
                     } // while (buffer.Length > 0
-
-                    // FIXME
-                    await Task.Yield();
                 }
                 catch (TaskCanceledException)
                 {
@@ -783,7 +779,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         }
 
         this.SendQueue.Enqueue(pubCompResponsePacket);
-
     }
 
     /// <summary>

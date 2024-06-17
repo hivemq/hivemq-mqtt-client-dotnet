@@ -213,7 +213,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         }
         else
         {
-            tlsOptions.RemoteCertificateValidationCallback = HiveMQClient.ValidateServerCertificate;
+            tlsOptions.RemoteCertificateValidationCallback = ValidateServerCertificate;
         }
 
         try

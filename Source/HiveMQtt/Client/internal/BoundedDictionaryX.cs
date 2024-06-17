@@ -42,7 +42,7 @@ public class BoundedDictionaryX<TKey, TVal> : IDisposable
     }
 
     /// <summary>
-    /// Attempts to add an item to the dictionary.
+    /// Attempts to add an item to the dictionary.  If there is not slot available, this method will asynchronously wait for an available slot.
     /// </summary>
     /// <param name="key">The key to add.</param>
     /// <param name="value">The value to add.</param>

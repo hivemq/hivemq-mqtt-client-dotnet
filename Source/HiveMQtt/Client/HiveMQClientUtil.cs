@@ -87,7 +87,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         if (pattern == "#")
         {
             // A subscription to “#” will not receive any messages published to a topic beginning with a $
-            if (candidate.StartsWith("$", System.StringComparison.CurrentCulture))
+            if (candidate.StartsWith("$", StringComparison.CurrentCulture))
             {
                 return false;
             }
@@ -100,8 +100,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         if (pattern == "+")
         {
             // A subscription to “+” will not receive any messages published to a topic beginning with a $ or /
-            if (candidate.StartsWith("$", System.StringComparison.CurrentCulture) ||
-                candidate.StartsWith("/", System.StringComparison.CurrentCulture))
+            if (candidate.StartsWith("$", StringComparison.CurrentCulture) ||
+                candidate.StartsWith("/", StringComparison.CurrentCulture))
             {
                 return false;
             }
@@ -126,7 +126,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         var regexp = "\\A" + Regex.Escape(pattern).Replace(@"\+", @"?[/][^/]*") + "\\z";
 
         regexp = regexp.Replace(@"/\#", @"(/?|.+)");
-        regexp = regexp.EndsWith("\\z", System.StringComparison.CurrentCulture) ? regexp : regexp + "\\z";
+        regexp = regexp.EndsWith("\\z", StringComparison.CurrentCulture) ? regexp : regexp + "\\z";
 
         return Regex.IsMatch(candidate, regexp);
     }
@@ -168,7 +168,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// or indirectly by a user's code. Managed and unmanaged resources
     /// can be disposed.
     /// If disposing equals false, the method has been called by the
-    /// runtime from inside the finalizer and you should not reference
+    /// runtime from inside finalize and you should not reference
     /// other objects. Only unmanaged resources can be disposed.
     /// </summary>
     /// <param name="disposing">True if called from user code.</param>
