@@ -78,7 +78,7 @@ public interface IHiveMQClient : IDisposable
     /// <summary>
     /// Publish a message to an MQTT topic.
     /// <para>
-    /// This is a convenience method that routes to <seealso cref="PublishAsync(MQTT5PublishMessage)"/>.
+    /// This is a convenience method that routes to <seealso cref="PublishAsync(MQTT5PublishMessage, CancellationToken)"/>.
     /// </para>
     /// </summary>
     /// <param name="topic">The string topic to publish to.</param>
@@ -90,7 +90,7 @@ public interface IHiveMQClient : IDisposable
     /// <summary>
     /// Publish a message to an MQTT topic.
     /// <para>
-    /// This is a convenience method that routes to <seealso cref="PublishAsync(MQTT5PublishMessage)"/>.
+    /// This is a convenience method that routes to <seealso cref="PublishAsync(MQTT5PublishMessage, CancellationToken)"/>.
     /// </para>
     /// </summary>
     /// <param name="topic">The string topic to publish to.</param>
