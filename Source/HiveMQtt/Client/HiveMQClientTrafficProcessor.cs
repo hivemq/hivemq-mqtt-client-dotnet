@@ -278,15 +278,12 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                             writeResult = await this.WriteAsync(unsubscribePacket.Encode()).ConfigureAwait(false);
                             this.OnUnsubscribeSentEventLauncher(unsubscribePacket);
                             break;
-                        case PublishPacket publishPacket:
-                            throw new HiveMQttClientException("PublishPacket should be sent via ConnectionPublishWriterAsync.");
 
                         case PubAckPacket pubAckPacket:
                             Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PubAckPacket id={pubAckPacket.PacketIdentifier} reason={pubAckPacket.ReasonCode}");
                             writeResult = await this.WriteAsync(pubAckPacket.Encode()).ConfigureAwait(false);
                             this.HandleSentPubAckPacket(pubAckPacket);
                             break;
-
                         case PubRecPacket pubRecPacket:
                             Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PubRecPacket id={pubRecPacket.PacketIdentifier} reason={pubRecPacket.ReasonCode}");
                             writeResult = await this.WriteAsync(pubRecPacket.Encode()).ConfigureAwait(false);
@@ -302,33 +299,28 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                             writeResult = await this.WriteAsync(pubCompPacket.Encode()).ConfigureAwait(false);
                             this.HandleSentPubCompPacket(pubCompPacket);
                             break;
+
                         case PingReqPacket pingReqPacket:
                             Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PingReqPacket id={pingReqPacket.PacketIdentifier}");
                             writeResult = await this.WriteAsync(PingReqPacket.Encode()).ConfigureAwait(false);
                             this.OnPingReqSentEventLauncher(pingReqPacket);
                             break;
+
+                        case PublishPacket publishPacket:
+                            throw new HiveMQttClientException("PublishPacket should be sent via ConnectionPublishWriterAsync.");
                         default:
                             Logger.Trace($"{this.Options.ClientId}-(W)- --> Unknown packet type {packet}");
                             break;
                     } // switch
 
-                    if (writeResult.IsCanceled)
+                    if (writeResult.IsCompleted || writeResult.IsCanceled)
                     {
-                        Logger.Trace($"{this.Options.ClientId}-(W)- ConnectionWriter Write Cancelled.  Exiting...");
-                        return;
-                    }
-
-                    if (writeResult.IsCompleted)
-                    {
-                        Logger.Trace($"{this.Options.ClientId}-(W)- ConnectionWriter IsCompleted: end of the stream.  Exiting...");
+                        Logger.Debug($"{this.Options.ClientId}-(W)- ConnectionWriter exiting: IsCompleted={writeResult.IsCompleted} IsCancelled={writeResult.IsCanceled}");
                         if (this.ConnectState == ConnectState.Connected)
                         {
-                            // This is an unexpected exit and may be due to a network failure.
-                            Logger.Debug($"{this.Options.ClientId}-(W)- ConnectionWriter IsCompleted: this was unexpected");
                             await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
                         }
 
-                        Logger.Info($"{this.Options.ClientId}-(W)- ConnectionWriter Exiting...{this.ConnectState}");
                         return;
                     }
                 }
@@ -375,23 +367,14 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
                     readResult = await this.ReadAsync().ConfigureAwait(false);
 
-                    if (readResult.IsCanceled)
+                    if (readResult.IsCanceled || readResult.IsCompleted)
                     {
-                        Logger.Trace($"{this.Options.ClientId}-(R)- Cancelled read result.  Exiting...");
-                        return true;
-                    }
-
-                    if (readResult.IsCompleted)
-                    {
-                        Logger.Trace($"{this.Options.ClientId}-(R)- ConnectionReader IsCompleted: end of the stream");
+                        Logger.Debug($"{this.Options.ClientId}-(R)- ConnectionReader exiting: IsCompleted={readResult.IsCompleted} IsCancelled={readResult.IsCanceled}");
                         if (this.ConnectState == ConnectState.Connected)
                         {
-                            // This is an unexpected exit and may be due to a network failure.
-                            Logger.Debug($"{this.Options.ClientId}-(R)- ConnectionReader IsCompleted: this was unexpected");
                             await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
                         }
 
-                        Logger.Info($"{this.Options.ClientId}-(R)- ConnectionReader Exiting...{this.ConnectState}");
                         return true;
                     }
 
@@ -403,13 +386,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                         {
                             if (decodedPacket is MalformedPacket)
                             {
-                                Logger.Warn($"Malformed packet received.  Disconnecting.");
+                                Logger.Error($"Malformed packet received.  Disconnecting...");
                                 Logger.Debug($"{this.Options.ClientId}-(R)- Malformed packet received: {decodedPacket}");
 
                                 var opts = new DisconnectOptions
                                 {
                                     ReasonCode = DisconnectReasonCode.MalformedPacket,
-                                    ReasonString = "Malformed Packet",
+                                    ReasonString = "Client couldn't decode packet.",
                                 };
                                 return await this.DisconnectAsync(opts).ConfigureAwait(false);
                             }
@@ -435,6 +418,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                             break;
                         }
 
+                        // For QoS 1 and 2 publishes, potentially apply back pressure according to ReceiveMaximum
                         if (decodedPacket is PublishPacket publishPacket)
                         {
                             // Limit the number of concurrent incoming QoS 1 and QoS 2 transactions
@@ -447,18 +431,21 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
                                 if (!success)
                                 {
-                                    Logger.Warn($"Duplicate packet ID detected {publishPacket.PacketIdentifier} while queueing to transaction queue for an incoming QoS {publishPacket.Message.QoS} publish .");
+                                    Logger.Error($"Received a publish with a duplicate packet identifier {publishPacket.PacketIdentifier} for a transaction already in progress.  Disconnecting.");
 
-                                    // FIXME: We should potentially disconnect here
-                                    continue;
+                                    var opts = new DisconnectOptions
+                                    {
+                                        ReasonCode = DisconnectReasonCode.UnspecifiedError,
+                                        ReasonString = "Client received a publish with duplicate packet identifier for a transaction already in progress.",
+                                    };
+                                    return await this.DisconnectAsync(opts).ConfigureAwait(false);
                                 }
                             }
                         }
 
                         Logger.Trace($"{this.Options.ClientId}-(R)- <-- Received {decodedPacket.GetType().Name} id: {decodedPacket.PacketIdentifier}.  Adding to receivedQueue.");
-
-                        // Add the packet to the received queue for processing later by ReceivedPacketsHandlerAsync
                         this.ReceivedQueue.Enqueue(decodedPacket);
+
                     } // while (buffer.Length > 0
                 }
                 catch (TaskCanceledException)
