@@ -393,28 +393,23 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                         // We handle disconnects immediately
                         if (decodedPacket is DisconnectPacket disconnectPacket)
                         {
-                            Logger.Error($"--> Disconnect received <--: {disconnectPacket.DisconnectReasonCode} {disconnectPacket.Properties.ReasonString}");
-                            await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
-                            this.OnDisconnectReceivedEventLauncher(disconnectPacket);
+                            await this.HandleIncomingDisconnectPacketAsync(disconnectPacket).ConfigureAwait(false);
                             break;
                         }
 
                         // Check that maximum packet size has not been exceeded
-                        if (this.Options.ClientMaximumPacketSize != null)
+                        if (this.Options.ClientMaximumPacketSize is not null && decodedPacket.PacketSize > this.Options.ClientMaximumPacketSize)
                         {
-                            if (decodedPacket.PacketSize > this.Options.ClientMaximumPacketSize)
-                            {
-                                Logger.Error($"Received a packet that exceeds the requested maximum of {this.Options.ClientMaximumPacketSize}.  Disconnecting.");
-                                Logger.Debug($"{this.Options.ClientId}-(RPH)- Received packet size {decodedPacket.PacketSize} for packet {decodedPacket.GetType().Name}");
+                            Logger.Error($"Received a packet that exceeds the requested maximum of {this.Options.ClientMaximumPacketSize}.  Disconnecting.");
+                            Logger.Debug($"{this.Options.ClientId}-(RPH)- Received packet size {decodedPacket.PacketSize} for packet {decodedPacket.GetType().Name}");
 
-                                var opts = new DisconnectOptions
-                                {
-                                    ReasonCode = DisconnectReasonCode.PacketTooLarge,
-                                    ReasonString = "Packet size is larger than the requested Maximum Packet Size.",
-                                };
-                                await this.DisconnectAsync(opts).ConfigureAwait(false);
-                                return false;
-                            }
+                            var opts = new DisconnectOptions
+                            {
+                                ReasonCode = DisconnectReasonCode.PacketTooLarge,
+                                ReasonString = "Packet size is larger than the requested Maximum Packet Size.",
+                            };
+                            await this.DisconnectAsync(opts).ConfigureAwait(false);
+                            return false;
                         }
 
                         // For QoS 1 and 2 publishes, potentially apply back pressure according to ReceiveMaximum
@@ -557,7 +552,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             return;
         }, cancellationToken);
 
-
     /// <summary>
     /// Handle an incoming ConnAck packet.
     /// </summary>
@@ -576,6 +570,18 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         this.ConnectionProperties = connAckPacket.Properties;
         this.OnConnAckReceivedEventLauncher(connAckPacket);
+    }
+
+    /// <summary>
+    /// Handle an incoming Disconnect packet.
+    /// </summary>
+    /// <param name="disconnectPacket">The received Disconnect packet.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    internal async Task HandleIncomingDisconnectPacketAsync(DisconnectPacket disconnectPacket)
+    {
+        Logger.Error($"--> Disconnect received <--: {disconnectPacket.DisconnectReasonCode} {disconnectPacket.Properties.ReasonString}");
+        await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
+        this.OnDisconnectReceivedEventLauncher(disconnectPacket);
     }
 
     /// <summary>
@@ -607,20 +613,27 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             if (success)
             {
                 // Update the chain in the queue
-                if (!this.IPubTransactionQueue.TryUpdate(publishPacket.PacketIdentifier, publishQoS1Chain, publishQoS1Chain))
+                if (this.IPubTransactionQueue.TryUpdate(publishPacket.PacketIdentifier, publishQoS1Chain, publishQoS1Chain))
+                {
+                    this.SendQueue.Enqueue(pubAckResponse);
+                }
+                else
                 {
                     Logger.Error($"QoS1: Couldn't update Publish --> PubAck QoS1 Chain for packet identifier {publishPacket.PacketIdentifier}. Discarded.");
                     this.IPubTransactionQueue.Remove(publishPacket.PacketIdentifier, out _);
+
+                    var opts = new DisconnectOptions
+                    {
+                        ReasonCode = DisconnectReasonCode.UnspecifiedError,
+                        ReasonString = "Client internal error updating publish transaction chain.",
+                    };
+                    await this.DisconnectAsync(opts).ConfigureAwait(false);
                 }
             }
             else
             {
-                // FIXME: This should never happen if ConnectionReaderAsync is working correctly
-                Logger.Error($"QoS1: Received Publish with an unknown packet identifier {publishPacket.PacketIdentifier}. Discarded.");
-                return;
+                throw new HiveMQttClientException($"QoS1: Received Publish with an unknown packet identifier {publishPacket.PacketIdentifier}. Discarded.");
             }
-
-            this.SendQueue.Enqueue(pubAckResponse);
         }
         else if (publishPacket.Message.QoS is QualityOfService.ExactlyOnceDelivery)
         {
