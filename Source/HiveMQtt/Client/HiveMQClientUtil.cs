@@ -137,10 +137,11 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <returns>A valid packet identifier.</returns>
     protected int GeneratePacketIdentifier()
     {
-        if (this.lastPacketId == ushort.MaxValue)
-        {
-            this.lastPacketId = 0;
-        }
+        // 0 is not a validated packet identifier.  Start at 1.
+        Interlocked.CompareExchange(ref this.lastPacketId, 1, 0);
+
+        // 65535 is the maximum packet identifier.  Start over at 1.
+        Interlocked.CompareExchange(ref this.lastPacketId, 1, 65535);
 
         return Interlocked.Increment(ref this.lastPacketId);
     }

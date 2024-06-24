@@ -57,7 +57,7 @@ public class UnsubscribePacket : ControlPacket
         using (var vhAndPayloadStream = new MemoryStream())
         {
             // Variable Header
-            EncodeTwoByteInteger(vhAndPayloadStream, this.PacketIdentifier);
+            _ = EncodeTwoByteInteger(vhAndPayloadStream, (int)this.PacketIdentifier);
             this.EncodeProperties(vhAndPayloadStream);
 
             // Payload

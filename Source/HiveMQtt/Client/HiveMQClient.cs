@@ -58,6 +58,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         this.Options = options;
         this.cancellationTokenSource = new CancellationTokenSource();
 
+        // Initialize the packet identifier
+        this.lastPacketId = 1;
+
         // In-flight transaction queues
         this.IPubTransactionQueue = new BoundedDictionaryX<int, List<ControlPacket>>(this.Options.ClientReceiveMaximum);
 
@@ -97,7 +100,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         // Construct the MQTT Connect packet and queue to send
         var connPacket = new ConnectPacket(this.Options);
-        Logger.Trace($"Queuing packet for send: {connPacket.GetType().Name} id={connPacket.PacketIdentifier}");
+        Logger.Trace($"Queuing CONNECT packet for send.");
         this.SendQueue.Enqueue(connPacket);
 
         ConnAckPacket connAck;
@@ -174,7 +177,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         EventHandler<OnDisconnectSentEventArgs> eventHandler = TaskHandler;
         this.OnDisconnectSent += eventHandler;
 
-        Logger.Trace($"Queuing packet for send: {disconnectPacket.GetType().Name} id={disconnectPacket.PacketIdentifier}");
+        Logger.Trace($"Queuing DISCONNECT packet for send.");
         this.SendQueue.Enqueue(disconnectPacket);
 
         try
@@ -201,23 +204,25 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         message.Validate();
 
-        var packetIdentifier = this.GeneratePacketIdentifier();
-        var publishPacket = new PublishPacket(message, (ushort)packetIdentifier);
-
         // QoS 0: Fast Service
         if (message.QoS == QualityOfService.AtMostOnceDelivery)
         {
-            Logger.Trace($"Queuing packet for send: {publishPacket.GetType().Name} id={publishPacket.PacketIdentifier}");
+            var publishPacket = new PublishPacket(message, 0);
+            Logger.Trace($"Queuing QoS 0 publish packet for send: {publishPacket.GetType().Name}");
+
             this.OutgoingPublishQueue.Enqueue(publishPacket);
             return new PublishResult(publishPacket.Message);
         }
         else if (message.QoS == QualityOfService.AtLeastOnceDelivery)
         {
             // QoS 1: Acknowledged Delivery
-            Logger.Trace($"Queuing packet for send: {publishPacket.GetType().Name} id={publishPacket.PacketIdentifier}");
+            var packetIdentifier = this.GeneratePacketIdentifier();
+            var publishPacket = new PublishPacket(message, (ushort)packetIdentifier);
+            PubAckPacket pubAckPacket;
+
+            Logger.Trace($"Queuing QoS 1 publish packet for send: {publishPacket.GetType().Name} id={publishPacket.PacketIdentifier}");
             this.OutgoingPublishQueue.Enqueue(publishPacket);
 
-            PubAckPacket pubAckPacket;
             try
             {
                 // Wait on the QoS 1 handshake
@@ -236,8 +241,11 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         else if (message.QoS == QualityOfService.ExactlyOnceDelivery)
         {
             // QoS 2: Assured Delivery
+            var packetIdentifier = this.GeneratePacketIdentifier();
+            var publishPacket = new PublishPacket(message, (ushort)packetIdentifier);
             PublishResult? publishResult = null;
-            Logger.Trace($"Queuing packet for send: {publishPacket.GetType().Name} id={publishPacket.PacketIdentifier}");
+
+            Logger.Trace($"Queuing QoS 2 publish packet for send: {publishPacket.GetType().Name} id={publishPacket.PacketIdentifier}");
             this.OutgoingPublishQueue.Enqueue(publishPacket);
 
             List<ControlPacket> packetList;
