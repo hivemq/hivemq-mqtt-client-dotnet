@@ -532,7 +532,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                         Logger.Trace($"{this.Options.ClientId}-(RPH)- Cancelled with {this.ReceivedQueue.Count} received packets remaining.  Exiting...");
                         break;
                     }
-
                 }
                 catch (Exception ex)
                 {

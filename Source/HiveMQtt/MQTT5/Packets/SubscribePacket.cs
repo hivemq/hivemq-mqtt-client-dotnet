@@ -50,7 +50,6 @@ public class SubscribePacket : ControlPacket
         //
         // to wait for the subscribe transaction to complete.
         this.OnComplete += (sender, args) => this.OnCompleteTCS.SetResult(args.SubAckPacket);
-
     }
 
     /// <summary>
@@ -60,7 +59,6 @@ public class SubscribePacket : ControlPacket
 
     /// <inheritdoc/>
     public override ControlPacketType ControlPacketType => ControlPacketType.Subscribe;
-
 
     /// <summary>
     /// Valid for outgoing Subscribe packets.  An event that is fired after the the subscribe transaction is complete.
@@ -99,7 +97,6 @@ public class SubscribePacket : ControlPacket
     /// </para>
     /// </summary>
     public TaskCompletionSource<SubAckPacket> OnCompleteTCS { get; } = new();
-
 
     /// <summary>
     /// Encode this packet to be sent on the wire.
