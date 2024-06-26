@@ -13,7 +13,8 @@ public class SubscribeTest
     [Fact]
     public async Task MostBasicSubscribeAsync()
     {
-        var subClient = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("MostBasicSubscribeAsync").Build();
+        var subClient = new HiveMQClient(options);
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -30,7 +31,8 @@ public class SubscribeTest
     [Fact]
     public async Task MultiSubscribeAsync()
     {
-        var subClient = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("MultiSubscribeAsync").Build();
+        var subClient = new HiveMQClient(options);
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -54,7 +56,8 @@ public class SubscribeTest
     [Fact]
     public async Task MultiSubscribeExtendedOptionsAsync()
     {
-        var subClient = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("MultiSubscribeExtendedOptionsAsync").Build();
+        var subClient = new HiveMQClient(options);
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -79,7 +82,8 @@ public class SubscribeTest
     [Fact]
     public async Task SubscribeQoS1Async()
     {
-        var subClient = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("SubscribeQoS1Async").Build();
+        var subClient = new HiveMQClient(options);
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -95,7 +99,8 @@ public class SubscribeTest
     [Fact]
     public async Task SubscribeQoS2Async()
     {
-        var subClient = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("SubscribeQoS2Async").Build();
+        var subClient = new HiveMQClient(options);
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -111,7 +116,8 @@ public class SubscribeTest
     [Fact]
     public async Task Test_Subscribe_Events_Async()
     {
-        var client = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("Test_Subscribe_Events_Async1").Build();
+        var client = new HiveMQClient(options);
 
         // Client Events
         client.BeforeSubscribe += BeforeSubscribeHandler;
@@ -142,6 +148,9 @@ public class SubscribeTest
 
         client.OnSubscribeSent -= OnSubscribeSentHandler;
         client.OnSubAckReceived -= OnSubAckReceivedHandler;
+
+        await client.DisconnectAsync().ConfigureAwait(false);
+        client.Dispose();
     }
 
     private static void BeforeSubscribeHandler(object? sender, BeforeSubscribeEventArgs eventArgs)

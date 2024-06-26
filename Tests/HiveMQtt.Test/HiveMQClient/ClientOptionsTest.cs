@@ -8,7 +8,6 @@ public class ClientOptionsTest
     [Fact]
     public void Client_ID()
     {
-        // var clientOptions = new HiveMQClientOptions();
         var client = new HiveMQClient();
 
         Assert.NotNull(client.Options.ClientId);

@@ -13,7 +13,8 @@ public class UnsubscribeBuilderTest
     [Fact]
     public async Task BasicUnsubscribeAsync()
     {
-        var subClient = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("BasicUnsubscribeAsync").Build();
+        var subClient = new HiveMQClient(options);
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -48,7 +49,8 @@ public class UnsubscribeBuilderTest
     [Fact]
     public async Task WithSubscriptionAsync()
     {
-        var subClient = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("WithSubscriptionAsync").Build();
+        var subClient = new HiveMQClient(options);
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -75,7 +77,8 @@ public class UnsubscribeBuilderTest
     [Fact]
     public async Task InvalidUnsubscribeStringAsync()
     {
-        var subClient = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("InvalidUnsubscribeStringAsync").Build();
+        var subClient = new HiveMQClient(options);
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 

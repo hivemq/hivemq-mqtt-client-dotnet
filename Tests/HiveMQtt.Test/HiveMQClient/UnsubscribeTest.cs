@@ -13,7 +13,8 @@ public class UnsubscribeTest
     [Fact]
     public async Task MostBasicUnsubscribeAsync()
     {
-        var subClient = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("MostBasicUnsubscribeAsync").Build();
+        var subClient = new HiveMQClient(options);
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -36,7 +37,8 @@ public class UnsubscribeTest
     [Fact]
     public async Task InvalidUnsubscribeStringAsync()
     {
-        var subClient = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("InvalidUnsubscribeStringAsync").Build();
+        var subClient = new HiveMQClient(options);
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -52,7 +54,8 @@ public class UnsubscribeTest
     [Fact]
     public async Task InvalidUnsubscribeSubscriptionAsync()
     {
-        var subClient = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("InvalidUnsubscribeSubscriptionAsync").Build();
+        var subClient = new HiveMQClient(options);
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -71,7 +74,8 @@ public class UnsubscribeTest
     [Fact]
     public async Task Test_Unsubscribe_Events_Async()
     {
-        var client = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("Test_Unsubscribe_Events_Async").Build();
+        var client = new HiveMQClient(options);
 
         // Client Events
         client.BeforeUnsubscribe += BeforeUnsubscribeHandler;
@@ -108,6 +112,9 @@ public class UnsubscribeTest
 
         client.OnUnsubscribeSent -= OnUnsubscribeSentHandler;
         client.OnUnsubAckReceived -= OnUnsubAckReceivedHandler;
+
+        await client.DisconnectAsync().ConfigureAwait(false);
+        client.Dispose();
     }
 
     private static void BeforeUnsubscribeHandler(object? sender, BeforeUnsubscribeEventArgs eventArgs)
