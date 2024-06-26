@@ -216,7 +216,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         else if (message.QoS == QualityOfService.AtLeastOnceDelivery)
         {
             // QoS 1: Acknowledged Delivery
-            var packetIdentifier = this.GeneratePacketIdentifier();
+            var packetIdentifier = await this.PacketIDManager.GetAvailablePacketIDAsync().ConfigureAwait(false);
             var publishPacket = new PublishPacket(message, (ushort)packetIdentifier);
             PubAckPacket pubAckPacket;
 
@@ -241,7 +241,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         else if (message.QoS == QualityOfService.ExactlyOnceDelivery)
         {
             // QoS 2: Assured Delivery
-            var packetIdentifier = this.GeneratePacketIdentifier();
+            var packetIdentifier = await this.PacketIDManager.GetAvailablePacketIDAsync().ConfigureAwait(false);
             var publishPacket = new PublishPacket(message, (ushort)packetIdentifier);
             PublishResult? publishResult = null;
 
@@ -322,7 +322,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         // FIXME: We should only ever have one subscribe in flight at any time (for now)
         // Construct the MQTT Subscribe packet
-        var packetIdentifier = this.GeneratePacketIdentifier();
+        var packetIdentifier = await this.PacketIDManager.GetAvailablePacketIDAsync().ConfigureAwait(false);
         var subscribePacket = new SubscribePacket(options, (ushort)packetIdentifier);
 
         // Setup the task completion source to wait for the SUBACK
@@ -430,7 +430,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         // Fire the corresponding event
         this.BeforeUnsubscribeEventLauncher(unsubOptions.Subscriptions);
 
-        var packetIdentifier = this.GeneratePacketIdentifier();
+        var packetIdentifier = await this.PacketIDManager.GetAvailablePacketIDAsync().ConfigureAwait(false);
         var unsubscribePacket = new UnsubscribePacket(unsubOptions, (ushort)packetIdentifier);
 
         var taskCompletionSource = new TaskCompletionSource<UnsubAckPacket>();

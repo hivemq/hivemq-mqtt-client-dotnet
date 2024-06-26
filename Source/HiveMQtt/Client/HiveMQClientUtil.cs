@@ -132,21 +132,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     }
 
     /// <summary>
-    /// Generate a packet identifier.
-    /// </summary>
-    /// <returns>A valid packet identifier.</returns>
-    protected int GeneratePacketIdentifier()
-    {
-        // 0 is not a validated packet identifier.  Start at 1.
-        Interlocked.CompareExchange(ref this.lastPacketId, 1, 0);
-
-        // 65535 is the maximum packet identifier.  Start over at 1.
-        Interlocked.CompareExchange(ref this.lastPacketId, 1, 65535);
-
-        return Interlocked.Increment(ref this.lastPacketId);
-    }
-
-    /// <summary>
     /// https://learn.microsoft.com/en-us/dotnet/api/system.idisposable?view=net-6.0.
     /// </summary>
     public void Dispose()
