@@ -34,7 +34,8 @@ public class LastWillAndTestamentBuilderTest
     public async Task Last_Will_With_Properties_Async()
     {
         // Setup & Connect a client to listen for LWT
-        var listenerClient = new HiveMQClient();
+        var listenerOptions = new HiveMQClientOptionsBuilder().WithClientId("Last_Will_With_Properties_Async-Listener").Build();
+        var listenerClient = new HiveMQClient(listenerOptions);
         var connectResult = await listenerClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
         Assert.True(listenerClient.IsConnected());
@@ -86,6 +87,7 @@ public class LastWillAndTestamentBuilderTest
         // Setup & Connect the client with LWT
         var options = new HiveMQClientOptions
         {
+            ClientId = "Last_Will_With_Properties_Async-LWTClient",
             LastWillAndTestament = lwt,
         };
 
@@ -103,5 +105,7 @@ public class LastWillAndTestamentBuilderTest
         // Wait until the LWT message is received
         var taskResult = await taskLWTReceived.Task.WaitAsync(TimeSpan.FromSeconds(25)).ConfigureAwait(false);
         Assert.True(taskResult);
+
+        await listenerClient.DisconnectAsync().ConfigureAwait(false);
     }
 }

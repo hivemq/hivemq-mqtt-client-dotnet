@@ -13,7 +13,8 @@ public class PublishTest
     [Fact]
     public async Task MostBasicPublishAsync()
     {
-        var client = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("MostBasicPublishAsync").Build();
+        var client = new HiveMQClient(options);
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -22,12 +23,15 @@ public class PublishTest
 
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
+
+        client.Dispose();
     }
 
     [Fact]
     public async Task MostBasicPublishWithQoS0Async()
     {
-        var client = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("MostBasicPublishWithQoS0Async").Build();
+        var client = new HiveMQClient(options);
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -36,12 +40,15 @@ public class PublishTest
 
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
+
+        client.Dispose();
     }
 
     [Fact]
     public async Task MostBasicPublishWithQoS1Async()
     {
-        var client = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("MostBasicPublishWithQoS1Async").Build();
+        var client = new HiveMQClient(options);
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -52,12 +59,15 @@ public class PublishTest
 
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
+
+        client.Dispose();
     }
 
     [Fact]
     public async Task MostBasicPublishWithQoS2Async()
     {
-        var client = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("MostBasicPublishWithQoS2Async").Build();
+        var client = new HiveMQClient(options);
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -68,12 +78,15 @@ public class PublishTest
 
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
+
+        client.Dispose();
     }
 
     [Fact]
     public async Task MultiPublishWithQoS0Async()
     {
-        var client = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("MultiPublishWithQoS0Async").Build();
+        var client = new HiveMQClient(options);
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -91,12 +104,15 @@ public class PublishTest
 
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
+
+        client.Dispose();
     }
 
     [Fact]
     public async Task MultiPublishWithQoS1Async()
     {
-        var client = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("MultiPublishWithQoS1Async").Build();
+        var client = new HiveMQClient(options);
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -113,12 +129,15 @@ public class PublishTest
 
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
+
+        client.Dispose();
     }
 
     [Fact]
     public async Task MultiPublishWithQoS2Async()
     {
-        var client = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("MultiPublishWithQoS2Async").Build();
+        var client = new HiveMQClient(options);
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -134,12 +153,15 @@ public class PublishTest
 
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
+
+        client.Dispose();
     }
 
     [Fact]
     public async Task PublishWithOptionsAsync()
     {
-        var client = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("PublishWithOptionsAsync").Build();
+        var client = new HiveMQClient(options);
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -148,12 +170,15 @@ public class PublishTest
 
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
+
+        client.Dispose();
     }
 
     [Fact]
     public async Task PublishPayloadFormatIndicatorAsync()
     {
-        var client = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("PublishPayloadFormatIndicatorAsync").Build();
+        var client = new HiveMQClient(options);
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -175,14 +200,22 @@ public class PublishTest
 
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
+
+        client.Dispose();
     }
 
     [Fact]
     public async Task ThreeNodeQoS0ChainedPublishesAsync()
     {
-        var client1 = new HiveMQClient(); // publish message
-        var client2 = new HiveMQClient(); // receive and re-publish to another topic
-        var client3 = new HiveMQClient(); // receive republished message
+
+        var options = new HiveMQClientOptionsBuilder().WithClientId("ThreeNodeQoS0ChainedPublishesAsync1").Build();
+        var client1 = new HiveMQClient(options); // publish message
+
+        options = new HiveMQClientOptionsBuilder().WithClientId("ThreeNodeQoS0ChainedPublishesAsync2").Build();
+        var client2 = new HiveMQClient(options); // receive and re-publish to another topic
+
+        options = new HiveMQClientOptionsBuilder().WithClientId("ThreeNodeQoS0ChainedPublishesAsync3").Build();
+        var client3 = new HiveMQClient(options); // receive republished message
 
         // Connect client 1
         var connectResult = await client1.ConnectAsync().ConfigureAwait(false);
@@ -270,14 +303,23 @@ public class PublishTest
         Assert.True(disconnectResult);
         disconnectResult = await client3.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
+
+        client1.Dispose();
+        client2.Dispose();
+        client3.Dispose();
     }
 
     [Fact]
     public async Task ThreeNodeQoS1ChainedPublishesAsync()
     {
-        var client1 = new HiveMQClient(); // publish message
-        var client2 = new HiveMQClient(); // receive and re-publish to another topic
-        var client3 = new HiveMQClient(); // receive republished message
+        var options = new HiveMQClientOptionsBuilder().WithClientId("ThreeNodeQoS1ChainedPublishesAsync1").Build();
+        var client1 = new HiveMQClient(options); // publish message
+
+        options = new HiveMQClientOptionsBuilder().WithClientId("ThreeNodeQoS1ChainedPublishesAsync2").Build();
+        var client2 = new HiveMQClient(options); // receive and re-publish to another topic
+
+        options = new HiveMQClientOptionsBuilder().WithClientId("ThreeNodeQoS1ChainedPublishesAsync3").Build();
+        var client3 = new HiveMQClient(options); // receive republished message
 
         // Connect client 1
         var connectResult = await client1.ConnectAsync().ConfigureAwait(false);
@@ -365,14 +407,23 @@ public class PublishTest
         Assert.True(disconnectResult);
         disconnectResult = await client3.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
+
+        client1.Dispose();
+        client2.Dispose();
+        client3.Dispose();
     }
 
     [Fact]
     public async Task ThreeNodeQoS2ChainedPublishesAsync()
     {
-        var client1 = new HiveMQClient(); // publish message
-        var client2 = new HiveMQClient(); // receive and re-publish to another topic
-        var client3 = new HiveMQClient(); // receive republished message
+        var options = new HiveMQClientOptionsBuilder().WithClientId("ThreeNodeQoS2ChainedPublishesAsync1").Build();
+        var client1 = new HiveMQClient(options); // publish message
+
+        options = new HiveMQClientOptionsBuilder().WithClientId("ThreeNodeQoS2ChainedPublishesAsync2").Build();
+        var client2 = new HiveMQClient(options); // receive and re-publish to another topic
+
+        options = new HiveMQClientOptionsBuilder().WithClientId("ThreeNodeQoS2ChainedPublishesAsync3").Build();
+        var client3 = new HiveMQClient(options); // receive republished message
 
         // Connect client 1
         var connectResult = await client1.ConnectAsync().ConfigureAwait(false);
@@ -459,5 +510,9 @@ public class PublishTest
         Assert.True(disconnectResult);
         disconnectResult = await client3.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
+
+        client1.Dispose();
+        client2.Dispose();
+        client3.Dispose();
     }
 }

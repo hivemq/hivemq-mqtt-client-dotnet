@@ -12,7 +12,8 @@ public class SubscribeBuilderTest
     [Fact]
     public async Task MultiSubscribeAsync()
     {
-        var subClient = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("MultiSubscribeAsync").Build();
+        var subClient = new HiveMQClient(options);
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -35,7 +36,8 @@ public class SubscribeBuilderTest
     [Fact]
     public async Task MultiSubscribeExtendedOptionsAsync()
     {
-        var subClient = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("MultiSubscribeExtendedOptionsAsync").Build();
+        var subClient = new HiveMQClient(options);
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -61,7 +63,8 @@ public class SubscribeBuilderTest
     [Fact]
     public async Task PerSubscriptionHandlerAsync()
     {
-        var subClient = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("PerSubscriptionHandlerAsync1").Build();
+        var subClient = new HiveMQClient(options);
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -81,7 +84,8 @@ public class SubscribeBuilderTest
         Assert.NotEmpty(subResult.Subscriptions);
         Assert.Equal(SubAckReasonCode.GrantedQoS1, subResult.Subscriptions[0].SubscribeReasonCode);
 
-        var pubClient = new HiveMQClient();
+        options = new HiveMQClientOptionsBuilder().WithClientId("PerSubscriptionHandlerAsync2").Build();
+        var pubClient = new HiveMQClient(options);
         var pubConnectResult = await pubClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(pubConnectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -92,12 +96,19 @@ public class SubscribeBuilderTest
 
         var disconnectResult = await subClient.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
+
+        disconnectResult = await pubClient.DisconnectAsync().ConfigureAwait(false);
+        Assert.True(disconnectResult);
+
+        subClient.Dispose();
+        pubClient.Dispose();
     }
 
     [Fact]
     public async Task PerSubscriptionHandlerAndGlobalHandlerAsync()
     {
-        var subClient = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("PerSubscriptionHandlerAndGlobalHandlerAsync1").Build();
+        var subClient = new HiveMQClient(options);
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -130,7 +141,8 @@ public class SubscribeBuilderTest
         Assert.NotEmpty(subResult.Subscriptions);
         Assert.Equal(SubAckReasonCode.GrantedQoS1, subResult.Subscriptions[0].SubscribeReasonCode);
 
-        var pubClient = new HiveMQClient();
+        options = new HiveMQClientOptionsBuilder().WithClientId("PerSubscriptionHandlerAndGlobalHandlerAsync2").Build();
+        var pubClient = new HiveMQClient(options);
         var pubConnectResult = await pubClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(pubConnectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -154,13 +166,17 @@ public class SubscribeBuilderTest
 
         var disconnectResult = await subClient.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
+
+        disconnectResult = await pubClient.DisconnectAsync().ConfigureAwait(false);
+        Assert.True(disconnectResult);
     }
 
     [Fact]
     public async Task PerSubHandlerWithSingleLevelWildcardAsync()
     {
         // Create a subscribeClient that subscribes to a topic with a single-level wildcard
-        var subscribeClient = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("PerSubHandlerWithSingleLevelWildcardAsync1").Build();
+        var subscribeClient = new HiveMQClient(options);
         var connectResult = await subscribeClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -215,7 +231,8 @@ public class SubscribeBuilderTest
         Assert.NotEmpty(subResult.Subscriptions);
         Assert.Equal(SubAckReasonCode.GrantedQoS1, subResult.Subscriptions[0].SubscribeReasonCode);
 
-        var pubClient = new HiveMQClient();
+        options = new HiveMQClientOptionsBuilder().WithClientId("PerSubHandlerWithSingleLevelWildcardAsync2").Build();
+        var pubClient = new HiveMQClient(options);
         var pubConnectResult = await pubClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(pubConnectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -235,13 +252,17 @@ public class SubscribeBuilderTest
 
         disconnectResult = await pubClient.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
+
+        subscribeClient.Dispose();
+        pubClient.Dispose();
     }
 
     [Fact]
     public async Task PerSubHandlerWithMultiLevelWildcardAsync()
     {
         // Create a subscribeClient that subscribes to a topic with a single-level wildcard
-        var subscribeClient = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("PerSubHandlerWithMultiLevelWildcardAsync1").Build();
+        var subscribeClient = new HiveMQClient(options);
         var connectResult = await subscribeClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -273,7 +294,8 @@ public class SubscribeBuilderTest
         Assert.NotEmpty(subResult.Subscriptions);
         Assert.Equal(SubAckReasonCode.GrantedQoS1, subResult.Subscriptions[0].SubscribeReasonCode);
 
-        var pubClient = new HiveMQClient();
+        options = new HiveMQClientOptionsBuilder().WithClientId("PerSubHandlerWithMultiLevelWildcardAsync2").Build();
+        var pubClient = new HiveMQClient(options);
         var pubConnectResult = await pubClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(pubConnectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -288,5 +310,11 @@ public class SubscribeBuilderTest
 
         var disconnectResult = await subscribeClient.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
+
+        disconnectResult = await pubClient.DisconnectAsync().ConfigureAwait(false);
+        Assert.True(disconnectResult);
+
+        subscribeClient.Dispose();
+        pubClient.Dispose();
     }
 }

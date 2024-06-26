@@ -53,6 +53,7 @@ public class QueuedPublishesTest
             await publishClient.PublishAsync(firstTopic, payload, QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
         }
 
+        await publishClient.DisconnectAsync().ConfigureAwait(false);
         return batchSize;
     }
 
@@ -88,6 +89,7 @@ public class QueuedPublishesTest
 
         // Wait until all messages are relayed
         await Task.Delay(5000).ConfigureAwait(false);
+        await subscribeClient.DisconnectAsync().ConfigureAwait(false);
         return relayCount;
     }
 
@@ -113,6 +115,8 @@ public class QueuedPublishesTest
 
         // Wait for the receiver to receive all messages
         await Task.Delay(5000).ConfigureAwait(false);
+        await receiverClient.DisconnectAsync().ConfigureAwait(false);
+
         return receivedCount;
     }
 }

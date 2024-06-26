@@ -14,7 +14,8 @@ public class ConnectTest
     [Fact]
     public async Task BasicConnectAndDisconnectAsync()
     {
-        var client = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("BasicConnectAndDisconnectAsync").Build();
+        var client = new HiveMQClient(options);
         Assert.NotNull(client);
 
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
@@ -28,22 +29,27 @@ public class ConnectTest
         var disconnectResult = await client.DisconnectAsync(disconnectOptions).ConfigureAwait(false);
         Assert.True(disconnectResult);
         Assert.False(client.IsConnected());
+
+        client.Dispose();
     }
 
     [Fact]
     public async Task RaiseOnFailureToConnectAsync()
     {
         // Bad port number
-        var clientOptions = new HiveMQClientOptionsBuilder().WithPort(0).Build();
+        var clientOptions = new HiveMQClientOptionsBuilder().WithPort(0).WithClientId("RaiseOnFailureToConnectAsync").Build();
         var client = new HiveMQClient(clientOptions);
 
         await Assert.ThrowsAsync<HiveMQttClientException>(client.ConnectAsync).ConfigureAwait(false);
+
+        client.Dispose();
     }
 
     [Fact]
     public async Task TestConnectEventsAsync()
     {
-        var client = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("TestConnectEventsAsync").Build();
+        var client = new HiveMQClient(options);
 
         // Client Events
         client.BeforeConnect += BeforeConnectHandler;
@@ -85,12 +91,15 @@ public class ConnectTest
 
         client.OnConnectSent -= OnConnectSentHandler;
         client.OnConnAckReceived -= OnConnAckReceivedHandler;
+
+        client.Dispose();
     }
 
     [Fact]
     public async Task Test_AfterDisconnectEvent_Async()
     {
-        var client = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("Test_AfterDisconnectEvent_Async").Build();
+        var client = new HiveMQClient(options);
 
         // Client Events
         client.AfterDisconnect += AfterDisconnectHandler;
@@ -114,6 +123,8 @@ public class ConnectTest
 
         // Remove event handlers
         client.AfterDisconnect -= AfterDisconnectHandler;
+
+        client.Dispose();
     }
 
     private static void BeforeConnectHandler(object? sender, BeforeConnectEventArgs eventArgs)

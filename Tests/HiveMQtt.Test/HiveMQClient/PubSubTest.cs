@@ -13,7 +13,8 @@ public class PubSubTest
     {
         var testTopic = "tests/MostBasicPubSubAsync";
         var testPayload = new string(/*lang=json,strict*/ "{\"interference\": \"1029384\"}");
-        var client = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("MostBasicPubSubAsync").Build();
+        var client = new HiveMQClient(options);
         var taskCompletionSource = new TaskCompletionSource<bool>();
 
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
@@ -47,6 +48,8 @@ public class PubSubTest
 
         var taskResult = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
         Assert.True(taskResult);
+
+        client.Dispose();
     }
 
     [Fact]
@@ -54,7 +57,8 @@ public class PubSubTest
     {
         var testTopic = "tests/QoS1PubSubAsync";
         var testPayload = new string(/*lang=json,strict*/ "{\"interference\": \"1029384\"}");
-        var client = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("MostBasicPubSubAsync").Build();
+        var client = new HiveMQClient(options);
         var taskCompletionSource = new TaskCompletionSource<bool>();
         var messagesReceived = 0;
 
@@ -93,6 +97,8 @@ public class PubSubTest
 
         var taskResult = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
         Assert.True(taskResult);
+
+        client.Dispose();
     }
 
     [Fact]
@@ -101,7 +107,8 @@ public class PubSubTest
         var testTopic = "tests/QoS2PubSubAsync";
         var testPayload = new string(/*lang=json,strict*/ "{\"interference\": \"1029384\"}");
 
-        var client = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("QoS2PubSubAsync").Build();
+        var client = new HiveMQClient(options);
         var taskCompletionSource = new TaskCompletionSource<bool>();
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
@@ -141,6 +148,8 @@ public class PubSubTest
 
         var taskResult = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
         Assert.True(taskResult);
+
+        client.Dispose();
     }
 
     [Fact]
@@ -148,7 +157,8 @@ public class PubSubTest
     {
         var testTopic = "tests/LargeMessagePubSubAsync";
         var testPayload = "1. A delusion starts like any other idea, as an egg. Identical on the outside, perfectly formed. From the shell, you'd never know anything was wrong. It's what's inside that matters. 2. A delusion starts like any other idea, as an egg. Identical on the outside, perfectly formed. From the shell, you'd never know anything was wrong. It's what's inside that matters. 3. A delusion starts like any other idea, as an egg. Identical on the outside, perfectly formed. From the shell, you'd never know anything was wrong. It's what's inside that matters.";
-        var client = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("LargeMessagePubSubAsync").Build();
+        var client = new HiveMQClient(options);
         var taskCompletionSource = new TaskCompletionSource<bool>();
 
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
@@ -184,6 +194,8 @@ public class PubSubTest
 
         var taskResult = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
         Assert.True(taskResult);
+
+        client.Dispose();
     }
 
     [Fact]
@@ -198,7 +210,8 @@ public class PubSubTest
             testPayload[i] = 0x05;
         }
 
-        var client = new HiveMQClient();
+        var options = new HiveMQClientOptionsBuilder().WithClientId("OneMBMessagePubSubAsync").Build();
+        var client = new HiveMQClient(options);
         var taskCompletionSource = new TaskCompletionSource<bool>();
 
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
@@ -240,5 +253,7 @@ public class PubSubTest
 
         var taskResult = await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(15)).ConfigureAwait(false);
         Assert.True(taskResult);
+
+        client.Dispose();
     }
 }
