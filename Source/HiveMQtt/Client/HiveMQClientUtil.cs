@@ -23,7 +23,6 @@ using HiveMQtt.MQTT5.Types;
 public partial class HiveMQClient : IDisposable, IHiveMQClient
 {
     private bool disposed;
-    private int lastPacketId;
 
     /// <summary>
     /// Validates whether a subscription already exists.

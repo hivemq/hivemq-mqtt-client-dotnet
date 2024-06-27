@@ -58,9 +58,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         this.Options = options;
         this.cancellationTokenSource = new CancellationTokenSource();
 
-        // Initialize the packet identifier
-        this.lastPacketId = 1;
-
         // In-flight transaction queues
         this.IPubTransactionQueue = new BoundedDictionaryX<int, List<ControlPacket>>(this.Options.ClientReceiveMaximum);
 

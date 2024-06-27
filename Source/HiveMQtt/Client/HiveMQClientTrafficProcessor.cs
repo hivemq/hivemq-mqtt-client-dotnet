@@ -510,13 +510,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                             await this.HandleIncomingPubAckPacketAsync(pubAckPacket).ConfigureAwait(false);
                             break;
                         case PubRecPacket pubRecPacket:
-                            this.HandleIncomingPubRecPacket(pubRecPacket);
+                            await this.HandleIncomingPubRecPacketAsync(pubRecPacket).ConfigureAwait(false);
                             break;
                         case PubRelPacket pubRelPacket:
                             this.HandleIncomingPubRelPacket(pubRelPacket);
                             break;
                         case PubCompPacket pubCompPacket:
-                            this.HandleIncomingPubCompPacket(pubCompPacket);
+                            await this.HandleIncomingPubCompPacketAsync(pubCompPacket).ConfigureAwait(false);
                             break;
 
                         case PingRespPacket pingRespPacket:
@@ -713,7 +713,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// Handle an incoming PubRec packet.
     /// </summary>
     /// <param name="pubRecPacket">The received PubRec packet.</param>
-    internal async void HandleIncomingPubRecPacket(PubRecPacket pubRecPacket)
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    internal async Task HandleIncomingPubRecPacketAsync(PubRecPacket pubRecPacket)
     {
         Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received PubRec id={pubRecPacket.PacketIdentifier} reason={pubRecPacket.ReasonCode}");
         this.OnPubRecReceivedEventLauncher(pubRecPacket);
@@ -868,7 +869,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     /// <param name="pubCompPacket">The received PubComp packet.</param>
     /// <exception cref="HiveMQttClientException">Raised if the packet identifier is unknown.</exception>
-    internal async void HandleIncomingPubCompPacket(PubCompPacket pubCompPacket)
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    internal async Task HandleIncomingPubCompPacketAsync(PubCompPacket pubCompPacket)
     {
         Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received PubComp id={pubCompPacket.PacketIdentifier} reason={pubCompPacket.ReasonCode}");
         this.OnPubCompReceivedEventLauncher(pubCompPacket);
