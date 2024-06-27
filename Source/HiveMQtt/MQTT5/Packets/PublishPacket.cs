@@ -37,8 +37,18 @@ public class PublishPacket : ControlPacket
     /// <param name="packetIdentifier">A unique packet identifier for the packet to be created.</param>
     public PublishPacket(MQTT5PublishMessage message, int packetIdentifier)
     {
+        // PacketIdentifier is only used in transactional packets.  The invalid value 0 is used when on QoS 0
+        // packets since it won't be encoded anyways.
         this.PacketIdentifier = (ushort)packetIdentifier;
         this.Message = message;
+
+        if (this.Message.QoS != QualityOfService.AtMostOnceDelivery)
+        {
+            if (this.PacketIdentifier is < 1 or > 65535)
+            {
+                throw new ArgumentException("PacketIdentifier must be a valid value for QoS 1 and QoS 2 packets.");
+            }
+        }
 
         // Setup the QoS 1 TaskCompletionSource so users can simply call
         //

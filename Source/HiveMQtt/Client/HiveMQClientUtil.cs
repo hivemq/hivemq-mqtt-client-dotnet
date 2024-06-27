@@ -23,7 +23,6 @@ using HiveMQtt.MQTT5.Types;
 public partial class HiveMQClient : IDisposable, IHiveMQClient
 {
     private bool disposed;
-    private int lastPacketId;
 
     /// <summary>
     /// Validates whether a subscription already exists.
@@ -129,20 +128,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         regexp = regexp.EndsWith("\\z", StringComparison.CurrentCulture) ? regexp : regexp + "\\z";
 
         return Regex.IsMatch(candidate, regexp);
-    }
-
-    /// <summary>
-    /// Generate a packet identifier.
-    /// </summary>
-    /// <returns>A valid packet identifier.</returns>
-    protected int GeneratePacketIdentifier()
-    {
-        if (this.lastPacketId == ushort.MaxValue)
-        {
-            this.lastPacketId = 0;
-        }
-
-        return Interlocked.Increment(ref this.lastPacketId);
     }
 
     /// <summary>

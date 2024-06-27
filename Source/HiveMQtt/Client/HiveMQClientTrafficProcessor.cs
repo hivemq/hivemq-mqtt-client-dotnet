@@ -44,6 +44,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     // Outgoing Publish QoS > 0 in-flight transactions indexed by packet identifier
     internal BoundedDictionaryX<int, List<ControlPacket>> OPubTransactionQueue { get; set; }
 
+    internal PacketIDManager PacketIDManager { get; } = new();
+
     private readonly Stopwatch lastCommunicationTimer = new();
 
     /// <summary>
@@ -101,6 +103,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     Logger.Debug($"{this.Options.ClientId}-(CM)- OPubTransactionQueue:....{this.OPubTransactionQueue.Count}/{this.OPubTransactionQueue.Capacity}");
                     Logger.Debug($"{this.Options.ClientId}-(CM)- IPubTransactionQueue:....{this.IPubTransactionQueue.Count}/{this.IPubTransactionQueue.Capacity}");
                     Logger.Debug($"{this.Options.ClientId}-(CM)- # of Subscriptions:......{this.Subscriptions.Count}");
+                    Logger.Debug($"{this.Options.ClientId}-(CM)- PacketIDsInUse:..........{this.PacketIDManager.Count}");
 
                     // Background Tasks Health Check
                     await this.RunTaskHealthCheckAsync(this.ConnectionWriterTask, "ConnectionWriter").ConfigureAwait(false);
@@ -157,10 +160,11 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     FlushResult writeResult = default;
                     var publishPacket = await this.OutgoingPublishQueue.DequeueAsync(cancellationToken).ConfigureAwait(false);
 
-                    Logger.Trace($"{this.Options.ClientId}-(PW)- --> Sending PublishPacket id={publishPacket.PacketIdentifier}");
                     if (publishPacket.Message.QoS is QualityOfService.AtLeastOnceDelivery ||
                         publishPacket.Message.QoS is QualityOfService.ExactlyOnceDelivery)
                     {
+                        Logger.Trace($"{this.Options.ClientId}-(PW)- --> Sending QoS={publishPacket.Message.QoS} PublishPacket id={publishPacket.PacketIdentifier}");
+
                         // QoS > 0 - Add to transaction queue.  OPubTransactionQueue will block when necessary
                         // to respect the broker's ReceiveMaximum
                         var success = await this.OPubTransactionQueue.AddAsync(
@@ -173,6 +177,10 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                             Logger.Warn($"Duplicate packet ID detected {publishPacket.PacketIdentifier} while queueing to transaction queue for an outgoing QoS {publishPacket.Message.QoS} publish .");
                             continue;
                         }
+                    }
+                    else
+                    {
+                        Logger.Trace($"{this.Options.ClientId}-(PW)- --> Sending QoS 0 PublishPacket");
                     }
 
                     writeResult = await this.WriteAsync(publishPacket.Encode()).ConfigureAwait(false);
@@ -243,12 +251,12 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     {
                         // FIXME: Only one connect, subscribe or unsubscribe packet can be sent at a time.
                         case ConnectPacket connectPacket:
-                            Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending ConnectPacket id={connectPacket.PacketIdentifier}");
+                            Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending ConnectPacket");
                             writeResult = await this.WriteAsync(connectPacket.Encode()).ConfigureAwait(false);
                             this.OnConnectSentEventLauncher(connectPacket);
                             break;
                         case DisconnectPacket disconnectPacket:
-                            Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending DisconnectPacket id={disconnectPacket.PacketIdentifier}");
+                            Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending DisconnectPacket");
                             writeResult = await this.WriteAsync(disconnectPacket.Encode()).ConfigureAwait(false);
                             this.OnDisconnectSentEventLauncher(disconnectPacket);
                             break;
@@ -266,7 +274,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                         case PubAckPacket pubAckPacket:
                             Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PubAckPacket id={pubAckPacket.PacketIdentifier} reason={pubAckPacket.ReasonCode}");
                             writeResult = await this.WriteAsync(pubAckPacket.Encode()).ConfigureAwait(false);
-                            this.HandleSentPubAckPacket(pubAckPacket);
+                            await this.HandleSentPubAckPacketAsync(pubAckPacket).ConfigureAwait(false);
                             break;
                         case PubRecPacket pubRecPacket:
                             Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PubRecPacket id={pubRecPacket.PacketIdentifier} reason={pubRecPacket.ReasonCode}");
@@ -281,11 +289,11 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                         case PubCompPacket pubCompPacket:
                             Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PubCompPacket id={pubCompPacket.PacketIdentifier} reason={pubCompPacket.ReasonCode}");
                             writeResult = await this.WriteAsync(pubCompPacket.Encode()).ConfigureAwait(false);
-                            this.HandleSentPubCompPacket(pubCompPacket);
+                            await this.HandleSentPubCompPacketAsync(pubCompPacket).ConfigureAwait(false);
                             break;
 
                         case PingReqPacket pingReqPacket:
-                            Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PingReqPacket id={pingReqPacket.PacketIdentifier}");
+                            Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PingReqPacket");
                             writeResult = await this.WriteAsync(PingReqPacket.Encode()).ConfigureAwait(false);
                             this.OnPingReqSentEventLauncher(pingReqPacket);
                             break;
@@ -496,23 +504,23 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                             break;
 
                         case PublishPacket publishPacket:
-                            this.HandleIncomingPublishPacket(publishPacket);
+                            await this.HandleIncomingPublishPacketAsync(publishPacket).ConfigureAwait(false);
                             break;
                         case PubAckPacket pubAckPacket:
-                            this.HandleIncomingPubAckPacket(pubAckPacket);
+                            await this.HandleIncomingPubAckPacketAsync(pubAckPacket).ConfigureAwait(false);
                             break;
                         case PubRecPacket pubRecPacket:
-                            this.HandleIncomingPubRecPacket(pubRecPacket);
+                            await this.HandleIncomingPubRecPacketAsync(pubRecPacket).ConfigureAwait(false);
                             break;
                         case PubRelPacket pubRelPacket:
                             this.HandleIncomingPubRelPacket(pubRelPacket);
                             break;
                         case PubCompPacket pubCompPacket:
-                            this.HandleIncomingPubCompPacket(pubCompPacket);
+                            await this.HandleIncomingPubCompPacketAsync(pubCompPacket).ConfigureAwait(false);
                             break;
 
                         case PingRespPacket pingRespPacket:
-                            Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received PingResp id={pingRespPacket.PacketIdentifier}");
+                            Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received PingResp");
                             this.OnPingRespReceivedEventLauncher(pingRespPacket);
                             break;
 
@@ -557,7 +565,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <param name="connAckPacket">The received ConnAck packet.</param>
     internal void HandleIncomingConnAckPacket(ConnAckPacket connAckPacket)
     {
-        Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received ConnAck id={connAckPacket.PacketIdentifier}");
+        Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received ConnAck");
         if (connAckPacket.ReasonCode == ConnAckReasonCode.Success && connAckPacket.Properties.ReceiveMaximum != null)
         {
             Logger.Debug($"{this.Options.ClientId}-(RPH)- <-- Broker says limit concurrent incoming QoS 1 and QoS 2 publishes to {connAckPacket.Properties.ReceiveMaximum}.");
@@ -587,14 +595,16 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// Handle an incoming Publish packet.
     /// </summary>
     /// <param name="publishPacket">The received publish packet.</param>
-    internal async void HandleIncomingPublishPacket(PublishPacket publishPacket)
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    internal async Task HandleIncomingPublishPacketAsync(PublishPacket publishPacket)
     {
-        Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received Publish id={publishPacket.PacketIdentifier}");
-        this.OnPublishReceivedEventLauncher(publishPacket);
         bool success;
+
+        this.OnPublishReceivedEventLauncher(publishPacket);
 
         if (publishPacket.Message.QoS is QualityOfService.AtMostOnceDelivery)
         {
+            Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received QoS 0 Publish");
             this.OnMessageReceivedEventLauncher(publishPacket);
         }
         else if (publishPacket.Message.QoS is QualityOfService.AtLeastOnceDelivery)
@@ -603,7 +613,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             // by ConnectionReaderAsync to enforce the client's ReceiveMaximum
             // Send a PubAck and update the chain.  Once the PubAckPacket is sent,
             // the transaction chain will be deleted and the appropriate events will be
-            // launched in HandleSentPubAckPacket.
+            // launched in HandleSentPubAckPacketAsync.
+            Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received QoS 1 Publish id={publishPacket.PacketIdentifier}");
             var pubAckResponse = new PubAckPacket(publishPacket.PacketIdentifier, PubAckReasonCode.Success);
 
             success = this.IPubTransactionQueue.TryGetValue(publishPacket.PacketIdentifier, out var publishQoS1Chain);
@@ -620,6 +631,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     Logger.Error($"QoS1: Couldn't update Publish --> PubAck QoS1 Chain for packet identifier {publishPacket.PacketIdentifier}. Discarded.");
                     this.IPubTransactionQueue.Remove(publishPacket.PacketIdentifier, out _);
+                    await this.PacketIDManager.MarkPacketIDAsAvailableAsync(publishPacket.PacketIdentifier).ConfigureAwait(false);
 
                     var opts = new DisconnectOptions
                     {
@@ -640,6 +652,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             // by ConnectionReaderAsync to enforce the client's ReceiveMaximum.
             // Send a PubRec and add to QoS2 transaction register.  Once PubComp is sent,
             // Subscribers will be notified and the transaction chain will be deleted.
+            Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received QoS 2 Publish id={publishPacket.PacketIdentifier}");
             var pubRecResponse = new PubRecPacket(publishPacket.PacketIdentifier, PubRecReasonCode.Success);
 
             // Get the QoS2 transaction chain for this packet identifier and add the PubRec to it
@@ -653,6 +666,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 {
                     Logger.Error($"QoS2: Couldn't update Publish --> PubRec QoS2 Chain for packet identifier {publishPacket.PacketIdentifier}. Discarded.");
                     this.IPubTransactionQueue.Remove(publishPacket.PacketIdentifier, out _);
+                    await this.PacketIDManager.MarkPacketIDAsAvailableAsync(publishPacket.PacketIdentifier).ConfigureAwait(false);
                 }
             }
             else
@@ -670,8 +684,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// Handle an incoming PubAck packet.
     /// </summary>
     /// <param name="pubAckPacket">The received PubAck packet.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     /// <exception cref="HiveMQttClientException">Raised if the packet identifier is unknown.</exception>
-    internal void HandleIncomingPubAckPacket(PubAckPacket pubAckPacket)
+    internal async Task HandleIncomingPubAckPacketAsync(PubAckPacket pubAckPacket)
     {
         Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received PubAck id={pubAckPacket.PacketIdentifier} reason={pubAckPacket.ReasonCode}");
         this.OnPubAckReceivedEventLauncher(pubAckPacket);
@@ -690,13 +705,16 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         {
             Logger.Warn($"QoS1: Received PubAck with an unknown packet identifier {pubAckPacket.PacketIdentifier}. Discarded.");
         }
+
+        await this.PacketIDManager.MarkPacketIDAsAvailableAsync(pubAckPacket.PacketIdentifier).ConfigureAwait(false);
     }
 
     /// <summary>
     /// Handle an incoming PubRec packet.
     /// </summary>
     /// <param name="pubRecPacket">The received PubRec packet.</param>
-    internal async void HandleIncomingPubRecPacket(PubRecPacket pubRecPacket)
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    internal async Task HandleIncomingPubRecPacketAsync(PubRecPacket pubRecPacket)
     {
         Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received PubRec id={pubRecPacket.PacketIdentifier} reason={pubRecPacket.ReasonCode}");
         this.OnPubRecReceivedEventLauncher(pubRecPacket);
@@ -723,6 +741,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             {
                 Logger.Error($"QoS2: Couldn't update PubRec --> PubRel QoS2 Chain for packet identifier {pubRecPacket.PacketIdentifier}.");
                 this.OPubTransactionQueue.Remove(pubRecPacket.PacketIdentifier, out _);
+                await this.PacketIDManager.MarkPacketIDAsAvailableAsync(pubRecPacket.PacketIdentifier).ConfigureAwait(false);
 
                 // FIXME: Send an appropriate disconnect packet?
                 await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
@@ -781,7 +800,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// Handle an incoming PubComp packet.
     /// </summary>
     /// <param name="pubAckPacket">The received PubComp packet.</param>
-    internal void HandleSentPubAckPacket(PubAckPacket pubAckPacket)
+    /// <exception cref="HiveMQttClientException">Raised if the packet identifier is unknown.</exception>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    internal async Task HandleSentPubAckPacketAsync(PubAckPacket pubAckPacket)
     {
         // Remove the transaction chain from the transaction queue
         var success = this.IPubTransactionQueue.Remove(pubAckPacket.PacketIdentifier, out var publishQoS1Chain);
@@ -803,6 +824,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             Logger.Warn($"QoS1: Couldn't remove PubAck --> Publish QoS1 Chain for packet identifier {pubAckPacket.PacketIdentifier}.");
         }
 
+        // Release the packet identifier
+        await this.PacketIDManager.MarkPacketIDAsAvailableAsync(pubAckPacket.PacketIdentifier).ConfigureAwait(false);
+
         // The Packet Event
         this.OnPubAckSentEventLauncher(pubAckPacket);
     }
@@ -811,7 +835,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// Action to take once a PubComp packet is sent.
     /// </summary>
     /// <param name="pubCompPacket">The sent PubComp packet.</param>
-    internal void HandleSentPubCompPacket(PubCompPacket pubCompPacket)
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    internal async Task HandleSentPubCompPacketAsync(PubCompPacket pubCompPacket)
     {
         Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Sent PubComp id={pubCompPacket.PacketIdentifier} reason={pubCompPacket.ReasonCode}");
 
@@ -832,6 +857,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             }
         }
 
+        // Release the packet identifier
+        await this.PacketIDManager.MarkPacketIDAsAvailableAsync(pubCompPacket.PacketIdentifier).ConfigureAwait(false);
+
         // Trigger the general event
         this.OnPubCompSentEventLauncher(pubCompPacket);
     }
@@ -841,7 +869,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     /// <param name="pubCompPacket">The received PubComp packet.</param>
     /// <exception cref="HiveMQttClientException">Raised if the packet identifier is unknown.</exception>
-    internal void HandleIncomingPubCompPacket(PubCompPacket pubCompPacket)
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    internal async Task HandleIncomingPubCompPacketAsync(PubCompPacket pubCompPacket)
     {
         Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received PubComp id={pubCompPacket.PacketIdentifier} reason={pubCompPacket.ReasonCode}");
         this.OnPubCompReceivedEventLauncher(pubCompPacket);
@@ -862,6 +891,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         {
             Logger.Warn($"QoS2: Received PubComp with an unknown packet identifier {pubCompPacket.PacketIdentifier}. Discarded.");
         }
+
+        // Release the packet identifier
+        await this.PacketIDManager.MarkPacketIDAsAvailableAsync(pubCompPacket.PacketIdentifier).ConfigureAwait(false);
     }
 
     /// <summary>

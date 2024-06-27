@@ -146,6 +146,13 @@ public class BoundedDictionaryX<TKey, TVal> : IDisposable
     public bool TryGetValue(TKey key, out TVal value) => this.dictionary.TryGetValue(key, out value);
 
     /// <summary>
+    /// Determines whether the dictionary contains the specified key.
+    /// </summary>
+    /// <param name="key">The key to locate in the dictionary.</param>
+    /// <returns><c>true</c> if the dictionary contains an element with the specified key; otherwise, <c>false</c>.</returns>
+    public bool ContainsKey(TKey key) => this.dictionary.ContainsKey(key);
+
+    /// <summary>
     /// Removes all items from the dictionary.
     /// </summary>
     /// <returns><c>true</c> if the dictionary was cleared; otherwise, <c>false</c>.</returns>

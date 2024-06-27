@@ -97,7 +97,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         // Construct the MQTT Connect packet and queue to send
         var connPacket = new ConnectPacket(this.Options);
-        Logger.Trace($"Queuing packet for send: {connPacket.GetType().Name} id={connPacket.PacketIdentifier}");
+        Logger.Trace($"Queuing CONNECT packet for send.");
         this.SendQueue.Enqueue(connPacket);
 
         ConnAckPacket connAck;
@@ -174,7 +174,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         EventHandler<OnDisconnectSentEventArgs> eventHandler = TaskHandler;
         this.OnDisconnectSent += eventHandler;
 
-        Logger.Trace($"Queuing packet for send: {disconnectPacket.GetType().Name} id={disconnectPacket.PacketIdentifier}");
+        Logger.Trace($"Queuing DISCONNECT packet for send.");
         this.SendQueue.Enqueue(disconnectPacket);
 
         try
@@ -201,23 +201,25 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         message.Validate();
 
-        var packetIdentifier = this.GeneratePacketIdentifier();
-        var publishPacket = new PublishPacket(message, (ushort)packetIdentifier);
-
         // QoS 0: Fast Service
         if (message.QoS == QualityOfService.AtMostOnceDelivery)
         {
-            Logger.Trace($"Queuing packet for send: {publishPacket.GetType().Name} id={publishPacket.PacketIdentifier}");
+            var publishPacket = new PublishPacket(message, 0);
+            Logger.Trace($"Queuing QoS 0 publish packet for send: {publishPacket.GetType().Name}");
+
             this.OutgoingPublishQueue.Enqueue(publishPacket);
             return new PublishResult(publishPacket.Message);
         }
         else if (message.QoS == QualityOfService.AtLeastOnceDelivery)
         {
             // QoS 1: Acknowledged Delivery
-            Logger.Trace($"Queuing packet for send: {publishPacket.GetType().Name} id={publishPacket.PacketIdentifier}");
+            var packetIdentifier = await this.PacketIDManager.GetAvailablePacketIDAsync().ConfigureAwait(false);
+            var publishPacket = new PublishPacket(message, (ushort)packetIdentifier);
+            PubAckPacket pubAckPacket;
+
+            Logger.Trace($"Queuing QoS 1 publish packet for send: {publishPacket.GetType().Name} id={publishPacket.PacketIdentifier}");
             this.OutgoingPublishQueue.Enqueue(publishPacket);
 
-            PubAckPacket pubAckPacket;
             try
             {
                 // Wait on the QoS 1 handshake
@@ -236,8 +238,11 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         else if (message.QoS == QualityOfService.ExactlyOnceDelivery)
         {
             // QoS 2: Assured Delivery
+            var packetIdentifier = await this.PacketIDManager.GetAvailablePacketIDAsync().ConfigureAwait(false);
+            var publishPacket = new PublishPacket(message, (ushort)packetIdentifier);
             PublishResult? publishResult = null;
-            Logger.Trace($"Queuing packet for send: {publishPacket.GetType().Name} id={publishPacket.PacketIdentifier}");
+
+            Logger.Trace($"Queuing QoS 2 publish packet for send: {publishPacket.GetType().Name} id={publishPacket.PacketIdentifier}");
             this.OutgoingPublishQueue.Enqueue(publishPacket);
 
             List<ControlPacket> packetList;
@@ -314,7 +319,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         // FIXME: We should only ever have one subscribe in flight at any time (for now)
         // Construct the MQTT Subscribe packet
-        var packetIdentifier = this.GeneratePacketIdentifier();
+        var packetIdentifier = await this.PacketIDManager.GetAvailablePacketIDAsync().ConfigureAwait(false);
         var subscribePacket = new SubscribePacket(options, (ushort)packetIdentifier);
 
         // Setup the task completion source to wait for the SUBACK
@@ -422,7 +427,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         // Fire the corresponding event
         this.BeforeUnsubscribeEventLauncher(unsubOptions.Subscriptions);
 
-        var packetIdentifier = this.GeneratePacketIdentifier();
+        var packetIdentifier = await this.PacketIDManager.GetAvailablePacketIDAsync().ConfigureAwait(false);
         var unsubscribePacket = new UnsubscribePacket(unsubOptions, (ushort)packetIdentifier);
 
         var taskCompletionSource = new TaskCompletionSource<UnsubAckPacket>();
