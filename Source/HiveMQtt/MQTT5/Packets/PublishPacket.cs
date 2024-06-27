@@ -44,7 +44,7 @@ public class PublishPacket : ControlPacket
 
         if (this.Message.QoS != QualityOfService.AtMostOnceDelivery)
         {
-            if (this.PacketIdentifier == 0)
+            if (this.PacketIdentifier is < 1 or > 65535)
             {
                 throw new ArgumentException("PacketIdentifier must be a valid value for QoS 1 and QoS 2 packets.");
             }
