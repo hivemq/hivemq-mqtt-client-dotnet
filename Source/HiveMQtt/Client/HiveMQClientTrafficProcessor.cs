@@ -427,6 +427,14 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                             if (publishPacket.Message.QoS is QualityOfService.ExactlyOnceDelivery ||
                                 publishPacket.Message.QoS is QualityOfService.AtLeastOnceDelivery)
                             {
+                                if (publishPacket.Message.Duplicate)
+                                {
+                                    // We've received a retransmitted publish packet.
+                                    // Remove any prior transaction chain and reprocess the packet.
+                                    Logger.Debug($"{this.Options.ClientId}-(R)- Received a retransmitted publish packet with id={publishPacket.PacketIdentifier}.  Removing any prior transaction chain.");
+                                    _ = this.IPubTransactionQueue.Remove(publishPacket.PacketIdentifier, out _);
+                                }
+
                                 var success = await this.IPubTransactionQueue.AddAsync(
                                     publishPacket.PacketIdentifier,
                                     new List<ControlPacket> { publishPacket }).ConfigureAwait(false);

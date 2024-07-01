@@ -104,10 +104,11 @@ public class BoundedDictionaryX<TKey, TVal> : IDisposable
 
         try
         {
-            if (this.dictionary.TryRemove(key, out value))
+            if (this.dictionary.TryRemove(key, out var removedValue))
             {
                 // Item successfully removed, release the slot
                 this.semaphore.Release();
+                value = removedValue;
                 return true;
             }
             else
