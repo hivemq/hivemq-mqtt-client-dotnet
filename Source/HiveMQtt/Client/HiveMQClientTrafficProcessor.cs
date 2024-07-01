@@ -427,6 +427,14 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                             if (publishPacket.Message.QoS is QualityOfService.ExactlyOnceDelivery ||
                                 publishPacket.Message.QoS is QualityOfService.AtLeastOnceDelivery)
                             {
+                                if (publishPacket.Message.Duplicate)
+                                {
+                                    // We've received a retransmitted publish packet.
+                                    // Remove any prior transaction chain and reprocess the packet.
+                                    Logger.Debug($"{this.Options.ClientId}-(R)- Received a retransmitted publish packet with id={publishPacket.PacketIdentifier}.  Removing any prior transaction chain.");
+                                    _ = this.IPubTransactionQueue.Remove(publishPacket.PacketIdentifier, out _);
+                                }
+
                                 var success = await this.IPubTransactionQueue.AddAsync(
                                     publishPacket.PacketIdentifier,
                                     new List<ControlPacket> { publishPacket }).ConfigureAwait(false);
@@ -643,7 +651,14 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             }
             else
             {
-                throw new HiveMQttClientException($"QoS1: Received Publish with an unknown packet identifier {publishPacket.PacketIdentifier}. Discarded.");
+                var opts = new DisconnectOptions
+                {
+                    ReasonCode = DisconnectReasonCode.UnspecifiedError,
+                    ReasonString = "Client internal error managing publish transaction chain.",
+                };
+                await this.DisconnectAsync(opts).ConfigureAwait(false);
+                await this.PacketIDManager.MarkPacketIDAsAvailableAsync(publishPacket.PacketIdentifier).ConfigureAwait(false);
+                Logger.Error($"QoS1: Received Publish with an unknown packet identifier {publishPacket.PacketIdentifier}.");
             }
         }
         else if (publishPacket.Message.QoS is QualityOfService.ExactlyOnceDelivery)
@@ -671,9 +686,14 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             }
             else
             {
-                // FIXME: This should never happen if ConnectionReaderAsync is working correctly
-                Logger.Error($"QoS2: Received Publish with an unknown packet identifier {publishPacket.PacketIdentifier}. Discarded.");
-                return;
+                var opts = new DisconnectOptions
+                {
+                    ReasonCode = DisconnectReasonCode.UnspecifiedError,
+                    ReasonString = "Client internal error managing publish transaction chain.",
+                };
+                await this.DisconnectAsync(opts).ConfigureAwait(false);
+                await this.PacketIDManager.MarkPacketIDAsAvailableAsync(publishPacket.PacketIdentifier).ConfigureAwait(false);
+                Logger.Error($"QoS2: Received Publish with an unknown packet identifier {publishPacket.PacketIdentifier}.");
             }
 
             this.SendQueue.Enqueue(pubRecResponse);
