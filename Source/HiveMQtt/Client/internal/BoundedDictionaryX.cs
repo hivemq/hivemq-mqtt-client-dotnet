@@ -144,7 +144,12 @@ public class BoundedDictionaryX<TKey, TVal> : IDisposable
     /// <param name="key">The key to get.</param>
     /// <param name="value">The value retrieved.</param>
     /// <returns><c>true</c> if the item was retrieved; otherwise, <c>false</c>.</returns>
-    public bool TryGetValue(TKey key, out TVal value) => this.dictionary.TryGetValue(key, out value);
+    public bool TryGetValue(TKey key, out TVal value)
+    {
+        var result = this.dictionary.TryGetValue(key, out var retrievedValue);
+        value = retrievedValue is null ? default! : retrievedValue;
+        return result;
+    }
 
     /// <summary>
     /// Determines whether the dictionary contains the specified key.
