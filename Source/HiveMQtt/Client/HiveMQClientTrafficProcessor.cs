@@ -84,7 +84,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             {
                 try
                 {
-                    // If connected and no recent traffic, send a ping
+                    // If connected and no recent packets have been sent, send a ping
                     if (this.ConnectState == ConnectState.Connected)
                     {
                         if (this.lastCommunicationTimer.Elapsed > TimeSpan.FromSeconds(keepAlivePeriod))
@@ -949,7 +949,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         }
 
         var readResult = await this.Reader.ReadAsync(cancellationToken).ConfigureAwait(false);
-        this.lastCommunicationTimer.Restart();
         return readResult;
     }
 }

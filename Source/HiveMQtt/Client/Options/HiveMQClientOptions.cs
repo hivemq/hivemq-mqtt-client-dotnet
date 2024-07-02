@@ -61,7 +61,7 @@ public class HiveMQClientOptions
     // When resolving a DNS hostname in the Host property, prefer IPv6 addresses over IPv4 addresses.
     public bool PreferIPv6 { get; set; }
 
-    // The the maximum time interval that is permitted to elapse between the point at which the Client
+    // The the maximum time interval in seconds that is permitted to elapse between the point at which the Client
     // finishes transmitting one MQTT Control Packet and the point it starts sending the next.
     // Valid values: 0..65535
     public int KeepAlive { get; set; }
