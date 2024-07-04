@@ -187,6 +187,12 @@ public class HiveMQClientOptions
     public int ResponseTimeoutInMs { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether the client should automatically reconnect if the connection is lost.
+    /// Reconnection attempts will be made with a retry back off strategy.
+    /// </summary>
+    public bool AutomaticReconnect { get; set; }
+
+    /// <summary>
     /// Generate a semi-random client identifier to be used in <c>Client</c> connections.
     /// hmqc#-pid-randomstring.
     /// </summary>

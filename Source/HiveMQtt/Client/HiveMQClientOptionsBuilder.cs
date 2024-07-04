@@ -527,6 +527,31 @@ public class HiveMQClientOptionsBuilder
     }
 
     /// <summary>
+    /// Sets whether to automatically reconnect.
+    /// <para>
+    /// This value indicates whether the client should automatically reconnect to the broker in case of
+    /// a connection failure or disconnection.
+    /// </para>
+    /// <para>
+    /// When the Automatic Reconnect flag is set to true, the client will attempt to automatically reconnect
+    /// to the broker if the connection is lost or disconnected unexpectedly. The client will continue to
+    /// retry the connection at increasing intervals (with a maximum) until the connection is re-established successfully.
+    /// </para>
+    /// <para>
+    /// By enabling the Automatic Reconnect feature, clients can ensure that their MQTT communication remains
+    /// robust and resilient to network disruptions or temporary outages. The client will automatically recover
+    /// from connection failures and resume communication with the broker without manual intervention.
+    /// </para>
+    /// </summary>
+    /// <param name="automaticReconnect">A boolean indicating whether to automatically reconnect.</param>
+    /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
+    public HiveMQClientOptionsBuilder WithAutomaticReconnect(bool automaticReconnect)
+    {
+        this.options.AutomaticReconnect = automaticReconnect;
+        return this;
+    }
+
+    /// <summary>
     /// Builds the HiveMQClientOptions instance.
     /// </summary>
     /// <returns>The HiveMQClientOptions instance.</returns>
