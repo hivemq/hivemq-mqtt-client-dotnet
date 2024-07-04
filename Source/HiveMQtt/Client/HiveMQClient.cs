@@ -50,13 +50,18 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         Logger.Trace("Trace Level Logging Legend:");
         Logger.Trace("    -(W)-   == ConnectionWriter");
-        Logger.Trace("    -(PW)-   == ConnectionPublishWriter");
+        Logger.Trace("    -(PW)-  == ConnectionPublishWriter");
         Logger.Trace("    -(R)-   == ConnectionReader");
         Logger.Trace("    -(CM)-  == ConnectionMonitor");
         Logger.Trace("    -(RPH)- == ReceivedPacketsHandler");
 
         this.Options = options;
         this.cancellationTokenSource = new CancellationTokenSource();
+
+        if (this.Options.AutomaticReconnect)
+        {
+            this.AfterDisconnect += AutomaticReconnectHandler;
+        }
 
         // In-flight transaction queues
         this.IPubTransactionQueue = new BoundedDictionaryX<int, List<ControlPacket>>(this.Options.ClientReceiveMaximum);
@@ -481,47 +486,4 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         return unsubscribeResult;
     }
 
-    /// <summary>
-    /// Close the socket and set the connect state to disconnected.
-    /// </summary>
-    /// <param name="clean">Indicates whether the disconnect was intended or not.</param>
-    private async Task<bool> HandleDisconnectionAsync(bool clean = true)
-    {
-        if (this.ConnectState == ConnectState.Disconnected)
-        {
-            Logger.Trace("HandleDisconnection: Already disconnected.");
-            return false;
-        }
-
-        Logger.Debug($"HandleDisconnection: Handling disconnection. clean={clean}.");
-
-        // Cancel all background tasks and close the socket
-        this.ConnectState = ConnectState.Disconnected;
-
-        await this.CloseSocketAsync().ConfigureAwait(false);
-
-        if (clean)
-        {
-            if (!this.SendQueue.IsEmpty)
-            {
-                Logger.Warn($"HandleDisconnection: Send queue not empty. {this.SendQueue.Count} packets pending but we are disconnecting.");
-            }
-
-            if (!this.OutgoingPublishQueue.IsEmpty)
-            {
-                Logger.Warn($"HandleDisconnection: Outgoing publish queue not empty. {this.OutgoingPublishQueue.Count} packets pending but we are disconnecting.");
-            }
-
-            // We only clear the queues on explicit disconnect
-            this.SendQueue.Clear();
-            this.OutgoingPublishQueue.Clear();
-        }
-
-        // Delay for 1 seconds before launching the AfterDisconnect event
-        await Task.Delay(1000).ConfigureAwait(false);
-
-        // Fire the corresponding after event
-        this.AfterDisconnectEventLauncher(clean);
-        return true;
-    }
 }

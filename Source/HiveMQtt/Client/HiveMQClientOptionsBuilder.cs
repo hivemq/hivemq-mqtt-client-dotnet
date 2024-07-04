@@ -535,7 +535,7 @@ public class HiveMQClientOptionsBuilder
     /// <para>
     /// When the Automatic Reconnect flag is set to true, the client will attempt to automatically reconnect
     /// to the broker if the connection is lost or disconnected unexpectedly. The client will continue to
-    /// retry the connection at increasing intervals (with a maximum) until the connection is re-established successfully.
+    /// retry the connection at increasing intervals until the connection is re-established successfully.
     /// </para>
     /// <para>
     /// By enabling the Automatic Reconnect feature, clients can ensure that their MQTT communication remains

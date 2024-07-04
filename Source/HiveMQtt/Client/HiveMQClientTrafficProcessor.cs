@@ -576,7 +576,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received ConnAck");
         if (connAckPacket.ReasonCode == ConnAckReasonCode.Success && connAckPacket.Properties.ReceiveMaximum != null)
         {
-            Logger.Debug($"{this.Options.ClientId}-(RPH)- <-- Broker says limit concurrent incoming QoS 1 and QoS 2 publishes to {connAckPacket.Properties.ReceiveMaximum}.");
+            Logger.Debug($"{this.Options.ClientId}-(RPH)- <-- Broker ReceiveMaximum is {connAckPacket.Properties.ReceiveMaximum}.");
 
             // FIXME: A resize would be better to not lose any existing.  Can we send publishes before the CONNACK?
             // Replace the OPubTransactionQueue BoundedDictionary with a new one with the broker's ReceiveMaximum

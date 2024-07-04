@@ -47,6 +47,7 @@ public class HiveMQClientOptions
         this.ClientReceiveMaximum = 10;
         this.ConnectTimeoutInMs = 5000;
         this.ResponseTimeoutInMs = 5000;
+        this.AutomaticReconnect = false;
     }
 
     // Client Identifier to be used in the Client.  Will be set automatically if not specified.
@@ -202,8 +203,7 @@ public class HiveMQClientOptions
         var stamp = "hmqcs";
 
         var clientID = new string(Enumerable.Range(0, 18) // Target length 23 (5 chars for stamp)
-                                            .Select(_ =>
-                                            this.clientIdCharset[rand.Next(this.clientIdCharset.Length)])
+                                            .Select(_ => this.clientIdCharset[rand.Next(this.clientIdCharset.Length)])
                                             .ToArray());
 
         this.ClientId = stamp + clientID;
