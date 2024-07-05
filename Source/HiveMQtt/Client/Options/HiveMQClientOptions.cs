@@ -47,6 +47,7 @@ public class HiveMQClientOptions
         this.ClientReceiveMaximum = 10;
         this.ConnectTimeoutInMs = 5000;
         this.ResponseTimeoutInMs = 5000;
+        this.AutomaticReconnect = false;
     }
 
     // Client Identifier to be used in the Client.  Will be set automatically if not specified.
@@ -187,6 +188,12 @@ public class HiveMQClientOptions
     public int ResponseTimeoutInMs { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether the client should automatically reconnect if the connection is lost.
+    /// Reconnection attempts will be made with a retry back off strategy.
+    /// </summary>
+    public bool AutomaticReconnect { get; set; }
+
+    /// <summary>
     /// Generate a semi-random client identifier to be used in <c>Client</c> connections.
     /// hmqc#-pid-randomstring.
     /// </summary>
@@ -196,8 +203,7 @@ public class HiveMQClientOptions
         var stamp = "hmqcs";
 
         var clientID = new string(Enumerable.Range(0, 18) // Target length 23 (5 chars for stamp)
-                                            .Select(_ =>
-                                            this.clientIdCharset[rand.Next(this.clientIdCharset.Length)])
+                                            .Select(_ => this.clientIdCharset[rand.Next(this.clientIdCharset.Length)])
                                             .ToArray());
 
         this.ClientId = stamp + clientID;

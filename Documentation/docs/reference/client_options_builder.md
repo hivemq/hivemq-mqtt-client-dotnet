@@ -4,6 +4,14 @@ The `HiveMQClientOptionsBuilder` class is a builder pattern implementation that 
 
 ## Methods
 
+### `WithAutomaticReconnect(bool automaticReconnect)`
+
+Sets whether the client should automatically reconnect when the connection is lost or dropped.
+
+**Description:** This flag indicates whether the automatic reconnect system is enabled.  Reconnection attempts are made periodically with a backing off strategy that maxes out at once per minute until reconnected.
+
+**Example:** `WithAutomaticReconnect(true)`
+
 ### `WithBroker(string broker)`
 
 Sets the address of the broker to connect to.
