@@ -1,6 +1,3 @@
----
-sidebar_position: 45
----
 # HiveMQClientOptions
 
 The `HiveMQClientOptions` class provides options for configuring the HiveMQ MQTT client.
@@ -120,6 +117,18 @@ The `HiveMQClientOptions` class provides options for configuring the HiveMQ MQTT
 
 * Type: `int`
 * Description: The time in milliseconds to wait for a connection to be established.
+
+### `ResponseTimeoutInMs`
+-------------------------
+
+* Type: `int`
+* Description: The time in milliseconds to wait for a response from transactional packets.
+
+### `AutomaticReconnect`
+-------------------------
+
+* Type: `bool`
+* Description: Indicates whether the client should automatically reconnect if the connection is lost or dropped.
 
 ## Constructors
 ---------------
