@@ -5,4 +5,4 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("Usage", "VSTHRD100:Avoid async void methods", Justification = "<Pending>", Scope = "member", Target = "~M:HiveMQtt.Client.HiveMQClient.AutomaticReconnectHandler(System.Object,HiveMQtt.Client.Events.AfterDisconnectEventArgs)")]
+[assembly: SuppressMessage("Usage", "VSTHRD100:Avoid async void methods", Justification = "Event handlers are not awaited and have no return.", Scope = "member", Target = "~M:HiveMQtt.Client.HiveMQClient.AutomaticReconnectHandler(System.Object,HiveMQtt.Client.Events.AfterDisconnectEventArgs)")]

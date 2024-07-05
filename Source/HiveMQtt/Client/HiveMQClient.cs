@@ -485,5 +485,4 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         this.AfterUnsubscribeEventLauncher(unsubscribeResult);
         return unsubscribeResult;
     }
-
 }
