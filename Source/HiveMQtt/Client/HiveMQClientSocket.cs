@@ -104,45 +104,18 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <returns>A boolean representing the success or failure of the operation.</returns>
     internal async Task<bool> ConnectSocketAsync()
     {
-        IPAddress? ipAddress = null;
-        var ipHostInfo = await Dns.GetHostEntryAsync(this.Options.Host).ConfigureAwait(false);
+        IPEndPoint ipEndPoint;
+        var ipAddress = await this.LookupHostNameAsync(this.Options.Host).ConfigureAwait(false);
 
-        if (ipHostInfo.AddressList.Length == 0)
+        // Create the IPEndPoint depending on whether it is a host name or IP address.
+        if (ipAddress == null)
         {
-            throw new HiveMQttClientException("Failed to resolve host");
-        }
-
-        // DNS Address resolution logic.  If DNS returns multiple records, how do we handle?
-        // If we have a single record, we can use that.
-        // If we have multiple records, we can use the first one with respect to the PreferIPv6 option.
-        if (ipHostInfo.AddressList.Length == 1)
-        {
-            ipAddress = ipHostInfo.AddressList[0];
+            ipEndPoint = new IPEndPoint(IPAddress.Parse(this.Options.Host), this.Options.Port);
         }
         else
         {
-            // Loop through each to find a preferred address
-            foreach (var address in ipHostInfo.AddressList)
-            {
-                if (this.Options.PreferIPv6 && address.AddressFamily == AddressFamily.InterNetworkV6)
-                {
-                    ipAddress = address;
-                    break;
-                }
-
-                if (address.AddressFamily == AddressFamily.InterNetwork)
-                {
-                    ipAddress = address;
-                    break;
-                }
-            }
+            ipEndPoint = new IPEndPoint(ipAddress, this.Options.Port);
         }
-
-        // We have multiple address returned, but none of them match the PreferIPv6 option.
-        // Use the first one whatever it is.
-        ipAddress ??= ipHostInfo.AddressList[0];
-
-        IPEndPoint ipEndPoint = new(ipAddress, this.Options.Port);
 
         this.Socket = new(ipEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
@@ -350,6 +323,56 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         else
         {
             Logger.Error("ConnectionMonitorTask did not complete");
+        }
+    }
+
+    private async Task<IPAddress?> LookupHostNameAsync(string host)
+    {
+        try
+        {
+            IPAddress? ipAddress = null;
+            var ipHostInfo = await Dns.GetHostEntryAsync(host).ConfigureAwait(false);
+
+            if (ipHostInfo.AddressList.Length == 0)
+            {
+                throw new HiveMQttClientException("Failed to resolve host");
+            }
+
+            // DNS Address resolution logic.  If DNS returns multiple records, how do we handle?
+            // If we have a single record, we can use that.
+            // If we have multiple records, we can use the first one with respect to the PreferIPv6 option.
+            if (ipHostInfo.AddressList.Length == 1)
+            {
+                ipAddress = ipHostInfo.AddressList[0];
+            }
+            else
+            {
+                // Loop through each to find a preferred address
+                foreach (var address in ipHostInfo.AddressList)
+                {
+                    if (this.Options.PreferIPv6 && address.AddressFamily == AddressFamily.InterNetworkV6)
+                    {
+                        ipAddress = address;
+                        break;
+                    }
+
+                    if (address.AddressFamily == AddressFamily.InterNetwork)
+                    {
+                        ipAddress = address;
+                        break;
+                    }
+                }
+            }
+
+            // We have multiple address returned, but none of them match the PreferIPv6 option.
+            // Use the first one whatever it is.
+            ipAddress ??= ipHostInfo.AddressList[0];
+            return ipAddress;
+        }
+        catch (SocketException socketException)
+        {
+            Logger.Debug(socketException.Message);
+            return null;
         }
     }
 }
