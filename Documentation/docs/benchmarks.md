@@ -21,14 +21,57 @@ The benchmarks provide insights into the performance of different messaging meth
 
 ## Legend
 
-```
-  Mean   : Arithmetic mean of all measurements
-  Error  : Half of 99.9% confidence interval
-  StdDev : Standard deviation of all measurements
-  Median : Value separating the higher half of all measurements (50th percentile)
-  1 us   : 1 Microsecond (0.000001 sec)
-  1 ms   : 1,000 Microseconds
-```
+* **Mean**: Arithmetic mean of all measurements
+* **Error**: Half of 99.9% confidence interval
+* **StdDev**: Standard deviation of all measurements
+* **Median**: Value separating the higher half of all measurements (50th percentile)
+* **1 us**: 1 Microsecond (0.000001 sec)
+* **1 ms**: 1,000 Microseconds
+* <font color="green">Green</font>: Improvement
+* <font color="red">Red</font>: Regression
+
+## July 25, 2024
+
+### Summary
+
+The client has had many feature additions and improvements from March 2024 including:
+
+* New Back-pressure support
+* Improved QoS reliability
+* Improved Async await strategies
+* Re-architected internal queues
+* Improved event & trigger handling
+* All around better error handling
+
+The following table shows the benchmark results compared against previous benchmark runs.
+
+| Method | Alpha | March 2024 | July 2024 |
+| ------ | ----- | -------- | -------------- |
+| QoS 0 Message    | <font color="">4.875 us</font>  | <font color="red">9.084 us</font>  | <font color="green">5.500 us</font>  |
+| QoS 1 Message    | <font color="">790.645 us</font>  | <font color="red">1,357.063 us</font>  | <font color="green">982.208 us</font>  |
+| QoS 2 Message    | <font color="">1,653.083 us</font>  | <font color="green">1,292.396 us</font>  | <font color="green">1,004.854 us</font>  |
+| 100 QoS 0 @ 256b | No Data | <font color="">79.604 us</font>  | <font color="red">100.375 us</font>  |
+| 100 QoS 1 @ 256b | No Data | <font color="">42,482.520 us</font>  | <font color="green">29,661.605 us</font>  |
+| 100 QoS 2 @ 256b | No Data | <font color="">85,640.167 us</font>  | <font color="green">55,474.250 us</font>  |
+| 100 QoS 0 @ 256k | No Data | <font color="">69.709 us</font>  | <font color="red">99.354 us</font>  |
+| 100 QoS 1 @ 256k | No Data | <font color="">266,506.583 us</font>  | <font color="green">215,158.104 us</font>  |
+| 100 QoS 2 @ 256k | No Data | <font color="">296,254.688 us</font>  | <font color="green">227,255.729 us</font>  |
+
+### July Benchmark Data
+
+The raw benchmark data from July.
+
+| Method                                           | Mean          | Error        | StdDev        | Median         |
+|------------------------------------------------- |--------------:|-------------:|--------------:|---------------:|
+| 'Publish a QoS 0 message'                        |      32.59 us |     85.64 us |     252.53 us |       5.500 us |
+| 'Publish a QoS 1 message'                        |   6,323.30 us | 16,671.57 us |  49,156.51 us |     982.208 us |
+| 'Publish a QoS 2 message'                        |   6,554.90 us | 16,998.38 us |  50,120.10 us |   1,004.854 us |
+| 'Publish 100 256b length payload QoS 0 messages' |     131.73 us |     92.15 us |     271.71 us |     100.375 us |
+| 'Publish 100 256b length payload QoS 1 messages' |  35,405.71 us | 17,183.26 us |  50,665.23 us |  29,661.605 us |
+| 'Publish 100 256b length payload QoS 2 messages' |  61,955.04 us | 17,559.19 us |  51,773.66 us |  55,474.250 us |
+| 'Publish 100 256k length payload QoS 0 messages' |     129.00 us |     83.24 us |     245.42 us |      99.354 us |
+| 'Publish 100 256k length payload QoS 1 messages' | 226,498.28 us | 42,050.59 us | 123,987.13 us | 215,158.104 us |
+| 'Publish 100 256k length payload QoS 2 messages' | 244,227.03 us | 47,932.40 us | 141,329.77 us | 227,255.729 us |
 
 ## Mar 22, 2024
 
@@ -50,7 +93,17 @@ See also: [What is MQTT Quality of Service (QoS) 0,1, & 2? – MQTT Essentials: 
 
 ## Mar 21, 2024
 
-With release [v0.11.0](https://github.com/hivemq/hivemq-mqtt-client-dotnet/releases/tag/v0.11.0) there was a big performance improvement.  All messaging performance was improved but particularly publishing a QoS level 2 message went from ~206ms down to ~1.6ms.
+With release [v0.11.0](https://github.com/hivemq/hivemq-mqtt-client-dotnet/releases/tag/v0.11.0) there was a big performance improvement.  All messaging performance was improved but particularly publishing a **QoS level 2 message went from ~206ms down to ~1.6ms**.
+
+### Summary
+
+From the early version through two refactors, this table summarizes the performance improvements.
+
+| Method | Original | First Pass Refactor | Final Refactor |
+| ------ | -------- | ------------------- | -------------- |
+| QoS 0 Message | <font color="red">5.646 us</font>  | 9.250 us  | <font color="green">4.875 us</font>  |
+| QoS 1 Message | <font color="red">103,536.375 us</font>  | 1,324.251 us  | <font color="green">790.645 us</font>  |
+| QoS 2 Message | <font color="red">206,959.834 us</font>  | 2,569.166 us  | <font color="green">1,653.083 us</font>  |
 
 ###  Previous Performance
 
