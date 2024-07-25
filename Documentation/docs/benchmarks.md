@@ -4,7 +4,9 @@ sidebar_position: 90
 
 # Benchmarks
 
-The benchmarks provided in the HiveMQtt GitHub repository are built using BenchmarkDotNet, a .NET library for benchmarking. These benchmarks are designed to measure the performance of various messaging operations against any MQTT broker.
+The HiveMQtt GitHub repository provides benchmarks built using BenchmarkDotNet, a .NET library for benchmarking. These benchmarks measure the performance of various messaging operations against any MQTT broker.
+
+
 
 ## Running Benchmarks
 
@@ -17,7 +19,7 @@ dotnet run ClientBenchmarkApp.csproj -c Release
 
 ## Results
 
-The benchmarks provide insights into the performance of different messaging methods under various scenarios. Below are the results obtained from running the benchmarks on a local MBP (MacBook Pro) against a HiveMQ v4 broker running in a Docker container over localhost.
+The benchmarks provide insights into the performance of different messaging methods under various scenarios. Below are the results obtained from running the benchmarks on a local MacBook Pro against a HiveMQ v4 broker running in a Docker container over localhost.
 
 ## Legend
 
