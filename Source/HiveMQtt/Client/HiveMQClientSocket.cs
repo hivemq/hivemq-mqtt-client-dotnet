@@ -102,7 +102,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// Make a TCP connection to a remote broker.
     /// </summary>
     /// <returns>A boolean representing the success or failure of the operation.</returns>
-    internal async Task<bool> ConnectSocketAsync()
+    internal async Task<bool> ConnectTCPSocketAsync()
     {
         IPEndPoint ipEndPoint;
         var ipAddress = await this.LookupHostNameAsync(this.Options.Host).ConfigureAwait(false);

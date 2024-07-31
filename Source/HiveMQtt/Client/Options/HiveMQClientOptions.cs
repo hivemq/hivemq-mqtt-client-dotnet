@@ -54,6 +54,7 @@ public class HiveMQClientOptions
     public string? ClientId { get; set; }
 
     // IP Address or DNS Hostname of the MQTT Broker to connect to
+    // This can also be a websocket URL: ws:// or wss://
     public string Host { get; set; }
 
     // The port to connect to on the MQTT Broker

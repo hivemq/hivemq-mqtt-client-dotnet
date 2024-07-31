@@ -92,7 +92,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         // Fire the corresponding event
         this.BeforeConnectEventLauncher(this.Options);
 
-        var socketIsConnected = await this.ConnectSocketAsync().ConfigureAwait(false);
+        var socketIsConnected = await this.ConnectTCPSocketAsync().ConfigureAwait(false);
 
         var taskCompletionSource = new TaskCompletionSource<ConnAckPacket>();
         void TaskHandler(object? sender, OnConnAckReceivedEventArgs args) => taskCompletionSource.SetResult(args.ConnAckPacket);
