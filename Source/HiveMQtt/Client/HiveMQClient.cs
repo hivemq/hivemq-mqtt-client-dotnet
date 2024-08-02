@@ -19,7 +19,7 @@ namespace HiveMQtt.Client;
 using System;
 using System.Text;
 using System.Threading.Tasks;
-
+using HiveMQtt.Client.Connection;
 using HiveMQtt.Client.Events;
 using HiveMQtt.Client.Exceptions;
 using HiveMQtt.Client.Internal;
@@ -37,37 +37,24 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 {
     private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
-    internal ConnectState ConnectState { get; set; }
+    internal ConnectionManager Connection { get; set; }
 
     public HiveMQClient(HiveMQClientOptions? options = null)
     {
-        this.ConnectState = ConnectState.Disconnected;
-
         options ??= new HiveMQClientOptions();
         options.Validate();
 
         Logger.Trace($"New client created: Client ID: {options.ClientId}");
 
-        Logger.Trace("Trace Level Logging Legend:");
-        Logger.Trace("    -(W)-   == ConnectionWriter");
-        Logger.Trace("    -(PW)-  == ConnectionPublishWriter");
-        Logger.Trace("    -(R)-   == ConnectionReader");
-        Logger.Trace("    -(CM)-  == ConnectionMonitor");
-        Logger.Trace("    -(RPH)- == ReceivedPacketsHandler");
-
         this.Options = options;
-        this.cancellationTokenSource = new CancellationTokenSource();
 
         if (this.Options.AutomaticReconnect)
         {
             this.AfterDisconnect += AutomaticReconnectHandler;
         }
 
-        // In-flight transaction queues
-        this.IPubTransactionQueue = new BoundedDictionaryX<int, List<ControlPacket>>(this.Options.ClientReceiveMaximum);
-
-        // Set protocol default until ConnAck is received
-        this.OPubTransactionQueue = new BoundedDictionaryX<int, List<ControlPacket>>(65535);
+        // Initialize the connection manager
+        this.Connection = new ConnectionManager(this);
     }
 
     /// <inheritdoc />
@@ -80,19 +67,19 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     public List<Subscription> Subscriptions { get; } = new();
 
     /// <inheritdoc />
-    public bool IsConnected() => this.ConnectState == ConnectState.Connected;
+    public bool IsConnected() => this.Connection.State == ConnectState.Connected;
 
     /// <inheritdoc />
     public async Task<ConnectResult> ConnectAsync()
     {
-        this.ConnectState = ConnectState.Connecting;
+        this.Connection.State = ConnectState.Connecting;
 
         Logger.Info("Connecting to broker at {0}:{1}", this.Options.Host, this.Options.Port);
 
         // Fire the corresponding event
         this.BeforeConnectEventLauncher(this.Options);
 
-        var socketIsConnected = await this.ConnectTCPSocketAsync().ConfigureAwait(false);
+        await this.Connection.ConnectAsync().ConfigureAwait(true);
 
         var taskCompletionSource = new TaskCompletionSource<ConnAckPacket>();
         void TaskHandler(object? sender, OnConnAckReceivedEventArgs args) => taskCompletionSource.SetResult(args.ConnAckPacket);
@@ -103,7 +90,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         // Construct the MQTT Connect packet and queue to send
         var connPacket = new ConnectPacket(this.Options);
         Logger.Trace($"Queuing CONNECT packet for send.");
-        this.SendQueue.Enqueue(connPacket);
+        this.Connection.SendQueue.Enqueue(connPacket);
 
         ConnAckPacket connAck;
         ConnectResult connectResult;
@@ -113,7 +100,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         }
         catch (TimeoutException)
         {
-            this.ConnectState = ConnectState.Disconnected;
+            this.Connection.State = ConnectState.Disconnected;
             Logger.Error($"Connect timeout.  No response received in {this.Options.ConnectTimeoutInMs} milliseconds.");
             throw new HiveMQttClientException($"Connect timeout.  No response received in {this.Options.ConnectTimeoutInMs} milliseconds.");
         }
@@ -125,11 +112,11 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         if (connAck.ReasonCode == ConnAckReasonCode.Success)
         {
-            this.ConnectState = ConnectState.Connected;
+            this.Connection.State = ConnectState.Connected;
         }
         else
         {
-            this.ConnectState = ConnectState.Disconnected;
+            this.Connection.State = ConnectState.Disconnected;
         }
 
         connectResult = new ConnectResult(connAck.ReasonCode, connAck.SessionPresent, connAck.Properties);
@@ -147,15 +134,15 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <inheritdoc />
     public async Task<bool> DisconnectAsync(DisconnectOptions? options = null)
     {
-        if (this.ConnectState == ConnectState.Disconnecting)
+        if (this.Connection.State == ConnectState.Disconnecting)
         {
             // We're already disconnecting in another task.
             return true;
         }
 
-        if (this.ConnectState != ConnectState.Connected)
+        if (this.Connection.State != ConnectState.Connected)
         {
-            Logger.Warn($"DisconnectAsync called but this client is not connected.  State is {this.ConnectState}.");
+            Logger.Warn($"DisconnectAsync called but this client is not connected.  State is {this.Connection.State}.");
             return false;
         }
 
@@ -172,7 +159,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         };
 
         // Once this is set, no more incoming packets or outgoing will be accepted
-        this.ConnectState = ConnectState.Disconnecting;
+        this.Connection.State = ConnectState.Disconnecting;
 
         var taskCompletionSource = new TaskCompletionSource<DisconnectPacket>();
         void TaskHandler(object? sender, OnDisconnectSentEventArgs args) => taskCompletionSource.SetResult(args.DisconnectPacket);
@@ -180,7 +167,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         this.OnDisconnectSent += eventHandler;
 
         Logger.Trace($"Queuing DISCONNECT packet for send.");
-        this.SendQueue.Enqueue(disconnectPacket);
+        this.Connection.SendQueue.Enqueue(disconnectPacket);
 
         try
         {
@@ -198,7 +185,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             this.OnDisconnectSent -= eventHandler;
         }
 
-        return await this.HandleDisconnectionAsync().ConfigureAwait(false);
+        return await this.Connection.HandleDisconnectionAsync().ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -212,18 +199,18 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             var publishPacket = new PublishPacket(message, 0);
             Logger.Trace($"Queuing QoS 0 publish packet for send: {publishPacket.GetType().Name}");
 
-            this.OutgoingPublishQueue.Enqueue(publishPacket);
+            this.Connection.OutgoingPublishQueue.Enqueue(publishPacket);
             return new PublishResult(publishPacket.Message);
         }
         else if (message.QoS == QualityOfService.AtLeastOnceDelivery)
         {
             // QoS 1: Acknowledged Delivery
-            var packetIdentifier = await this.PacketIDManager.GetAvailablePacketIDAsync().ConfigureAwait(false);
+            var packetIdentifier = await this.Connection.PacketIDManager.GetAvailablePacketIDAsync().ConfigureAwait(false);
             var publishPacket = new PublishPacket(message, (ushort)packetIdentifier);
             PubAckPacket pubAckPacket;
 
             Logger.Trace($"Queuing QoS 1 publish packet for send: {publishPacket.GetType().Name} id={publishPacket.PacketIdentifier}");
-            this.OutgoingPublishQueue.Enqueue(publishPacket);
+            this.Connection.OutgoingPublishQueue.Enqueue(publishPacket);
 
             try
             {
@@ -243,12 +230,12 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         else if (message.QoS == QualityOfService.ExactlyOnceDelivery)
         {
             // QoS 2: Assured Delivery
-            var packetIdentifier = await this.PacketIDManager.GetAvailablePacketIDAsync().ConfigureAwait(false);
+            var packetIdentifier = await this.Connection.PacketIDManager.GetAvailablePacketIDAsync().ConfigureAwait(false);
             var publishPacket = new PublishPacket(message, (ushort)packetIdentifier);
             PublishResult? publishResult = null;
 
             Logger.Trace($"Queuing QoS 2 publish packet for send: {publishPacket.GetType().Name} id={publishPacket.PacketIdentifier}");
-            this.OutgoingPublishQueue.Enqueue(publishPacket);
+            this.Connection.OutgoingPublishQueue.Enqueue(publishPacket);
 
             List<ControlPacket> packetList;
             try
@@ -324,7 +311,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         // FIXME: We should only ever have one subscribe in flight at any time (for now)
         // Construct the MQTT Subscribe packet
-        var packetIdentifier = await this.PacketIDManager.GetAvailablePacketIDAsync().ConfigureAwait(false);
+        var packetIdentifier = await this.Connection.PacketIDManager.GetAvailablePacketIDAsync().ConfigureAwait(false);
         var subscribePacket = new SubscribePacket(options, (ushort)packetIdentifier);
 
         // Setup the task completion source to wait for the SUBACK
@@ -334,7 +321,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         this.OnSubAckReceived += eventHandler;
 
         // Queue the constructed packet to be sent on the wire
-        this.SendQueue.Enqueue(subscribePacket);
+        this.Connection.SendQueue.Enqueue(subscribePacket);
 
         SubAckPacket subAck;
         SubscribeResult subscribeResult;
@@ -432,7 +419,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         // Fire the corresponding event
         this.BeforeUnsubscribeEventLauncher(unsubOptions.Subscriptions);
 
-        var packetIdentifier = await this.PacketIDManager.GetAvailablePacketIDAsync().ConfigureAwait(false);
+        var packetIdentifier = await this.Connection.PacketIDManager.GetAvailablePacketIDAsync().ConfigureAwait(false);
         var unsubscribePacket = new UnsubscribePacket(unsubOptions, (ushort)packetIdentifier);
 
         var taskCompletionSource = new TaskCompletionSource<UnsubAckPacket>();
@@ -440,7 +427,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         EventHandler<OnUnsubAckReceivedEventArgs> eventHandler = TaskHandler;
         this.OnUnsubAckReceived += eventHandler;
 
-        this.SendQueue.Enqueue(unsubscribePacket);
+        this.Connection.SendQueue.Enqueue(unsubscribePacket);
 
         // FIXME: Cancellation token and better timeout value
         UnsubAckPacket unsubAck;
