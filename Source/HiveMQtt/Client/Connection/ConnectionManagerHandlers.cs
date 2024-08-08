@@ -150,7 +150,6 @@ public partial class ConnectionManager
     /// </summary>
     /// <param name="pubAckPacket">The received PubAck packet.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    /// <exception cref="HiveMQttClientException">Raised if the packet identifier is unknown.</exception>
     internal async Task HandleIncomingPubAckPacketAsync(PubAckPacket pubAckPacket)
     {
         Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- <-- Received PubAck id={pubAckPacket.PacketIdentifier} reason={pubAckPacket.ReasonCode}");
@@ -265,7 +264,6 @@ public partial class ConnectionManager
     /// Handle an incoming PubComp packet.
     /// </summary>
     /// <param name="pubAckPacket">The received PubComp packet.</param>
-    /// <exception cref="HiveMQttClientException">Raised if the packet identifier is unknown.</exception>
     /// <returns>A task that represents the asynchronous operation.</returns>
     internal async Task HandleSentPubAckPacketAsync(PubAckPacket pubAckPacket)
     {
@@ -333,7 +331,6 @@ public partial class ConnectionManager
     /// Handle an incoming PubComp packet.
     /// </summary>
     /// <param name="pubCompPacket">The received PubComp packet.</param>
-    /// <exception cref="HiveMQttClientException">Raised if the packet identifier is unknown.</exception>
     /// <returns>A task that represents the asynchronous operation.</returns>
     internal async Task HandleIncomingPubCompPacketAsync(PubCompPacket pubCompPacket)
     {

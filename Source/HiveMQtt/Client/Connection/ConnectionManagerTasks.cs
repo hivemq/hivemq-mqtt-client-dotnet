@@ -1,5 +1,16 @@
 namespace HiveMQtt.Client.Connection;
 
+using HiveMQtt.Client.Exceptions;
+using HiveMQtt.Client.Internal;
+using HiveMQtt.Client.Options;
+using HiveMQtt.MQTT5;
+using HiveMQtt.MQTT5.Packets;
+using HiveMQtt.MQTT5.ReasonCodes;
+using HiveMQtt.MQTT5.Types;
+
+/// <summary>
+/// Represents the connection manager for the MQTT client.
+/// </summary>
 public partial class ConnectionManager
 {
     internal Task? ConnectionPublishWriterTask { get; set; }
@@ -19,14 +30,14 @@ public partial class ConnectionManager
     {
         if (task is null)
         {
-            Logger.Info($"{this.Options.ClientId}-(CM)- {taskName} is not running.");
+            Logger.Info($"{this.Client.Options.ClientId}-(CM)- {taskName} is not running.");
         }
         else
         {
             if (task.IsFaulted)
             {
-                Logger.Error($"{this.Options.ClientId}-(CM)- {taskName} Faulted: {task.Exception}");
-                Logger.Error($"{this.Options.ClientId}-(CM)- {taskName} died.  Disconnecting.");
+                Logger.Error($"{this.Client.Options.ClientId}-(CM)- {taskName} Faulted: {task.Exception}");
+                Logger.Error($"{this.Client.Options.ClientId}-(CM)- {taskName} died.  Disconnecting.");
                 _ = await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
             }
         }
@@ -40,8 +51,8 @@ public partial class ConnectionManager
     private Task ConnectionMonitorAsync(CancellationToken cancellationToken) => Task.Run(
         async () =>
         {
-            var keepAlivePeriod = this.Options.KeepAlive / 2;
-            Logger.Trace($"{this.Options.ClientId}-(CM)- Starting...{this.ConnectState}");
+            var keepAlivePeriod = this.Client.Options.KeepAlive / 2;
+            Logger.Trace($"{this.Client.Options.ClientId}-(CM)- Starting...{this.State}");
             this.lastCommunicationTimer.Start();
 
             while (true)
@@ -49,25 +60,25 @@ public partial class ConnectionManager
                 try
                 {
                     // If connected and no recent packets have been sent, send a ping
-                    if (this.ConnectState == ConnectState.Connected)
+                    if (this.State == ConnectState.Connected)
                     {
                         if (this.lastCommunicationTimer.Elapsed > TimeSpan.FromSeconds(keepAlivePeriod))
                         {
                             // Send PingReq
-                            Logger.Trace($"{this.Options.ClientId}-(CM)- --> PingReq");
+                            Logger.Trace($"{this.Client.Options.ClientId}-(CM)- --> PingReq");
                             this.SendQueue.Enqueue(new PingReqPacket());
                         }
                     }
 
                     // Dumping Client State
-                    Logger.Debug($"{this.Options.ClientId}-(CM)- {this.ConnectState}: last communications {this.lastCommunicationTimer.Elapsed} ago");
-                    Logger.Debug($"{this.Options.ClientId}-(CM)- SendQueue:...............{this.SendQueue.Count}");
-                    Logger.Debug($"{this.Options.ClientId}-(CM)- ReceivedQueue:...........{this.ReceivedQueue.Count}");
-                    Logger.Debug($"{this.Options.ClientId}-(CM)- OutgoingPublishQueue:....{this.OutgoingPublishQueue.Count}");
-                    Logger.Debug($"{this.Options.ClientId}-(CM)- OPubTransactionQueue:....{this.OPubTransactionQueue.Count}/{this.OPubTransactionQueue.Capacity}");
-                    Logger.Debug($"{this.Options.ClientId}-(CM)- IPubTransactionQueue:....{this.IPubTransactionQueue.Count}/{this.IPubTransactionQueue.Capacity}");
-                    Logger.Debug($"{this.Options.ClientId}-(CM)- # of Subscriptions:......{this.Subscriptions.Count}");
-                    Logger.Debug($"{this.Options.ClientId}-(CM)- PacketIDsInUse:..........{this.PacketIDManager.Count}");
+                    Logger.Debug($"{this.Client.Options.ClientId}-(CM)- {this.State}: last communications {this.lastCommunicationTimer.Elapsed} ago");
+                    Logger.Debug($"{this.Client.Options.ClientId}-(CM)- SendQueue:...............{this.SendQueue.Count}");
+                    Logger.Debug($"{this.Client.Options.ClientId}-(CM)- ReceivedQueue:...........{this.ReceivedQueue.Count}");
+                    Logger.Debug($"{this.Client.Options.ClientId}-(CM)- OutgoingPublishQueue:....{this.OutgoingPublishQueue.Count}");
+                    Logger.Debug($"{this.Client.Options.ClientId}-(CM)- OPubTransactionQueue:....{this.OPubTransactionQueue.Count}/{this.OPubTransactionQueue.Capacity}");
+                    Logger.Debug($"{this.Client.Options.ClientId}-(CM)- IPubTransactionQueue:....{this.IPubTransactionQueue.Count}/{this.IPubTransactionQueue.Capacity}");
+                    Logger.Debug($"{this.Client.Options.ClientId}-(CM)- # of Subscriptions:......{this.Client.Subscriptions.Count}");
+                    Logger.Debug($"{this.Client.Options.ClientId}-(CM)- PacketIDsInUse:..........{this.PacketIDManager.Count}");
 
                     // Background Tasks Health Check
                     await this.RunTaskHealthCheckAsync(this.ConnectionWriterTask, "ConnectionWriter").ConfigureAwait(false);
@@ -81,7 +92,7 @@ public partial class ConnectionManager
                     // Check for cancellation
                     if (cancellationToken.IsCancellationRequested)
                     {
-                        Logger.Trace($"{this.Options.ClientId}-(CM)- Canceled & exiting...");
+                        Logger.Trace($"{this.Client.Options.ClientId}-(CM)- Canceled & exiting...");
                         break;
                     }
                 }
@@ -93,13 +104,13 @@ public partial class ConnectionManager
                     }
                     else
                     {
-                        Logger.Error($"{this.Options.ClientId}-(CM)- Exception: {ex}");
+                        Logger.Error($"{this.Client.Options.ClientId}-(CM)- Exception: {ex}");
                         throw;
                     }
                 }
             }
 
-            Logger.Debug($"{this.Options.ClientId}-(CM)- Exiting...{this.ConnectState}, cancellationRequested={cancellationToken.IsCancellationRequested}");
+            Logger.Debug($"{this.Client.Options.ClientId}-(CM)- Exiting...{this.State}, cancellationRequested={cancellationToken.IsCancellationRequested}");
         }, cancellationToken);
 
     /// <summary>
@@ -108,26 +119,26 @@ public partial class ConnectionManager
     private Task ConnectionPublishWriterAsync(CancellationToken cancellationToken) => Task.Run(
         async () =>
         {
-            Logger.Trace($"{this.Options.ClientId}-(PW)- Starting...{this.ConnectState}");
+            Logger.Trace($"{this.Client.Options.ClientId}-(PW)- Starting...{this.State}");
 
             while (true)
             {
                 try
                 {
-                    while (this.ConnectState != ConnectState.Connected)
+                    while (this.State != ConnectState.Connected)
                     {
-                        Logger.Trace($"{this.Options.ClientId}-(PW)- Not connected.  Waiting for connect...");
+                        Logger.Trace($"{this.Client.Options.ClientId}-(PW)- Not connected.  Waiting for connect...");
                         await Task.Delay(500).ConfigureAwait(false);
                         continue;
                     }
 
-                    FlushResult writeResult = default;
+                    var writeSuccess = true;
                     var publishPacket = await this.OutgoingPublishQueue.DequeueAsync(cancellationToken).ConfigureAwait(false);
 
                     if (publishPacket.Message.QoS is QualityOfService.AtLeastOnceDelivery ||
                         publishPacket.Message.QoS is QualityOfService.ExactlyOnceDelivery)
                     {
-                        Logger.Trace($"{this.Options.ClientId}-(PW)- --> Sending QoS={publishPacket.Message.QoS} PublishPacket id={publishPacket.PacketIdentifier}");
+                        Logger.Trace($"{this.Client.Options.ClientId}-(PW)- --> Sending QoS={publishPacket.Message.QoS} PublishPacket id={publishPacket.PacketIdentifier}");
 
                         // QoS > 0 - Add to transaction queue.  OPubTransactionQueue will block when necessary
                         // to respect the broker's ReceiveMaximum
@@ -144,20 +155,20 @@ public partial class ConnectionManager
                     }
                     else
                     {
-                        Logger.Trace($"{this.Options.ClientId}-(PW)- --> Sending QoS 0 PublishPacket");
+                        Logger.Trace($"{this.Client.Options.ClientId}-(PW)- --> Sending QoS 0 PublishPacket");
                     }
 
-                    writeResult = await this.WriteAsync(publishPacket.Encode()).ConfigureAwait(false);
-                    this.OnPublishSentEventLauncher(publishPacket);
+                    writeSuccess = await this.Transport.WriteAsync(publishPacket.Encode()).ConfigureAwait(false);
+                    this.Client.OnPublishSentEventLauncher(publishPacket);
 
-                    if (writeResult.IsCompleted || writeResult.IsCanceled)
+                    if (!writeSuccess)
                     {
-                        Logger.Trace($"{this.Options.ClientId}-(PW)- ConnectionPublishWriter: IsCompleted={writeResult.IsCompleted} IsCancelled={writeResult.IsCanceled}");
+                        Logger.Trace($"{this.Client.Options.ClientId}-(PW)- ConnectionPublishWriter: Failed to write to transport.");
 
-                        if (this.ConnectState == ConnectState.Connected)
+                        if (this.State == ConnectState.Connected)
                         {
                             // This is an unexpected exit and may be due to a network failure.
-                            Logger.Debug($"{this.Options.ClientId}-(PW)- ConnectionPublishWriter: unexpected exit.  Disconnecting...");
+                            Logger.Debug($"{this.Client.Options.ClientId}-(PW)- ConnectionPublishWriter: unexpected exit.  Disconnecting...");
                             await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
                         }
 
@@ -166,7 +177,7 @@ public partial class ConnectionManager
 
                     if (cancellationToken.IsCancellationRequested)
                     {
-                        Logger.Trace($"{this.Options.ClientId}-(PW)- Cancelled & existing with {this.OutgoingPublishQueue.Count} publish packets remaining.");
+                        Logger.Trace($"{this.Client.Options.ClientId}-(PW)- Cancelled & existing with {this.OutgoingPublishQueue.Count} publish packets remaining.");
                         break;
                     }
                 }
@@ -178,13 +189,13 @@ public partial class ConnectionManager
                     }
                     else
                     {
-                        Logger.Error($"{this.Options.ClientId}-(PW)- Exception: {ex}");
+                        Logger.Error($"{this.Client.Options.ClientId}-(PW)- Exception: {ex}");
                         throw;
                     }
                 }
             } // while(true)
 
-            Logger.Debug($"{this.Options.ClientId}-(PW)- ConnectionPublishWriter Exiting...{this.ConnectState}, cancellationRequested={cancellationToken.IsCancellationRequested}");
+            Logger.Debug($"{this.Client.Options.ClientId}-(PW)- ConnectionPublishWriter Exiting...{this.State}, cancellationRequested={cancellationToken.IsCancellationRequested}");
         }, cancellationToken);
 
     /// <summary>
@@ -193,7 +204,7 @@ public partial class ConnectionManager
     private Task ConnectionWriterAsync(CancellationToken cancellationToken) => Task.Run(
         async () =>
         {
-            Logger.Trace($"{this.Options.ClientId}-(W)- Starting...{this.ConnectState}");
+            Logger.Trace($"{this.Client.Options.ClientId}-(W)- Starting...{this.State}");
 
             while (true)
             {
@@ -201,78 +212,75 @@ public partial class ConnectionManager
                 {
                     // We allow this task to run in Connecting, Connected, and Disconnecting states
                     // because it is the one that has to send the CONNECT and DISCONNECT packets.
-                    while (this.ConnectState == ConnectState.Disconnected)
+                    while (this.State == ConnectState.Disconnected)
                     {
-                        Logger.Trace($"{this.Options.ClientId}-(W)- Not connected.  Waiting for connect...");
+                        Logger.Trace($"{this.Client.Options.ClientId}-(W)- Not connected.  Waiting for connect...");
                         await Task.Delay(2000).ConfigureAwait(false);
                         continue;
                     }
 
                     var packet = await this.SendQueue.DequeueAsync(cancellationToken).ConfigureAwait(false);
-                    FlushResult writeResult = default;
+                    var writeSuccess = true;
 
                     switch (packet)
                     {
                         // FIXME: Only one connect, subscribe or unsubscribe packet can be sent at a time.
                         case ConnectPacket connectPacket:
-                            Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending ConnectPacket");
-                            writeResult = await this.WriteAsync(connectPacket.Encode()).ConfigureAwait(false);
-                            this.OnConnectSentEventLauncher(connectPacket);
+                            Logger.Trace($"{this.Client.Options.ClientId}-(W)- --> Sending ConnectPacket");
+                            writeSuccess = await this.Transport.WriteAsync(connectPacket.Encode()).ConfigureAwait(false);
+                            this.Client.OnConnectSentEventLauncher(connectPacket);
                             break;
                         case DisconnectPacket disconnectPacket:
-                            Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending DisconnectPacket");
-                            writeResult = await this.WriteAsync(disconnectPacket.Encode()).ConfigureAwait(false);
-                            this.OnDisconnectSentEventLauncher(disconnectPacket);
+                            Logger.Trace($"{this.Client.Options.ClientId}-(W)- --> Sending DisconnectPacket");
+                            writeSuccess = await this.Transport.WriteAsync(disconnectPacket.Encode()).ConfigureAwait(false);
+                            this.Client.OnDisconnectSentEventLauncher(disconnectPacket);
                             break;
                         case SubscribePacket subscribePacket:
-                            Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending SubscribePacket id={subscribePacket.PacketIdentifier}");
-                            writeResult = await this.WriteAsync(subscribePacket.Encode()).ConfigureAwait(false);
-                            this.OnSubscribeSentEventLauncher(subscribePacket);
+                            Logger.Trace($"{this.Client.Options.ClientId}-(W)- --> Sending SubscribePacket id={subscribePacket.PacketIdentifier}");
+                            writeSuccess = await this.Transport.WriteAsync(subscribePacket.Encode()).ConfigureAwait(false);
+                            this.Client.OnSubscribeSentEventLauncher(subscribePacket);
                             break;
                         case UnsubscribePacket unsubscribePacket:
-                            Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending UnsubscribePacket id={unsubscribePacket.PacketIdentifier}");
-                            writeResult = await this.WriteAsync(unsubscribePacket.Encode()).ConfigureAwait(false);
-                            this.OnUnsubscribeSentEventLauncher(unsubscribePacket);
+                            Logger.Trace($"{this.Client.Options.ClientId}-(W)- --> Sending UnsubscribePacket id={unsubscribePacket.PacketIdentifier}");
+                            writeSuccess = await this.Transport.WriteAsync(unsubscribePacket.Encode()).ConfigureAwait(false);
+                            this.Client.OnUnsubscribeSentEventLauncher(unsubscribePacket);
                             break;
 
                         case PubAckPacket pubAckPacket:
-                            Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PubAckPacket id={pubAckPacket.PacketIdentifier} reason={pubAckPacket.ReasonCode}");
-                            writeResult = await this.WriteAsync(pubAckPacket.Encode()).ConfigureAwait(false);
+                            Logger.Trace($"{this.Client.Options.ClientId}-(W)- --> Sending PubAckPacket id={pubAckPacket.PacketIdentifier} reason={pubAckPacket.ReasonCode}");
+                            writeSuccess = await this.Transport.WriteAsync(pubAckPacket.Encode()).ConfigureAwait(false);
                             await this.HandleSentPubAckPacketAsync(pubAckPacket).ConfigureAwait(false);
                             break;
                         case PubRecPacket pubRecPacket:
-                            Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PubRecPacket id={pubRecPacket.PacketIdentifier} reason={pubRecPacket.ReasonCode}");
-                            writeResult = await this.WriteAsync(pubRecPacket.Encode()).ConfigureAwait(false);
-                            this.OnPubRecSentEventLauncher(pubRecPacket);
+                            Logger.Trace($"{this.Client.Options.ClientId}-(W)- --> Sending PubRecPacket id={pubRecPacket.PacketIdentifier} reason={pubRecPacket.ReasonCode}");
+                            writeSuccess = await this.Transport.WriteAsync(pubRecPacket.Encode()).ConfigureAwait(false);
+                            this.Client.OnPubRecSentEventLauncher(pubRecPacket);
                             break;
                         case PubRelPacket pubRelPacket:
-                            Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PubRelPacket id={pubRelPacket.PacketIdentifier} reason={pubRelPacket.ReasonCode}");
-                            writeResult = await this.WriteAsync(pubRelPacket.Encode()).ConfigureAwait(false);
-                            this.OnPubRelSentEventLauncher(pubRelPacket);
+                            Logger.Trace($"{this.Client.Options.ClientId}-(W)- --> Sending PubRelPacket id={pubRelPacket.PacketIdentifier} reason={pubRelPacket.ReasonCode}");
+                            writeSuccess = await this.Transport.WriteAsync(pubRelPacket.Encode()).ConfigureAwait(false);
+                            this.Client.OnPubRelSentEventLauncher(pubRelPacket);
                             break;
                         case PubCompPacket pubCompPacket:
-                            Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PubCompPacket id={pubCompPacket.PacketIdentifier} reason={pubCompPacket.ReasonCode}");
-                            writeResult = await this.WriteAsync(pubCompPacket.Encode()).ConfigureAwait(false);
+                            Logger.Trace($"{this.Client.Options.ClientId}-(W)- --> Sending PubCompPacket id={pubCompPacket.PacketIdentifier} reason={pubCompPacket.ReasonCode}");
+                            writeSuccess = await this.Transport.WriteAsync(pubCompPacket.Encode()).ConfigureAwait(false);
                             await this.HandleSentPubCompPacketAsync(pubCompPacket).ConfigureAwait(false);
                             break;
 
                         case PingReqPacket pingReqPacket:
-                            Logger.Trace($"{this.Options.ClientId}-(W)- --> Sending PingReqPacket");
-                            writeResult = await this.WriteAsync(PingReqPacket.Encode()).ConfigureAwait(false);
-                            this.OnPingReqSentEventLauncher(pingReqPacket);
+                            Logger.Trace($"{this.Client.Options.ClientId}-(W)- --> Sending PingReqPacket");
+                            writeSuccess = await this.Transport.WriteAsync(PingReqPacket.Encode()).ConfigureAwait(false);
+                            this.Client.OnPingReqSentEventLauncher(pingReqPacket);
                             break;
 
-                        case PublishPacket publishPacket:
-                            throw new HiveMQttClientException("PublishPacket should be sent via ConnectionPublishWriterAsync.");
                         default:
-                            Logger.Trace($"{this.Options.ClientId}-(W)- --> Unknown packet type {packet}");
-                            break;
+                            throw new HiveMQttClientException($"{this.Client.Options.ClientId}-(W)- --> Unknown packet type {packet}");
                     } // switch
 
-                    if (writeResult.IsCompleted || writeResult.IsCanceled)
+                    if (!writeSuccess)
                     {
-                        Logger.Debug($"{this.Options.ClientId}-(W)- ConnectionWriter exiting: IsCompleted={writeResult.IsCompleted} IsCancelled={writeResult.IsCanceled}");
-                        if (this.ConnectState == ConnectState.Connected)
+                        Logger.Error($"{this.Client.Options.ClientId}-(W)- Write failed.  Disconnecting...");
+                        if (this.State == ConnectState.Connected)
                         {
                             await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
                         }
@@ -280,9 +288,11 @@ public partial class ConnectionManager
                         break;
                     }
 
+                    this.lastCommunicationTimer.Restart();
+
                     if (cancellationToken.IsCancellationRequested)
                     {
-                        Logger.Trace($"{this.Options.ClientId}-(W)- Cancelled & exiting with {this.SendQueue.Count} packets remaining.");
+                        Logger.Trace($"{this.Client.Options.ClientId}-(W)- Cancelled & exiting with {this.SendQueue.Count} packets remaining.");
                         break;
                     }
                 }
@@ -294,13 +304,13 @@ public partial class ConnectionManager
                     }
                     else
                     {
-                        Logger.Error($"{this.Options.ClientId}-(W)- Exception: {ex}");
+                        Logger.Error($"{this.Client.Options.ClientId}-(W)- Exception: {ex}");
                         throw;
                     }
                 }
             } // while(true)
 
-            Logger.Debug($"{this.Options.ClientId}-(W)- ConnectionWriter Exiting...{this.ConnectState}, cancellationRequested={cancellationToken.IsCancellationRequested}");
+            Logger.Debug($"{this.Client.Options.ClientId}-(W)- ConnectionWriter Exiting...{this.State}, cancellationRequested={cancellationToken.IsCancellationRequested}");
             return;
         }, cancellationToken);
 
@@ -311,19 +321,18 @@ public partial class ConnectionManager
     private Task<bool> ConnectionReaderAsync(CancellationToken cancellationToken) => Task.Run(
         async () =>
         {
-            ReadResult readResult;
-            Logger.Trace($"{this.Options.ClientId}-(R)- ConnectionReader Starting...{this.ConnectState}");
+            Logger.Trace($"{this.Client.Options.ClientId}-(R)- ConnectionReader Starting...{this.State}");
 
-            while (this.ConnectState is ConnectState.Connecting or ConnectState.Connected)
+            while (this.State is ConnectState.Connecting or ConnectState.Connected)
             {
                 try
                 {
-                    readResult = await this.ReadAsync().ConfigureAwait(false);
+                    var readResult = await this.Transport.ReadAsync().ConfigureAwait(false);
 
-                    if (readResult.IsCanceled || readResult.IsCompleted)
+                    if (readResult.Failed)
                     {
-                        Logger.Debug($"{this.Options.ClientId}-(R)- ConnectionReader exiting: IsCompleted={readResult.IsCompleted} IsCancelled={readResult.IsCanceled}");
-                        if (this.ConnectState == ConnectState.Connected)
+                        Logger.Debug($"{this.Client.Options.ClientId}-(R)- ConnectionReader exiting: Read from transport failed.");
+                        if (this.State == ConnectState.Connected)
                         {
                             await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
                         }
@@ -340,27 +349,27 @@ public partial class ConnectionManager
                             if (decodedPacket is MalformedPacket)
                             {
                                 Logger.Error($"Malformed packet received.  Disconnecting...");
-                                Logger.Debug($"{this.Options.ClientId}-(R)- Malformed packet received: {decodedPacket}");
+                                Logger.Debug($"{this.Client.Options.ClientId}-(R)- Malformed packet received: {decodedPacket}");
 
                                 var opts = new DisconnectOptions
                                 {
                                     ReasonCode = DisconnectReasonCode.MalformedPacket,
                                     ReasonString = "Client couldn't decode packet.",
                                 };
-                                return await this.DisconnectAsync(opts).ConfigureAwait(false);
+                                return await this.Client.DisconnectAsync(opts).ConfigureAwait(false);
                             }
 
                             // Not enough data in the buffer to decode a packet
                             // Advance the reader to the end of the consumed data
                             buffer = buffer.Slice(0, consumed);
-                            this.Reader?.AdvanceTo(buffer.Start, readResult.Buffer.End);
-                            Logger.Trace($"{this.Options.ClientId}-(R)- ConnectionReader: PacketDecoder.TryDecode returned false.  Waiting for more data...");
+                            this.Transport.AdvanceTo(buffer.Start, readResult.Buffer.End);
+                            Logger.Trace($"{this.Client.Options.ClientId}-(R)- ConnectionReader: PacketDecoder.TryDecode returned false.  Waiting for more data...");
                             break;
                         }
 
                         // Advance the reader to indicate how much of the buffer has been consumed
                         buffer = buffer.Slice(consumed);
-                        this.Reader?.AdvanceTo(buffer.Start);
+                        this.Transport.AdvanceTo(buffer.Start);
 
                         // We handle disconnects immediately
                         if (decodedPacket is DisconnectPacket disconnectPacket)
@@ -370,17 +379,17 @@ public partial class ConnectionManager
                         }
 
                         // Check that maximum packet size has not been exceeded
-                        if (this.Options.ClientMaximumPacketSize is not null && decodedPacket.PacketSize > this.Options.ClientMaximumPacketSize)
+                        if (this.Client.Options.ClientMaximumPacketSize is not null && decodedPacket.PacketSize > this.Client.Options.ClientMaximumPacketSize)
                         {
-                            Logger.Error($"Received a packet that exceeds the requested maximum of {this.Options.ClientMaximumPacketSize}.  Disconnecting.");
-                            Logger.Debug($"{this.Options.ClientId}-(RPH)- Received packet size {decodedPacket.PacketSize} for packet {decodedPacket.GetType().Name}");
+                            Logger.Error($"Received a packet that exceeds the requested maximum of {this.Client.Options.ClientMaximumPacketSize}.  Disconnecting.");
+                            Logger.Debug($"{this.Client.Options.ClientId}-(RPH)- Received packet size {decodedPacket.PacketSize} for packet {decodedPacket.GetType().Name}");
 
                             var opts = new DisconnectOptions
                             {
                                 ReasonCode = DisconnectReasonCode.PacketTooLarge,
                                 ReasonString = "Packet size is larger than the requested Maximum Packet Size.",
                             };
-                            await this.DisconnectAsync(opts).ConfigureAwait(false);
+                            await this.Client.DisconnectAsync(opts).ConfigureAwait(false);
                             return false;
                         }
 
@@ -395,7 +404,7 @@ public partial class ConnectionManager
                                 {
                                     // We've received a retransmitted publish packet.
                                     // Remove any prior transaction chain and reprocess the packet.
-                                    Logger.Debug($"{this.Options.ClientId}-(R)- Received a retransmitted publish packet with id={publishPacket.PacketIdentifier}.  Removing any prior transaction chain.");
+                                    Logger.Debug($"{this.Client.Options.ClientId}-(R)- Received a retransmitted publish packet with id={publishPacket.PacketIdentifier}.  Removing any prior transaction chain.");
                                     _ = this.IPubTransactionQueue.Remove(publishPacket.PacketIdentifier, out _);
                                 }
 
@@ -412,19 +421,19 @@ public partial class ConnectionManager
                                         ReasonCode = DisconnectReasonCode.UnspecifiedError,
                                         ReasonString = "Client received a publish with duplicate packet identifier for a transaction already in progress.",
                                     };
-                                    return await this.DisconnectAsync(opts).ConfigureAwait(false);
+                                    return await this.Client.DisconnectAsync(opts).ConfigureAwait(false);
                                 }
                             }
                         }
 
-                        Logger.Trace($"{this.Options.ClientId}-(R)- <-- Received {decodedPacket.GetType().Name} id: {decodedPacket.PacketIdentifier}.  Adding to receivedQueue.");
+                        Logger.Trace($"{this.Client.Options.ClientId}-(R)- <-- Received {decodedPacket.GetType().Name} id: {decodedPacket.PacketIdentifier}.  Adding to receivedQueue.");
                         this.ReceivedQueue.Enqueue(decodedPacket);
                     } // while (buffer.Length > 0
 
                     // Check for cancellation
                     if (cancellationToken.IsCancellationRequested)
                     {
-                        Logger.Trace($"{this.Options.ClientId}-(R)- Cancelled & exiting...");
+                        Logger.Trace($"{this.Client.Options.ClientId}-(R)- Cancelled & exiting...");
                         break;
                     }
                 }
@@ -436,13 +445,13 @@ public partial class ConnectionManager
                     }
                     else
                     {
-                        Logger.Error($"{this.Options.ClientId}-(R)- Exception: {ex}");
+                        Logger.Error($"{this.Client.Options.ClientId}-(R)- Exception: {ex}");
                         throw;
                     }
                 }
-            } // while (this.ConnectState is ConnectState.Connecting or ConnectState.Connected)
+            } // while (this.State is ConnectState.Connecting or ConnectState.Connected)
 
-            Logger.Debug($"{this.Options.ClientId}-(R)- ConnectionReader Exiting...{this.ConnectState}, cancellationRequested={cancellationToken.IsCancellationRequested}");
+            Logger.Debug($"{this.Client.Options.ClientId}-(R)- ConnectionReader Exiting...{this.State}, cancellationRequested={cancellationToken.IsCancellationRequested}");
             return true;
         }, cancellationToken);
 
@@ -453,7 +462,7 @@ public partial class ConnectionManager
     private Task ReceivedPacketsHandlerAsync(CancellationToken cancellationToken) => Task.Run(
         async () =>
         {
-            Logger.Trace($"{this.Options.ClientId}-(RPH)- Starting...{this.ConnectState}");
+            Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- Starting...{this.State}");
 
             while (true)
             {
@@ -467,12 +476,12 @@ public partial class ConnectionManager
                             this.HandleIncomingConnAckPacket(connAckPacket);
                             break;
                         case SubAckPacket subAckPacket:
-                            Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received SubAck id={subAckPacket.PacketIdentifier}");
-                            this.OnSubAckReceivedEventLauncher(subAckPacket);
+                            Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- <-- Received SubAck id={subAckPacket.PacketIdentifier}");
+                            this.Client.OnSubAckReceivedEventLauncher(subAckPacket);
                             break;
                         case UnsubAckPacket unsubAckPacket:
-                            Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received UnsubAck id={unsubAckPacket.PacketIdentifier}");
-                            this.OnUnsubAckReceivedEventLauncher(unsubAckPacket);
+                            Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- <-- Received UnsubAck id={unsubAckPacket.PacketIdentifier}");
+                            this.Client.OnUnsubAckReceivedEventLauncher(unsubAckPacket);
                             break;
 
                         case PublishPacket publishPacket:
@@ -492,24 +501,24 @@ public partial class ConnectionManager
                             break;
 
                         case PingRespPacket pingRespPacket:
-                            Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received PingResp");
-                            this.OnPingRespReceivedEventLauncher(pingRespPacket);
+                            Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- <-- Received PingResp");
+                            this.Client.OnPingRespReceivedEventLauncher(pingRespPacket);
                             break;
 
                         case DisconnectPacket disconnectPacket:
                             // Disconnects are handled immediate and shouldn't be received here
                             // We leave this just as a sanity backup
-                            Logger.Error($"{this.Options.ClientId}-(RPH)- Incorrectly received Disconnect packet in ReceivedPacketsHandlerAsync");
+                            Logger.Error($"{this.Client.Options.ClientId}-(RPH)- Incorrectly received Disconnect packet in ReceivedPacketsHandlerAsync");
                             throw new HiveMQttClientException("Received Disconnect packet in ReceivedPacketsHandlerAsync");
                         default:
-                            Logger.Trace($"{this.Options.ClientId}-(RPH)- <-- Received Unknown packet type.  Will discard.");
+                            Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- <-- Received Unknown packet type.  Will discard.");
                             Logger.Error($"Unrecognized packet received.  Will discard. {packet}");
                             break;
                     } // switch (packet)
 
                     if (cancellationToken.IsCancellationRequested)
                     {
-                        Logger.Trace($"{this.Options.ClientId}-(RPH)- Cancelled with {this.ReceivedQueue.Count} received packets remaining.  Exiting...");
+                        Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- Cancelled with {this.ReceivedQueue.Count} received packets remaining.  Exiting...");
                         break;
                     }
                 }
@@ -521,15 +530,13 @@ public partial class ConnectionManager
                     }
                     else
                     {
-                        Logger.Error($"{this.Options.ClientId}-(RPH)- Exception: {ex}");
+                        Logger.Error($"{this.Client.Options.ClientId}-(RPH)- Exception: {ex}");
                         throw;
                     }
                 }
             } // while (true)
 
-            Logger.Debug($"{this.Options.ClientId}-(RPH)- ReceivedPacketsHandler Exiting...{this.ConnectState}, cancellationRequested={cancellationToken.IsCancellationRequested}");
+            Logger.Debug($"{this.Client.Options.ClientId}-(RPH)- ReceivedPacketsHandler Exiting...{this.State}, cancellationRequested={cancellationToken.IsCancellationRequested}");
             return;
         }, cancellationToken);
-
-
 }

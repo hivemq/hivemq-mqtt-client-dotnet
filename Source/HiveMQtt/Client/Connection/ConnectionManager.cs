@@ -73,11 +73,22 @@ public partial class ConnectionManager : IDisposable
     public ConnectionManager(HiveMQClient client)
     {
         this.Client = client;
-        this.Transport = new BaseTransport();
         this.cancellationTokenSource = new CancellationTokenSource();
         this.IPubTransactionQueue = new BoundedDictionaryX<int, List<ControlPacket>>(this.Client.Options.ClientReceiveMaximum);
         this.OPubTransactionQueue = new BoundedDictionaryX<int, List<ControlPacket>>(65535);
         this.State = ConnectState.Disconnected;
+
+        // Connect the appropriate transport
+        if (this.Client.Options.Host.StartsWith("ws://", StringComparison.OrdinalIgnoreCase) ||
+            this.Client.Options.Host.StartsWith("wss://", StringComparison.OrdinalIgnoreCase))
+        {
+            // this.Transport = new WebSocketTransport(this.Client.Options);
+            this.Transport = new TCPTransport(this.Client.Options);
+        }
+        else
+        {
+            this.Transport = new TCPTransport(this.Client.Options);
+        }
 
         Logger.Trace("Trace Level Logging Legend:");
         Logger.Trace("    -(W)-   == ConnectionWriter");
@@ -93,7 +104,7 @@ public partial class ConnectionManager : IDisposable
         if (this.Client.Options.Host.StartsWith("ws://", StringComparison.OrdinalIgnoreCase) ||
             this.Client.Options.Host.StartsWith("wss://", StringComparison.OrdinalIgnoreCase))
         {
-            this.Transport = new WebSocketTransport(this.Client.Options);
+            // this.Transport = new WebSocketTransport(this.Client.Options);
         }
         else
         {
@@ -120,6 +131,19 @@ public partial class ConnectionManager : IDisposable
         this.ConnectionMonitorTask = this.ConnectionMonitorAsync(this.cancellationTokenSource.Token);
 
         return true;
+    }
+
+    /// <summary>
+    /// Close the connection.
+    /// </summary>
+    /// <returns>A boolean indicating if the connection was closed successfully.</returns>
+    internal async Task<bool> CloseAsync()
+    {
+        // Cancel all background tasks
+        await this.CancelBackgroundTasksAsync().ConfigureAwait(false);
+
+        // Close the transport
+        return await this.Transport.CloseAsync().ConfigureAwait(false);
     }
 
     /// <summary>

@@ -19,15 +19,21 @@ using System.Net;
 using System.Net.Sockets;
 using HiveMQtt.Client.Exceptions;
 
-public class BaseTransport
+public abstract class BaseTransport
 {
     protected static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
-    public async Task<bool> CloseAsync() =>
-        throw new NotImplementedException("Close must be implemented in derived classes");
+    public abstract Task<bool> ConnectAsync();
 
-    public async Task<bool> ConnectAsync() =>
-        throw new NotImplementedException("ConnectAsync must be implemented in derived classes");
+    public abstract Task<bool> CloseAsync(bool? shutdownPipeline = true);
+
+    public abstract Task<bool> WriteAsync(byte[] buffer, CancellationToken cancellationToken = default);
+
+    public abstract Task<TransportReadResult> ReadAsync(CancellationToken cancellationToken = default);
+
+    public abstract void AdvanceTo(SequencePosition consumed);
+
+    public abstract void AdvanceTo(SequencePosition consumed, SequencePosition examined);
 
     /// <summary>
     /// Lookup the hostname and return the IP address.

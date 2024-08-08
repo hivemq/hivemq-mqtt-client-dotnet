@@ -20,7 +20,6 @@ using System.Threading.Tasks;
 
 using HiveMQtt.Client.Events;
 using HiveMQtt.Client.Exceptions;
-using HiveMQtt.Client.Internal;
 using HiveMQtt.MQTT5.ReasonCodes;
 
 /// <inheritdoc />
@@ -83,5 +82,4 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             }
         }
     }
-
 }

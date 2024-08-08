@@ -36,10 +36,7 @@ public class TCPTransport : BaseTransport, IDisposable
 
     internal HiveMQClientOptions Options { get; }
 
-    public TCPTransport(HiveMQClientOptions options)
-    {
-        this.Options = options;
-    }
+    public TCPTransport(HiveMQClientOptions options) => this.Options = options;
 
     /// <summary>
     /// SSLStream Callback.  This is used to always allow invalid broker certificates.
@@ -160,10 +157,10 @@ public class TCPTransport : BaseTransport, IDisposable
     /// Make a TCP connection to a remote broker.
     /// </summary>
     /// <returns>A boolean representing the success or failure of the operation.</returns>
-    internal async Task<bool> ConnectAsync()
+    public override async Task<bool> ConnectAsync()
     {
         IPEndPoint ipEndPoint;
-        var ipAddress = await this.LookupHostNameAsync(this.Options.Host, this.Options.PreferIPv6).ConfigureAwait(false);
+        var ipAddress = await LookupHostNameAsync(this.Options.Host, this.Options.PreferIPv6).ConfigureAwait(false);
 
         // Create the IPEndPoint depending on whether it is a host name or IP address.
         if (ipAddress == null)
@@ -212,10 +209,13 @@ public class TCPTransport : BaseTransport, IDisposable
         return socketConnected;
     }
 
-    internal async Task<bool> CloseSocketAsync(bool? shutdownPipeline = true)
+    /// <summary>
+    /// Close the TCP connection.
+    /// </summary>
+    /// <param name="shutdownPipeline">A boolean indicating whether to shutdown the pipeline.</param>
+    /// <returns>A boolean indicating whether the operation was successful.</returns>
+    public override async Task<bool> CloseAsync(bool? shutdownPipeline = true)
     {
-        await this.CancelBackgroundTasksAsync().ConfigureAwait(false);
-
         if (shutdownPipeline == true)
         {
             if (this.Reader != null && this.Writer != null)
@@ -254,39 +254,59 @@ public class TCPTransport : BaseTransport, IDisposable
     /// <summary>
     /// Write a buffer to the stream.
     /// </summary>
-    /// <param name="source">The buffer to write.</param>
+    /// <param name="buffer">The buffer to write.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A FlushResult wrapped in a ValueTask.</returns>
+    /// <returns>A boolean indicating whether the write was successful.</returns>
     /// <exception cref="HiveMQttClientException">Raised if the writer is null.</exception>
-    internal ValueTask<FlushResult> WriteAsync(ReadOnlyMemory<byte> source, CancellationToken cancellationToken = default)
+    public override async Task<bool> WriteAsync(byte[] buffer, CancellationToken cancellationToken = default)
     {
-        if (this.Writer is null)
+        if (this.Writer == null)
         {
-            throw new HiveMQttClientException("Writer is null");
+            throw new HiveMQttClientException("TCP Transport Writer is null");
         }
 
-        var writeResult = this.Writer.WriteAsync(source, cancellationToken);
-        this.lastCommunicationTimer.Restart();
-        return writeResult;
+        var source = new ReadOnlyMemory<byte>(buffer);
+        var writeResult = await this.Writer.WriteAsync(source, cancellationToken).ConfigureAwait(false);
+
+        if (writeResult.IsCompleted || writeResult.IsCanceled)
+        {
+            Logger.Debug($"-(TCP)- WriteAsync: The party is over. IsCompleted={writeResult.IsCompleted} IsCancelled={writeResult.IsCanceled}");
+            return false;
+        }
+
+        return true;
     }
 
     /// <summary>
     /// Read a buffer from the stream.
     /// </summary>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A ReadResult wrapped in a ValueTask.</returns>
+    /// <returns>A TransportReadResult object containing the buffer.</returns>
     /// <exception cref="HiveMQttClientException">Raised if the reader is null.</exception>
-    internal async ValueTask<ReadResult> ReadAsync(CancellationToken cancellationToken = default)
+    public override async Task<TransportReadResult> ReadAsync(CancellationToken cancellationToken = default)
     {
-        if (this.Reader is null)
+        if (this.Reader == null)
         {
             throw new HiveMQttClientException("Reader is null");
         }
 
         var readResult = await this.Reader.ReadAsync(cancellationToken).ConfigureAwait(false);
-        return readResult;
+
+        if (readResult.IsCanceled || readResult.IsCompleted)
+        {
+            Logger.Debug($"-(TCP)- ReadAsync: The party is over. IsCompleted={readResult.IsCompleted} IsCancelled={readResult.IsCanceled}");
+            return new TransportReadResult(true);
+        }
+
+        // var bytesRead = readResult.Buffer.Length;
+        // this.Reader.AdvanceTo(readResult.Buffer.End);
+        // return bytesRead;
+        return new TransportReadResult(readResult.Buffer);
     }
 
+    public override void AdvanceTo(SequencePosition consumed) => this.Reader?.AdvanceTo(consumed);
+
+    public override void AdvanceTo(SequencePosition consumed, SequencePosition examined) => this.Reader?.AdvanceTo(consumed, examined);
 
     /// <summary>
     /// https://learn.microsoft.com/en-us/dotnet/api/system.idisposable?view=net-6.0.

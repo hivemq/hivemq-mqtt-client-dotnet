@@ -17,11 +17,10 @@ namespace HiveMQtt.Client.Transport;
 
 using HiveMQtt.Client.Options;
 
-public class WebSocketTransport : BaseTransport
+public class WebSocketTransport// : BaseTransport
 {
     public WebSocketTransport(HiveMQClientOptions options)
     {
         // ...
     }
-
 }
