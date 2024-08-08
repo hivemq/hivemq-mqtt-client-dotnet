@@ -50,24 +50,18 @@ public class ClientTest
 
         // Validate private internals of the HiveMQtt client
 
-        // Socket Stuff
-        Assert.Null(client.Socket);
-        Assert.Null(client.Stream);
-        Assert.Null(client.Reader);
-        Assert.Null(client.Writer);
-
         // Task Stuff
-        Assert.Null(client.ConnectionWriterTask);
-        Assert.Null(client.ConnectionReaderTask);
-        Assert.Null(client.ReceivedPacketsHandlerTask);
-        Assert.Null(client.ConnectionMonitorTask);
+        Assert.Null(client.Connection.ConnectionWriterTask);
+        Assert.Null(client.Connection.ConnectionReaderTask);
+        Assert.Null(client.Connection.ReceivedPacketsHandlerTask);
+        Assert.Null(client.Connection.ConnectionMonitorTask);
 
         // Queues
-        Assert.NotNull(client.SendQueue);
-        Assert.NotNull(client.ReceivedQueue);
+        Assert.NotNull(client.Connection.SendQueue);
+        Assert.NotNull(client.Connection.ReceivedQueue);
 
         // State
-        Assert.Equal(ConnectState.Disconnected, client.ConnectState);
+        Assert.Equal(ConnectState.Disconnected, client.Connection.State);
 
         // *************************************
         // Connect and validate internals again
@@ -78,29 +72,23 @@ public class ClientTest
         // Wait for connack
         await Task.Delay(1000).ConfigureAwait(false);
 
-        // Socket Stuff
-        Assert.NotNull(client.Socket);
-        Assert.NotNull(client.Stream);
-        Assert.NotNull(client.Reader);
-        Assert.NotNull(client.Writer);
-
         // Task Stuff
-        Assert.NotNull(client.ConnectionWriterTask);
-        Assert.NotNull(client.ConnectionReaderTask);
-        Assert.NotNull(client.ReceivedPacketsHandlerTask);
-        Assert.NotNull(client.ConnectionMonitorTask);
+        Assert.NotNull(client.Connection.ConnectionWriterTask);
+        Assert.NotNull(client.Connection.ConnectionReaderTask);
+        Assert.NotNull(client.Connection.ReceivedPacketsHandlerTask);
+        Assert.NotNull(client.Connection.ConnectionMonitorTask);
 
-        Assert.Equal(TaskStatus.WaitingForActivation, client.ConnectionWriterTask.Status);
-        Assert.Equal(TaskStatus.WaitingForActivation, client.ConnectionReaderTask.Status);
-        Assert.Equal(TaskStatus.WaitingForActivation, client.ReceivedPacketsHandlerTask.Status);
-        Assert.Equal(TaskStatus.WaitingForActivation, client.ConnectionMonitorTask.Status);
+        Assert.Equal(TaskStatus.WaitingForActivation, client.Connection.ConnectionWriterTask.Status);
+        Assert.Equal(TaskStatus.WaitingForActivation, client.Connection.ConnectionReaderTask.Status);
+        Assert.Equal(TaskStatus.WaitingForActivation, client.Connection.ReceivedPacketsHandlerTask.Status);
+        Assert.Equal(TaskStatus.WaitingForActivation, client.Connection.ConnectionMonitorTask.Status);
 
         // Queues
-        Assert.NotNull(client.SendQueue);
-        Assert.NotNull(client.ReceivedQueue);
+        Assert.NotNull(client.Connection.SendQueue);
+        Assert.NotNull(client.Connection.ReceivedQueue);
 
         // State
-        Assert.Equal(ConnectState.Connected, client.ConnectState);
+        Assert.Equal(ConnectState.Connected, client.Connection.State);
 
         // *************************************
         // Do some stuff and validate internals again
@@ -121,26 +109,20 @@ public class ClientTest
                                         new string("♚ ♛ ♜ ♝ ♞ ♟ ♔ ♕ ♖ ♗ ♘ ♙"),
                                         MQTT5.Types.QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
 
-        // Socket Stuff
-        Assert.NotNull(client.Socket);
-        Assert.NotNull(client.Stream);
-        Assert.NotNull(client.Reader);
-        Assert.NotNull(client.Writer);
-
         // Task Stuff
-        Assert.NotNull(client.ConnectionWriterTask);
-        Assert.NotNull(client.ConnectionReaderTask);
-        Assert.NotNull(client.ReceivedPacketsHandlerTask);
-        Assert.NotNull(client.ConnectionMonitorTask);
+        Assert.NotNull(client.Connection.ConnectionWriterTask);
+        Assert.NotNull(client.Connection.ConnectionReaderTask);
+        Assert.NotNull(client.Connection.ReceivedPacketsHandlerTask);
+        Assert.NotNull(client.Connection.ConnectionMonitorTask);
 
-        Assert.Equal(TaskStatus.WaitingForActivation, client.ConnectionWriterTask.Status);
-        Assert.Equal(TaskStatus.WaitingForActivation, client.ConnectionReaderTask.Status);
-        Assert.Equal(TaskStatus.WaitingForActivation, client.ReceivedPacketsHandlerTask.Status);
-        Assert.Equal(TaskStatus.WaitingForActivation, client.ConnectionMonitorTask.Status);
+        Assert.Equal(TaskStatus.WaitingForActivation, client.Connection.ConnectionWriterTask.Status);
+        Assert.Equal(TaskStatus.WaitingForActivation, client.Connection.ConnectionReaderTask.Status);
+        Assert.Equal(TaskStatus.WaitingForActivation, client.Connection.ReceivedPacketsHandlerTask.Status);
+        Assert.Equal(TaskStatus.WaitingForActivation, client.Connection.ConnectionMonitorTask.Status);
 
         // Queues
-        Assert.NotNull(client.SendQueue);
-        Assert.NotNull(client.ReceivedQueue);
+        Assert.NotNull(client.Connection.SendQueue);
+        Assert.NotNull(client.Connection.ReceivedQueue);
 
         // *************************************
         // Disconnect and validate internals again
@@ -150,23 +132,17 @@ public class ClientTest
         // Wait for disconnect to take affect
         await Task.Delay(1000).ConfigureAwait(false);
 
-        // Socket Stuff
-        Assert.Null(client.Socket);
-        Assert.Null(client.Stream);
-        Assert.Null(client.Reader);
-        Assert.Null(client.Writer);
-
         // Task Stuff
-        Assert.Null(client.ConnectionWriterTask);
-        Assert.Null(client.ConnectionReaderTask);
-        Assert.Null(client.ReceivedPacketsHandlerTask);
-        Assert.Null(client.ConnectionMonitorTask);
+        Assert.Null(client.Connection.ConnectionWriterTask);
+        Assert.Null(client.Connection.ConnectionReaderTask);
+        Assert.Null(client.Connection.ReceivedPacketsHandlerTask);
+        Assert.Null(client.Connection.ConnectionMonitorTask);
 
         // Queues
-        Assert.NotNull(client.SendQueue);
-        Assert.NotNull(client.ReceivedQueue);
+        Assert.NotNull(client.Connection.SendQueue);
+        Assert.NotNull(client.Connection.ReceivedQueue);
 
         // State
-        Assert.Equal(ConnectState.Disconnected, client.ConnectState);
+        Assert.Equal(ConnectState.Disconnected, client.Connection.State);
     }
 }

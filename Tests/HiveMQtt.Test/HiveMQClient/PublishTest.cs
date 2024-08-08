@@ -276,25 +276,25 @@ public class PublishTest
         Assert.Equal(10, client2MessageCount);
         Assert.Equal(10, client3MessageCount);
 
-        Assert.Equal(0, client1.OutgoingPublishQueue.Count);
-        Assert.Equal(0, client2.OutgoingPublishQueue.Count);
-        Assert.Equal(0, client3.OutgoingPublishQueue.Count);
+        Assert.Equal(0, client1.Connection.OutgoingPublishQueue.Count);
+        Assert.Equal(0, client2.Connection.OutgoingPublishQueue.Count);
+        Assert.Equal(0, client3.Connection.OutgoingPublishQueue.Count);
 
-        Assert.Equal(0, client1.ReceivedQueue.Count);
-        Assert.Equal(0, client2.ReceivedQueue.Count);
-        Assert.Equal(0, client3.ReceivedQueue.Count);
+        Assert.Equal(0, client1.Connection.ReceivedQueue.Count);
+        Assert.Equal(0, client2.Connection.ReceivedQueue.Count);
+        Assert.Equal(0, client3.Connection.ReceivedQueue.Count);
 
-        Assert.Equal(0, client1.SendQueue.Count);
-        Assert.Equal(0, client2.SendQueue.Count);
-        Assert.Equal(0, client3.SendQueue.Count);
+        Assert.Equal(0, client1.Connection.SendQueue.Count);
+        Assert.Equal(0, client2.Connection.SendQueue.Count);
+        Assert.Equal(0, client3.Connection.SendQueue.Count);
 
-        Assert.Equal(0, client1.OPubTransactionQueue.Count);
-        Assert.Equal(0, client2.OPubTransactionQueue.Count);
-        Assert.Equal(0, client3.OPubTransactionQueue.Count);
+        Assert.Equal(0, client1.Connection.OPubTransactionQueue.Count);
+        Assert.Equal(0, client2.Connection.OPubTransactionQueue.Count);
+        Assert.Equal(0, client3.Connection.OPubTransactionQueue.Count);
 
-        Assert.Equal(0, client1.IPubTransactionQueue.Count);
-        Assert.Equal(0, client2.IPubTransactionQueue.Count);
-        Assert.Equal(0, client3.IPubTransactionQueue.Count);
+        Assert.Equal(0, client1.Connection.IPubTransactionQueue.Count);
+        Assert.Equal(0, client2.Connection.IPubTransactionQueue.Count);
+        Assert.Equal(0, client3.Connection.IPubTransactionQueue.Count);
 
         // All done, disconnect all clients
         var disconnectResult = await client1.DisconnectAsync().ConfigureAwait(false);
@@ -380,25 +380,25 @@ public class PublishTest
         Assert.Equal(10, client2MessageCount);
         Assert.Equal(10, client3MessageCount);
 
-        Assert.Equal(0, client1.OutgoingPublishQueue.Count);
-        Assert.Equal(0, client2.OutgoingPublishQueue.Count);
-        Assert.Equal(0, client3.OutgoingPublishQueue.Count);
+        Assert.Equal(0, client1.Connection.OutgoingPublishQueue.Count);
+        Assert.Equal(0, client2.Connection.OutgoingPublishQueue.Count);
+        Assert.Equal(0, client3.Connection.OutgoingPublishQueue.Count);
 
-        Assert.Equal(0, client1.ReceivedQueue.Count);
-        Assert.Equal(0, client2.ReceivedQueue.Count);
-        Assert.Equal(0, client3.ReceivedQueue.Count);
+        Assert.Equal(0, client1.Connection.ReceivedQueue.Count);
+        Assert.Equal(0, client2.Connection.ReceivedQueue.Count);
+        Assert.Equal(0, client3.Connection.ReceivedQueue.Count);
 
-        Assert.Equal(0, client1.SendQueue.Count);
-        Assert.Equal(0, client2.SendQueue.Count);
-        Assert.Equal(0, client3.SendQueue.Count);
+        Assert.Equal(0, client1.Connection.SendQueue.Count);
+        Assert.Equal(0, client2.Connection.SendQueue.Count);
+        Assert.Equal(0, client3.Connection.SendQueue.Count);
 
-        Assert.Equal(0, client1.OPubTransactionQueue.Count);
-        Assert.Equal(0, client2.OPubTransactionQueue.Count);
-        Assert.Equal(0, client3.OPubTransactionQueue.Count);
+        Assert.Equal(0, client1.Connection.OPubTransactionQueue.Count);
+        Assert.Equal(0, client2.Connection.OPubTransactionQueue.Count);
+        Assert.Equal(0, client3.Connection.OPubTransactionQueue.Count);
 
-        Assert.Equal(0, client1.IPubTransactionQueue.Count);
-        Assert.Equal(0, client2.IPubTransactionQueue.Count);
-        Assert.Equal(0, client3.IPubTransactionQueue.Count);
+        Assert.Equal(0, client1.Connection.IPubTransactionQueue.Count);
+        Assert.Equal(0, client2.Connection.IPubTransactionQueue.Count);
+        Assert.Equal(0, client3.Connection.IPubTransactionQueue.Count);
 
         // All done, disconnect all clients
         var disconnectResult = await client1.DisconnectAsync().ConfigureAwait(false);
@@ -483,25 +483,25 @@ public class PublishTest
         Assert.Equal(10, client2MessageCount);
         Assert.Equal(10, client3MessageCount);
 
-        Assert.Equal(0, client1.OutgoingPublishQueue.Count);
-        Assert.Equal(0, client2.OutgoingPublishQueue.Count);
-        Assert.Equal(0, client3.OutgoingPublishQueue.Count);
+        Assert.Equal(0, client1.Connection.OutgoingPublishQueue.Count);
+        Assert.Equal(0, client2.Connection.OutgoingPublishQueue.Count);
+        Assert.Equal(0, client3.Connection.OutgoingPublishQueue.Count);
 
-        Assert.Equal(0, client1.ReceivedQueue.Count);
-        Assert.Equal(0, client2.ReceivedQueue.Count);
-        Assert.Equal(0, client3.ReceivedQueue.Count);
+        Assert.Equal(0, client1.Connection.ReceivedQueue.Count);
+        Assert.Equal(0, client2.Connection.ReceivedQueue.Count);
+        Assert.Equal(0, client3.Connection.ReceivedQueue.Count);
 
-        Assert.Equal(0, client1.SendQueue.Count);
-        Assert.Equal(0, client2.SendQueue.Count);
-        Assert.Equal(0, client3.SendQueue.Count);
+        Assert.Equal(0, client1.Connection.SendQueue.Count);
+        Assert.Equal(0, client2.Connection.SendQueue.Count);
+        Assert.Equal(0, client3.Connection.SendQueue.Count);
 
-        Assert.Equal(0, client1.OPubTransactionQueue.Count);
-        Assert.Equal(0, client2.OPubTransactionQueue.Count);
-        Assert.Equal(0, client3.OPubTransactionQueue.Count);
+        Assert.Equal(0, client1.Connection.OPubTransactionQueue.Count);
+        Assert.Equal(0, client2.Connection.OPubTransactionQueue.Count);
+        Assert.Equal(0, client3.Connection.OPubTransactionQueue.Count);
 
-        Assert.Equal(0, client1.IPubTransactionQueue.Count);
-        Assert.Equal(0, client2.IPubTransactionQueue.Count);
-        Assert.Equal(0, client3.IPubTransactionQueue.Count);
+        Assert.Equal(0, client1.Connection.IPubTransactionQueue.Count);
+        Assert.Equal(0, client2.Connection.IPubTransactionQueue.Count);
+        Assert.Equal(0, client3.Connection.IPubTransactionQueue.Count);
 
         // All done, disconnect all clients
         var disconnectResult = await client1.DisconnectAsync().ConfigureAwait(false);
