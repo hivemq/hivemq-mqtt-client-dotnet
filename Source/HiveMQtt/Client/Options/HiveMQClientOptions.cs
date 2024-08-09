@@ -54,6 +54,7 @@ public class HiveMQClientOptions
     public string? ClientId { get; set; }
 
     // IP Address or DNS Hostname of the MQTT Broker to connect to
+    // This can also be a websocket URL: ws:// or wss://
     public string Host { get; set; }
 
     // The port to connect to on the MQTT Broker
@@ -294,7 +295,7 @@ public class HiveMQClientOptions
 
         if (this.ClientId is not null && this.ClientId.Length > 23)
         {
-            Logger.Info($"Client ID {this.ClientId} is longer than 23 characters.  This may cause issues with some brokers.");
+            Logger.Debug($"Client ID {this.ClientId} is longer than 23 characters.  This may cause issues with some brokers.");
         }
     }
 

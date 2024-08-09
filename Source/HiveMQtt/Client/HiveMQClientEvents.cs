@@ -34,7 +34,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     public event EventHandler<BeforeConnectEventArgs>? BeforeConnect;
 
-    protected virtual void BeforeConnectEventLauncher(HiveMQClientOptions options)
+    internal virtual void BeforeConnectEventLauncher(HiveMQClientOptions options)
     {
         if (this.BeforeConnect != null && this.BeforeConnect.GetInvocationList().Length > 0)
         {
@@ -57,7 +57,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     public event EventHandler<AfterConnectEventArgs>? AfterConnect;
 
-    protected virtual void AfterConnectEventLauncher(ConnectResult results)
+    internal virtual void AfterConnectEventLauncher(ConnectResult results)
     {
         if (this.AfterConnect != null && this.AfterConnect.GetInvocationList().Length > 0)
         {
@@ -80,7 +80,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     public event EventHandler<BeforeDisconnectEventArgs>? BeforeDisconnect;
 
-    protected virtual void BeforeDisconnectEventLauncher()
+    internal virtual void BeforeDisconnectEventLauncher()
     {
         if (this.BeforeDisconnect != null && this.BeforeDisconnect.GetInvocationList().Length > 0)
         {
@@ -103,7 +103,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     public event EventHandler<AfterDisconnectEventArgs>? AfterDisconnect;
 
-    protected virtual void AfterDisconnectEventLauncher(bool clean = false)
+    internal virtual void AfterDisconnectEventLauncher(bool clean = false)
     {
         if (this.AfterDisconnect != null && this.AfterDisconnect.GetInvocationList().Length > 0)
         {
@@ -126,7 +126,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     public event EventHandler<BeforeSubscribeEventArgs>? BeforeSubscribe;
 
-    protected virtual void BeforeSubscribeEventLauncher(SubscribeOptions options)
+    internal virtual void BeforeSubscribeEventLauncher(SubscribeOptions options)
     {
         if (this.BeforeSubscribe != null && this.BeforeSubscribe.GetInvocationList().Length > 0)
         {
@@ -149,7 +149,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     public event EventHandler<AfterSubscribeEventArgs>? AfterSubscribe;
 
-    protected virtual void AfterSubscribeEventLauncher(SubscribeResult results)
+    internal virtual void AfterSubscribeEventLauncher(SubscribeResult results)
     {
         if (this.AfterSubscribe != null && this.AfterSubscribe.GetInvocationList().Length > 0)
         {
@@ -172,7 +172,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     public event EventHandler<BeforeUnsubscribeEventArgs>? BeforeUnsubscribe;
 
-    protected virtual void BeforeUnsubscribeEventLauncher(List<Subscription> subscriptions)
+    internal virtual void BeforeUnsubscribeEventLauncher(List<Subscription> subscriptions)
     {
         if (this.BeforeUnsubscribe != null && this.BeforeUnsubscribe.GetInvocationList().Length > 0)
         {
@@ -195,7 +195,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     public event EventHandler<AfterUnsubscribeEventArgs>? AfterUnsubscribe;
 
-    protected virtual void AfterUnsubscribeEventLauncher(UnsubscribeResult results)
+    internal virtual void AfterUnsubscribeEventLauncher(UnsubscribeResult results)
     {
         if (this.AfterUnsubscribe != null && this.AfterUnsubscribe.GetInvocationList().Length > 0)
         {
@@ -218,7 +218,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     public event EventHandler<OnMessageReceivedEventArgs>? OnMessageReceived;
 
-    protected virtual void OnMessageReceivedEventLauncher(PublishPacket packet)
+    internal virtual void OnMessageReceivedEventLauncher(PublishPacket packet)
     {
         var eventArgs = new OnMessageReceivedEventArgs(packet.Message);
         var messageHandled = false;
@@ -282,7 +282,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     public event EventHandler<OnConnectSentEventArgs>? OnConnectSent;
 
-    protected virtual void OnConnectSentEventLauncher(ConnectPacket packet)
+    internal virtual void OnConnectSentEventLauncher(ConnectPacket packet)
     {
         if (this.OnConnectSent != null && this.OnConnectSent.GetInvocationList().Length > 0)
         {
@@ -305,7 +305,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     public event EventHandler<OnConnAckReceivedEventArgs>? OnConnAckReceived;
 
-    protected virtual void OnConnAckReceivedEventLauncher(ConnAckPacket packet)
+    internal virtual void OnConnAckReceivedEventLauncher(ConnAckPacket packet)
     {
         if (this.OnConnAckReceived != null && this.OnConnAckReceived.GetInvocationList().Length > 0)
         {
@@ -328,7 +328,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     public event EventHandler<OnDisconnectSentEventArgs>? OnDisconnectSent;
 
-    protected virtual void OnDisconnectSentEventLauncher(DisconnectPacket packet)
+    internal virtual void OnDisconnectSentEventLauncher(DisconnectPacket packet)
     {
         if (this.OnDisconnectSent != null && this.OnDisconnectSent.GetInvocationList().Length > 0)
         {
@@ -351,7 +351,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     public event EventHandler<OnDisconnectReceivedEventArgs>? OnDisconnectReceived;
 
-    protected virtual void OnDisconnectReceivedEventLauncher(DisconnectPacket packet)
+    internal virtual void OnDisconnectReceivedEventLauncher(DisconnectPacket packet)
     {
         if (this.OnDisconnectReceived != null && this.OnDisconnectReceived.GetInvocationList().Length > 0)
         {
@@ -374,7 +374,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     public event EventHandler<OnPingReqSentEventArgs>? OnPingReqSent;
 
-    protected virtual void OnPingReqSentEventLauncher(PingReqPacket packet)
+    internal virtual void OnPingReqSentEventLauncher(PingReqPacket packet)
     {
         if (this.OnPingReqSent != null && this.OnPingReqSent.GetInvocationList().Length > 0)
         {
@@ -397,7 +397,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     public event EventHandler<OnPingRespReceivedEventArgs>? OnPingRespReceived;
 
-    protected virtual void OnPingRespReceivedEventLauncher(PingRespPacket packet)
+    internal virtual void OnPingRespReceivedEventLauncher(PingRespPacket packet)
     {
         if (this.OnPingRespReceived != null && this.OnPingRespReceived.GetInvocationList().Length > 0)
         {
@@ -420,7 +420,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     public event EventHandler<OnSubscribeSentEventArgs>? OnSubscribeSent;
 
-    protected virtual void OnSubscribeSentEventLauncher(SubscribePacket packet)
+    internal virtual void OnSubscribeSentEventLauncher(SubscribePacket packet)
     {
         if (this.OnSubscribeSent != null && this.OnSubscribeSent.GetInvocationList().Length > 0)
         {
@@ -443,7 +443,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     public event EventHandler<OnSubAckReceivedEventArgs>? OnSubAckReceived;
 
-    protected virtual void OnSubAckReceivedEventLauncher(SubAckPacket packet)
+    internal virtual void OnSubAckReceivedEventLauncher(SubAckPacket packet)
     {
         if (this.OnSubAckReceived != null && this.OnSubAckReceived.GetInvocationList().Length > 0)
         {
@@ -466,7 +466,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     public event EventHandler<OnUnsubscribeSentEventArgs>? OnUnsubscribeSent;
 
-    protected virtual void OnUnsubscribeSentEventLauncher(UnsubscribePacket packet)
+    internal virtual void OnUnsubscribeSentEventLauncher(UnsubscribePacket packet)
     {
         if (this.OnUnsubscribeSent != null && this.OnUnsubscribeSent.GetInvocationList().Length > 0)
         {
@@ -489,7 +489,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     public event EventHandler<OnUnsubAckReceivedEventArgs>? OnUnsubAckReceived;
 
-    protected virtual void OnUnsubAckReceivedEventLauncher(UnsubAckPacket packet)
+    internal virtual void OnUnsubAckReceivedEventLauncher(UnsubAckPacket packet)
     {
         if (this.OnUnsubAckReceived != null && this.OnUnsubAckReceived.GetInvocationList().Length > 0)
         {
@@ -512,7 +512,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     public event EventHandler<OnPublishReceivedEventArgs>? OnPublishReceived;
 
-    protected virtual void OnPublishReceivedEventLauncher(PublishPacket packet)
+    internal virtual void OnPublishReceivedEventLauncher(PublishPacket packet)
     {
         if (this.OnPublishReceived != null && this.OnPublishReceived.GetInvocationList().Length > 0)
         {
@@ -535,7 +535,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     public event EventHandler<OnPublishSentEventArgs>? OnPublishSent;
 
-    protected virtual void OnPublishSentEventLauncher(PublishPacket packet)
+    internal virtual void OnPublishSentEventLauncher(PublishPacket packet)
     {
         if (this.OnPublishSent != null && this.OnPublishSent.GetInvocationList().Length > 0)
         {
@@ -558,7 +558,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     public event EventHandler<OnPubAckReceivedEventArgs>? OnPubAckReceived;
 
-    protected virtual void OnPubAckReceivedEventLauncher(PubAckPacket packet)
+    internal virtual void OnPubAckReceivedEventLauncher(PubAckPacket packet)
     {
         if (this.OnPubAckReceived != null && this.OnPubAckReceived.GetInvocationList().Length > 0)
         {
@@ -581,7 +581,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     public event EventHandler<OnPubAckSentEventArgs>? OnPubAckSent;
 
-    protected virtual void OnPubAckSentEventLauncher(PubAckPacket packet)
+    internal virtual void OnPubAckSentEventLauncher(PubAckPacket packet)
     {
         if (this.OnPubAckSent != null && this.OnPubAckSent.GetInvocationList().Length > 0)
         {
@@ -604,7 +604,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     public event EventHandler<OnPubRecReceivedEventArgs>? OnPubRecReceived;
 
-    protected virtual void OnPubRecReceivedEventLauncher(PubRecPacket packet)
+    internal virtual void OnPubRecReceivedEventLauncher(PubRecPacket packet)
     {
         if (this.OnPubRecReceived != null && this.OnPubRecReceived.GetInvocationList().Length > 0)
         {
@@ -627,7 +627,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     public event EventHandler<OnPubRecSentEventArgs>? OnPubRecSent;
 
-    protected virtual void OnPubRecSentEventLauncher(PubRecPacket packet)
+    internal virtual void OnPubRecSentEventLauncher(PubRecPacket packet)
     {
         if (this.OnPubRecSent != null && this.OnPubRecSent.GetInvocationList().Length > 0)
         {
@@ -650,7 +650,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     public event EventHandler<OnPubRelReceivedEventArgs>? OnPubRelReceived;
 
-    protected virtual void OnPubRelReceivedEventLauncher(PubRelPacket packet)
+    internal virtual void OnPubRelReceivedEventLauncher(PubRelPacket packet)
     {
         if (this.OnPubRelReceived != null && this.OnPubRelReceived.GetInvocationList().Length > 0)
         {
@@ -673,7 +673,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     public event EventHandler<OnPubRelSentEventArgs>? OnPubRelSent;
 
-    protected virtual void OnPubRelSentEventLauncher(PubRelPacket packet)
+    internal virtual void OnPubRelSentEventLauncher(PubRelPacket packet)
     {
         if (this.OnPubRelSent != null && this.OnPubRelSent.GetInvocationList().Length > 0)
         {
@@ -696,7 +696,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     public event EventHandler<OnPubCompReceivedEventArgs>? OnPubCompReceived;
 
-    protected virtual void OnPubCompReceivedEventLauncher(PubCompPacket packet)
+    internal virtual void OnPubCompReceivedEventLauncher(PubCompPacket packet)
     {
         if (this.OnPubCompReceived != null && this.OnPubCompReceived.GetInvocationList().Length > 0)
         {
@@ -719,7 +719,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     public event EventHandler<OnPubCompSentEventArgs>? OnPubCompSent;
 
-    protected virtual void OnPubCompSentEventLauncher(PubCompPacket packet)
+    internal virtual void OnPubCompSentEventLauncher(PubCompPacket packet)
     {
         if (this.OnPubCompSent != null && this.OnPubCompSent.GetInvocationList().Length > 0)
         {

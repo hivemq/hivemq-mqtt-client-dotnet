@@ -66,6 +66,12 @@ public class HiveMQClientOptionsBuilder
     /// <para>
     /// This can be either an IPv4 address, IPv6 address or a hostname.
     /// </para>
+    /// <para>
+    /// It can alternatively be a websocket URL such as:
+    ///   ws://mqtt.example.com:8083/mqtt
+    ///   wss://mqtt.example.com:8084/mqtt
+    /// .
+    /// </para>
     /// </summary>
     /// <param name="broker">The broker to connect to.</param>
     /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
@@ -77,6 +83,14 @@ public class HiveMQClientOptionsBuilder
 
     /// <summary>
     /// Sets the port to connect to.
+    /// <para>
+    /// Default ports are:
+    ///  - 1883 for non-TLS connections
+    ///  - 8883 for TLS connections
+    ///  - 1884 for non-TLS websocket connections (ws://)
+    ///  - 8884 for TLS websocket connections (wss://)
+    /// .
+    /// </para>
     /// </summary>
     /// <param name="port">The port to connect to.</param>
     /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
