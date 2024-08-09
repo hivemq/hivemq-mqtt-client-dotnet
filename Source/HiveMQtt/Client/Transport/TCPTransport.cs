@@ -290,17 +290,28 @@ public class TCPTransport : BaseTransport, IDisposable
             throw new HiveMQttClientException("Reader is null");
         }
 
-        var readResult = await this.Reader.ReadAsync(cancellationToken).ConfigureAwait(false);
-
-        if (readResult.IsCanceled || readResult.IsCompleted)
+        ReadResult readResult;
+        try
         {
-            Logger.Debug($"-(TCP)- ReadAsync: The party is over. IsCompleted={readResult.IsCompleted} IsCancelled={readResult.IsCanceled}");
+            readResult = await this.Reader.ReadAsync(cancellationToken).ConfigureAwait(false);
+
+            if (readResult.IsCanceled || readResult.IsCompleted)
+            {
+                Logger.Debug($"-(TCP)- ReadAsync: The party is over. IsCompleted={readResult.IsCompleted} IsCancelled={readResult.IsCanceled}");
+                return new TransportReadResult(true);
+            }
+        }
+        catch (SocketException ex)
+        {
+            Logger.Debug($"SocketException in ReadAsync: {ex.Message}");
+            return new TransportReadResult(true);
+        }
+        catch (IOException ex)
+        {
+            Logger.Debug($"SocketException in ReadAsync: {ex.Message}");
             return new TransportReadResult(true);
         }
 
-        // var bytesRead = readResult.Buffer.Length;
-        // this.Reader.AdvanceTo(readResult.Buffer.End);
-        // return bytesRead;
         return new TransportReadResult(readResult.Buffer);
     }
 

@@ -38,7 +38,7 @@ public partial class ConnectionManager
             {
                 Logger.Error($"{this.Client.Options.ClientId}-(CM)- {taskName} Faulted: {task.Exception}");
                 Logger.Error($"{this.Client.Options.ClientId}-(CM)- {taskName} died.  Disconnecting.");
-                _ = await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
+                await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
             }
         }
     }

@@ -295,7 +295,7 @@ public class HiveMQClientOptions
 
         if (this.ClientId is not null && this.ClientId.Length > 23)
         {
-            Logger.Info($"Client ID {this.ClientId} is longer than 23 characters.  This may cause issues with some brokers.");
+            Logger.Debug($"Client ID {this.ClientId} is longer than 23 characters.  This may cause issues with some brokers.");
         }
     }
 

@@ -134,19 +134,6 @@ public partial class ConnectionManager : IDisposable
     }
 
     /// <summary>
-    /// Close the connection.
-    /// </summary>
-    /// <returns>A boolean indicating if the connection was closed successfully.</returns>
-    internal async Task<bool> CloseAsync()
-    {
-        // Cancel all background tasks
-        await this.CancelBackgroundTasksAsync().ConfigureAwait(false);
-
-        // Close the transport
-        return await this.Transport.CloseAsync().ConfigureAwait(false);
-    }
-
-    /// <summary>
     /// Cancel all background tasks.
     /// </summary>
     /// <returns>A task representing the asynchronous operation.</returns>

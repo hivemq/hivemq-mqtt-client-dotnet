@@ -376,7 +376,10 @@ public partial class ConnectionManager
         // Cancel all background tasks and close the socket
         this.State = ConnectState.Disconnected;
 
-        // await this.CloseSocketAsync().ConfigureAwait(false);
+        // Cancel all background tasks
+        await this.CancelBackgroundTasksAsync().ConfigureAwait(false);
+
+        // Close the Transport
         await this.Transport.CloseAsync().ConfigureAwait(false);
 
         if (clean)
