@@ -66,18 +66,27 @@ public class HiveMQClientOptionsBuilder
     /// <para>
     /// This can be either an IPv4 address, IPv6 address or a hostname.
     /// </para>
-    /// <para>
-    /// It can alternatively be a websocket URL such as:
-    ///   ws://mqtt.example.com:8083/mqtt
-    ///   wss://mqtt.example.com:8084/mqtt
-    /// .
-    /// </para>
     /// </summary>
     /// <param name="broker">The broker to connect to.</param>
     /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
     public HiveMQClientOptionsBuilder WithBroker(string broker)
     {
         this.options.Host = broker;
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the WebSocket server to connect to.
+    /// <para>
+    /// This must be a fully qualified URI, e.g. "ws://localhost:8884/mqtt" or
+    /// "wss://localhost:8884/mqtt".
+    /// </para>
+    /// </summary>
+    /// <param name="webSocketServer">The WebSocket server to connect to.</param>
+    /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
+    public HiveMQClientOptionsBuilder WithWebSocketServer(string webSocketServer)
+    {
+        this.options.WebSocketServer = webSocketServer;
         return this;
     }
 

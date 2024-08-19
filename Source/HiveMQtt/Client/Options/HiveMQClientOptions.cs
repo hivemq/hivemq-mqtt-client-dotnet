@@ -34,6 +34,7 @@ public class HiveMQClientOptions
     public HiveMQClientOptions()
     {
         this.GenerateClientID();
+        this.WebSocketServer = string.Empty;
         this.Host = "127.0.0.1";
         this.Port = 1883;
         this.PreferIPv6 = false;
@@ -53,15 +54,31 @@ public class HiveMQClientOptions
     // Client Identifier to be used in the Client.  Will be set automatically if not specified.
     public string? ClientId { get; set; }
 
+    /// <summary>
+    /// Gets or sets the WebSocket server address to connect to.
+    /// <para>
+    /// The WebSocket server address must include the protocol such as ws:// or wss://.
+    /// </para>
+    /// <para>
+    /// Examples:
+    /// ws://localhost:8000/mqtt
+    /// wss://localhost:8884/mqtt
+    /// </para>
+    /// </summary>
+    public string WebSocketServer { get; set; }
+
     // IP Address or DNS Hostname of the MQTT Broker to connect to
-    // This can also be a websocket URL: ws:// or wss://
     public string Host { get; set; }
 
-    // The port to connect to on the MQTT Broker
+    // The port to connect to on the MQTT Broker.
     public int Port { get; set; }
 
     // When resolving a DNS hostname in the Host property, prefer IPv6 addresses over IPv4 addresses.
     public bool PreferIPv6 { get; set; }
+
+    // The default connection type is TCP unless using one of the WebSocket ports above.  This option is
+    // used to force a WebSocket connection in the case of non-standard ports.
+    public bool UseWebSocket { get; set; }
 
     // The the maximum time interval in seconds that is permitted to elapse between the point at which the Client
     // finishes transmitting one MQTT Control Packet and the point it starts sending the next.

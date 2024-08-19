@@ -23,7 +23,7 @@ public abstract class BaseTransport
 {
     protected static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
-    public abstract Task<bool> ConnectAsync();
+    public abstract Task<bool> ConnectAsync(CancellationToken cancellationToken = default);
 
     public abstract Task<bool> CloseAsync(bool? shutdownPipeline = true);
 

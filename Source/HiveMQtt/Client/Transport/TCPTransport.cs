@@ -156,8 +156,9 @@ public class TCPTransport : BaseTransport, IDisposable
     /// <summary>
     /// Make a TCP connection to a remote broker.
     /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A boolean representing the success or failure of the operation.</returns>
-    public override async Task<bool> ConnectAsync()
+    public override async Task<bool> ConnectAsync(CancellationToken cancellationToken = default)
     {
         IPEndPoint ipEndPoint;
         var ipAddress = await LookupHostNameAsync(this.Options.Host, this.Options.PreferIPv6).ConfigureAwait(false);

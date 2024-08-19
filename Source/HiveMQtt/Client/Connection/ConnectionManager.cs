@@ -101,10 +101,9 @@ public partial class ConnectionManager : IDisposable
     internal async Task<bool> ConnectAsync()
     {
         // Connect the appropriate transport
-        if (this.Client.Options.Host.StartsWith("ws://", StringComparison.OrdinalIgnoreCase) ||
-            this.Client.Options.Host.StartsWith("wss://", StringComparison.OrdinalIgnoreCase))
+        if (this.Client.Options.WebSocketServer.Length > 0)
         {
-            // this.Transport = new WebSocketTransport(this.Client.Options);
+            this.Transport = new WebSocketTransport(this.Client.Options);
         }
         else
         {
