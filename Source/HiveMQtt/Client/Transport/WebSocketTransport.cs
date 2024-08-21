@@ -16,8 +16,8 @@
 namespace HiveMQtt.Client.Transport;
 
 using HiveMQtt.Client.Options;
+using System.Buffers;
 using System.Net.WebSockets;
-using System.Runtime.InteropServices;
 
 public class WebSocketTransport : BaseTransport, IDisposable
 {
@@ -29,13 +29,22 @@ public class WebSocketTransport : BaseTransport, IDisposable
     {
         this.Options = options;
         this.Socket = new ClientWebSocket();
+
+        Uri uri = new Uri(this.Options.WebSocketServer);
+        this.Options.Host = uri.Host;
+        this.Options.Port = uri.Port;
+
+        if (uri.Scheme is not "ws" and not "wss")
+        {
+            throw new ArgumentException("Invalid WebSocket URI scheme");
+        }
     }
 
     public override async Task<bool> ConnectAsync(CancellationToken cancellationToken = default)
     {
         try
         {
-            await this.Socket.ConnectAsync(new Uri(this.Options.Host), cancellationToken).ConfigureAwait(false);
+            await this.Socket.ConnectAsync(new Uri(this.Options.WebSocketServer), cancellationToken).ConfigureAwait(false);
         }
         catch (WebSocketException ex)
         {
@@ -77,19 +86,24 @@ public class WebSocketTransport : BaseTransport, IDisposable
         return true;
     }
 
-    public override Task<TransportReadResult> ReadAsync(CancellationToken cancellationToken = default)
+    public override async Task<TransportReadResult> ReadAsync(CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var buffer = new ArraySegment<byte>(new byte[1024]);
+        var result = await this.Socket.ReceiveAsync(buffer, cancellationToken).ConfigureAwait(false);
+
+        Logger.Trace($"Received {result.Count} bytes");
+
+        return new TransportReadResult(new ReadOnlySequence<byte>(buffer));
     }
 
     public override void AdvanceTo(SequencePosition consumed)
     {
-        throw new NotImplementedException();
+        Logger.Error("WebSocketTransport.AdvanceTo() not implemented");
     }
 
     public override void AdvanceTo(SequencePosition consumed, SequencePosition examined)
     {
-        throw new NotImplementedException();
+        Logger.Error("WebSocketTransport.AdvanceTo() not implemented");
     }
 
     /// <summary>
