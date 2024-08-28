@@ -227,49 +227,49 @@ public partial class ConnectionManager
                         // FIXME: Only one connect, subscribe or unsubscribe packet can be sent at a time.
                         case ConnectPacket connectPacket:
                             Logger.Trace($"{this.Client.Options.ClientId}-(W)- --> Sending ConnectPacket");
-                            writeSuccess = await this.Transport.WriteAsync(connectPacket.Encode()).ConfigureAwait(false);
+                            writeSuccess = await this.Transport.WriteAsync(connectPacket.Encode(), cancellationToken).ConfigureAwait(false);
                             this.Client.OnConnectSentEventLauncher(connectPacket);
                             break;
                         case DisconnectPacket disconnectPacket:
                             Logger.Trace($"{this.Client.Options.ClientId}-(W)- --> Sending DisconnectPacket");
-                            writeSuccess = await this.Transport.WriteAsync(disconnectPacket.Encode()).ConfigureAwait(false);
+                            writeSuccess = await this.Transport.WriteAsync(disconnectPacket.Encode(), cancellationToken).ConfigureAwait(false);
                             this.Client.OnDisconnectSentEventLauncher(disconnectPacket);
                             break;
                         case SubscribePacket subscribePacket:
                             Logger.Trace($"{this.Client.Options.ClientId}-(W)- --> Sending SubscribePacket id={subscribePacket.PacketIdentifier}");
-                            writeSuccess = await this.Transport.WriteAsync(subscribePacket.Encode()).ConfigureAwait(false);
+                            writeSuccess = await this.Transport.WriteAsync(subscribePacket.Encode(), cancellationToken).ConfigureAwait(false);
                             this.Client.OnSubscribeSentEventLauncher(subscribePacket);
                             break;
                         case UnsubscribePacket unsubscribePacket:
                             Logger.Trace($"{this.Client.Options.ClientId}-(W)- --> Sending UnsubscribePacket id={unsubscribePacket.PacketIdentifier}");
-                            writeSuccess = await this.Transport.WriteAsync(unsubscribePacket.Encode()).ConfigureAwait(false);
+                            writeSuccess = await this.Transport.WriteAsync(unsubscribePacket.Encode(), cancellationToken).ConfigureAwait(false);
                             this.Client.OnUnsubscribeSentEventLauncher(unsubscribePacket);
                             break;
 
                         case PubAckPacket pubAckPacket:
                             Logger.Trace($"{this.Client.Options.ClientId}-(W)- --> Sending PubAckPacket id={pubAckPacket.PacketIdentifier} reason={pubAckPacket.ReasonCode}");
-                            writeSuccess = await this.Transport.WriteAsync(pubAckPacket.Encode()).ConfigureAwait(false);
+                            writeSuccess = await this.Transport.WriteAsync(pubAckPacket.Encode(), cancellationToken).ConfigureAwait(false);
                             await this.HandleSentPubAckPacketAsync(pubAckPacket).ConfigureAwait(false);
                             break;
                         case PubRecPacket pubRecPacket:
                             Logger.Trace($"{this.Client.Options.ClientId}-(W)- --> Sending PubRecPacket id={pubRecPacket.PacketIdentifier} reason={pubRecPacket.ReasonCode}");
-                            writeSuccess = await this.Transport.WriteAsync(pubRecPacket.Encode()).ConfigureAwait(false);
+                            writeSuccess = await this.Transport.WriteAsync(pubRecPacket.Encode(), cancellationToken).ConfigureAwait(false);
                             this.Client.OnPubRecSentEventLauncher(pubRecPacket);
                             break;
                         case PubRelPacket pubRelPacket:
                             Logger.Trace($"{this.Client.Options.ClientId}-(W)- --> Sending PubRelPacket id={pubRelPacket.PacketIdentifier} reason={pubRelPacket.ReasonCode}");
-                            writeSuccess = await this.Transport.WriteAsync(pubRelPacket.Encode()).ConfigureAwait(false);
+                            writeSuccess = await this.Transport.WriteAsync(pubRelPacket.Encode(), cancellationToken).ConfigureAwait(false);
                             this.Client.OnPubRelSentEventLauncher(pubRelPacket);
                             break;
                         case PubCompPacket pubCompPacket:
                             Logger.Trace($"{this.Client.Options.ClientId}-(W)- --> Sending PubCompPacket id={pubCompPacket.PacketIdentifier} reason={pubCompPacket.ReasonCode}");
-                            writeSuccess = await this.Transport.WriteAsync(pubCompPacket.Encode()).ConfigureAwait(false);
+                            writeSuccess = await this.Transport.WriteAsync(pubCompPacket.Encode(), cancellationToken).ConfigureAwait(false);
                             await this.HandleSentPubCompPacketAsync(pubCompPacket).ConfigureAwait(false);
                             break;
 
                         case PingReqPacket pingReqPacket:
                             Logger.Trace($"{this.Client.Options.ClientId}-(W)- --> Sending PingReqPacket");
-                            writeSuccess = await this.Transport.WriteAsync(PingReqPacket.Encode()).ConfigureAwait(false);
+                            writeSuccess = await this.Transport.WriteAsync(PingReqPacket.Encode(), cancellationToken).ConfigureAwait(false);
                             this.Client.OnPingReqSentEventLauncher(pingReqPacket);
                             break;
 
