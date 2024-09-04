@@ -25,14 +25,19 @@ public class WebSocketTransport : BaseTransport, IDisposable
 
     internal ClientWebSocket Socket { get; private set; }
 
+    private readonly byte[] receiveBuffer = new byte[65536];
+
+    private int receiveBufferPosition;
+
     public WebSocketTransport(HiveMQClientOptions options)
     {
         this.Options = options;
         this.Socket = new ClientWebSocket();
 
-        Uri uri = new Uri(this.Options.WebSocketServer);
-        this.Options.Host = uri.Host;
-        this.Options.Port = uri.Port;
+        var uri = new Uri(this.Options.WebSocketServer);
+        this.Socket.Options.AddSubProtocol("mqtt");
+        // this.Options.Host = uri.Host;
+        // this.Options.Port = uri..NonePort;
 
         if (uri.Scheme is not "ws" and not "wss")
         {
@@ -44,7 +49,8 @@ public class WebSocketTransport : BaseTransport, IDisposable
     {
         try
         {
-            await this.Socket.ConnectAsync(new Uri(this.Options.WebSocketServer), cancellationToken).ConfigureAwait(false);
+            var uri = new Uri(this.Options.WebSocketServer);
+            await this.Socket.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
         }
         catch (WebSocketException ex)
         {
@@ -60,12 +66,25 @@ public class WebSocketTransport : BaseTransport, IDisposable
         return this.Socket.State == WebSocketState.Open;
     }
 
+    /// <summary>
+    /// Close the WebSocket connection.
+    /// </summary>
+    /// <param name="shutdownPipeline">Whether to shutdown the pipeline.</param>
+    /// <returns>True if the close was successful, false otherwise.</returns>
     public override async Task<bool> CloseAsync(bool? shutdownPipeline = true)
     {
         await this.Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None).ConfigureAwait(false);
         return true;
     }
 
+    /// <summary>
+    /// Write to the WebSocket server.
+    /// </summary>
+    /// <param name="buffer">The buffer to write.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>True if the write was successful, false otherwise.</returns>
+    /// <exception cref="WebSocketException">Thrown when the WebSocket server is not available.</exception>
+    /// <exception cref="OperationCanceledException">Thrown when the operation is canceled.</exception>
     public override async Task<bool> WriteAsync(byte[] buffer, CancellationToken cancellationToken = default)
     {
         try
@@ -86,6 +105,13 @@ public class WebSocketTransport : BaseTransport, IDisposable
         return true;
     }
 
+    /// <summary>
+    /// Read from the WebSocket server.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The read result.</returns>
+    /// <exception cref="WebSocketException">Thrown when the WebSocket server is not available.</exception>
+    /// <exception cref="OperationCanceledException">Thrown when the operation is canceled.</exception>
     public override async Task<TransportReadResult> ReadAsync(CancellationToken cancellationToken = default)
     {
         var buffer = new ArraySegment<byte>(new byte[1024]);
