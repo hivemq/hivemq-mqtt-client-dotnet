@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-present HiveMQ and the HiveMQ Community
+ * Copyright 2024-present HiveMQ and the HiveMQ Community
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-namespace HiveMQtt.Client;
+namespace HiveMQtt.Client.Transport;
 
 using System.IO.Pipelines;
 using System.Net;
@@ -21,14 +21,10 @@ using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
-
-using System.Threading;
-using System.Threading.Tasks;
-
 using HiveMQtt.Client.Exceptions;
+using HiveMQtt.Client.Options;
 
-/// <inheritdoc />
-public partial class HiveMQClient : IDisposable, IHiveMQClient
+public class TCPTransport : BaseTransport, IDisposable
 {
     internal Socket? Socket { get; set; }
 
@@ -38,17 +34,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
     internal PipeWriter? Writer { get; set; }
 
-    private CancellationTokenSource cancellationTokenSource;
+    internal HiveMQClientOptions Options { get; }
 
-    internal Task? ConnectionPublishWriterTask { get; set; }
-
-    internal Task? ConnectionWriterTask { get; set; }
-
-    internal Task? ConnectionReaderTask { get; set; }
-
-    internal Task? ReceivedPacketsHandlerTask { get; set; }
-
-    internal Task? ConnectionMonitorTask { get; set; }
+    public TCPTransport(HiveMQClientOptions options) => this.Options = options;
 
     /// <summary>
     /// SSLStream Callback.  This is used to always allow invalid broker certificates.
@@ -87,6 +75,11 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         X509Chain? chain,
         SslPolicyErrors sslPolicyErrors)
     {
+        // Ignore the unused parameters
+        _ = sender;
+        _ = certificate;
+        _ = chain;
+
         if (sslPolicyErrors == SslPolicyErrors.None)
         {
             return true;
@@ -96,73 +89,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         // Do not allow this client to communicate with unauthenticated servers.
         return false;
-    }
-
-    /// <summary>
-    /// Make a TCP connection to a remote broker.
-    /// </summary>
-    /// <returns>A boolean representing the success or failure of the operation.</returns>
-    internal async Task<bool> ConnectSocketAsync()
-    {
-        IPEndPoint ipEndPoint;
-        var ipAddress = await this.LookupHostNameAsync(this.Options.Host).ConfigureAwait(false);
-
-        // Create the IPEndPoint depending on whether it is a host name or IP address.
-        if (ipAddress == null)
-        {
-            ipEndPoint = new IPEndPoint(IPAddress.Parse(this.Options.Host), this.Options.Port);
-        }
-        else
-        {
-            ipEndPoint = new IPEndPoint(ipAddress, this.Options.Port);
-        }
-
-        this.Socket = new(ipEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-
-        try
-        {
-            await this.Socket.ConnectAsync(ipEndPoint).ConfigureAwait(false);
-        }
-        catch (SocketException socketException)
-        {
-            throw new HiveMQttClientException("Failed to connect to broker", socketException);
-        }
-
-        var socketConnected = this.Socket.Connected;
-        if (!socketConnected || this.Socket == null)
-        {
-            throw new HiveMQttClientException("Failed to connect socket");
-        }
-
-        // Setup the stream
-        this.Stream = new NetworkStream(this.Socket);
-
-        if (this.Options.UseTLS)
-        {
-            var result = await this.CreateTLSConnectionAsync(this.Stream).ConfigureAwait(false);
-            if (!result)
-            {
-                throw new HiveMQttClientException("Failed to create TLS connection");
-            }
-        }
-
-        // Setup the Pipeline
-        this.Reader = PipeReader.Create(this.Stream);
-        this.Writer = PipeWriter.Create(this.Stream);
-
-        // Reset the CancellationTokenSource in case this is a reconnect
-        this.cancellationTokenSource.Dispose();
-        this.cancellationTokenSource = new CancellationTokenSource();
-
-        // Start the traffic processors
-        this.ConnectionPublishWriterTask = this.ConnectionPublishWriterAsync(this.cancellationTokenSource.Token);
-        this.ConnectionWriterTask = this.ConnectionWriterAsync(this.cancellationTokenSource.Token);
-        this.ConnectionReaderTask = this.ConnectionReaderAsync(this.cancellationTokenSource.Token);
-        this.ReceivedPacketsHandlerTask = this.ReceivedPacketsHandlerAsync(this.cancellationTokenSource.Token);
-        this.ConnectionMonitorTask = this.ConnectionMonitorAsync(this.cancellationTokenSource.Token);
-
-        Logger.Trace($"Socket connected to {this.Socket.RemoteEndPoint}");
-        return socketConnected;
     }
 
     private async Task<bool> CreateTLSConnectionAsync(Stream stream)
@@ -227,10 +153,70 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         }
     }
 
-    internal async Task<bool> CloseSocketAsync(bool? shutdownPipeline = true)
+    /// <summary>
+    /// Make a TCP connection to a remote broker.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A boolean representing the success or failure of the operation.</returns>
+    public override async Task<bool> ConnectAsync(CancellationToken cancellationToken = default)
     {
-        await this.CancelBackgroundTasksAsync().ConfigureAwait(false);
+        IPEndPoint ipEndPoint;
+        var ipAddress = await LookupHostNameAsync(this.Options.Host, this.Options.PreferIPv6).ConfigureAwait(false);
 
+        // Create the IPEndPoint depending on whether it is a host name or IP address.
+        if (ipAddress == null)
+        {
+            ipEndPoint = new IPEndPoint(IPAddress.Parse(this.Options.Host), this.Options.Port);
+        }
+        else
+        {
+            ipEndPoint = new IPEndPoint(ipAddress, this.Options.Port);
+        }
+
+        this.Socket = new(ipEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+
+        try
+        {
+            await this.Socket.ConnectAsync(ipEndPoint).ConfigureAwait(false);
+        }
+        catch (SocketException socketException)
+        {
+            throw new HiveMQttClientException("Failed to connect to broker", socketException);
+        }
+
+        var socketConnected = this.Socket.Connected;
+        if (!socketConnected || this.Socket == null)
+        {
+            throw new HiveMQttClientException("Failed to connect socket");
+        }
+
+        // Setup the stream
+        this.Stream = new NetworkStream(this.Socket);
+
+        if (this.Options.UseTLS)
+        {
+            var result = await this.CreateTLSConnectionAsync(this.Stream).ConfigureAwait(false);
+            if (!result)
+            {
+                throw new HiveMQttClientException("Failed to create TLS connection");
+            }
+        }
+
+        // Setup the Pipeline
+        this.Reader = PipeReader.Create(this.Stream);
+        this.Writer = PipeWriter.Create(this.Stream);
+
+        Logger.Trace($"Socket connected to {this.Socket.RemoteEndPoint}");
+        return socketConnected;
+    }
+
+    /// <summary>
+    /// Close the TCP connection.
+    /// </summary>
+    /// <param name="shutdownPipeline">A boolean indicating whether to shutdown the pipeline.</param>
+    /// <returns>A boolean indicating whether the operation was successful.</returns>
+    public override async Task<bool> CloseAsync(bool? shutdownPipeline = true)
+    {
         if (shutdownPipeline == true)
         {
             if (this.Reader != null && this.Writer != null)
@@ -267,112 +253,86 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     }
 
     /// <summary>
-    /// Cancel all background tasks.
+    /// Write a buffer to the stream.
     /// </summary>
-    /// <returns>A task representing the asynchronous operation.</returns>
-    internal async Task CancelBackgroundTasksAsync()
+    /// <param name="buffer">The buffer to write.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A boolean indicating whether the write was successful.</returns>
+    /// <exception cref="HiveMQttClientException">Raised if the writer is null.</exception>
+    public override async Task<bool> WriteAsync(byte[] buffer, CancellationToken cancellationToken = default)
     {
-        // Don't use CancelAsync here to maintain backwards compatibility
-        // with >=.net6.0.  CancelAsync was introduced in .net8.0
-        this.cancellationTokenSource.Cancel();
-
-        // Delay for a short period to allow the tasks to cancel
-        await Task.Delay(1000).ConfigureAwait(false);
-
-        // Reset the tasks
-        if (this.ConnectionPublishWriterTask is not null && this.ConnectionPublishWriterTask.IsCompleted)
+        if (this.Writer == null)
         {
-            this.ConnectionPublishWriterTask = null;
-        }
-        else
-        {
-            Logger.Error("ConnectionPublishWriterTask did not complete");
+            throw new HiveMQttClientException("TCP Transport Writer is null");
         }
 
-        if (this.ConnectionWriterTask is not null && this.ConnectionWriterTask.IsCompleted)
+        var source = new ReadOnlyMemory<byte>(buffer);
+        var writeResult = await this.Writer.WriteAsync(source, cancellationToken).ConfigureAwait(false);
+
+        if (writeResult.IsCompleted || writeResult.IsCanceled)
         {
-            this.ConnectionWriterTask = null;
-        }
-        else
-        {
-            Logger.Error("ConnectionWriterTask did not complete");
+            Logger.Debug($"-(TCP)- WriteAsync: The party is over. IsCompleted={writeResult.IsCompleted} IsCancelled={writeResult.IsCanceled}");
+            return false;
         }
 
-        if (this.ConnectionReaderTask is not null && this.ConnectionReaderTask.IsCompleted)
-        {
-            this.ConnectionReaderTask = null;
-        }
-        else
-        {
-            Logger.Error("ConnectionReaderTask did not complete");
-        }
-
-        if (this.ReceivedPacketsHandlerTask is not null && this.ReceivedPacketsHandlerTask.IsCompleted)
-        {
-            this.ReceivedPacketsHandlerTask = null;
-        }
-        else
-        {
-            Logger.Error("ReceivedPacketsHandlerTask did not complete");
-        }
-
-        if (this.ConnectionMonitorTask is not null && this.ConnectionMonitorTask.IsCompleted)
-        {
-            this.ConnectionMonitorTask = null;
-        }
-        else
-        {
-            Logger.Error("ConnectionMonitorTask did not complete");
-        }
+        return true;
     }
 
-    private async Task<IPAddress?> LookupHostNameAsync(string host)
+    /// <summary>
+    /// Read a buffer from the stream.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A TransportReadResult object containing the buffer.</returns>
+    /// <exception cref="HiveMQttClientException">Raised if the reader is null.</exception>
+    public override async Task<TransportReadResult> ReadAsync(CancellationToken cancellationToken = default)
     {
+        if (this.Reader == null)
+        {
+            throw new HiveMQttClientException("Reader is null");
+        }
+
+        ReadResult readResult;
         try
         {
-            IPAddress? ipAddress = null;
-            var ipHostInfo = await Dns.GetHostEntryAsync(host).ConfigureAwait(false);
+            readResult = await this.Reader.ReadAsync(cancellationToken).ConfigureAwait(false);
 
-            if (ipHostInfo.AddressList.Length == 0)
+            if (readResult.IsCanceled || readResult.IsCompleted)
             {
-                throw new HiveMQttClientException("Failed to resolve host");
+                Logger.Debug($"-(TCP)- ReadAsync: The party is over. IsCompleted={readResult.IsCompleted} IsCancelled={readResult.IsCanceled}");
+                return new TransportReadResult(true);
             }
-
-            // DNS Address resolution logic.  If DNS returns multiple records, how do we handle?
-            // If we have a single record, we can use that.
-            // If we have multiple records, we can use the first one with respect to the PreferIPv6 option.
-            if (ipHostInfo.AddressList.Length == 1)
-            {
-                ipAddress = ipHostInfo.AddressList[0];
-            }
-            else
-            {
-                // Loop through each to find a preferred address
-                foreach (var address in ipHostInfo.AddressList)
-                {
-                    if (this.Options.PreferIPv6 && address.AddressFamily == AddressFamily.InterNetworkV6)
-                    {
-                        ipAddress = address;
-                        break;
-                    }
-
-                    if (address.AddressFamily == AddressFamily.InterNetwork)
-                    {
-                        ipAddress = address;
-                        break;
-                    }
-                }
-            }
-
-            // We have multiple address returned, but none of them match the PreferIPv6 option.
-            // Use the first one whatever it is.
-            ipAddress ??= ipHostInfo.AddressList[0];
-            return ipAddress;
         }
-        catch (SocketException socketException)
+        catch (SocketException ex)
         {
-            Logger.Debug(socketException.Message);
-            return null;
+            Logger.Debug($"SocketException in ReadAsync: {ex.Message}");
+            return new TransportReadResult(true);
         }
+        catch (IOException ex)
+        {
+            Logger.Debug($"SocketException in ReadAsync: {ex.Message}");
+            return new TransportReadResult(true);
+        }
+
+        return new TransportReadResult(readResult.Buffer);
+    }
+
+    public override void AdvanceTo(SequencePosition consumed) => this.Reader?.AdvanceTo(consumed);
+
+    public override void AdvanceTo(SequencePosition consumed, SequencePosition examined) => this.Reader?.AdvanceTo(consumed, examined);
+
+    /// <summary>
+    /// https://learn.microsoft.com/en-us/dotnet/api/system.idisposable?view=net-6.0.
+    /// </summary>
+    public void Dispose()
+    {
+        this.Dispose();
+        /*
+          This object will be cleaned up by the Dispose method.
+          Therefore, you should call GC.SuppressFinalize to
+          take this object off the finalization queue
+          and prevent finalization code for this object
+          from executing a second time.
+        */
+        GC.SuppressFinalize(this);
     }
 }

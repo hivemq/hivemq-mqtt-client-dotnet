@@ -168,15 +168,15 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             // and unmanaged resources.
             if (disposing)
             {
-                if (this.ConnectState == Internal.ConnectState.Connected)
+                if (this.Connection.State == Internal.ConnectState.Connected)
                 {
                     Logger.Trace("HiveMQClient Dispose: Disconnecting connected client.");
                     _ = Task.Run(async () => await this.DisconnectAsync().ConfigureAwait(false));
                 }
 
                 // Dispose managed resources.
-                this.cancellationTokenSource.Cancel();
-                this.cancellationTokenSource.Dispose();
+                // this.cancellationTokenSource.Cancel();
+                // this.cancellationTokenSource.Dispose();
             }
 
             // Call the appropriate methods to clean up

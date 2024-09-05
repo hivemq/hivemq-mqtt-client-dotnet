@@ -76,7 +76,30 @@ public class HiveMQClientOptionsBuilder
     }
 
     /// <summary>
+    /// Sets the WebSocket server to connect to.
+    /// <para>
+    /// This must be a fully qualified URI, e.g. "ws://localhost:8884/mqtt" or
+    /// "wss://localhost:8884/mqtt".
+    /// </para>
+    /// </summary>
+    /// <param name="webSocketServer">The WebSocket server to connect to.</param>
+    /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
+    public HiveMQClientOptionsBuilder WithWebSocketServer(string webSocketServer)
+    {
+        this.options.WebSocketServer = webSocketServer;
+        return this;
+    }
+
+    /// <summary>
     /// Sets the port to connect to.
+    /// <para>
+    /// Default ports are:
+    ///  - 1883 for non-TLS connections
+    ///  - 8883 for TLS connections
+    ///  - 1884 for non-TLS websocket connections (ws://)
+    ///  - 8884 for TLS websocket connections (wss://)
+    /// .
+    /// </para>
     /// </summary>
     /// <param name="port">The port to connect to.</param>
     /// <returns>The HiveMQClientOptionsBuilder instance.</returns>

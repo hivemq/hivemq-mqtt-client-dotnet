@@ -1,4 +1,4 @@
-namespace HiveMQtt.Test.HiveMQClient;
+namespace HiveMQtt.Test.HiveMQClient.WebSocket;
 
 using System.Text;
 using System.Threading.Tasks;
@@ -13,7 +13,11 @@ public class PublishTest
     [Fact]
     public async Task MostBasicPublishAsync()
     {
-        var options = new HiveMQClientOptionsBuilder().WithClientId("MostBasicPublishAsync").Build();
+        var options = new HiveMQClientOptionsBuilder()
+                            .WithWebSocketServer("ws://localhost:8000/mqtt")
+                            .WithClientId("MostBasicPublishAsync")
+                            .Build();
+
         var client = new HiveMQClient(options);
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
@@ -30,7 +34,10 @@ public class PublishTest
     [Fact]
     public async Task MostBasicPublishWithQoS0Async()
     {
-        var options = new HiveMQClientOptionsBuilder().WithClientId("MostBasicPublishWithQoS0Async").Build();
+        var options = new HiveMQClientOptionsBuilder()
+                            .WithWebSocketServer("ws://localhost:8000/mqtt")
+                            .WithClientId("MostBasicPublishWithQoS0Async")
+                            .Build();
         var client = new HiveMQClient(options);
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
@@ -47,7 +54,11 @@ public class PublishTest
     [Fact]
     public async Task MostBasicPublishWithQoS1Async()
     {
-        var options = new HiveMQClientOptionsBuilder().WithClientId("MostBasicPublishWithQoS1Async").Build();
+        var options = new HiveMQClientOptionsBuilder()
+                            .WithWebSocketServer("ws://localhost:8000/mqtt")
+                            .WithClientId("MostBasicPublishWithQoS1Async")
+                            .Build();
+
         var client = new HiveMQClient(options);
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
@@ -66,7 +77,10 @@ public class PublishTest
     [Fact]
     public async Task MostBasicPublishWithQoS2Async()
     {
-        var options = new HiveMQClientOptionsBuilder().WithClientId("MostBasicPublishWithQoS2Async").Build();
+        var options = new HiveMQClientOptionsBuilder()
+                            .WithWebSocketServer("ws://localhost:8000/mqtt")
+                            .WithClientId("MostBasicPublishWithQoS2Async")
+                            .Build();
         var client = new HiveMQClient(options);
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
@@ -85,7 +99,11 @@ public class PublishTest
     [Fact]
     public async Task MultiPublishWithQoS0Async()
     {
-        var options = new HiveMQClientOptionsBuilder().WithClientId("MultiPublishWithQoS0Async").Build();
+        var options = new HiveMQClientOptionsBuilder()
+                            .WithWebSocketServer("ws://localhost:8000/mqtt")
+                            .WithClientId("MultiPublishWithQoS0Async")
+                            .Build();
+
         var client = new HiveMQClient(options);
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
@@ -111,7 +129,11 @@ public class PublishTest
     [Fact]
     public async Task MultiPublishWithQoS1Async()
     {
-        var options = new HiveMQClientOptionsBuilder().WithClientId("MultiPublishWithQoS1Async").Build();
+        var options = new HiveMQClientOptionsBuilder()
+                            .WithWebSocketServer("ws://localhost:8000/mqtt")
+                            .WithClientId("MultiPublishWithQoS1Async")
+                            .Build();
+
         var client = new HiveMQClient(options);
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
@@ -136,7 +158,11 @@ public class PublishTest
     [Fact]
     public async Task MultiPublishWithQoS2Async()
     {
-        var options = new HiveMQClientOptionsBuilder().WithClientId("MultiPublishWithQoS2Async").Build();
+        var options = new HiveMQClientOptionsBuilder()
+                            .WithWebSocketServer("ws://localhost:8000/mqtt")
+                            .WithClientId("MultiPublishWithQoS2Async")
+                            .Build();
+
         var client = new HiveMQClient(options);
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
@@ -160,7 +186,11 @@ public class PublishTest
     [Fact]
     public async Task PublishWithOptionsAsync()
     {
-        var options = new HiveMQClientOptionsBuilder().WithClientId("PublishWithOptionsAsync").Build();
+        var options = new HiveMQClientOptionsBuilder()
+                            .WithWebSocketServer("ws://localhost:8000/mqtt")
+                            .WithClientId("PublishWithOptionsAsync")
+                            .Build();
+
         var client = new HiveMQClient(options);
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
@@ -177,7 +207,11 @@ public class PublishTest
     [Fact]
     public async Task PublishPayloadFormatIndicatorAsync()
     {
-        var options = new HiveMQClientOptionsBuilder().WithClientId("PublishPayloadFormatIndicatorAsync").Build();
+        var options = new HiveMQClientOptionsBuilder()
+                            .WithWebSocketServer("ws://localhost:8000/mqtt")
+                            .WithClientId("PublishPayloadFormatIndicatorAsync")
+                            .Build();
+
         var client = new HiveMQClient(options);
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
@@ -208,13 +242,19 @@ public class PublishTest
     public async Task ThreeNodeQoS0ChainedPublishesAsync()
     {
 
-        var options = new HiveMQClientOptionsBuilder().WithClientId("ThreeNodeQoS0ChainedPublishesAsync1").Build();
+        var options = new HiveMQClientOptionsBuilder()
+                            .WithWebSocketServer("ws://localhost:8000/mqtt")
+                            .WithClientId("ThreeNodeQoS0ChainedPublishesAsync1").Build();
         var client1 = new HiveMQClient(options); // publish message
 
-        options = new HiveMQClientOptionsBuilder().WithClientId("ThreeNodeQoS0ChainedPublishesAsync2").Build();
+        options = new HiveMQClientOptionsBuilder()
+                        .WithWebSocketServer("ws://localhost:8000/mqtt")
+                        .WithClientId("ThreeNodeQoS0ChainedPublishesAsync2").Build();
         var client2 = new HiveMQClient(options); // receive and re-publish to another topic
 
-        options = new HiveMQClientOptionsBuilder().WithClientId("ThreeNodeQoS0ChainedPublishesAsync3").Build();
+        options = new HiveMQClientOptionsBuilder()
+                        .WithWebSocketServer("ws://localhost:8000/mqtt")
+                        .WithClientId("ThreeNodeQoS0ChainedPublishesAsync3").Build();
         var client3 = new HiveMQClient(options); // receive republished message
 
         // Connect client 1
@@ -312,13 +352,19 @@ public class PublishTest
     [Fact]
     public async Task ThreeNodeQoS1ChainedPublishesAsync()
     {
-        var options = new HiveMQClientOptionsBuilder().WithClientId("ThreeNodeQoS1ChainedPublishesAsync1").Build();
+        var options = new HiveMQClientOptionsBuilder()
+                            .WithWebSocketServer("ws://localhost:8000/mqtt")
+                            .WithClientId("ThreeNodeQoS1ChainedPublishesAsync1").Build();
         var client1 = new HiveMQClient(options); // publish message
 
-        options = new HiveMQClientOptionsBuilder().WithClientId("ThreeNodeQoS1ChainedPublishesAsync2").Build();
+        options = new HiveMQClientOptionsBuilder()
+                        .WithWebSocketServer("ws://localhost:8000/mqtt")
+                        .WithClientId("ThreeNodeQoS1ChainedPublishesAsync2").Build();
         var client2 = new HiveMQClient(options); // receive and re-publish to another topic
 
-        options = new HiveMQClientOptionsBuilder().WithClientId("ThreeNodeQoS1ChainedPublishesAsync3").Build();
+        options = new HiveMQClientOptionsBuilder()
+                        .WithWebSocketServer("ws://localhost:8000/mqtt")
+                        .WithClientId("ThreeNodeQoS1ChainedPublishesAsync3").Build();
         var client3 = new HiveMQClient(options); // receive republished message
 
         // Connect client 1
@@ -416,13 +462,19 @@ public class PublishTest
     [Fact]
     public async Task ThreeNodeQoS2ChainedPublishesAsync()
     {
-        var options = new HiveMQClientOptionsBuilder().WithClientId("ThreeNodeQoS2ChainedPublishesAsync1").Build();
+        var options = new HiveMQClientOptionsBuilder()
+                        .WithWebSocketServer("ws://localhost:8000/mqtt")
+                        .WithClientId("ThreeNodeQoS2ChainedPublishesAsync1").Build();
         var client1 = new HiveMQClient(options); // publish message
 
-        options = new HiveMQClientOptionsBuilder().WithClientId("ThreeNodeQoS2ChainedPublishesAsync2").Build();
+        options = new HiveMQClientOptionsBuilder()
+                        .WithWebSocketServer("ws://localhost:8000/mqtt")
+                        .WithClientId("ThreeNodeQoS2ChainedPublishesAsync2").Build();
         var client2 = new HiveMQClient(options); // receive and re-publish to another topic
 
-        options = new HiveMQClientOptionsBuilder().WithClientId("ThreeNodeQoS2ChainedPublishesAsync3").Build();
+        options = new HiveMQClientOptionsBuilder()
+                        .WithWebSocketServer("ws://localhost:8000/mqtt")
+                        .WithClientId("ThreeNodeQoS2ChainedPublishesAsync3").Build();
         var client3 = new HiveMQClient(options); // receive republished message
 
         // Connect client 1
