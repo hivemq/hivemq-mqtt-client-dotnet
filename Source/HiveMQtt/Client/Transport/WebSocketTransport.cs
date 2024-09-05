@@ -25,10 +25,6 @@ public class WebSocketTransport : BaseTransport, IDisposable
 
     internal ClientWebSocket Socket { get; private set; }
 
-    private readonly byte[] receiveBuffer = new byte[65536];
-
-    private int receiveBufferPosition;
-
     public WebSocketTransport(HiveMQClientOptions options)
     {
         this.Options = options;
@@ -36,8 +32,6 @@ public class WebSocketTransport : BaseTransport, IDisposable
 
         var uri = new Uri(this.Options.WebSocketServer);
         this.Socket.Options.AddSubProtocol("mqtt");
-        // this.Options.Host = uri.Host;
-        // this.Options.Port = uri..NonePort;
 
         if (uri.Scheme is not "ws" and not "wss")
         {
@@ -114,22 +108,43 @@ public class WebSocketTransport : BaseTransport, IDisposable
     /// <exception cref="OperationCanceledException">Thrown when the operation is canceled.</exception>
     public override async Task<TransportReadResult> ReadAsync(CancellationToken cancellationToken = default)
     {
-        var buffer = new ArraySegment<byte>(new byte[1024]);
-        var result = await this.Socket.ReceiveAsync(buffer, cancellationToken).ConfigureAwait(false);
+        var buffer = new ArraySegment<byte>(new Byte[8192]);
+        WebSocketReceiveResult result;
 
-        Logger.Trace($"Received {result.Count} bytes");
+        using (var ms = new MemoryStream())
+        {
+            // Read until the end of the message
+            do
+            {
+                result = await this.Socket.ReceiveAsync(buffer, CancellationToken.None).ConfigureAwait(false);
+                await ms.WriteAsync(buffer.Array, buffer.Offset, result.Count, cancellationToken).ConfigureAwait(false);
+            }
+            while (!result.EndOfMessage);
 
-        return new TransportReadResult(new ReadOnlySequence<byte>(buffer));
+            Logger.Trace($"Received {ms.Length} bytes");
+
+            // ms.Seek(0, SeekOrigin.Begin);
+
+            if (result.MessageType == WebSocketMessageType.Binary)
+            {
+                // Prepare the result and return
+                return new TransportReadResult(new ReadOnlySequence<byte>(ms.ToArray()));
+            }
+            else
+            {
+                return new TransportReadResult(true);
+            }
+        }
     }
 
     public override void AdvanceTo(SequencePosition consumed)
     {
-        Logger.Error("WebSocketTransport.AdvanceTo() not implemented");
+        // No-op in websocket
     }
 
     public override void AdvanceTo(SequencePosition consumed, SequencePosition examined)
     {
-        Logger.Error("WebSocketTransport.AdvanceTo() not implemented");
+        // No-op in websocket
     }
 
     /// <summary>
