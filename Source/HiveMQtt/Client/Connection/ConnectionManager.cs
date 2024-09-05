@@ -197,6 +197,10 @@ public partial class ConnectionManager : IDisposable
     /// </summary>
     public void Dispose()
     {
+        // Dispose managed resources.
+        this.cancellationTokenSource.Cancel();
+        this.cancellationTokenSource.Dispose();
+
         this.Dispose();
         /*
           This object will be cleaned up by the Dispose method.
