@@ -47,6 +47,29 @@ var client = new HiveMQClient(options);
 var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 ```
 
+## Using WebSockets
+
+```csharp
+var options = new HiveMQClientOptionsBuilder()
+    .WithWebSocketServer("ws://broker.hivemq.com:8000/mqtt")
+    .Build();
+
+var client = new HiveMQClient(options);
+var connectResult = await client.ConnectAsync().ConfigureAwait(false);
+```
+
+## Using an IP address
+
+Some embedded devices don't have DNS support and can only connect to static IPs.  Here's how you can connect:
+
+```csharp
+var options = new HiveMQClientOptionsBuilder()
+    .WithWebSocketServer("127.0.0.1:8000")
+    .Build();
+
+var client = new HiveMQClient(options);
+var connectResult = await client.ConnectAsync().ConfigureAwait(false);
+```
 
 ## See Also
 
