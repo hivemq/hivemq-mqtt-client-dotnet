@@ -64,7 +64,7 @@ Some embedded devices don't have DNS support and can only connect to static IPs.
 
 ```csharp
 var options = new HiveMQClientOptionsBuilder()
-    .WithWebSocketServer("127.0.0.1:8000")
+    .WithBroker("10.0.12.222:8000")
     .Build();
 
 var client = new HiveMQClient(options);
