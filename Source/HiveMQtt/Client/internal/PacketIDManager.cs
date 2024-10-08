@@ -6,7 +6,7 @@ public class PacketIDManager
 {
     private HashSet<int> PacketIDsInUse { get; } = new();
 
-    private BitArray PacketIDBitArray { get; } = new BitArray(65536);
+    private BitArray PacketIDBitArray { get; } = new BitArray(131070);
 
     private SemaphoreSlim SemLock { get; } = new(1, 1);
 
