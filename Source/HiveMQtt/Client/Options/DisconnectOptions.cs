@@ -15,6 +15,7 @@
  */
 namespace HiveMQtt.Client.Options;
 
+using HiveMQtt.Client.Exceptions;
 using HiveMQtt.MQTT5.ReasonCodes;
 
 /// <summary>
@@ -41,7 +42,7 @@ public class DisconnectOptions
     /// to the indicated value.  The value represents the session expiration time
     /// in seconds.
     /// </summary>
-    public int? SessionExpiry { get; set; }
+    public int? SessionExpiryInterval { get; set; }
 
     /// <summary>
     /// Gets or sets the reason string for the disconnection.  This is a human readable
@@ -53,4 +54,32 @@ public class DisconnectOptions
     /// Gets or sets the user properties for the disconnection.
     /// </summary>
     public Dictionary<string, string> UserProperties { get; set; }
+
+    /// <summary>
+    /// Validate that the options in this instance are valid.
+    /// </summary>
+    /// <exception cref="HiveMQttClientException">The exception raised if some value is out of range or invalid.</exception>
+    public void Validate()
+    {
+        // Validate SessionExpiry is non-negative if provided
+        if (this.SessionExpiryInterval.HasValue && this.SessionExpiryInterval < 0)
+        {
+            throw new HiveMQttClientException("Session expiry must be a non-negative value.");
+        }
+
+        // Validate ReasonString length (assuming max length of 65535 characters)
+        if (this.ReasonString != null && this.ReasonString.Length > 65535)
+        {
+            throw new HiveMQttClientException("Reason string must not exceed 65535 characters.");
+        }
+
+        // Validate UserProperties for null keys or values
+        foreach (var kvp in this.UserProperties)
+        {
+            if (kvp.Key == null || kvp.Value == null)
+            {
+                throw new HiveMQttClientException("User properties must not have null keys or values.");
+            }
+        }
+    }
 }
