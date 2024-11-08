@@ -280,8 +280,15 @@ public class HiveMQClientOptionsBuilder
     /// </summary>
     /// <param name="method">The authentication method.</param>
     /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
+    /// <exception cref="ArgumentException">Thrown when the authentication method is not between 1 and 65535 characters.</exception>
     public HiveMQClientOptionsBuilder WithAuthenticationMethod(string method)
     {
+        if (method.Length is < 1 or > 65535)
+        {
+            Logger.Error("Authentication method must be between 1 and 65535 characters.");
+            throw new ArgumentException("Authentication method must be between 1 and 65535 characters.");
+        }
+
         this.options.AuthenticationMethod = method;
         return this;
     }

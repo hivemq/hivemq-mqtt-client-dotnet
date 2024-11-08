@@ -2,6 +2,7 @@ namespace HiveMQtt.Test.HiveMQClient.Plan;
 
 using FluentAssertions;
 using HiveMQtt.Client;
+using HiveMQtt.Client.ReasonCodes;
 using HiveMQtt.MQTT5.Types;
 using NUnit.Framework;
 
@@ -63,6 +64,28 @@ public class Utf8LimitTest
     }
 
     [Test]
+    public async Task Publish_ResponseTopic_Should_Allow_0_To_65535_Characters_Async()
+    {
+        var responseTopic = GenerateUtf8String(65535);
+        var publishMessage = new PublishMessageBuilder()
+                    .WithTopic("test/publish")
+                    .WithPayload("test message")
+                    .WithQualityOfService(QualityOfService.AtMostOnceDelivery)
+                    .WithResponseTopic(responseTopic)
+                    .Build();
+
+        var options = new HiveMQClientOptionsBuilder().Build();
+        var client = new HiveMQClient(options);
+
+        client.Should().NotBeNull();
+
+        var publishResult = await client.PublishAsync(publishMessage).ConfigureAwait(false);
+
+        publishResult.Should().NotBeNull();
+        publishResult.ReasonCode().Should().Be((int)QoS1ReasonCode.Success);
+    }
+
+    [Test]
     public void UserName_Should_Allow_0_To_65535_Characters()
     {
         var userName = GenerateUtf8String(65535);
@@ -94,30 +117,104 @@ public class Utf8LimitTest
         client.Should().NotBeNull();
     }
 
-    // [Test]
-    // public void ReasonString_Should_Allow_0_To_65535_Characters()
-    // {
-    //     var reasonString = GenerateUtf8String(65535);
-    //     var options = new HiveMQClientOptionsBuilder()
-    //                   .WithReasonString(reasonString)
-    //                   .Build();
-    //     var client = new Client.HiveMQClient(options);
+    [Test]
+    public async Task Publish_ContentType_Should_Allow_0_To_65535_Characters_Async()
+    {
+        var contentType = GenerateUtf8String(65535);
+        var publishMessage = new PublishMessageBuilder()
+                    .WithTopic("test/publish")
+                    .WithPayload("test message")
+                    .WithQualityOfService(QualityOfService.AtMostOnceDelivery)
+                    .WithContentType(contentType)
+                    .Build();
 
-    //     client.Should().NotBeNull();
-    // }
+        var options = new HiveMQClientOptionsBuilder().Build();
+        var client = new HiveMQClient(options);
+
+        client.Should().NotBeNull();
+
+        var publishResult = await client.PublishAsync(publishMessage).ConfigureAwait(false);
+
+        publishResult.Should().NotBeNull();
+        publishResult.ReasonCode().Should().Be((int)QoS1ReasonCode.Success);
+    }
 
     [Test]
-    public void AuthenticationMethod_Should_Allow_0_To_65535_Characters()
+    public async Task Disconnect_ReasonString_Should_Allow_0_To_65535_Characters_Async()
     {
-        var authMethod = GenerateUtf8String(65535);
+        var reasonString = GenerateUtf8String(65535);
+        var disconnectOptions = new DisconnectOptionsBuilder()
+                                .WithReasonString(reasonString)
+                                .Build();
+
+        var options = new HiveMQClientOptionsBuilder().Build();
+        var client = new HiveMQClient(options);
+
+        client.Should().NotBeNull();
+
+        // Now connect, test, disconnect and test
+        var connectResult = await client.ConnectAsync().ConfigureAwait(false);
+        connectResult.Should().NotBeNull();
+
+        var disconnectResult = await client.DisconnectAsync(disconnectOptions).ConfigureAwait(false);
+        disconnectResult.Should().BeTrue();
+    }
+
+    [Test]
+    public async Task Connect_Authentication_Method_Should_Allow_0_To_65535_Characters_Async()
+    {
+        var authenticationMethod = GenerateUtf8String(65535);
         var options = new HiveMQClientOptionsBuilder()
-                        .WithAuthenticationMethod(authMethod)
+                        .WithAuthenticationMethod(authenticationMethod)
                         .Build();
         var client = new HiveMQClient(options);
 
         client.Should().NotBeNull();
+
+        var connectResult = await client.ConnectAsync().ConfigureAwait(false);
+        connectResult.Should().NotBeNull();
+
+        var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
+        disconnectResult.Should().BeTrue();
+    }
+
+    [Test]
+    public async Task Publish_Topic_Should_Allow_0_To_65535_Characters_Async()
+    {
+        var topic = GenerateUtf8String(65535);
+        var publishMessage = new PublishMessageBuilder()
+                    .WithTopic(topic)
+                    .WithPayload("test message")
+                    .WithQualityOfService(QualityOfService.AtMostOnceDelivery)
+                    .Build();
+
+        var options = new HiveMQClientOptionsBuilder().Build();
+        var client = new HiveMQClient(options);
+        client.Should().NotBeNull();
+
+        var publishResult = await client.PublishAsync(publishMessage).ConfigureAwait(false);
+
+        publishResult.Should().NotBeNull();
+        publishResult.ReasonCode().Should().Be((int)QoS1ReasonCode.Success);
+    }
+
+    [Test]
+    public void Publish_Topic_Should_Not_Contain_Wildcards()
+    {
+        var topic = "test/+/topic#";
+
+        // This should raise an ArgumentException
+        Action act = () =>
+        {
+            var publishMessage = new PublishMessageBuilder()
+                    .WithTopic(topic)
+                    .WithPayload("test message")
+                    .WithQualityOfService(QualityOfService.AtMostOnceDelivery)
+                    .Build();
+        };
+
+        act.Should().Throw<ArgumentException>().WithMessage("Topic must not contain wildcard characters.  Use TopicFilter instead.");
     }
 
     private static string GenerateUtf8String(int length) => new string('a', length);
-
 }

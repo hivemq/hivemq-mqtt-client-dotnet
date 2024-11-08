@@ -111,10 +111,41 @@ public class DisconnectOptionsBuilder
         return this;
     }
 
+    /// <summary>
+    /// Adds a dictionary of user properties to the disconnect.
+    /// </summary>
+    /// <param name="properties">The dictionary of user properties to add.</param>
+    /// <returns>The builder instance.</returns>
+    /// <exception cref="ArgumentException">Thrown if a key or value is not between 1 and 65535 characters.</exception>
+    /// <exception cref="ArgumentNullException">Thrown if the key or value is null.</exception>
     public DisconnectOptionsBuilder WithUserProperties(Dictionary<string, string> properties)
     {
         foreach (var property in properties)
         {
+            if (property.Key is null)
+            {
+                Logger.Error("User property key cannot be null.");
+                throw new ArgumentNullException(nameof(properties));
+            }
+
+            if (property.Value is null)
+            {
+                Logger.Error("User property value cannot be null.");
+                throw new ArgumentNullException(nameof(properties));
+            }
+
+            if (property.Key.Length is < 1 or > 65535)
+            {
+                Logger.Error("User property key must be between 1 and 65535 characters.");
+                throw new ArgumentException("User property key must be between 1 and 65535 characters.");
+            }
+
+            if (property.Value.Length is < 1 or > 65535)
+            {
+                Logger.Error("User property value must be between 1 and 65535 characters.");
+                throw new ArgumentException("User property value must be between 1 and 65535 characters.");
+            }
+
             this.options.UserProperties.Add(property.Key, property.Value);
         }
 

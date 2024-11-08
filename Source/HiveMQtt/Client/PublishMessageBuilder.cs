@@ -62,8 +62,27 @@ public class PublishMessageBuilder
     /// </summary>
     /// <param name="topic">The topic.</param>
     /// <returns>The builder instance.</returns>
+    /// <exception cref="ArgumentException">Thrown when the topic is null or empty.</exception>
+    /// <exception cref="ArgumentException">Thrown when the topic length is greater than 65535 characters.</exception>
+    /// <exception cref="ArgumentException">Thrown when the topic contains wildcard characters.</exception>
     public PublishMessageBuilder WithTopic(string topic)
     {
+        if (string.IsNullOrEmpty(topic))
+        {
+            throw new ArgumentException("Topic must not be null or empty.");
+        }
+
+        if (topic.Length is < 1 or > 65535)
+        {
+            throw new ArgumentException("Topic must be between 1 and 65535 characters.");
+        }
+
+        // The topic string should not contain any wildcard characters.
+        if (topic.Contains('+') || topic.Contains('#'))
+        {
+            throw new ArgumentException("Topic must not contain wildcard characters.  Use TopicFilter instead.");
+        }
+
         this.message.Topic = topic;
         return this;
     }
