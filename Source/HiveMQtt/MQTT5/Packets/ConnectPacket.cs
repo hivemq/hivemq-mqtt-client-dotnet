@@ -121,7 +121,7 @@ public class ConnectPacket : ControlPacket
         this.clientOptions.Validate();
 
         this.flags = 0x0;
-        if (this.clientOptions.CleanStart is true)
+        if (this.clientOptions.CleanStart)
         {
             this.flags |= 0x2;
         }

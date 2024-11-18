@@ -17,6 +17,7 @@ namespace HiveMQtt.MQTT5.Packets;
 
 using System.Buffers;
 using System.IO;
+using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.ReasonCodes;
 
 /// <summary>
@@ -25,8 +26,28 @@ using HiveMQtt.MQTT5.ReasonCodes;
 /// </summary>
 public class DisconnectPacket : ControlPacket
 {
-    public DisconnectPacket()
+    public DisconnectPacket(DisconnectOptions options)
     {
+        this.DisconnectReasonCode = options.ReasonCode;
+
+        if (options.ReasonString != null)
+        {
+            if (options.ReasonString.Length is < 1 or > 65535)
+            {
+                throw new ArgumentException("Reason string must be between 1 and 65535 characters.");
+            }
+        }
+
+        this.Properties.ReasonString = options.ReasonString;
+        if (options.SessionExpiryInterval.HasValue)
+        {
+            this.Properties.SessionExpiryInterval = (uint)options.SessionExpiryInterval;
+        }
+
+        if (options.UserProperties != null)
+        {
+            this.Properties.UserProperties = options.UserProperties;
+        }
     }
 
     public DisconnectPacket(ReadOnlySequence<byte> packetData) => this.Decode(packetData);
@@ -41,18 +62,24 @@ public class DisconnectPacket : ControlPacket
     /// <returns>An array of bytes ready to be sent.</returns>
     public byte[] Encode()
     {
-        using (var stream = new MemoryStream(8))
+        using (var stream = new MemoryStream())
         {
+            // Variable Header - starts at byte 2
             stream.Position = 2;
 
-            // Variable Header - starts at byte 2
+            // Disconnect Reason Code
             stream.WriteByte((byte)this.DisconnectReasonCode);
+
+            // Properties
+            this.EncodeProperties(stream);
 
             // Disconnect has no payload
 
             // Fixed Header - Add to the beginning of the stream
             var remainingLength = stream.Length - 2;
 
+            // Go back to the beginning of the stream and write
+            // the first two bytes.
             stream.Position = 0;
             stream.WriteByte((byte)ControlPacketType.Disconnect << 4);
             EncodeVariableByteInteger(stream, (int)remainingLength);

@@ -125,6 +125,12 @@ public class HiveMQClientOptionsBuilder
     /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
     public HiveMQClientOptionsBuilder WithClientId(string clientId)
     {
+        if (clientId.Length is < 0 or > 65535)
+        {
+            Logger.Error("Client Id must be between 0 and 65535 characters.");
+            throw new ArgumentException("Client Id must be between 0 and 65535 characters.");
+        }
+
         this.options.ClientId = clientId;
         return this;
     }
@@ -275,8 +281,15 @@ public class HiveMQClientOptionsBuilder
     /// </summary>
     /// <param name="method">The authentication method.</param>
     /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
+    /// <exception cref="ArgumentException">Thrown when the authentication method is not between 1 and 65535 characters.</exception>
     public HiveMQClientOptionsBuilder WithAuthenticationMethod(string method)
     {
+        if (method.Length is < 1 or > 65535)
+        {
+            Logger.Error("Authentication method must be between 1 and 65535 characters.");
+            throw new ArgumentException("Authentication method must be between 1 and 65535 characters.");
+        }
+
         this.options.AuthenticationMethod = method;
         return this;
     }
@@ -309,6 +322,18 @@ public class HiveMQClientOptionsBuilder
     /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
     public HiveMQClientOptionsBuilder WithUserProperty(string key, string value)
     {
+        if (key.Length is < 1 or > 65535)
+        {
+            Logger.Error("User property key must be between 1 and 65535 characters.");
+            throw new ArgumentException("User property key must be between 1 and 65535 characters.");
+        }
+
+        if (value.Length is < 1 or > 65535)
+        {
+            Logger.Error("User property value must be between 1 and 65535 characters.");
+            throw new ArgumentException("User property value must be between 1 and 65535 characters.");
+        }
+
         this.options.UserProperties.Add(key, value);
         return this;
     }
@@ -432,6 +457,12 @@ public class HiveMQClientOptionsBuilder
     /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
     public HiveMQClientOptionsBuilder WithUserName(string username)
     {
+        if (username.Length is < 0 or > 65535)
+        {
+            Logger.Error("Username must be between 0 and 65535 characters.");
+            throw new ArgumentException("Username must be between 0 and 65535 characters.");
+        }
+
         this.options.UserName = username;
         return this;
     }
@@ -462,6 +493,12 @@ public class HiveMQClientOptionsBuilder
     /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
     public HiveMQClientOptionsBuilder WithPassword(string password)
     {
+        if (password.Length is < 0 or > 65535)
+        {
+            Logger.Error("Password must be between 0 and 65535 characters.");
+            throw new ArgumentException("Password must be between 0 and 65535 characters.");
+        }
+
         this.options.Password = password;
         return this;
     }
