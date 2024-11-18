@@ -154,14 +154,26 @@ public abstract class ControlPacket
     {
         if (reader.TryReadBigEndian(out short stringLength))
         {
-            var array = new byte[stringLength];
+            var length = (ushort)stringLength;
+
+            // Ensure the string length is non-negative and within a reasonable range
+            if (length < 0 || length > reader.Remaining)
+            {
+                throw new MQTTProtocolException("DecodeUTF8String: Invalid UTF-8 string length");
+            }
+
+            var array = new byte[length];
             var span = new Span<byte>(array);
 
-            for (var i = 0; i < stringLength; i++)
+            for (var i = 0; i < length; i++)
             {
                 if (reader.TryRead(out var outValue))
                 {
                     span[i] = outValue;
+                }
+                else
+                {
+                    throw new MQTTProtocolException("DecodeUTF8String: Unexpected end of data");
                 }
             }
 
