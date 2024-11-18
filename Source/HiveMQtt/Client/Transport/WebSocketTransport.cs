@@ -123,8 +123,8 @@ public class WebSocketTransport : BaseTransport, IDisposable
 
             Logger.Trace($"Received {ms.Length} bytes");
 
+            // Development
             // ms.Seek(0, SeekOrigin.Begin);
-
             if (result.MessageType == WebSocketMessageType.Binary)
             {
                 // Prepare the result and return

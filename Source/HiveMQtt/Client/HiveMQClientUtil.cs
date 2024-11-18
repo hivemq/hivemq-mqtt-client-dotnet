@@ -173,7 +173,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     Logger.Trace("HiveMQClient Dispose: Disconnecting connected client.");
                     _ = Task.Run(async () => await this.DisconnectAsync().ConfigureAwait(false));
                 }
-             }
+            }
 
             // Call the appropriate methods to clean up
             // unmanaged resources here.

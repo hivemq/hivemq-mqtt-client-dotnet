@@ -130,6 +130,7 @@ public class HiveMQClientOptionsBuilder
             Logger.Error("Client Id must be between 0 and 65535 characters.");
             throw new ArgumentException("Client Id must be between 0 and 65535 characters.");
         }
+
         this.options.ClientId = clientId;
         return this;
     }
@@ -497,6 +498,7 @@ public class HiveMQClientOptionsBuilder
             Logger.Error("Password must be between 0 and 65535 characters.");
             throw new ArgumentException("Password must be between 0 and 65535 characters.");
         }
+
         this.options.Password = password;
         return this;
     }

@@ -63,6 +63,7 @@ public class HiveMQClientOptions
     /// Examples:
     /// ws://localhost:8000/mqtt
     /// wss://localhost:8884/mqtt
+    /// .
     /// </para>
     /// </summary>
     public string WebSocketServer { get; set; }

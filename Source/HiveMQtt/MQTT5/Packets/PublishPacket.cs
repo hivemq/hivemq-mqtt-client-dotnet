@@ -293,7 +293,7 @@ public class PublishPacket : ControlPacket
             var byte1 = (byte)ControlPacketType.Publish << 4;
 
             // DUP Flag
-            if (this.Message.Duplicate is true)
+            if (this.Message.Duplicate)
             {
                 byte1 |= 0x8;
             }
@@ -309,7 +309,7 @@ public class PublishPacket : ControlPacket
             }
 
             // Retain Flag
-            if (this.Message.Retain is true)
+            if (this.Message.Retain)
             {
                 byte1 |= 0x1;
             }
