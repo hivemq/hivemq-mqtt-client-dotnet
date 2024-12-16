@@ -15,12 +15,15 @@
  */
 namespace HiveMQtt.MQTT5.Types;
 
+using System.ComponentModel.DataAnnotations;
 using HiveMQtt.Client.Exceptions;
+using HiveMQtt.Client.Internal;
 
 public class TopicFilter
 {
     public TopicFilter(string topic, QualityOfService qos = QualityOfService.AtMostOnceDelivery, bool? noLocal = null, bool? retainAsPublished = null, RetainHandling? retainHandling = null)
     {
+        Client.Internal.Validator.ValidateTopicFilter(topic);
         this.Topic = topic;
         this.QoS = qos;
         this.NoLocal = noLocal;

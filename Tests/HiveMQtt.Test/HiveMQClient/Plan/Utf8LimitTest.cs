@@ -199,21 +199,111 @@ public class Utf8LimitTest
     }
 
     [Test]
-    public void Publish_Topic_Should_Not_Contain_Wildcards()
+    public async Task TopicFilter_Should_Abide_By_Utf8_Encoded_String_Limits_Async()
     {
-        var topic = "test/+/topic#";
+        var validTopicFilter = GenerateUtf8String(65535);
+        var options = new HiveMQClientOptionsBuilder().Build();
+        var client = new HiveMQClient(options);
 
-        // This should raise an ArgumentException
-        Action act = () =>
+        client.Should().NotBeNull();
+
+        var connectResult = await client.ConnectAsync().ConfigureAwait(false);
+        connectResult.Should().NotBeNull();
+
+        var subscribeOptions = new SubscribeOptionsBuilder()
+                                .WithSubscription(new TopicFilter(validTopicFilter, QualityOfService.AtMostOnceDelivery))
+                                .Build();
+
+        var subscribeResult = await client.SubscribeAsync(subscribeOptions).ConfigureAwait(false);
+        subscribeResult.Should().NotBeNull();
+
+        var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
+        disconnectResult.Should().BeTrue();
+    }
+
+    [Test]
+    public async Task TopicFilter_Should_Allow_Plus_Wildcard_Anywhere_Async()
+    {
+        var topicFilter = "test/+/topic";
+        var options = new HiveMQClientOptionsBuilder().Build();
+        var client = new HiveMQClient(options);
+
+        client.Should().NotBeNull();
+
+        var connectResult = await client.ConnectAsync().ConfigureAwait(false);
+        connectResult.Should().NotBeNull();
+
+        var subscribeOptions = new SubscribeOptionsBuilder()
+                                .WithSubscription(new TopicFilter(topicFilter, QualityOfService.AtMostOnceDelivery))
+                                .Build();
+
+        var subscribeResult = await client.SubscribeAsync(subscribeOptions).ConfigureAwait(false);
+        subscribeResult.Should().NotBeNull();
+
+        var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
+        disconnectResult.Should().BeTrue();
+    }
+
+    [Test]
+    public async Task TopicFilter_Should_Allow_Hash_Wildcard_Only_At_End_Async()
+    {
+        var topicFilter = "test/topic/#";
+        var options = new HiveMQClientOptionsBuilder().Build();
+        var client = new HiveMQClient(options);
+
+        client.Should().NotBeNull();
+
+        var connectResult = await client.ConnectAsync().ConfigureAwait(false);
+        connectResult.Should().NotBeNull();
+
+        var subscribeOptions = new SubscribeOptionsBuilder()
+                                .WithSubscription(new TopicFilter(topicFilter, QualityOfService.AtMostOnceDelivery))
+                                .Build();
+
+        var subscribeResult = await client.SubscribeAsync(subscribeOptions).ConfigureAwait(false);
+        subscribeResult.Should().NotBeNull();
+
+        var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
+        disconnectResult.Should().BeTrue();
+    }
+
+    [Test]
+    public async Task TopicFilter_Should_Not_Allow_Invalid_Plus_Wildcard_Async()
+    {
+        var topicFilter = "asd+";
+        var options = new HiveMQClientOptionsBuilder().Build();
+        var client = new HiveMQClient(options);
+
+        client.Should().NotBeNull();
+
+        var connectResult = await client.ConnectAsync().ConfigureAwait(false);
+        connectResult.Should().NotBeNull();
+
+        Func<Task> act = async () =>
         {
-            var publishMessage = new PublishMessageBuilder()
-                    .WithTopic(topic)
-                    .WithPayload("test message")
-                    .WithQualityOfService(QualityOfService.AtMostOnceDelivery)
-                    .Build();
+            var subscribeOptions = new SubscribeOptionsBuilder()
+                                    .WithSubscription(new TopicFilter(topicFilter, QualityOfService.AtMostOnceDelivery))
+                                    .Build();
+
+            await client.SubscribeAsync(subscribeOptions).ConfigureAwait(false);
         };
 
-        act.Should().Throw<ArgumentException>().WithMessage("Topic must not contain wildcard characters.  Use TopicFilter instead.");
+        await act.Should().ThrowAsync<ArgumentException>().WithMessage("The '+' wildcard must stand alone and cannot be part of another string.");
+
+        topicFilter = "asd#";
+        act = async () =>
+        {
+            var subscribeOptions = new SubscribeOptionsBuilder()
+                                    .WithSubscription(new TopicFilter(topicFilter, QualityOfService.AtMostOnceDelivery))
+                                    .Build();
+
+            await client.SubscribeAsync(subscribeOptions).ConfigureAwait(false);
+        };
+
+        await act.Should().ThrowAsync<ArgumentException>().WithMessage("The '#' wildcard must be preceded by a topic level separator or be the only character.");
+
+        var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
+        disconnectResult.Should().BeTrue();
     }
 
     private static string GenerateUtf8String(int length) => new string('a', length);
