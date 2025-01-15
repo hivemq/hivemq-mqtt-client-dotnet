@@ -17,7 +17,7 @@
 ### 💽 Installation & Compatibility
 * **Easy-to-Install**: Available as a [Nuget package](https://www.nuget.org/packages/HiveMQtt).
 * **Globally Compatible**: Built to be a fully compliant MQTT 5.0 client compatible with all modern MQTT brokers.
-* **Multi-Targeted**: Supports .NET 6.0, 7.0 & 8.0
+* **Multi-Targeted**: Supports .NET 6.0, 7.0, 8.0 & 9.0
 
 ### 🚀 Features
 * **MQTT 5.0 Support**: Fully compliant with the latest [MQTT 5.0 specification](https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.html), ensuring compatibility with modern MQTT brokers.

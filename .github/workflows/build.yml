@@ -44,7 +44,7 @@ jobs:
         # Docker containers not supported on windows and macOS in Github runners.
         # os: [ubuntu-latest, windows-latest, macOS-latest]
         os: [ubuntu-latest]
-        dotnet-version: ['7.0.x', '8.0.x', '9.0.x']
+        dotnet-version: ['6.0.x', '7.0.x', '8.0.x', '9.0.x']
     steps:
       - name: "Checkout"
         uses: actions/checkout@v4.2.2
