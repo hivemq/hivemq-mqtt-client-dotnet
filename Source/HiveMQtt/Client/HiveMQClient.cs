@@ -472,4 +472,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         this.AfterUnsubscribeEventLauncher(unsubscribeResult);
         return unsubscribeResult;
     }
+
+    // Method to check if ping are sent based on the KeepAlive option
+    public bool IsPingSent() => this.Options.KeepAlive > 0;
 }
