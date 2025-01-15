@@ -19,7 +19,10 @@ Task("Restore")
     .IsDependentOn("Clean")
     .Does(() =>
     {
-        DotNetRestore();
+        DotNetRestore(new DotNetRestoreSettings
+        {
+            Verbosity = DotNetVerbosity.Normal
+        });
     });
 
 Task("Build")
