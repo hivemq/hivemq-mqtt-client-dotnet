@@ -15,6 +15,7 @@
  */
 namespace HiveMQtt.Client.Transport;
 
+using System.Data;
 using System.IO.Pipelines;
 using System.Net;
 using System.Net.Security;
@@ -160,17 +161,25 @@ public class TCPTransport : BaseTransport, IDisposable
     /// <returns>A boolean representing the success or failure of the operation.</returns>
     public override async Task<bool> ConnectAsync(CancellationToken cancellationToken = default)
     {
-        IPEndPoint ipEndPoint;
-        var ipAddress = await LookupHostNameAsync(this.Options.Host, this.Options.PreferIPv6).ConfigureAwait(false);
+        IPEndPoint? ipEndPoint = null;
 
-        // Create the IPEndPoint depending on whether it is a host name or IP address.
-        if (ipAddress == null)
+        if (IPAddress.TryParse(this.Options.Host, out var parsedIp))
         {
-            ipEndPoint = new IPEndPoint(IPAddress.Parse(this.Options.Host), this.Options.Port);
+            ipEndPoint = new IPEndPoint(parsedIp, this.Options.Port);
         }
         else
         {
-            ipEndPoint = new IPEndPoint(ipAddress, this.Options.Port);
+            var lookupResult = await LookupHostNameAsync(this.Options.Host, this.Options.PreferIPv6).ConfigureAwait(false);
+
+            if (lookupResult != null)
+            {
+                ipEndPoint = new IPEndPoint(lookupResult, this.Options.Port);
+            }
+        }
+
+        if (ipEndPoint == null)
+        {
+            throw new HiveMQttClientException("Failed to create IPEndPoint. Broker is no valid IP address or hostname.");
         }
 
         this.Socket = new(ipEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
