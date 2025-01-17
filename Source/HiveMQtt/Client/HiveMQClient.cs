@@ -316,12 +316,21 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         // Setup the task completion source to wait for the SUBACK
         var taskCompletionSource = new TaskCompletionSource<SubAckPacket>();
-        void TaskHandler(object? sender, OnSubAckReceivedEventArgs args) => taskCompletionSource.SetResult(args.SubAckPacket);
+        void TaskHandler(object? sender, OnSubAckReceivedEventArgs args)
+        {
+            if (args.SubAckPacket.PacketIdentifier == subscribePacket.PacketIdentifier)
+            {
+                taskCompletionSource.SetResult(args.SubAckPacket);
+            }
+        }
+
         EventHandler<OnSubAckReceivedEventArgs> eventHandler = TaskHandler;
         this.OnSubAckReceived += eventHandler;
 
         // Queue the constructed packet to be sent on the wire
         this.Connection.SendQueue.Enqueue(subscribePacket);
+
+
 
         SubAckPacket subAck;
         SubscribeResult subscribeResult;
