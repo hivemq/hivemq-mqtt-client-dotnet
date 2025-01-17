@@ -56,7 +56,7 @@ jobs:
         with:
           dotnet-version: '${{ matrix.dotnet-version }}'
       - name: Create temporary global.json
-        run: echo "{\"sdk\":{\"version\": \"${{ matrix.dotnet-version }}\" }}" > ./global.json
+        run: echo '{"sdk":{"version":"${{ matrix.dotnet-version }}"}}' > global.json
       - name: "Dotnet Tool Restore"
         run: dotnet tool restore
         shell: pwsh
