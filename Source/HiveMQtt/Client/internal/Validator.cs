@@ -111,14 +111,14 @@ public class Validator
         }
 
         // Check for invalid usage of '#' wildcard
-        if (topic.Contains("#"))
+        if (topic.Contains('#'))
         {
             if (topic.IndexOf('#') != topic.Length - 1)
             {
                 throw new ArgumentException("The '#' wildcard must be the last character in the topic filter.");
             }
 
-            if (topic.Length > 1 && topic[topic.Length - 2] != '/')
+            if (topic.Length > 1 && topic[^2] != '/')
             {
                 throw new ArgumentException("The '#' wildcard must be preceded by a topic level separator or be the only character.");
             }
@@ -128,7 +128,7 @@ public class Validator
         var segments = topic.Split('/');
         foreach (var segment in segments)
         {
-            if (segment.Contains("+") && segment != "+")
+            if (segment.Contains('+') && segment != "+")
             {
                 throw new ArgumentException("The '+' wildcard must stand alone and cannot be part of another string.");
             }

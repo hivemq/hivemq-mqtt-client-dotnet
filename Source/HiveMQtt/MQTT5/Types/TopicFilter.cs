@@ -15,9 +15,7 @@
  */
 namespace HiveMQtt.MQTT5.Types;
 
-using System.ComponentModel.DataAnnotations;
 using HiveMQtt.Client.Exceptions;
-using HiveMQtt.Client.Internal;
 
 public class TopicFilter
 {

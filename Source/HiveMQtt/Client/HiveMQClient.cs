@@ -232,7 +232,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             // QoS 2: Assured Delivery
             var packetIdentifier = await this.Connection.PacketIDManager.GetAvailablePacketIDAsync().ConfigureAwait(false);
             var publishPacket = new PublishPacket(message, (ushort)packetIdentifier);
-            PublishResult? publishResult = null;
+            var publishResult = new PublishResult(publishPacket.Message);
 
             Logger.Trace($"Queuing QoS 2 publish packet for send: {publishPacket.GetType().Name} id={publishPacket.PacketIdentifier}");
             this.Connection.OutgoingPublishQueue.Enqueue(publishPacket);
