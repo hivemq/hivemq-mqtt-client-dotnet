@@ -2,7 +2,6 @@ namespace HiveMQtt.Test.HiveMQClient.Plan;
 
 using FluentAssertions;
 using HiveMQtt.Client;
-using HiveMQtt.MQTT5.Types;
 using NUnit.Framework;
 using System.Threading.Tasks;
 
@@ -10,7 +9,7 @@ using System.Threading.Tasks;
 public class KeepAliveTest
 {
     [Test]
-    public async Task Client_Uses_Zero_As_Keep_Alive_No_Pings_Are_Sent()
+    public async Task Client_Uses_Zero_As_Keep_Alive_No_Pings_Are_Sent_Async()
     {
         var options = new HiveMQClientOptionsBuilder()
                         .WithKeepAlive(0)
@@ -35,7 +34,7 @@ public class KeepAliveTest
     }
 
     [Test]
-    public async Task Client_Sends_Pings_After_Interval_Passed()
+    public async Task Client_Sends_Pings_After_Interval_Passed_Async()
     {
         var options = new HiveMQClientOptionsBuilder()
                         .WithKeepAlive(5) // 5 seconds
@@ -58,5 +57,4 @@ public class KeepAliveTest
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         disconnectResult.Should().BeTrue();
     }
-
 }

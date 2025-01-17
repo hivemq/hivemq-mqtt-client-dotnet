@@ -8,7 +8,6 @@ using Xunit;
 
 public class PublishBuilderTest
 {
-
     private readonly byte[] payload = { 0x01, 0x02, 0x03 };
 
     [Fact]

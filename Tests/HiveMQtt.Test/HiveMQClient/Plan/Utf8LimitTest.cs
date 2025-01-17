@@ -288,7 +288,7 @@ public class Utf8LimitTest
             await client.SubscribeAsync(subscribeOptions).ConfigureAwait(false);
         };
 
-        await act.Should().ThrowAsync<ArgumentException>().WithMessage("The '+' wildcard must stand alone and cannot be part of another string.");
+        await act.Should().ThrowAsync<ArgumentException>().WithMessage("The '+' wildcard must stand alone and cannot be part of another string.").ConfigureAwait(true);
 
         topicFilter = "asd#";
         act = async () =>
@@ -300,11 +300,13 @@ public class Utf8LimitTest
             await client.SubscribeAsync(subscribeOptions).ConfigureAwait(false);
         };
 
-        await act.Should().ThrowAsync<ArgumentException>().WithMessage("The '#' wildcard must be preceded by a topic level separator or be the only character.");
+        await act.Should().ThrowAsync<ArgumentException>().WithMessage("The '#' wildcard must be preceded by a topic level separator or be the only character.").ConfigureAwait(true);
 
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         disconnectResult.Should().BeTrue();
     }
 
+#pragma warning disable IDE0090 // Use 'new(...)'
     private static string GenerateUtf8String(int length) => new string('a', length);
+#pragma warning restore IDE0090 // Use 'new(...)'
 }

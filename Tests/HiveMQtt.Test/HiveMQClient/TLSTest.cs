@@ -8,7 +8,9 @@ using Xunit;
 
 public class TLSTest
 {
-    [Fact (Skip = "Github CI failing: Need to be run manually")]
+#pragma warning disable xUnit1004
+    [Fact(Skip = "Github CI failing: Need to be run manually")]
+#pragma warning restore xUnit1004
     public async Task Public_Broker_TLS_Async()
     {
         var options = new HiveMQClientOptions

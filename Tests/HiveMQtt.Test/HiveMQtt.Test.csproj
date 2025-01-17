@@ -20,6 +20,7 @@
     </TargetFrameworks>
 
     <ReleaseVersion>0.1.0</ReleaseVersion>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
