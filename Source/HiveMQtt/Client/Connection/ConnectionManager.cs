@@ -152,7 +152,7 @@ public partial class ConnectionManager : IDisposable
         }
         else
         {
-            Logger.Error("ConnectionPublishWriterTask did not complete");
+            Logger.Trace("ConnectionPublishWriterTask did not complete in time");
         }
 
         if (this.ConnectionWriterTask is not null && this.ConnectionWriterTask.IsCompleted)
@@ -161,7 +161,7 @@ public partial class ConnectionManager : IDisposable
         }
         else
         {
-            Logger.Error("ConnectionWriterTask did not complete");
+            Logger.Trace("ConnectionWriterTask did not complete in time");
         }
 
         if (this.ConnectionReaderTask is not null && this.ConnectionReaderTask.IsCompleted)
@@ -170,7 +170,7 @@ public partial class ConnectionManager : IDisposable
         }
         else
         {
-            Logger.Error("ConnectionReaderTask did not complete");
+            Logger.Trace("ConnectionReaderTask did not complete in time");
         }
 
         if (this.ReceivedPacketsHandlerTask is not null && this.ReceivedPacketsHandlerTask.IsCompleted)
@@ -179,7 +179,7 @@ public partial class ConnectionManager : IDisposable
         }
         else
         {
-            Logger.Error("ReceivedPacketsHandlerTask did not complete");
+            Logger.Trace("ReceivedPacketsHandlerTask did not complete in time");
         }
 
         if (this.ConnectionMonitorTask is not null && this.ConnectionMonitorTask.IsCompleted)
@@ -188,7 +188,7 @@ public partial class ConnectionManager : IDisposable
         }
         else
         {
-            Logger.Error("ConnectionMonitorTask did not complete");
+            Logger.Trace("ConnectionMonitorTask did not complete in time");
         }
     }
 
