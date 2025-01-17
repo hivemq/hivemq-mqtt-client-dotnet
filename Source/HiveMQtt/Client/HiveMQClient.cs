@@ -432,7 +432,14 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         var unsubscribePacket = new UnsubscribePacket(unsubOptions, (ushort)packetIdentifier);
 
         var taskCompletionSource = new TaskCompletionSource<UnsubAckPacket>();
-        void TaskHandler(object? sender, OnUnsubAckReceivedEventArgs args) => taskCompletionSource.SetResult(args.UnsubAckPacket);
+        void TaskHandler(object? sender, OnUnsubAckReceivedEventArgs args)
+        {
+            if (args.UnsubAckPacket.PacketIdentifier == unsubscribePacket.PacketIdentifier)
+            {
+                taskCompletionSource.SetResult(args.UnsubAckPacket);
+            }
+        }
+
         EventHandler<OnUnsubAckReceivedEventArgs> eventHandler = TaskHandler;
         this.OnUnsubAckReceived += eventHandler;
 
