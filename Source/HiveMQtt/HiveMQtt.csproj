@@ -1,8 +1,24 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup Label="Build">
-    <TargetFrameworks>net6.0;net7.0;net8.0;</TargetFrameworks>
-    <TargetFrameworks Condition="'$(NETCoreSdkVersion)' >= '9.0.0'">net9.0</TargetFrameworks>
+    <!-- Include net6.0 only if the SDK supports it -->
+    <TargetFrameworks Condition="'$(NETCoreSdkVersion)' >= '6.0.0'">net6.0</TargetFrameworks>
+
+    <!-- Add net7.0 conditionally if the SDK supports it -->
+    <TargetFrameworks Condition="'$(NETCoreSdkVersion)' >= '7.0.0'">
+      $(TargetFrameworks);net7.0
+    </TargetFrameworks>
+
+    <!-- Add net8.0 conditionally if the SDK supports it -->
+    <TargetFrameworks Condition="'$(NETCoreSdkVersion)' >= '8.0.0'">
+      $(TargetFrameworks);net8.0
+    </TargetFrameworks>
+
+    <!-- Add net9.0 conditionally if the SDK supports it -->
+    <TargetFrameworks Condition="'$(NETCoreSdkVersion)' >= '9.0.0'">
+      $(TargetFrameworks);net9.0
+    </TargetFrameworks>
+
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
