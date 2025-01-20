@@ -108,7 +108,7 @@ public class WebSocketTransport : BaseTransport, IDisposable
     /// <exception cref="OperationCanceledException">Thrown when the operation is canceled.</exception>
     public override async Task<TransportReadResult> ReadAsync(CancellationToken cancellationToken = default)
     {
-        var buffer = new ArraySegment<byte>(new Byte[8192]);
+        var buffer = new ArraySegment<byte>(new byte[8192]);
         WebSocketReceiveResult result;
 
         using (var ms = new MemoryStream())

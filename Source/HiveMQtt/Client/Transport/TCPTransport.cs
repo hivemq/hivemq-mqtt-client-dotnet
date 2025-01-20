@@ -15,7 +15,6 @@
  */
 namespace HiveMQtt.Client.Transport;
 
-using System.Data;
 using System.IO.Pipelines;
 using System.Net;
 using System.Net.Security;

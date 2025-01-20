@@ -193,7 +193,7 @@ public class PublishBuilderTest
         Assert.IsType<Client.Results.PublishResult>(publishResult);
         Assert.Null(publishResult.QoS1ReasonCode);
         Assert.Null(publishResult.QoS2ReasonCode);
-        Assert.Equal(MQTT5.Types.QualityOfService.AtMostOnceDelivery, publishResult.Message.QoS);
+        Assert.Equal(QualityOfService.AtMostOnceDelivery, publishResult.Message.QoS);
         Assert.Equal("test", publishResult.Message.UserProperties["test"]);
 
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
