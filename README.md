@@ -13,6 +13,7 @@
 ![Static Badge](https://img.shields.io/badge/.NET%20Core-6-%23512BD4?style=for-the-badge)
 ![Static Badge](https://img.shields.io/badge/.NET%20Core-7-%23512BD4?style=for-the-badge)
 ![Static Badge](https://img.shields.io/badge/.NET%20Core-8-%23512BD4?style=for-the-badge)
+![Static Badge](https://img.shields.io/badge/.NET%20Core-9-%23512BD4?style=for-the-badge)
 
 ### 💽 Installation & Compatibility
 * **Easy-to-Install**: Available as a [Nuget package](https://www.nuget.org/packages/HiveMQtt).
