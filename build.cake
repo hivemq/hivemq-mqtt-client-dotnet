@@ -2,6 +2,7 @@ var target = Argument("Target", "Default");
 var configuration =
     HasArgument("Configuration") ? Argument<string>("Configuration") :
     EnvironmentVariable("Configuration", "Release");
+var targetFramework = Argument("framework", "net6.0");
 
 var artifactsDirectory = Directory("./Artifacts");
 
@@ -50,6 +51,7 @@ Task("Test")
                 new DotNetTestSettings()
                 {
                     Blame = true,
+                    Framework = targetFramework,
                     Collectors = new string[] { "Code Coverage", "XPlat Code Coverage" },
                     Configuration = configuration,
                     Loggers = new string[]

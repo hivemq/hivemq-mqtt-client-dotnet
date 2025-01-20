@@ -66,7 +66,7 @@ jobs:
         shell: pwsh
 
       - name: Dotnet Cake Test
-        run: dotnet cake --target=Test
+        run: dotnet cake --target=Test --framework net${{ matrix.dotnet-version }}
         shell: pwsh
 
       - name: Dotnet Cake Pack
