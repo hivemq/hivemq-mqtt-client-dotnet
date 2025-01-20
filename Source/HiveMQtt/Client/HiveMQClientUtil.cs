@@ -112,7 +112,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         // If pattern contains a multi-level wildcard character, it must be the last character in the pattern
         // and it must be preceded by a topic level separator.
+#pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
         var mlwcValidityRegex = new Regex(@"(?<!/)#");
+#pragma warning restore SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
 
         if (pattern.Contains("/#/") | mlwcValidityRegex.IsMatch(pattern))
         {

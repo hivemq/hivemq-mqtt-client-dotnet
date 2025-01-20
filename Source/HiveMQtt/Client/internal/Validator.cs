@@ -90,6 +90,7 @@ public class Validator
     /// <exception cref="ArgumentNullException">Thrown when the topic filter is null.</exception>
     /// <exception cref="HiveMQttClientException">Thrown when the topic filter is longer than 65535 characters or empty.</exception>
     /// <exception cref="HiveMQttClientException">Thrown when the topic filter contains any null characters.</exception>
+    /// <exception cref="ArgumentException">Thrown when the topic filter contains invalid wildcard usage.</exception>
     public static void ValidateTopicFilter(string topic)
     {
         ArgumentNullException.ThrowIfNull(topic);
@@ -107,6 +108,30 @@ public class Validator
         if (topic.Contains('\0'))
         {
             throw new HiveMQttClientException("A topic name cannot contain any null characters.");
+        }
+
+        // Check for invalid usage of '#' wildcard
+        if (topic.Contains('#'))
+        {
+            if (topic.IndexOf('#') != topic.Length - 1)
+            {
+                throw new ArgumentException("The '#' wildcard must be the last character in the topic filter.");
+            }
+
+            if (topic.Length > 1 && topic[^2] != '/')
+            {
+                throw new ArgumentException("The '#' wildcard must be preceded by a topic level separator or be the only character.");
+            }
+        }
+
+        // Check for invalid usage of '+' wildcard
+        var segments = topic.Split('/');
+        foreach (var segment in segments)
+        {
+            if (segment.Contains('+') && segment != "+")
+            {
+                throw new ArgumentException("The '+' wildcard must stand alone and cannot be part of another string.");
+            }
         }
     }
 }

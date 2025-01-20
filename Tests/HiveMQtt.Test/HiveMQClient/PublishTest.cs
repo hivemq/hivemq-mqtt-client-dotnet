@@ -207,7 +207,6 @@ public class PublishTest
     [Fact]
     public async Task ThreeNodeQoS0ChainedPublishesAsync()
     {
-
         var options = new HiveMQClientOptionsBuilder().WithClientId("ThreeNodeQoS0ChainedPublishesAsync1").Build();
         var client1 = new HiveMQClient(options); // publish message
 

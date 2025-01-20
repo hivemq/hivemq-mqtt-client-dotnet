@@ -41,9 +41,7 @@ public class LastWillAndTestamentBuilderTest
         Assert.True(listenerClient.IsConnected());
 
         var taskLWTReceived = new TaskCompletionSource<bool>();
-#pragma warning disable SA1010 // Opening square brackets should be spaced correctly
-        byte[] correlationDataBytes = [1, 2, 3, 4, 5];
-#pragma warning restore SA1010 // Opening square brackets should be spaced correctly
+        var correlationData = new byte[] { 1, 2, 3, 4, 5 };
 
         // Set the event handler for the message received event
         listenerClient.OnMessageReceived += (sender, args) =>
@@ -53,7 +51,7 @@ public class LastWillAndTestamentBuilderTest
             Assert.Equal("last will message", args.PublishMessage.PayloadAsString);
             Assert.Equal("application/text", args.PublishMessage.ContentType);
             Assert.Equal("response/topic", args.PublishMessage.ResponseTopic);
-            Assert.Equal(correlationDataBytes, args.PublishMessage.CorrelationData);
+            Assert.Equal(correlationData, args.PublishMessage.CorrelationData);
             Assert.Equal(MQTT5PayloadFormatIndicator.UTF8Encoded, args.PublishMessage.PayloadFormatIndicator);
             Assert.Equal(100, args.PublishMessage.MessageExpiryInterval);
             Assert.Single(args.PublishMessage.UserProperties);
@@ -77,7 +75,7 @@ public class LastWillAndTestamentBuilderTest
             .WithQualityOfServiceLevel(QualityOfService.AtLeastOnceDelivery)
             .WithContentType("application/text")
             .WithResponseTopic("response/topic")
-            .WithCorrelationData(correlationDataBytes)
+            .WithCorrelationData(correlationData)
             .WithPayloadFormatIndicator(MQTT5PayloadFormatIndicator.UTF8Encoded)
             .WithMessageExpiryInterval(100)
             .WithUserProperty("userPropertyKey", "userPropertyValue")

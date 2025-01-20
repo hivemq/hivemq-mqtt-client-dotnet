@@ -73,6 +73,8 @@ public class QueuedPublishesTest
         var subscribeClient = new HiveMQClient(subscriberOptions);
 
         var relayCount = 0;
+#pragma warning disable CS8652
+#pragma warning disable CS8604
         subscribeClient.OnMessageReceived += async (sender, args) =>
         {
             // Republish the Message to the second topic
@@ -83,6 +85,8 @@ public class QueuedPublishesTest
             // Atomically increment the relayCount
             Interlocked.Increment(ref relayCount);
         };
+#pragma warning restore CS8652
+#pragma warning restore CS8604
 
         await subscribeClient.ConnectAsync().ConfigureAwait(false);
         await subscribeClient.SubscribeAsync(firstTopic, QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);

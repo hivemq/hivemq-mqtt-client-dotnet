@@ -11,19 +11,15 @@ on:
   workflow_dispatch:
 
 env:
-  # Disable the .NET logo in the console output.
   DOTNET_NOLOGO: true
-  # Disable the .NET first time experience to skip caching NuGet packages and speed up the build.
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
-  # Disable sending .NET CLI telemetry to Microsoft.
   DOTNET_CLI_TELEMETRY_OPTOUT: true
-  # Set the build number in MinVer.
-  MINVERBUILDMETADATA: build.${{github.run_number}}
+  MINVERBUILDMETADATA: build.${{ github.run_number }}
 
 jobs:
   build:
-    name: pipeline-${{matrix.os}}-dotnet-${{matrix.dotnet-version}}
-    runs-on: ${{matrix.os}}
+    name: pipeline-${{ matrix.os }}-dotnet-${{ matrix.dotnet-version }}
+    runs-on: ${{ matrix.os }}
 
     services:
       hivemq:
@@ -41,33 +37,43 @@ jobs:
 
     strategy:
       matrix:
-        # Docker containers not supported on windows and macOS in Github runners.
-        # os: [ubuntu-latest, windows-latest, macOS-latest]
         os: [ubuntu-latest]
-        dotnet-version: ['6.0.x', '7.0.x', '8.0.x']
+        dotnet-version: ['6.0.x', '7.0.x', '8.0.x', '9.0.x']
     steps:
-      - name: "Checkout"
+      - name: Checkout
         uses: actions/checkout@v4.2.2
         with:
           lfs: true
           fetch-depth: 0
-      - name: "Install .NET Core SDK"
+
+      - name: Install .NET Core SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '${{ matrix.dotnet-version }}'
-      - name: "Dotnet Tool Restore"
+
+      - name: List Installed SDKs
+        run: dotnet --list-sdks
+
+      - name: Create temporary global.json
+        run: echo '{"sdk":{"version":"${{ matrix.dotnet-version }}"}}' > global.json
+
+      - name: Dotnet Tool Restore
         run: dotnet tool restore
         shell: pwsh
-      - name: "Dotnet Cake Build"
+
+      - name: Dotnet Cake Build
         run: dotnet cake --target=Build
         shell: pwsh
-      - name: "Dotnet Cake Test"
-        run: dotnet cake --target=Test
+
+      - name: Dotnet Cake Test
+        run: dotnet cake --target=Test --framework net${{ matrix.dotnet-version }}
         shell: pwsh
-      - name: "Dotnet Cake Pack"
+
+      - name: Dotnet Cake Pack
         run: dotnet cake --target=Pack
         shell: pwsh
-      - name: "Upload NuGet packages"
+
+      - name: Upload NuGet packages
         uses: actions/upload-artifact@v4
         with:
           name: nuget-packages-${{ matrix.dotnet-version }}
@@ -77,20 +83,28 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: "Download NuGet packages"
+      - name: Download NuGet packages for .NET 6.0
         uses: actions/download-artifact@v4
         with:
           name: nuget-packages-6.0.x
           path: ./Artifacts
-      - name: "Download NuGet packages"
+
+      - name: Download NuGet packages for .NET 7.0
         uses: actions/download-artifact@v4
         with:
           name: nuget-packages-7.0.x
           path: ./Artifacts
-      - name: "Download NuGet packages"
+
+      - name: Download NuGet packages for .NET 8.0
         uses: actions/download-artifact@v4
         with:
           name: nuget-packages-8.0.x
+          path: ./Artifacts
+
+      - name: Download NuGet packages for .NET 9.0
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-packages-9.0.x
           path: ./Artifacts
 
       - name: Push to NuGet
