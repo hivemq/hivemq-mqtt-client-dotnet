@@ -241,7 +241,6 @@ public class PublishTest
     [Fact]
     public async Task ThreeNodeQoS0ChainedPublishesAsync()
     {
-
         var options = new HiveMQClientOptionsBuilder()
                             .WithWebSocketServer("ws://localhost:8000/mqtt")
                             .WithClientId("ThreeNodeQoS0ChainedPublishesAsync1").Build();

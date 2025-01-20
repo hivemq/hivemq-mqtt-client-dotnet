@@ -21,6 +21,7 @@ public class TopicFilter
 {
     public TopicFilter(string topic, QualityOfService qos = QualityOfService.AtMostOnceDelivery, bool? noLocal = null, bool? retainAsPublished = null, RetainHandling? retainHandling = null)
     {
+        Client.Internal.Validator.ValidateTopicFilter(topic);
         this.Topic = topic;
         this.QoS = qos;
         this.NoLocal = noLocal;
