@@ -10,10 +10,10 @@
 [![GitHub](https://img.shields.io/github/license/hivemq/hivemq-mqtt-client-dotnet?style=for-the-badge)](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/LICENSE)
 
 
-![Static Badge](https://img.shields.io/badge/.NET%20Core-6-%23512BD4?style=for-the-badge)
-![Static Badge](https://img.shields.io/badge/.NET%20Core-7-%23512BD4?style=for-the-badge)
-![Static Badge](https://img.shields.io/badge/.NET%20Core-8-%23512BD4?style=for-the-badge)
-![Static Badge](https://img.shields.io/badge/.NET%20Core-9-%23512BD4?style=for-the-badge)
+![Static Badge](https://img.shields.io/badge/.NET%206.0-%23512BD4?style=for-the-badge)
+![Static Badge](https://img.shields.io/badge/.NET%207.0-%23512BD4?style=for-the-badge)
+![Static Badge](https://img.shields.io/badge/.NET%208.0-%23512BD4?style=for-the-badge)
+![Static Badge](https://img.shields.io/badge/.NET%209.0-%23512BD4?style=for-the-badge)
 
 ### 💽 Installation & Compatibility
 * **Easy-to-Install**: Available as a [Nuget package](https://www.nuget.org/packages/HiveMQtt).
