@@ -82,7 +82,7 @@ public class PubSubTest
             Assert.Equal(testPayload, args.PublishMessage.PayloadAsString);
 
             Interlocked.Increment(ref messagesReceived);
-            if (messagesReceived == 10 && taskCompletionSource.Task.IsCompleted == false)
+            if (messagesReceived == 10 && !taskCompletionSource.Task.IsCompleted)
             {
                 taskCompletionSource.SetResult(true);
             }

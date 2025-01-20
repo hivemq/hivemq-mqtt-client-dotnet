@@ -330,8 +330,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         // Queue the constructed packet to be sent on the wire
         this.Connection.SendQueue.Enqueue(subscribePacket);
 
-
-
         SubAckPacket subAck;
         SubscribeResult subscribeResult;
         try
