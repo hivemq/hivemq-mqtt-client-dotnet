@@ -35,7 +35,6 @@ public class BoundedDictionaryXTest
 
             // The third should block and wait for the cancellation token to timeout
             await dictionary.AddAsync(3, packet, cts.Token).ConfigureAwait(false);
-
         }
         catch (OperationCanceledException)
         {

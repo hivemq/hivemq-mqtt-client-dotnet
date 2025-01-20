@@ -15,11 +15,17 @@
  */
 namespace HiveMQtt.Client.Exceptions;
 
+using System.Runtime.Serialization;
+
 [Serializable]
 
 public class
 HiveMQttClientException : Exception
 {
+    protected HiveMQttClientException(SerializationInfo info, StreamingContext context)
+    {
+    }
+
     public HiveMQttClientException()
     {
     }

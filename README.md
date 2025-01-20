@@ -9,15 +9,15 @@
 [![Nuget](https://img.shields.io/nuget/dt/HiveMQtt?style=for-the-badge)](https://www.nuget.org/packages/HiveMQtt)
 [![GitHub](https://img.shields.io/github/license/hivemq/hivemq-mqtt-client-dotnet?style=for-the-badge)](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/LICENSE)
 
-
-![Static Badge](https://img.shields.io/badge/.NET%20Core-6-%23512BD4?style=for-the-badge)
-![Static Badge](https://img.shields.io/badge/.NET%20Core-7-%23512BD4?style=for-the-badge)
-![Static Badge](https://img.shields.io/badge/.NET%20Core-8-%23512BD4?style=for-the-badge)
+![Static Badge](https://img.shields.io/badge/.NET-6.0-%23512BD4?style=for-the-badge)
+![Static Badge](https://img.shields.io/badge/.NET-7.0-%23512BD4?style=for-the-badge)
+![Static Badge](https://img.shields.io/badge/.NET-8.0-%23512BD4?style=for-the-badge)
+![Static Badge](https://img.shields.io/badge/.NET-9.0-%23512BD4?style=for-the-badge)
 
 ### 💽 Installation & Compatibility
 * **Easy-to-Install**: Available as a [Nuget package](https://www.nuget.org/packages/HiveMQtt).
 * **Globally Compatible**: Built to be a fully compliant MQTT 5.0 client compatible with all modern MQTT brokers.
-* **Multi-Targeted**: Supports .NET 6.0, 7.0 & 8.0
+* **Multi-Targeted**: Supports .NET 6.0, 7.0, 8.0 & 9.0
 
 ### 🚀 Features
 * **MQTT 5.0 Support**: Fully compliant with the latest [MQTT 5.0 specification](https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.html), ensuring compatibility with modern MQTT brokers.

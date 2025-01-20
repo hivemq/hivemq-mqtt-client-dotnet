@@ -117,7 +117,9 @@ public class WebSocketTransport : BaseTransport, IDisposable
             do
             {
                 result = await this.Socket.ReceiveAsync(buffer, CancellationToken.None).ConfigureAwait(false);
+#pragma warning disable CA1835 // Prefer the 'Memory'-based overloads for 'ReadAsync' and 'WriteAsync'
                 await ms.WriteAsync(buffer.Array, buffer.Offset, result.Count, cancellationToken).ConfigureAwait(false);
+#pragma warning restore CA1835 // Prefer the 'Memory'-based overloads for 'ReadAsync' and 'WriteAsync'
             }
             while (!result.EndOfMessage);
 

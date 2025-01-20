@@ -51,8 +51,13 @@ public partial class ConnectionManager
     private Task ConnectionMonitorAsync(CancellationToken cancellationToken) => Task.Run(
         async () =>
         {
-            var keepAlivePeriod = this.Client.Options.KeepAlive / 2;
             Logger.Trace($"{this.Client.Options.ClientId}-(CM)- Starting...{this.State}");
+            if (this.Client.Options.KeepAlive == 0)
+            {
+                Logger.Debug($"{this.Client.Options.ClientId}-(CM)- KeepAlive is 0.  No pings will be sent.");
+            }
+
+            var keepAlivePeriod = this.Client.Options.KeepAlive;
             this.lastCommunicationTimer.Start();
 
             while (true)
@@ -62,7 +67,7 @@ public partial class ConnectionManager
                     // If connected and no recent packets have been sent, send a ping
                     if (this.State == ConnectState.Connected)
                     {
-                        if (this.lastCommunicationTimer.Elapsed > TimeSpan.FromSeconds(keepAlivePeriod))
+                        if (this.Client.Options.KeepAlive > 0 && this.lastCommunicationTimer.Elapsed > TimeSpan.FromSeconds(keepAlivePeriod))
                         {
                             // Send PingReq
                             Logger.Trace($"{this.Client.Options.ClientId}-(CM)- --> PingReq");
