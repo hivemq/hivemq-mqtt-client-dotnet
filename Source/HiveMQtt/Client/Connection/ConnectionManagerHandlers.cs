@@ -170,6 +170,7 @@ public partial class ConnectionManager
             Logger.Warn($"QoS1: Received PubAck with an unknown packet identifier {pubAckPacket.PacketIdentifier}. Discarded.");
         }
 
+        // QoS1 transaction is done.  Release the packet identifier
         await this.PacketIDManager.MarkPacketIDAsAvailableAsync(pubAckPacket.PacketIdentifier).ConfigureAwait(false);
     }
 
@@ -287,7 +288,7 @@ public partial class ConnectionManager
             Logger.Warn($"QoS1: Couldn't remove PubAck --> Publish QoS1 Chain for packet identifier {pubAckPacket.PacketIdentifier}.");
         }
 
-        // Release the packet identifier
+        // QoS1 transaction is done.  Release the packet identifier
         await this.PacketIDManager.MarkPacketIDAsAvailableAsync(pubAckPacket.PacketIdentifier).ConfigureAwait(false);
 
         // The Packet Event
@@ -320,7 +321,7 @@ public partial class ConnectionManager
             }
         }
 
-        // Release the packet identifier
+        // QoS2 transaction is done.  Release the packet identifier
         await this.PacketIDManager.MarkPacketIDAsAvailableAsync(pubCompPacket.PacketIdentifier).ConfigureAwait(false);
 
         // Trigger the general event
@@ -354,7 +355,7 @@ public partial class ConnectionManager
             Logger.Warn($"QoS2: Received PubComp with an unknown packet identifier {pubCompPacket.PacketIdentifier}. Discarded.");
         }
 
-        // Release the packet identifier
+        // QoS2 transaction is done.  Release the packet identifier
         await this.PacketIDManager.MarkPacketIDAsAvailableAsync(pubCompPacket.PacketIdentifier).ConfigureAwait(false);
     }
 
