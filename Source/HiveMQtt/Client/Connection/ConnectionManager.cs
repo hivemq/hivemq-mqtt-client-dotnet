@@ -60,8 +60,10 @@ public partial class ConnectionManager : IDisposable
     // Outgoing Publish QoS > 0 in-flight transactions indexed by packet identifier
     internal BoundedDictionaryX<int, List<ControlPacket>> OPubTransactionQueue { get; set; }
 
-    // We generate new PacketIDs here.
+    // We generate new Packet IDs here.
     internal PacketIDManager PacketIDManager { get; } = new();
+
+    public PacketIDManager GetPacketIDManager() => this.PacketIDManager;
 
     // This is used to know if and when we need to send a MQTT PingReq
     private readonly Stopwatch lastCommunicationTimer = new();

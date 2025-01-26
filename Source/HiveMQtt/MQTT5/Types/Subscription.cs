@@ -22,6 +22,8 @@ public class Subscription
 {
     public Subscription(TopicFilter topicFilter) => this.TopicFilter = topicFilter;
 
+    public Subscription(string topicFilter) => this.TopicFilter = new TopicFilter(topicFilter);
+
     /// <summary>
     /// Gets the topic filter for the subscription.
     /// </summary>

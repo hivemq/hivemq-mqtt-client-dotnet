@@ -42,7 +42,14 @@ public class PublishPacket : ControlPacket
         this.PacketIdentifier = (ushort)packetIdentifier;
         this.Message = message;
 
-        if (this.Message.QoS != QualityOfService.AtMostOnceDelivery)
+        if (this.Message.QoS == QualityOfService.AtMostOnceDelivery)
+        {
+            if (this.PacketIdentifier is not 0)
+            {
+                throw new ArgumentException("PacketIdentifier must be 0 for QoS 0 packets.");
+            }
+        }
+        else
         {
             if (this.PacketIdentifier is < 1 or > 65535)
             {

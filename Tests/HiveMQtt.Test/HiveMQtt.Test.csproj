@@ -47,7 +47,8 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="FluentAssertions" Version="6.12.1" />
+     <!-- Locking FluentAssertions to <8.0.0 because version 8 introduced paid licensing -->
+    <PackageReference Include="FluentAssertions" Version="[6.12.1, 8.0.0)" />
     <PackageReference Include="NUnit" Version="4.2.2" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
   </ItemGroup>
