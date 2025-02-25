@@ -15,7 +15,7 @@ public class PubSubTest
         var testPayload = new string(/*lang=json,strict*/ "{\"interference\": \"1029384\"}");
         var options = new HiveMQClientOptionsBuilder().WithClientId("MostBasicPubSubAsync").Build();
         var client = new HiveMQClient(options);
-        var taskCompletionSource = new TaskCompletionSource<bool>();
+        var taskCompletionSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
@@ -59,7 +59,7 @@ public class PubSubTest
         var testPayload = new string(/*lang=json,strict*/ "{\"interference\": \"1029384\"}");
         var options = new HiveMQClientOptionsBuilder().WithClientId("MostBasicPubSubAsync").Build();
         var client = new HiveMQClient(options);
-        var taskCompletionSource = new TaskCompletionSource<bool>();
+        var taskCompletionSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         var messagesReceived = 0;
 
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
@@ -109,7 +109,7 @@ public class PubSubTest
 
         var options = new HiveMQClientOptionsBuilder().WithClientId("QoS2PubSubAsync").Build();
         var client = new HiveMQClient(options);
-        var taskCompletionSource = new TaskCompletionSource<bool>();
+        var taskCompletionSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
         var messagesReceived = 0;
@@ -159,7 +159,7 @@ public class PubSubTest
         var testPayload = "1. A delusion starts like any other idea, as an egg. Identical on the outside, perfectly formed. From the shell, you'd never know anything was wrong. It's what's inside that matters. 2. A delusion starts like any other idea, as an egg. Identical on the outside, perfectly formed. From the shell, you'd never know anything was wrong. It's what's inside that matters. 3. A delusion starts like any other idea, as an egg. Identical on the outside, perfectly formed. From the shell, you'd never know anything was wrong. It's what's inside that matters.";
         var options = new HiveMQClientOptionsBuilder().WithClientId("LargeMessagePubSubAsync").Build();
         var client = new HiveMQClient(options);
-        var taskCompletionSource = new TaskCompletionSource<bool>();
+        var taskCompletionSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
@@ -212,7 +212,7 @@ public class PubSubTest
 
         var options = new HiveMQClientOptionsBuilder().WithClientId("OneMBMessagePubSubAsync").Build();
         var client = new HiveMQClient(options);
-        var taskCompletionSource = new TaskCompletionSource<bool>();
+        var taskCompletionSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);

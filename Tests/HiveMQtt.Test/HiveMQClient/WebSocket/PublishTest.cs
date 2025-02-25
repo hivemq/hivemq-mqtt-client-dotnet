@@ -222,7 +222,7 @@ public class PublishTest
             Payload = Encoding.ASCII.GetBytes("blah"),
         };
 
-        var taskCompletionSource = new TaskCompletionSource<bool>();
+        var taskCompletionSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         client.OnPublishSent += (sender, args) =>
         {
             Assert.Equal(MQTT5PayloadFormatIndicator.UTF8Encoded, args.PublishPacket.Message.PayloadFormatIndicator);

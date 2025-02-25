@@ -84,7 +84,7 @@ public class ConnectTest
         client.OnConnAckReceived += OnConnAckReceivedHandler;
 
         // Set up TaskCompletionSource to wait for event handlers to finish
-        var taskCompletionSource = new TaskCompletionSource<bool>();
+        var taskCompletionSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         client.OnDisconnectSent += (sender, args) => taskCompletionSource.SetResult(true);
 
         // Connect and Disconnect
@@ -129,7 +129,7 @@ public class ConnectTest
         client.AfterDisconnect += AfterDisconnectHandler;
 
         // Set up TaskCompletionSource to wait for event handlers to finish
-        var taskCompletionSource = new TaskCompletionSource<bool>();
+        var taskCompletionSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         client.OnDisconnectSent += (sender, args) => taskCompletionSource.SetResult(true);
 
         // Connect and Disconnect

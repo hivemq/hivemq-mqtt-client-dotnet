@@ -96,7 +96,7 @@ public class SubscribePacket : ControlPacket
     /// Valid for outgoing subscribe packets.  A TaskCompletionSource that is set when the subscribe transaction is complete.
     /// </para>
     /// </summary>
-    public TaskCompletionSource<SubAckPacket> OnCompleteTCS { get; } = new();
+    public TaskCompletionSource<SubAckPacket> OnCompleteTCS { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     /// <summary>
     /// Encode this packet to be sent on the wire.

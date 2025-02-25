@@ -46,7 +46,6 @@ public class PacketRestrictionsTest
         result.Should().NotBeNull();
         // result.ReasonCodes.Should().Contain(ReasonCode.NoSubscriptionExisted);
         // result.Subscriptions.Count.Should().Be(1);
-
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         disconnectResult.Should().BeTrue();
     }
