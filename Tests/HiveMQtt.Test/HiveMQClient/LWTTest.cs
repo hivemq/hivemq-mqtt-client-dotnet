@@ -20,7 +20,7 @@ public class LWTTest
         Assert.True(listenerClient.IsConnected());
 
         var messagesReceived = 0;
-        var taskLWTReceived = new TaskCompletionSource<bool>();
+        var taskLWTReceived = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         // Set the event handler for the message received event
         listenerClient.OnMessageReceived += (sender, args) =>

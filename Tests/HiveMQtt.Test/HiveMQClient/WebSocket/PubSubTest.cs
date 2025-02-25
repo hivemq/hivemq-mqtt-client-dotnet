@@ -222,7 +222,7 @@ public class PubSubTest
                             .WithWebSocketServer("ws://localhost:8000/mqtt")
                             .WithClientId("OneMBMessagePubSubAsync").Build();
         var client = new HiveMQClient(options);
-        var taskCompletionSource = new TaskCompletionSource<bool>();
+        var taskCompletionSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);

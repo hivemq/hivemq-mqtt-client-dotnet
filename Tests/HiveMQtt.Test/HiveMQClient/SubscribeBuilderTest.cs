@@ -68,7 +68,7 @@ public class SubscribeBuilderTest
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
-        var tcs = new TaskCompletionSource<bool>();
+        var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         var subscribeOptions = new SubscribeOptionsBuilder()
             .WithSubscription("tests/PerSubscriptionHandler", MQTT5.Types.QualityOfService.AtLeastOnceDelivery, messageReceivedHandler: (sender, args) =>
@@ -112,8 +112,8 @@ public class SubscribeBuilderTest
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
-        var tcs = new TaskCompletionSource<bool>();
-        var gtcs = new TaskCompletionSource<bool>();
+        var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var gtcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         // Setup a per-subscription handler
         var subscribeOptions = new SubscribeOptionsBuilder()
@@ -183,9 +183,9 @@ public class SubscribeBuilderTest
         // This is the fix for:
         // per-subscription OnMessageReceivedEventLauncher exception: One or more errors occurred. (An attempt was
         // made to transition a task to a final state when it had already completed.)
-        var tcs1 = new TaskCompletionSource<bool>();
-        var tcs2 = new TaskCompletionSource<bool>();
-        var tcs3 = new TaskCompletionSource<bool>();
+        var tcs1 = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var tcs2 = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var tcs3 = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         var messageCount = 0;
 
@@ -266,7 +266,7 @@ public class SubscribeBuilderTest
         var connectResult = await subscribeClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
-        var tcs = new TaskCompletionSource<bool>();
+        var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         var messageCount = 0;
 
         var subscribeOptions = new SubscribeOptionsBuilder()

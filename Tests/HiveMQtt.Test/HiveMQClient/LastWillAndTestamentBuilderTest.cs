@@ -40,7 +40,7 @@ public class LastWillAndTestamentBuilderTest
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
         Assert.True(listenerClient.IsConnected());
 
-        var taskLWTReceived = new TaskCompletionSource<bool>();
+        var taskLWTReceived = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         var correlationData = new byte[] { 1, 2, 3, 4, 5 };
 
         // Set the event handler for the message received event
