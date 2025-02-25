@@ -30,13 +30,7 @@ public class PubAckPacket : ControlPacket
         this.ReasonCode = reasonCode;
     }
 
-    public PubAckPacket(ReadOnlySequence<byte> packetData)
-    {
-        this.SessionPresent = false;
-        this.Decode(packetData);
-    }
-
-    public bool SessionPresent { get; set; }
+    public PubAckPacket(ReadOnlySequence<byte> packetData) => this.Decode(packetData);
 
     public int AckFlags { get; set; }
 
