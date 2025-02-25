@@ -86,7 +86,7 @@ This project is licensed under the terms of the `Apache Software License 2.0` li
 @misc{hivemq-mqtt-client-dotnet,
   author = {HiveMQ GmbH},
   title = {The HiveMQ C# MQTT client for .NET},
-  year = {2024},
+  year = {2025},
   publisher = {GitHub},
   journal = {GitHub repository},
   howpublished = {\url{https://github.com/hivemq/hivemq-mqtt-client-dotnet}}
