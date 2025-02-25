@@ -54,7 +54,7 @@ public class ClientTest
         Assert.Null(client.Connection.ConnectionWriterTask);
         Assert.Null(client.Connection.ConnectionReaderTask);
         Assert.Null(client.Connection.ReceivedPacketsHandlerTask);
-        Assert.Null(client.Connection.ConnectionMonitorTask);
+        Assert.Null(client.Connection.ConnectionMonitorThread);
 
         // Queues
         Assert.NotNull(client.Connection.SendQueue);
@@ -76,12 +76,12 @@ public class ClientTest
         Assert.NotNull(client.Connection.ConnectionWriterTask);
         Assert.NotNull(client.Connection.ConnectionReaderTask);
         Assert.NotNull(client.Connection.ReceivedPacketsHandlerTask);
-        Assert.NotNull(client.Connection.ConnectionMonitorTask);
+        Assert.NotNull(client.Connection.ConnectionMonitorThread);
 
         Assert.Equal(TaskStatus.WaitingForActivation, client.Connection.ConnectionWriterTask.Status);
         Assert.Equal(TaskStatus.WaitingForActivation, client.Connection.ConnectionReaderTask.Status);
         Assert.Equal(TaskStatus.WaitingForActivation, client.Connection.ReceivedPacketsHandlerTask.Status);
-        Assert.Equal(TaskStatus.WaitingForActivation, client.Connection.ConnectionMonitorTask.Status);
+        Assert.True(client.Connection.ConnectionMonitorThread.IsAlive);
 
         // Queues
         Assert.NotNull(client.Connection.SendQueue);
@@ -113,12 +113,12 @@ public class ClientTest
         Assert.NotNull(client.Connection.ConnectionWriterTask);
         Assert.NotNull(client.Connection.ConnectionReaderTask);
         Assert.NotNull(client.Connection.ReceivedPacketsHandlerTask);
-        Assert.NotNull(client.Connection.ConnectionMonitorTask);
+        Assert.NotNull(client.Connection.ConnectionMonitorThread);
 
         Assert.Equal(TaskStatus.WaitingForActivation, client.Connection.ConnectionWriterTask.Status);
         Assert.Equal(TaskStatus.WaitingForActivation, client.Connection.ConnectionReaderTask.Status);
         Assert.Equal(TaskStatus.WaitingForActivation, client.Connection.ReceivedPacketsHandlerTask.Status);
-        Assert.Equal(TaskStatus.WaitingForActivation, client.Connection.ConnectionMonitorTask.Status);
+        Assert.True(client.Connection.ConnectionMonitorThread.IsAlive);
 
         // Queues
         Assert.NotNull(client.Connection.SendQueue);
@@ -136,7 +136,7 @@ public class ClientTest
         Assert.Null(client.Connection.ConnectionWriterTask);
         Assert.Null(client.Connection.ConnectionReaderTask);
         Assert.Null(client.Connection.ReceivedPacketsHandlerTask);
-        Assert.Null(client.Connection.ConnectionMonitorTask);
+        Assert.Null(client.Connection.ConnectionMonitorThread);
 
         // Queues
         Assert.NotNull(client.Connection.SendQueue);

@@ -242,6 +242,7 @@ public class TCPTransport : BaseTransport, IDisposable
         if (this.Stream != null)
         {
             // Dispose of the Stream
+            await this.Stream.FlushAsync().ConfigureAwait(false);
             this.Stream.Close();
             await this.Stream.DisposeAsync().ConfigureAwait(false);
             this.Stream = null;

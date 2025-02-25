@@ -556,6 +556,7 @@ public abstract class ControlPacket
 
         _ = EncodeVariableByteInteger(writer, propertiesLength);
 
+        propertyStream.Flush();
         _ = propertyStream.Seek(0, SeekOrigin.Begin);
         propertyStream.CopyTo(writer);
     }
