@@ -119,7 +119,7 @@ public class PublishPacket : ControlPacket
     /// Valid for outgoing Publish messages QoS 1.  A TaskCompletionSource that is set when the QoS 1 publish transaction is complete.
     /// </para>
     /// </summary>
-    public TaskCompletionSource<PubAckPacket> OnPublishQoS1CompleteTCS { get; } = new();
+    public TaskCompletionSource<PubAckPacket> OnPublishQoS1CompleteTCS { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     /// <summary>
     /// Valid for outgoing Publish messages QoS 2.  An event that is fired after the the QoS 2 PubComp is received.
@@ -150,7 +150,7 @@ public class PublishPacket : ControlPacket
     /// Valid for outgoing Publish messages QoS 2.  A TaskCompletionSource that is set when the QoS 2 publish transaction is complete.
     /// </para>
     /// </summary>
-    public TaskCompletionSource<List<ControlPacket>> OnPublishQoS2CompleteTCS { get; } = new();
+    public TaskCompletionSource<List<ControlPacket>> OnPublishQoS2CompleteTCS { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     /// <summary>
     /// Decode the received MQTT Publish packet.

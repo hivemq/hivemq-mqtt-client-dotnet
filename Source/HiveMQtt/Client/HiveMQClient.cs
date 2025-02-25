@@ -81,7 +81,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         await this.Connection.ConnectAsync().ConfigureAwait(true);
 
-        var taskCompletionSource = new TaskCompletionSource<ConnAckPacket>();
+        var taskCompletionSource = new TaskCompletionSource<ConnAckPacket>(TaskCreationOptions.RunContinuationsAsynchronously);
         void TaskHandler(object? sender, OnConnAckReceivedEventArgs args) => taskCompletionSource.SetResult(args.ConnAckPacket);
 
         EventHandler<OnConnAckReceivedEventArgs> eventHandler = TaskHandler;
@@ -161,7 +161,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         // Once this is set, no more incoming packets or outgoing will be accepted
         this.Connection.State = ConnectState.Disconnecting;
 
-        var taskCompletionSource = new TaskCompletionSource<DisconnectPacket>();
+        var taskCompletionSource = new TaskCompletionSource<DisconnectPacket>(TaskCreationOptions.RunContinuationsAsynchronously);
         void TaskHandler(object? sender, OnDisconnectSentEventArgs args) => taskCompletionSource.SetResult(args.DisconnectPacket);
         EventHandler<OnDisconnectSentEventArgs> eventHandler = TaskHandler;
         this.OnDisconnectSent += eventHandler;
@@ -315,7 +315,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         var subscribePacket = new SubscribePacket(options, (ushort)packetIdentifier);
 
         // Setup the task completion source to wait for the SUBACK
-        var taskCompletionSource = new TaskCompletionSource<SubAckPacket>();
+        var taskCompletionSource = new TaskCompletionSource<SubAckPacket>(TaskCreationOptions.RunContinuationsAsynchronously);
         void TaskHandler(object? sender, OnSubAckReceivedEventArgs args)
         {
             if (args.SubAckPacket.PacketIdentifier == subscribePacket.PacketIdentifier)
@@ -429,7 +429,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         var packetIdentifier = await this.Connection.PacketIDManager.GetAvailablePacketIDAsync().ConfigureAwait(false);
         var unsubscribePacket = new UnsubscribePacket(unsubOptions, (ushort)packetIdentifier);
 
-        var taskCompletionSource = new TaskCompletionSource<UnsubAckPacket>();
+        var taskCompletionSource = new TaskCompletionSource<UnsubAckPacket>(TaskCreationOptions.RunContinuationsAsynchronously);
         void TaskHandler(object? sender, OnUnsubAckReceivedEventArgs args)
         {
             if (args.UnsubAckPacket.PacketIdentifier == unsubscribePacket.PacketIdentifier)
