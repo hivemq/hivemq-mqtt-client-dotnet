@@ -21,12 +21,12 @@ public partial class ConnectionManager
 
     internal Task? ReceivedPacketsHandlerTask { get; set; }
 
-    internal Task? ConnectionMonitorTask { get; set; }
+    internal Thread? ConnectionMonitorThread { get; set; }
 
     /// <summary>
     /// Health check method to assure that tasks haven't faulted unexpectedly.
     /// </summary>
-    private async Task RunTaskHealthCheckAsync(Task? task, string taskName)
+    private void RunTaskHealthCheck(Task? task, string taskName)
     {
         if (task is null)
         {
@@ -38,85 +38,74 @@ public partial class ConnectionManager
             {
                 Logger.Error($"{this.Client.Options.ClientId}-(CM)- {taskName} Faulted: {task.Exception}");
                 Logger.Error($"{this.Client.Options.ClientId}-(CM)- {taskName} died.  Disconnecting.");
-                await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
+                _ = Task.Run(async () => await this.HandleDisconnectionAsync(false).ConfigureAwait(false));
             }
         }
+    }
+
+    private Thread LaunchConnectionMonitorThread()
+    {
+        var thread = new Thread(this.ConnectionMonitor);
+        thread.Start();
+        return thread;
     }
 
     /// <summary>
     /// Asynchronous background task that monitors the connection state and sends PingReq packets when
     /// necessary.
     /// </summary>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    private Task ConnectionMonitorAsync(CancellationToken cancellationToken) => Task.Run(
-        async () =>
+    private void ConnectionMonitor()
+    {
+        Logger.Trace($"{this.Client.Options.ClientId}-(CM)- Starting...{this.State}");
+        if (this.Client.Options.KeepAlive == 0)
         {
-            Logger.Trace($"{this.Client.Options.ClientId}-(CM)- Starting...{this.State}");
-            if (this.Client.Options.KeepAlive == 0)
-            {
-                Logger.Debug($"{this.Client.Options.ClientId}-(CM)- KeepAlive is 0.  No pings will be sent.");
-            }
+            Logger.Debug($"{this.Client.Options.ClientId}-(CM)- KeepAlive is 0.  No pings will be sent.");
+        }
 
-            var keepAlivePeriod = this.Client.Options.KeepAlive;
-            this.lastCommunicationTimer.Start();
+        var keepAlivePeriod = this.Client.Options.KeepAlive;
+        this.lastCommunicationTimer.Start();
 
-            while (true)
+        while (true)
+        {
+            try
             {
-                try
+                // If connected and no recent packets have been sent, send a ping
+                if (this.State == ConnectState.Connected)
                 {
-                    // If connected and no recent packets have been sent, send a ping
-                    if (this.State == ConnectState.Connected)
+                    if (this.Client.Options.KeepAlive > 0 && this.lastCommunicationTimer.Elapsed > TimeSpan.FromSeconds(keepAlivePeriod))
                     {
-                        if (this.Client.Options.KeepAlive > 0 && this.lastCommunicationTimer.Elapsed > TimeSpan.FromSeconds(keepAlivePeriod))
-                        {
-                            // Send PingReq
-                            Logger.Trace($"{this.Client.Options.ClientId}-(CM)- --> PingReq");
-                            this.SendQueue.Enqueue(new PingReqPacket());
-                        }
-                    }
-
-                    // Dumping Client State
-                    Logger.Debug($"{this.Client.Options.ClientId}-(CM)- {this.State}: last communications {this.lastCommunicationTimer.Elapsed} ago");
-                    Logger.Debug($"{this.Client.Options.ClientId}-(CM)- SendQueue:...............{this.SendQueue.Count}");
-                    Logger.Debug($"{this.Client.Options.ClientId}-(CM)- ReceivedQueue:...........{this.ReceivedQueue.Count}");
-                    Logger.Debug($"{this.Client.Options.ClientId}-(CM)- OutgoingPublishQueue:....{this.OutgoingPublishQueue.Count}");
-                    Logger.Debug($"{this.Client.Options.ClientId}-(CM)- OPubTransactionQueue:....{this.OPubTransactionQueue.Count}/{this.OPubTransactionQueue.Capacity}");
-                    Logger.Debug($"{this.Client.Options.ClientId}-(CM)- IPubTransactionQueue:....{this.IPubTransactionQueue.Count}/{this.IPubTransactionQueue.Capacity}");
-                    Logger.Debug($"{this.Client.Options.ClientId}-(CM)- # of Subscriptions:......{this.Client.Subscriptions.Count}");
-                    Logger.Debug($"{this.Client.Options.ClientId}-(CM)- PacketIDsInUse:..........{this.PacketIDManager.Count}");
-
-                    // Background Tasks Health Check
-                    await this.RunTaskHealthCheckAsync(this.ConnectionWriterTask, "ConnectionWriter").ConfigureAwait(false);
-                    await this.RunTaskHealthCheckAsync(this.ConnectionReaderTask, "ConnectionReader").ConfigureAwait(false);
-                    await this.RunTaskHealthCheckAsync(this.ConnectionPublishWriterTask, "ConnectionPublishWriter").ConfigureAwait(false);
-                    await this.RunTaskHealthCheckAsync(this.ReceivedPacketsHandlerTask, "ReceivedPacketsHandler").ConfigureAwait(false);
-
-                    // Sleep cycle
-                    await Task.Delay(2000, cancellationToken).ConfigureAwait(false);
-
-                    // Check for cancellation
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        Logger.Trace($"{this.Client.Options.ClientId}-(CM)- Canceled & exiting...");
-                        break;
+                        // Send PingReq
+                        Logger.Trace($"{this.Client.Options.ClientId}-(CM)- --> PingReq");
+                        this.SendQueue.Enqueue(new PingReqPacket());
                     }
                 }
-                catch (Exception ex)
-                {
-                    if (ex is TaskCanceledException || cancellationToken.IsCancellationRequested)
-                    {
-                        break;
-                    }
-                    else
-                    {
-                        Logger.Error($"{this.Client.Options.ClientId}-(CM)- Exception: {ex}");
-                        throw;
-                    }
-                }
-            }
 
-            Logger.Debug($"{this.Client.Options.ClientId}-(CM)- Exiting...{this.State}, cancellationRequested={cancellationToken.IsCancellationRequested}");
-        }, cancellationToken);
+                // Dumping Client State
+                Logger.Debug($"{this.Client.Options.ClientId}-(CM)- {this.State}: last communications {this.lastCommunicationTimer.Elapsed} ago");
+                Logger.Debug($"{this.Client.Options.ClientId}-(CM)- SendQueue:...............{this.SendQueue.Count}");
+                Logger.Debug($"{this.Client.Options.ClientId}-(CM)- ReceivedQueue:...........{this.ReceivedQueue.Count}");
+                Logger.Debug($"{this.Client.Options.ClientId}-(CM)- OutgoingPublishQueue:....{this.OutgoingPublishQueue.Count}");
+                Logger.Debug($"{this.Client.Options.ClientId}-(CM)- OPubTransactionQueue:....{this.OPubTransactionQueue.Count}/{this.OPubTransactionQueue.Capacity}");
+                Logger.Debug($"{this.Client.Options.ClientId}-(CM)- IPubTransactionQueue:....{this.IPubTransactionQueue.Count}/{this.IPubTransactionQueue.Capacity}");
+                Logger.Debug($"{this.Client.Options.ClientId}-(CM)- # of Subscriptions:......{this.Client.Subscriptions.Count}");
+                Logger.Debug($"{this.Client.Options.ClientId}-(CM)- PacketIDsInUse:..........{this.PacketIDManager.Count}");
+
+                // Background Tasks Health Check
+                this.RunTaskHealthCheck(this.ConnectionWriterTask, "ConnectionWriter");
+                this.RunTaskHealthCheck(this.ConnectionReaderTask, "ConnectionReader");
+                this.RunTaskHealthCheck(this.ConnectionPublishWriterTask, "ConnectionPublishWriter");
+                this.RunTaskHealthCheck(this.ReceivedPacketsHandlerTask, "ReceivedPacketsHandler");
+
+                // Sleep cycle
+                Thread.Sleep(2000);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"{this.Client.Options.ClientId}-(CM)- Exception: {ex}");
+                throw;
+            }
+        } // while (true)
+    }
 
     /// <summary>
     /// Asynchronous background task that handles the outgoing publish packets queued in OutgoingPublishQueue.
