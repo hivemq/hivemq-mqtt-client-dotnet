@@ -105,8 +105,6 @@ public partial class ConnectionManager
                 throw;
             }
         } // while (true)
-
-        Logger.Debug($"{this.Client.Options.ClientId}-(CM)- Exiting...{this.State}");
     }
 
     /// <summary>
