@@ -58,15 +58,17 @@ public interface IHiveMQClient : IDisposable
     /// Asynchronously makes a TCP connection to the remote specified in HiveMQClientOptions and then
     /// proceeds to make an MQTT Connect request.
     /// </summary>
+    /// <param name="connectOptions">The connect override options for the MQTT Connect call.  These settings
+    /// will override the settings in HiveMQClientOptions.</param>
     /// <returns>A ConnectResult class representing the result of the MQTT connect call.</returns>
-    public Task<ConnectResult> ConnectAsync();
+    public Task<ConnectResult> ConnectAsync(ConnectOptions? connectOptions);
 
     /// <summary>
     /// Asynchronous disconnect from the previously connected MQTT broker.
     /// </summary>
     /// <param name="options">The options for the MQTT Disconnect call.</param>
     /// <returns>A boolean indicating on success or failure.</returns>
-    public Task<bool> DisconnectAsync(DisconnectOptions options);
+    public Task<bool> DisconnectAsync(DisconnectOptions? options);
 
     /// <summary>
     /// Publish a message to an MQTT topic.

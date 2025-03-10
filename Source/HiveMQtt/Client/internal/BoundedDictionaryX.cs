@@ -168,7 +168,12 @@ public class BoundedDictionaryX<TKey, TVal> : IDisposable
         {
             var numItems = this.dictionary.Count;
             this.dictionary.Clear();
-            this.semaphore.Release(numItems);
+
+            if (numItems > 0)
+            {
+                this.semaphore.Release(numItems);
+            }
+
             return true;
         }
         catch (ArgumentNullException ex)

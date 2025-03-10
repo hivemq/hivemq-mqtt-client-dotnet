@@ -60,7 +60,7 @@ public class ConnectTest
                             .WithClientId("RaiseOnFailureToConnectAsync").Build();
         var client = new HiveMQClient(clientOptions);
 
-        await Assert.ThrowsAsync<HiveMQttClientException>(client.ConnectAsync).ConfigureAwait(false);
+        await Assert.ThrowsAsync<HiveMQttClientException>(() => client.ConnectAsync()).ConfigureAwait(false);
 
         client.Dispose();
     }
