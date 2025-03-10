@@ -31,10 +31,11 @@ public class SessionExpiryTest
         subscribeResult.Subscriptions[0].TopicFilter.Topic.Should().Be("test/topic");
         subscribeResult.Subscriptions[0].SubscribeReasonCode.Should().Be(SubAckReasonCode.GrantedQoS1);
 
-        // Normal disconnect and reconnect.  We should get session present
+        // Normal disconnect
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         disconnectResult.Should().BeTrue();
 
+        // Reconnect.  We should get session present
         var connectOptions = new ConnectOptionsBuilder().WithCleanStart(false).Build();
         var connectResult2 = await client.ConnectAsync(connectOptions).ConfigureAwait(false);
         connectResult2.Should().NotBeNull();
@@ -42,14 +43,16 @@ public class SessionExpiryTest
         connectResult2.SessionExpiryInterval.Should().Be(30);
         connectResult2.SessionPresent.Should().BeTrue();
 
-        // Disconnect with custom session expiry, delay longer than the session expiry and reconnect.  We should get session not present
+        // Disconnect with custom session expiry
         var disconnectOptions = new DisconnectOptionsBuilder().WithSessionExpiryInterval(5).Build();
         disconnectResult = await client.DisconnectAsync(disconnectOptions).ConfigureAwait(false);
         disconnectResult.Should().BeTrue();
 
+        // Delay longer than the session expiry
         await Task.Delay(10000).ConfigureAwait(false);
 
-        var connectResult3 = await client.ConnectAsync().ConfigureAwait(false);
+        // Reconnect.  We should get session not present
+        var connectResult3 = await client.ConnectAsync(connectOptions).ConfigureAwait(false);
         connectResult3.Should().NotBeNull();
         connectResult3.ReasonCode.Should().Be(ConnAckReasonCode.Success);
         connectResult3.SessionExpiryInterval.Should().Be(30);
