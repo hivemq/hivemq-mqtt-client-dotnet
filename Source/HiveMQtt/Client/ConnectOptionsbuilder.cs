@@ -22,8 +22,7 @@ using HiveMQtt.Client.Options;
 /// </summary>
 public class ConnectOptionsBuilder
 {
-    private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
-
+    // private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
     private readonly ConnectOptions options;
 
     public ConnectOptionsBuilder() => this.options = new ConnectOptions();
