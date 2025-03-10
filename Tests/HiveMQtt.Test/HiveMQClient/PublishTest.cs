@@ -514,4 +514,23 @@ public class PublishTest
         client2.Dispose();
         client3.Dispose();
     }
+
+    [Fact]
+    public async Task PublishWithoutQoSAsync()
+    {
+        var options = new HiveMQClientOptionsBuilder().WithClientId("PublishWithoutQoSAsync").Build();
+        var client = new HiveMQClient(options);
+        var connectResult = await client.ConnectAsync().ConfigureAwait(false);
+        Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
+
+        var msg = new string(/*lang=json,strict*/ "{\"interference\": \"1029384\"}");
+        var publishResult = await client.PublishAsync("tests/PublishWithoutQoSAsync", msg).ConfigureAwait(false);
+        Assert.NotNull(publishResult);
+        Assert.Equal(publishResult.Message.QoS, QualityOfService.AtMostOnceDelivery);
+
+        var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
+        Assert.True(disconnectResult);
+
+        client.Dispose();
+    }
 }

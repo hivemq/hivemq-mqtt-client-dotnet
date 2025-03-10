@@ -193,6 +193,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         message.Validate();
 
+        if (message.QoS.HasValue && this.Connection.ConnectionProperties.MaximumQoS.HasValue &&
+            (ushort)message.QoS.Value > this.Connection.ConnectionProperties.MaximumQoS.Value)
+        {
+            Logger.Debug($"Reducing message QoS from {message.QoS} to broker enforced maximum of {this.Connection.ConnectionProperties.MaximumQoS}");
+            message.QoS = (QualityOfService)this.Connection.ConnectionProperties.MaximumQoS.Value;
+        }
+
         // QoS 0: Fast Service
         if (message.QoS == QualityOfService.AtMostOnceDelivery)
         {
