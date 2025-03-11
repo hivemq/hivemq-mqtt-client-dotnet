@@ -7,6 +7,7 @@ using NUnit.Framework;
 using System;
 using System.Threading.Tasks;
 using HiveMQtt.Client.Exceptions;
+using HiveMQtt.MQTT5.ReasonCodes;
 
 [TestFixture]
 public class PacketRestrictionsTest
@@ -36,7 +37,7 @@ public class PacketRestrictionsTest
         connectResult.Should().NotBeNull();
 
         var unsubscribeOptions = new UnsubscribeOptionsBuilder()
-                                    .WithSubscription(new Subscription("nonexistent/topic"))
+                                    .WithSubscription(new Subscription("nonexistent/topic129482"))
                                     .Build();
 
         // Act
@@ -44,8 +45,12 @@ public class PacketRestrictionsTest
 
         // Assert
         result.Should().NotBeNull();
-        // result.ReasonCodes.Should().Contain(ReasonCode.NoSubscriptionExisted);
-        // result.Subscriptions.Count.Should().Be(1);
+        result.Subscriptions.Count.Should().Be(1);
+
+        // HiveMQ broker returns success for unsubscribe with non-existent topic
+        // result.Subscriptions[0].UnsubscribeReasonCode.Should().Be(UnsubAckReasonCode.NoSubscriptionExisted);
+        result.Subscriptions[0].UnsubscribeReasonCode.Should().Be(UnsubAckReasonCode.Success);
+
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         disconnectResult.Should().BeTrue();
     }

@@ -70,11 +70,30 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     public bool IsConnected() => this.Connection.State == ConnectState.Connected;
 
     /// <inheritdoc />
-    public async Task<ConnectResult> ConnectAsync()
+    public async Task<ConnectResult> ConnectAsync(ConnectOptions? connectOptions = null)
     {
         this.Connection.State = ConnectState.Connecting;
 
         Logger.Info("Connecting to broker at {0}:{1}", this.Options.Host, this.Options.Port);
+
+        // Apply the connect override options if provided
+        if (connectOptions != null)
+        {
+            if (connectOptions.SessionExpiryInterval != null)
+            {
+                this.Options.SessionExpiryInterval = connectOptions.SessionExpiryInterval.Value;
+            }
+
+            if (connectOptions.KeepAlive != null)
+            {
+                this.Options.KeepAlive = connectOptions.KeepAlive.Value;
+            }
+
+            if (connectOptions.CleanStart != null)
+            {
+                this.Options.CleanStart = connectOptions.CleanStart.Value;
+            }
+        }
 
         // Fire the corresponding event
         this.BeforeConnectEventLauncher(this.Options);
@@ -192,6 +211,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     public async Task<PublishResult> PublishAsync(MQTT5PublishMessage message, CancellationToken cancellationToken = default)
     {
         message.Validate();
+
+        if (message.QoS.HasValue && this.Connection.ConnectionProperties.MaximumQoS.HasValue &&
+            (ushort)message.QoS.Value > this.Connection.ConnectionProperties.MaximumQoS.Value)
+        {
+            Logger.Debug($"Reducing message QoS from {message.QoS} to broker enforced maximum of {this.Connection.ConnectionProperties.MaximumQoS}");
+            message.QoS = (QualityOfService)this.Connection.ConnectionProperties.MaximumQoS.Value;
+        }
 
         // QoS 0: Fast Service
         if (message.QoS == QualityOfService.AtMostOnceDelivery)

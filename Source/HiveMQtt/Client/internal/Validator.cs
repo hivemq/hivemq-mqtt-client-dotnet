@@ -40,6 +40,7 @@ public class Validator
         }
 
         // Regular expression to match any character that is NOT in the specified set
+        // We can't use GeneratedRegexAttribute because it's not available in .net 6.0
         var regex = new Regex("[^0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ]");
 
         // Check if the input string contains any character that does not match the pattern

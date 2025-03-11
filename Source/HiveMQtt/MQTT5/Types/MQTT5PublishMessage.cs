@@ -173,6 +173,11 @@ public class MQTT5PublishMessage
             this.PayloadFormatIndicator = MQTT5PayloadFormatIndicator.Unspecified;
         }
 
+        if (!this.QoS.HasValue)
+        {
+            this.QoS = QualityOfService.AtMostOnceDelivery;
+        }
+
         if (this.MessageExpiryInterval.HasValue && (this.MessageExpiryInterval.Value is < 0 or > 268435455))
         {
             throw new HiveMQttClientException("Message Expiry Interval must be between 0 and 268_435_455.");

@@ -19,11 +19,21 @@ public partial class ConnectionManager
     internal void HandleIncomingConnAckPacket(ConnAckPacket connAckPacket)
     {
         Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- <-- Received ConnAck");
+
+        // If SessionPresent is false, we need to reset any in-flight transactions
+        // To manage disconnections, users should subscribe to the OnPublishSent event and timeout
+        // if no response is received from the broker.  This is done to make this client simpler,
+        // and to avoid the complexity of managing in-flight transactions across connections.
+        if (!connAckPacket.SessionPresent)
+        {
+            this.IPubTransactionQueue.Clear();
+            this.OPubTransactionQueue.Clear();
+        }
+
         if (connAckPacket.ReasonCode == ConnAckReasonCode.Success && connAckPacket.Properties.ReceiveMaximum != null)
         {
             Logger.Debug($"{this.Client.Options.ClientId}-(RPH)- <-- Broker ReceiveMaximum is {connAckPacket.Properties.ReceiveMaximum}.");
 
-            // FIXME: A resize would be better to not lose any existing.  Can we send publishes before the CONNACK?
             // Replace the OPubTransactionQueue BoundedDictionary with a new one with the broker's ReceiveMaximum
             this.OPubTransactionQueue = new BoundedDictionaryX<int, List<ControlPacket>>((int)connAckPacket.Properties.ReceiveMaximum);
         }
