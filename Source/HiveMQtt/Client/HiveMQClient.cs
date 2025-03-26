@@ -220,6 +220,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             {
                 throw new HiveMQttClientException("Topic aliases are not supported by the broker");
             }
+
             if (message.TopicAlias.Value > topicAliasMaximum)
             {
                 throw new HiveMQttClientException($"Topic alias exceeds broker's maximum allowed value of {topicAliasMaximum}");

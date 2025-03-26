@@ -121,7 +121,7 @@ public class BrokerEnforcementTest
         {
             Topic = "test/topic",
             Payload = Encoding.ASCII.GetBytes("test message"),
-            Retain = true
+            Retain = true,
         };
 
         // Act & Assert
@@ -144,7 +144,7 @@ public class BrokerEnforcementTest
         {
             Topic = "test/topic",
             Payload = Encoding.ASCII.GetBytes("test message"),
-            Retain = true
+            Retain = true,
         };
 
         // Act & Assert
@@ -248,7 +248,7 @@ public class BrokerEnforcementTest
         {
             Topic = "test/topic",
             Payload = Encoding.ASCII.GetBytes("test message"),
-            TopicAlias = 1
+            TopicAlias = 1,
         };
 
         // Act & Assert
@@ -271,7 +271,7 @@ public class BrokerEnforcementTest
         {
             Topic = "test/topic",
             Payload = Encoding.ASCII.GetBytes("test message"),
-            TopicAlias = 1
+            TopicAlias = 1,
         };
 
         // Act & Assert
@@ -294,7 +294,7 @@ public class BrokerEnforcementTest
         {
             Topic = "test/topic",
             Payload = Encoding.ASCII.GetBytes("test message"),
-            TopicAlias = 6
+            TopicAlias = 6,
         };
 
         // Act & Assert
