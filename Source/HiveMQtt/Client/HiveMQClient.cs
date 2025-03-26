@@ -212,6 +212,20 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         message.Validate();
 
+        // Check if topic alias is used but not supported by broker
+        var topicAliasMaximum = this.Connection?.ConnectionProperties?.TopicAliasMaximum ?? 0;
+        if (message.TopicAlias.HasValue)
+        {
+            if (topicAliasMaximum == 0)
+            {
+                throw new HiveMQttClientException("Topic aliases are not supported by the broker");
+            }
+            if (message.TopicAlias.Value > topicAliasMaximum)
+            {
+                throw new HiveMQttClientException($"Topic alias exceeds broker's maximum allowed value of {topicAliasMaximum}");
+            }
+        }
+
         // Check if retain is used but not supported by broker
         var retainSupported = this.Connection?.ConnectionProperties?.RetainAvailable ?? true;
         if (!retainSupported && message.Retain)
@@ -339,6 +353,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <inheritdoc />
     public async Task<SubscribeResult> SubscribeAsync(SubscribeOptions options)
     {
+        // Check if subscription identifiers are used but not supported by broker
+        var subscriptionIdentifiersSupported = this.Connection?.ConnectionProperties?.SubscriptionIdentifiersAvailable ?? true;
+        if (!subscriptionIdentifiersSupported && options.SubscriptionIdentifier.HasValue)
+        {
+            throw new HiveMQttClientException("Subscription identifiers are not supported by the broker");
+        }
+
         // Check if retain is used but not supported by broker
         var retainSupported = this.Connection?.ConnectionProperties?.RetainAvailable ?? true;
         if (!retainSupported)
