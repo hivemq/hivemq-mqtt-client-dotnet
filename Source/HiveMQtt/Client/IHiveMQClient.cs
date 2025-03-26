@@ -61,14 +61,14 @@ public interface IHiveMQClient : IDisposable
     /// <param name="connectOptions">The connect override options for the MQTT Connect call.  These settings
     /// will override the settings in HiveMQClientOptions.</param>
     /// <returns>A ConnectResult class representing the result of the MQTT connect call.</returns>
-    public Task<ConnectResult> ConnectAsync(ConnectOptions? connectOptions);
+    public Task<ConnectResult> ConnectAsync(ConnectOptions? connectOptions = null);
 
     /// <summary>
     /// Asynchronous disconnect from the previously connected MQTT broker.
     /// </summary>
     /// <param name="options">The options for the MQTT Disconnect call.</param>
     /// <returns>A boolean indicating on success or failure.</returns>
-    public Task<bool> DisconnectAsync(DisconnectOptions? options);
+    public Task<bool> DisconnectAsync(DisconnectOptions? options = null);
 
     /// <summary>
     /// Publish a message to an MQTT topic.
