@@ -23,6 +23,7 @@ using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.ReasonCodes;
 using HiveMQtt.MQTT5.Types;
 using Xunit;
+using System.Text;
 
 public class BrokerEnforcementTest
 {
@@ -103,6 +104,92 @@ public class BrokerEnforcementTest
         Assert.NotNull(result);
         Assert.Single(result.Subscriptions);
         Assert.Equal("$share/group/test/topic", result.Subscriptions[0].TopicFilter.Topic);
+        Assert.Equal(SubAckReasonCode.GrantedQoS0, result.Subscriptions[0].SubscribeReasonCode);
+    }
+
+    [Fact]
+    public async Task RetainAvailable_WhenFalse_RejectsRetainedPublishAsync()
+    {
+        // Arrange
+        var client = new HiveMQClient();
+        _ = await client.ConnectAsync().ConfigureAwait(false);
+
+        // Manually override the connection properties to simulate a broker that does not support retained messages
+        client.Connection.ConnectionProperties.RetainAvailable = false;
+
+        var message = new MQTT5PublishMessage
+        {
+            Topic = "test/topic",
+            Payload = Encoding.ASCII.GetBytes("test message"),
+            Retain = true
+        };
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<HiveMQttClientException>(() =>
+            client.PublishAsync(message)).ConfigureAwait(true);
+        Assert.Contains("Retained messages are not supported by the broker", exception.Message);
+    }
+
+    [Fact]
+    public async Task RetainAvailable_WhenTrue_AcceptsRetainedPublishAsync()
+    {
+        // Arrange
+        var client = new HiveMQClient();
+        _ = await client.ConnectAsync().ConfigureAwait(false);
+
+        // Manually override the connection properties to simulate a broker that supports retained messages
+        client.Connection.ConnectionProperties.RetainAvailable = true;
+
+        var message = new MQTT5PublishMessage
+        {
+            Topic = "test/topic",
+            Payload = Encoding.ASCII.GetBytes("test message"),
+            Retain = true
+        };
+
+        // Act & Assert
+        var result = await client.PublishAsync(message).ConfigureAwait(true);
+        Assert.NotNull(result);
+        Assert.True(result.Message.Retain);
+    }
+
+    [Fact]
+    public async Task RetainAvailable_WhenFalse_RejectsRetainAsPublishedSubscribeAsync()
+    {
+        // Arrange
+        var client = new HiveMQClient();
+        _ = await client.ConnectAsync().ConfigureAwait(false);
+
+        // Manually override the connection properties to simulate a broker that does not support retained messages
+        client.Connection.ConnectionProperties.RetainAvailable = false;
+
+        var options = new SubscribeOptions();
+        options.TopicFilters.Add(new TopicFilter("test/topic", retainAsPublished: true));
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<HiveMQttClientException>(() =>
+            client.SubscribeAsync(options)).ConfigureAwait(true);
+        Assert.Contains("Retained messages are not supported by the broker", exception.Message);
+    }
+
+    [Fact]
+    public async Task RetainAvailable_WhenTrue_AcceptsRetainAsPublishedSubscribeAsync()
+    {
+        // Arrange
+        var client = new HiveMQClient();
+        _ = await client.ConnectAsync().ConfigureAwait(false);
+
+        // Manually override the connection properties to simulate a broker that supports retained messages
+        client.Connection.ConnectionProperties.RetainAvailable = true;
+
+        var options = new SubscribeOptions();
+        options.TopicFilters.Add(new TopicFilter("test/topic", retainAsPublished: true));
+
+        // Act & Assert
+        var result = await client.SubscribeAsync(options).ConfigureAwait(true);
+        Assert.NotNull(result);
+        Assert.Single(result.Subscriptions);
+        Assert.True(result.Subscriptions[0].TopicFilter.RetainAsPublished);
         Assert.Equal(SubAckReasonCode.GrantedQoS0, result.Subscriptions[0].SubscribeReasonCode);
     }
 }

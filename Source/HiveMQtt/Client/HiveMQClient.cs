@@ -212,6 +212,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         message.Validate();
 
+        // Check if retain is used but not supported by broker
+        var retainSupported = this.Connection?.ConnectionProperties?.RetainAvailable ?? true;
+        if (!retainSupported && message.Retain)
+        {
+            throw new HiveMQttClientException("Retained messages are not supported by the broker");
+        }
+
         if (message.QoS.HasValue && this.Connection.ConnectionProperties.MaximumQoS.HasValue &&
             (ushort)message.QoS.Value > this.Connection.ConnectionProperties.MaximumQoS.Value)
         {
@@ -332,6 +339,20 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <inheritdoc />
     public async Task<SubscribeResult> SubscribeAsync(SubscribeOptions options)
     {
+        // Check if retain is used but not supported by broker
+        var retainSupported = this.Connection?.ConnectionProperties?.RetainAvailable ?? true;
+        if (!retainSupported)
+        {
+            // Check if any topic filter has retainAsPublished set to true
+            foreach (var topicFilter in options.TopicFilters)
+            {
+                if (topicFilter.RetainAsPublished is true)
+                {
+                    throw new HiveMQttClientException("Retained messages are not supported by the broker");
+                }
+            }
+        }
+
         // Check if shared subscriptions are used but not supported by broker
         var sharedSubscriptionSupported = this.Connection?.ConnectionProperties?.SharedSubscriptionAvailable ?? true;
         if (!sharedSubscriptionSupported)
