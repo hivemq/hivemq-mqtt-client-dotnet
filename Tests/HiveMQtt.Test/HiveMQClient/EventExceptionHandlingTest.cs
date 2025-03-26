@@ -23,10 +23,7 @@ public class EventExceptionHandlingTest
         Assert.True(client.IsConnected());
 
         // Add event handler that throws an exception
-        client.BeforeDisconnect += (sender, args) =>
-        {
-            throw new Exception("Test exception in BeforeDisconnect");
-        };
+        client.BeforeDisconnect += (sender, args) => throw new InvalidOperationException("Test exception in BeforeDisconnect");
 
         // Attempt to disconnect - should succeed despite the exception
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
@@ -50,10 +47,7 @@ public class EventExceptionHandlingTest
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
         // Add event handler that throws an exception
-        client.OnPublishSent += (sender, args) =>
-        {
-            throw new Exception("Test exception in OnPublishSent");
-        };
+        client.OnPublishSent += (sender, args) => throw new InvalidOperationException("Test exception in OnPublishSent");
 
         // Attempt to publish - should succeed despite the exception
         var publishResult = await client.PublishAsync(
@@ -85,10 +79,7 @@ public class EventExceptionHandlingTest
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
         // Add event handler that throws an exception
-        client.BeforeSubscribe += (sender, args) =>
-        {
-            throw new Exception("Test exception in BeforeSubscribe");
-        };
+        client.BeforeSubscribe += (sender, args) => throw new InvalidOperationException("Test exception in BeforeSubscribe");
 
         // Attempt to subscribe - should succeed despite the exception
         var subscribeResult = await client.SubscribeAsync(
@@ -126,10 +117,7 @@ public class EventExceptionHandlingTest
         Assert.NotEmpty(subscribeResult.Subscriptions);
 
         // Add event handler that throws an exception
-        client.BeforeUnsubscribe += (sender, args) =>
-        {
-            throw new Exception("Test exception in BeforeUnsubscribe");
-        };
+        client.BeforeUnsubscribe += (sender, args) => throw new InvalidOperationException("Test exception in BeforeUnsubscribe");
 
         // Attempt to unsubscribe - should succeed despite the exception
         var unsubscribeResult = await client.UnsubscribeAsync(
@@ -167,16 +155,10 @@ public class EventExceptionHandlingTest
         Assert.NotEmpty(subscribeResult.Subscriptions);
 
         // Add event handler that throws an exception
-        client.OnMessageReceived += (sender, args) =>
-        {
-            throw new Exception("Test exception in OnMessageReceived");
-        };
+        client.OnMessageReceived += (sender, args) => throw new InvalidOperationException("Test exception in OnMessageReceived");
 
         // Add another event handler to verify message was still delivered
-        client.OnMessageReceived += (sender, args) =>
-        {
-            messageReceived = true;
-        };
+        client.OnMessageReceived += (sender, args) => messageReceived = true;
 
         // Publish a message
         var publishResult = await client.PublishAsync(
@@ -207,10 +189,7 @@ public class EventExceptionHandlingTest
         var client = new HiveMQClient(options);
 
         // Add event handler that throws an exception
-        client.BeforeConnect += (sender, args) =>
-        {
-            throw new Exception("Test exception in BeforeConnect");
-        };
+        client.BeforeConnect += (sender, args) => throw new InvalidOperationException("Test exception in BeforeConnect");
 
         // Attempt to connect - should succeed despite the exception
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
@@ -238,16 +217,10 @@ public class EventExceptionHandlingTest
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
         // Add event handler that throws an exception
-        client.OnPubAckReceived += (sender, args) =>
-        {
-            throw new Exception("Test exception in OnPubAckReceived");
-        };
+        client.OnPubAckReceived += (sender, args) => throw new InvalidOperationException("Test exception in OnPubAckReceived");
 
         // Add another event handler to verify PubAck was still received
-        client.OnPubAckReceived += (sender, args) =>
-        {
-            pubAckReceived = true;
-        };
+        client.OnPubAckReceived += (sender, args) => pubAckReceived = true;
 
         // Publish a QoS 1 message
         var publishResult = await client.PublishAsync(

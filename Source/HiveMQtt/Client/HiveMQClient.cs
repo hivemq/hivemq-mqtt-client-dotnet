@@ -332,6 +332,20 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <inheritdoc />
     public async Task<SubscribeResult> SubscribeAsync(SubscribeOptions options)
     {
+        // Check if wildcards are used but not supported by broker
+        var wildcardSupported = this.Connection?.ConnectionProperties?.WildcardSubscriptionAvailable ?? true;
+        if (!wildcardSupported)
+        {
+            // Check if any topic filter contains wildcards (+ or #)
+            foreach (var topicFilter in options.TopicFilters)
+            {
+                if (topicFilter.Topic.Contains('+') || topicFilter.Topic.Contains('#'))
+                {
+                    throw new HiveMQttClientException("Wildcard subscriptions are not supported by the broker");
+                }
+            }
+        }
+
         // Fire the corresponding event
         this.BeforeSubscribeEventLauncher(options);
 
