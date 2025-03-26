@@ -332,6 +332,20 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <inheritdoc />
     public async Task<SubscribeResult> SubscribeAsync(SubscribeOptions options)
     {
+        // Check if shared subscriptions are used but not supported by broker
+        var sharedSubscriptionSupported = this.Connection?.ConnectionProperties?.SharedSubscriptionAvailable ?? true;
+        if (!sharedSubscriptionSupported)
+        {
+            // Check if any topic filter contains shared subscription prefix ($share/)
+            foreach (var topicFilter in options.TopicFilters)
+            {
+                if (topicFilter.Topic.StartsWith("$share/", StringComparison.Ordinal))
+                {
+                    throw new HiveMQttClientException("Shared subscriptions are not supported by the broker");
+                }
+            }
+        }
+
         // Check if wildcards are used but not supported by broker
         var wildcardSupported = this.Connection?.ConnectionProperties?.WildcardSubscriptionAvailable ?? true;
         if (!wildcardSupported)

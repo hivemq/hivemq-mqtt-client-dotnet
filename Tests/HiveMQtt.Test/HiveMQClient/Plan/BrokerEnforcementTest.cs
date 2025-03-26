@@ -65,4 +65,44 @@ public class BrokerEnforcementTest
         Assert.Equal("test/+/topic", result.Subscriptions[0].TopicFilter.Topic);
         Assert.Equal(SubAckReasonCode.GrantedQoS0, result.Subscriptions[0].SubscribeReasonCode);
     }
+
+    [Fact]
+    public async Task SharedSubscriptionAvailable_WhenFalse_RejectsSharedSubscriptionsAsync()
+    {
+        // Arrange
+        var client = new HiveMQClient();
+        _ = await client.ConnectAsync().ConfigureAwait(false);
+
+        // Manually override the connection properties to simulate a broker that does not support shared subscriptions
+        client.Connection.ConnectionProperties.SharedSubscriptionAvailable = false;
+
+        var options = new SubscribeOptions();
+        options.TopicFilters.Add(new TopicFilter("$share/group/test/topic"));
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<HiveMQttClientException>(() =>
+            client.SubscribeAsync(options)).ConfigureAwait(true);
+        Assert.Contains("Shared subscriptions are not supported by the broker", exception.Message);
+    }
+
+    [Fact]
+    public async Task SharedSubscriptionAvailable_WhenTrue_AcceptsSharedSubscriptionsAsync()
+    {
+        // Arrange
+        var client = new HiveMQClient();
+        _ = await client.ConnectAsync().ConfigureAwait(false);
+
+        // Manually override the connection properties to simulate a broker that supports shared subscriptions
+        client.Connection.ConnectionProperties.SharedSubscriptionAvailable = true;
+
+        var options = new SubscribeOptions();
+        options.TopicFilters.Add(new TopicFilter("$share/group/test/topic"));
+
+        // Act & Assert
+        var result = await client.SubscribeAsync(options).ConfigureAwait(true);
+        Assert.NotNull(result);
+        Assert.Single(result.Subscriptions);
+        Assert.Equal("$share/group/test/topic", result.Subscriptions[0].TopicFilter.Topic);
+        Assert.Equal(SubAckReasonCode.GrantedQoS0, result.Subscriptions[0].SubscribeReasonCode);
+    }
 }
