@@ -223,21 +223,23 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         var eventArgs = new OnMessageReceivedEventArgs(packet.Message);
         var messageHandled = false;
 
-        if (this.OnMessageReceived != null && this.OnMessageReceived.GetInvocationList().Length > 0)
+        // Get all handlers
+        var handlers = this.OnMessageReceived?.GetInvocationList();
+        if (handlers != null)
         {
-            Logger.Trace("OnMessageReceivedEventLauncher");
-
-            // Global Event Handler
-            _ = Task.Run(() => this.OnMessageReceived?.Invoke(this, eventArgs)).ContinueWith(
-                t =>
-                {
-                    if (t.IsFaulted)
+            foreach (var handler in handlers)
+            {
+                _ = Task.Run(() => {
+                    try
                     {
-                        Logger.Error("OnMessageReceivedEventLauncher exception: " + t.Exception?.Message);
+                        ((EventHandler<OnMessageReceivedEventArgs>)handler)(this, eventArgs);
                     }
-                },
-                TaskScheduler.Default);
-
+                    catch (Exception ex)
+                    {
+                        Logger.Error($"Handler exception: {ex.Message}");
+                    }
+                });
+            }
             messageHandled = true;
         }
 
