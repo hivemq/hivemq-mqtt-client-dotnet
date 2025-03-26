@@ -136,7 +136,7 @@ public class ClientTest
         Assert.Null(client.Connection.ConnectionWriterTask);
         Assert.Null(client.Connection.ConnectionReaderTask);
         Assert.Null(client.Connection.ReceivedPacketsHandlerTask);
-        Assert.Null(client.Connection.ConnectionMonitorThread);
+        Assert.True(client.Connection.ConnectionMonitorThread.IsAlive);
 
         // Queues
         Assert.NotNull(client.Connection.SendQueue);

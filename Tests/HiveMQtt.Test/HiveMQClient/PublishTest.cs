@@ -28,6 +28,39 @@ public class PublishTest
     }
 
     [Fact]
+    public async Task PublishBeforeConnectAsync()
+    {
+        var options = new HiveMQClientOptionsBuilder().WithClientId("PublishBeforeConnectAsync").Build();
+        var client = new HiveMQClient(options);
+
+        // Start publish task before connecting
+        var publishTask = Task.Run(async () =>
+        {
+            var msg = new string(/*lang=json,strict*/ "{\"interference\": \"1029384\"}");
+            var result = await client.PublishAsync("tests/PublishBeforeConnectAsync", msg).ConfigureAwait(false);
+            Assert.NotNull(result);
+            Assert.NotNull(result.Message);
+            return result;
+        });
+
+        // Small delay to ensure publish task starts first
+        await Task.Delay(100).ConfigureAwait(false);
+
+        // Connect in separate task
+        var connectResult = await client.ConnectAsync().ConfigureAwait(false);
+        Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
+
+        // Wait for publish to complete and verify result
+        var publishResult = await publishTask.ConfigureAwait(false);
+        Assert.NotNull(publishResult);
+
+        var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
+        Assert.True(disconnectResult);
+
+        client.Dispose();
+    }
+
+    [Fact]
     public async Task MostBasicPublishWithQoS0Async()
     {
         var options = new HiveMQClientOptionsBuilder().WithClientId("MostBasicPublishWithQoS0Async").Build();
