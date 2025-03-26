@@ -203,8 +203,10 @@ public class BrokerEnforcementTest
         // Manually override the connection properties to simulate a broker that does not support subscription identifiers
         client.Connection.ConnectionProperties.SubscriptionIdentifiersAvailable = false;
 
-        var options = new SubscribeOptions();
-        options.SubscriptionIdentifier = 1;
+        var options = new SubscribeOptions
+        {
+            SubscriptionIdentifier = 1,
+        };
         options.TopicFilters.Add(new TopicFilter("test/topic"));
 
         // Act & Assert
@@ -223,8 +225,10 @@ public class BrokerEnforcementTest
         // Manually override the connection properties to simulate a broker that supports subscription identifiers
         client.Connection.ConnectionProperties.SubscriptionIdentifiersAvailable = true;
 
-        var options = new SubscribeOptions();
-        options.SubscriptionIdentifier = 1;
+        var options = new SubscribeOptions
+        {
+            SubscriptionIdentifier = 1,
+        };
         options.TopicFilters.Add(new TopicFilter("test/topic"));
 
         // Act & Assert
