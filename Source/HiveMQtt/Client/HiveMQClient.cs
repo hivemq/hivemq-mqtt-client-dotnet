@@ -212,6 +212,28 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         message.Validate();
 
+        // Check if topic alias is used but not supported by broker
+        var topicAliasMaximum = this.Connection?.ConnectionProperties?.TopicAliasMaximum ?? 0;
+        if (message.TopicAlias.HasValue)
+        {
+            if (topicAliasMaximum == 0)
+            {
+                throw new HiveMQttClientException("Topic aliases are not supported by the broker");
+            }
+
+            if (message.TopicAlias.Value > topicAliasMaximum)
+            {
+                throw new HiveMQttClientException($"Topic alias exceeds broker's maximum allowed value of {topicAliasMaximum}");
+            }
+        }
+
+        // Check if retain is used but not supported by broker
+        var retainSupported = this.Connection?.ConnectionProperties?.RetainAvailable ?? true;
+        if (!retainSupported && message.Retain)
+        {
+            throw new HiveMQttClientException("Retained messages are not supported by the broker");
+        }
+
         if (message.QoS.HasValue && this.Connection.ConnectionProperties.MaximumQoS.HasValue &&
             (ushort)message.QoS.Value > this.Connection.ConnectionProperties.MaximumQoS.Value)
         {
@@ -332,6 +354,55 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <inheritdoc />
     public async Task<SubscribeResult> SubscribeAsync(SubscribeOptions options)
     {
+        // Check if subscription identifiers are used but not supported by broker
+        var subscriptionIdentifiersSupported = this.Connection?.ConnectionProperties?.SubscriptionIdentifiersAvailable ?? true;
+        if (!subscriptionIdentifiersSupported && options.SubscriptionIdentifier.HasValue)
+        {
+            throw new HiveMQttClientException("Subscription identifiers are not supported by the broker");
+        }
+
+        // Check if retain is used but not supported by broker
+        var retainSupported = this.Connection?.ConnectionProperties?.RetainAvailable ?? true;
+        if (!retainSupported)
+        {
+            // Check if any topic filter has retainAsPublished set to true
+            foreach (var topicFilter in options.TopicFilters)
+            {
+                if (topicFilter.RetainAsPublished is true)
+                {
+                    throw new HiveMQttClientException("Retained messages are not supported by the broker");
+                }
+            }
+        }
+
+        // Check if shared subscriptions are used but not supported by broker
+        var sharedSubscriptionSupported = this.Connection?.ConnectionProperties?.SharedSubscriptionAvailable ?? true;
+        if (!sharedSubscriptionSupported)
+        {
+            // Check if any topic filter contains shared subscription prefix ($share/)
+            foreach (var topicFilter in options.TopicFilters)
+            {
+                if (topicFilter.Topic.StartsWith("$share/", StringComparison.Ordinal))
+                {
+                    throw new HiveMQttClientException("Shared subscriptions are not supported by the broker");
+                }
+            }
+        }
+
+        // Check if wildcards are used but not supported by broker
+        var wildcardSupported = this.Connection?.ConnectionProperties?.WildcardSubscriptionAvailable ?? true;
+        if (!wildcardSupported)
+        {
+            // Check if any topic filter contains wildcards (+ or #)
+            foreach (var topicFilter in options.TopicFilters)
+            {
+                if (topicFilter.Topic.Contains('+') || topicFilter.Topic.Contains('#'))
+                {
+                    throw new HiveMQttClientException("Wildcard subscriptions are not supported by the broker");
+                }
+            }
+        }
+
         // Fire the corresponding event
         this.BeforeSubscribeEventLauncher(options);
 
