@@ -262,6 +262,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                         }
                     }, TaskScheduler.Default);
             }
+
             messageHandled = true;
         }
 
