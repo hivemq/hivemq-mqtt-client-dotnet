@@ -66,6 +66,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <inheritdoc />
     public List<Subscription> Subscriptions { get; } = new();
 
+    private SemaphoreSlim SubscriptionsSemaphore { get; } = new(1, 1);
+
     /// <inheritdoc />
     public bool IsConnected() => this.Connection.State == ConnectState.Connected;
 
@@ -479,8 +481,16 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     subscription.MessageReceivedHandler = handler.Value;
                 }
             }
+        }
 
-            this.Subscriptions.Add(subscription);
+        try
+        {
+            await this.SubscriptionsSemaphore.WaitAsync().ConfigureAwait(false);
+            this.Subscriptions.AddRange(subscribeResult.Subscriptions);
+        }
+        finally
+        {
+            _ = this.SubscriptionsSemaphore.Release();
         }
 
         // Fire the corresponding event
@@ -508,9 +518,17 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <inheritdoc />
     public async Task<UnsubscribeResult> UnsubscribeAsync(Subscription subscription)
     {
-        if (!this.Subscriptions.Contains(subscription))
+        try
         {
-            throw new HiveMQttClientException("No such subscription found.  Make sure to take subscription(s) from HiveMQClient.Subscriptions[] or HiveMQClient.GetSubscriptionByTopic().");
+            await this.SubscriptionsSemaphore.WaitAsync().ConfigureAwait(false);
+            if (!this.Subscriptions.Contains(subscription))
+            {
+                throw new HiveMQttClientException("No such subscription found.  Make sure to take subscription(s) from HiveMQClient.Subscriptions[] or HiveMQClient.GetSubscriptionByTopic().");
+            }
+        }
+        finally
+        {
+            _ = this.SubscriptionsSemaphore.Release();
         }
 
         var unsubOptions = new UnsubscribeOptionsBuilder()
@@ -523,11 +541,22 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <inheritdoc />
     public async Task<UnsubscribeResult> UnsubscribeAsync(List<Subscription> subscriptions)
     {
-        for (var i = 0; i < subscriptions.Count; i++)
+        HashSet<Subscription> currentSubscriptions;
+        try
         {
-            if (!this.Subscriptions.Contains(subscriptions[i]))
+            await this.SubscriptionsSemaphore.WaitAsync().ConfigureAwait(false);
+            currentSubscriptions = [.. this.Subscriptions];
+        }
+        finally
+        {
+            _ = this.SubscriptionsSemaphore.Release();
+        }
+
+        foreach (var sub in subscriptions)
+        {
+            if (!currentSubscriptions.Contains(sub))
             {
-                throw new HiveMQttClientException("No such subscription found.  Make sure to take subscription(s) from HiveMQClient.Subscriptions[] or HiveMQClient.GetSubscriptionByTopic().");
+                throw new HiveMQttClientException("No such subscription found. Make sure to take subscription(s) from HiveMQClient.Subscriptions[] or HiveMQClient.GetSubscriptionByTopic().");
             }
         }
 
@@ -589,13 +618,28 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         };
 
         var counter = 0;
+        var subscriptionsToRemove = new List<Subscription>();
         foreach (var reasonCode in unsubAck.ReasonCodes)
         {
             unsubscribeResult.Subscriptions[counter].UnsubscribeReasonCode = reasonCode;
             if (reasonCode == UnsubAckReasonCode.Success)
             {
-                // Remove the subscription from the client
-                this.Subscriptions.Remove(unsubscribeResult.Subscriptions[counter]);
+                // Collect subscriptions which need to be removed
+               subscriptionsToRemove.Add(unsubscribeResult.Subscriptions[counter]);
+            }
+        }
+
+        if (subscriptionsToRemove.Count != 0)
+        {
+            try
+            {
+                // remove subscriptions from client while locking them
+                await this.SubscriptionsSemaphore.WaitAsync().ConfigureAwait(false);
+                _ = this.Subscriptions.RemoveAll(subscriptionsToRemove.Contains);
+            }
+            finally
+            {
+                _ = this.SubscriptionsSemaphore.Release();
             }
         }
 
