@@ -8,8 +8,15 @@ using MQTT5.Types;
 using Xunit;
 using Xunit.Abstractions;
 
-public class ThreadSafeSubscribeUnsubscribeTest(ITestOutputHelper testOutputHelper)
+public class ThreadSafeSubscribeUnsubscribeTest
 {
+    private readonly ITestOutputHelper testOutputHelper;
+
+    public ThreadSafeSubscribeUnsubscribeTest(ITestOutputHelper testOutputHelper)
+    {
+        this.testOutputHelper = testOutputHelper;
+    }
+
     [Fact]
     public async Task SubscribeUnsubscribe_InManyThreadsAsync()
     {
