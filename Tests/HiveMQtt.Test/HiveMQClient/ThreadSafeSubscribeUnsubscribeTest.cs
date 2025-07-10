@@ -38,7 +38,7 @@ public class ThreadSafeSubscribeUnsubscribeTest
         client.OnMessageReceived += (_, args) => { };
         _ = await client.SubscribeAsync("/test/#").ConfigureAwait(false);
 
-        ConcurrentBag<string> exceptionMessages = [];
+        var exceptionMessages = new ConcurrentBag<string>();
         var successCount = 0;
         var tasks = new List<Task>();
 
@@ -80,7 +80,7 @@ public class ThreadSafeSubscribeUnsubscribeTest
                     {
                         var errorMessage = $"Worker {workerId}, Iteration {i}: {e}";
                         exceptionMessages.Add(errorMessage);
-                        testOutputHelper.WriteLine(errorMessage);
+                        this.testOutputHelper.WriteLine(errorMessage);
                     }
                 }
             }));
