@@ -35,7 +35,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         try
         {
             this.SubscriptionsSemaphore.Wait();
-            tempList = [.. this.Subscriptions];
+            tempList = this.Subscriptions.ToList();
         }
         finally
         {
@@ -56,7 +56,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         try
         {
             this.SubscriptionsSemaphore.Wait();
-            tempList = [.. this.Subscriptions];
+            tempList = this.Subscriptions.ToList();
         }
         finally
         {

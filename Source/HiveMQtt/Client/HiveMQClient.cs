@@ -545,7 +545,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         try
         {
             await this.SubscriptionsSemaphore.WaitAsync().ConfigureAwait(false);
-            currentSubscriptions = [.. this.Subscriptions];
+            currentSubscriptions = this.Subscriptions.ToHashSet();
         }
         finally
         {
