@@ -31,20 +31,18 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <returns>A boolean indicating whether the subscription exists.</returns>
     internal bool SubscriptionExists(Subscription subscription)
     {
-        if (this.Subscriptions.Contains(subscription))
+        List<Subscription> tempList;
+        try
         {
-            return true;
+            this.SubscriptionsSemaphore.Wait();
+            tempList = this.Subscriptions.ToList();
+        }
+        finally
+        {
+            _ = this.SubscriptionsSemaphore.Release();
         }
 
-        foreach (var candidate in this.Subscriptions)
-        {
-            if (candidate.TopicFilter.Topic == subscription.TopicFilter.Topic)
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return tempList.Any(s => s.TopicFilter.Topic == subscription.TopicFilter.Topic);
     }
 
     /// <summary>
@@ -54,15 +52,18 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <returns>The subscription or null if not found.</returns>
     internal Subscription? GetSubscriptionByTopic(string topic)
     {
-        foreach (var subscription in this.Subscriptions)
+        List<Subscription> tempList;
+        try
         {
-            if (subscription.TopicFilter.Topic == topic)
-            {
-                return subscription;
-            }
+            this.SubscriptionsSemaphore.Wait();
+            tempList = this.Subscriptions.ToList();
+        }
+        finally
+        {
+            _ = this.SubscriptionsSemaphore.Release();
         }
 
-        return null;
+        return tempList.FirstOrDefault(s => s.TopicFilter.Topic == topic);
     }
 
     /// <summary>

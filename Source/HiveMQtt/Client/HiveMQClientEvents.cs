@@ -266,26 +266,46 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             messageHandled = true;
         }
 
-        // Per Subscription Event Handler
-        foreach (var subscription in this.Subscriptions)
+        if (packet.Message.Topic is null)
         {
-            if (packet.Message.Topic != null && MatchTopic(subscription.TopicFilter.Topic, packet.Message.Topic))
-            {
-                if (subscription.MessageReceivedHandler != null && subscription.MessageReceivedHandler.GetInvocationList().Length > 0)
-                {
-                    // We have a per-subscription message handler.
-                    _ = Task.Run(() => subscription.MessageReceivedHandler?.Invoke(this, eventArgs)).ContinueWith(
-                        t =>
-                        {
-                            if (t.IsFaulted)
-                            {
-                                Logger.Error($"per-subscription MessageReceivedEventLauncher faulted ({packet.Message.Topic}): {t.Exception?.Message}");
-                            }
-                        }, TaskScheduler.Default);
+            return;
+        }
 
-                    messageHandled = true;
+        // Per Subscription Event Handler
+        // use ToList, so the iteration goes through a copy and changes at the list make not problems
+        // otherwise it would be necessary to lock the Subscriptions with the semaphore of HiveMQClient
+        List<Subscription> tempList;
+        try
+        {
+            this.SubscriptionsSemaphore.Wait();
+            tempList = this.Subscriptions.ToList();
+        }
+        finally
+        {
+            _ = this.SubscriptionsSemaphore.Release();
+        }
+
+        var matchingSubscriptions = tempList.Where(sub =>
+            sub.MessageReceivedHandler is not null &&
+            MatchTopic(sub.TopicFilter.Topic, packet.Message.Topic));
+
+        foreach (var subscription in matchingSubscriptions)
+        {
+            // We have a per-subscription message handler.
+            _ = Task.Run(() =>
+            {
+                try
+                {
+                    subscription.MessageReceivedHandler?.Invoke(this, eventArgs);
                 }
-            }
+                catch (Exception e)
+                {
+                    Logger.Error(
+                        $"per-subscription MessageReceivedEventLauncher faulted ({packet.Message.Topic}): {e.Message}");
+                }
+            });
+
+            messageHandled = true;
         }
 
         if (!messageHandled)
