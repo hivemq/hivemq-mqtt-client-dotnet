@@ -81,7 +81,7 @@ public class ClientTest
         Assert.Equal(TaskStatus.WaitingForActivation, client.Connection.ConnectionWriterTask.Status);
         Assert.Equal(TaskStatus.WaitingForActivation, client.Connection.ConnectionReaderTask.Status);
         Assert.Equal(TaskStatus.WaitingForActivation, client.Connection.ReceivedPacketsHandlerTask.Status);
-        Assert.True(client.Connection.ConnectionMonitorThread.IsAlive);
+        Assert.False(client.Connection.ConnectionMonitorThread.IsCompleted);
 
         // Queues
         Assert.NotNull(client.Connection.SendQueue);
@@ -118,7 +118,7 @@ public class ClientTest
         Assert.Equal(TaskStatus.WaitingForActivation, client.Connection.ConnectionWriterTask.Status);
         Assert.Equal(TaskStatus.WaitingForActivation, client.Connection.ConnectionReaderTask.Status);
         Assert.Equal(TaskStatus.WaitingForActivation, client.Connection.ReceivedPacketsHandlerTask.Status);
-        Assert.True(client.Connection.ConnectionMonitorThread.IsAlive);
+        Assert.False(client.Connection.ConnectionMonitorThread.IsCompleted);
 
         // Queues
         Assert.NotNull(client.Connection.SendQueue);
@@ -136,7 +136,10 @@ public class ClientTest
         Assert.Null(client.Connection.ConnectionWriterTask);
         Assert.Null(client.Connection.ConnectionReaderTask);
         Assert.Null(client.Connection.ReceivedPacketsHandlerTask);
-        Assert.True(client.Connection.ConnectionMonitorThread.IsAlive);
+
+        // The task should be completed and null at this point since with every new call to ConnectAsync
+        // a new task is started and during DisconnectAsync this task should be stopped and removed
+        Assert.Null(client.Connection.ConnectionMonitorThread);
 
         // Queues
         Assert.NotNull(client.Connection.SendQueue);
@@ -144,5 +147,24 @@ public class ClientTest
 
         // State
         Assert.Equal(ConnectState.Disconnected, client.Connection.State);
+    }
+
+    [Fact]
+    public async Task AfterDisconnect_ConnectionMonitorThread_ShouldBe_StoppedAsync()
+    {
+        using var client = new HiveMQClient();
+        await client.ConnectAsync().ConfigureAwait(false);
+
+        // Hold the reference to the task since it's removed in the client
+        // after DisconnectAsync
+        var monitorThread = client.Connection.ConnectionMonitorThread;
+
+        Assert.True(monitorThread is not null && !monitorThread.IsCompleted);
+
+        await client.DisconnectAsync().ConfigureAwait(false);
+
+        // Task should be completed at this point. During DisconnectAsync the cancellation token
+        // should be cancelled and the task should stop
+        Assert.True(monitorThread is not null && monitorThread.IsCompleted);
     }
 }
