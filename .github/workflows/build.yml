@@ -47,7 +47,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install .NET Core SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '${{ matrix.dotnet-version }}'
 
