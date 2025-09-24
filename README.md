@@ -47,7 +47,7 @@
 
 Download the HiveMQ C# MQTT Client for .NET and start building your next-generation IoT, industrial automation, or real-time data streaming application with HiveMQ on your side.
 
-_Do you have a success story with this client?  [Let us know]().  We'd love to feature your story in a blog post or video and you'll get some sweet HiveMQ swag (and publicity) along the way._
+_Do you have a success story with this client?  [Let us know](https://www.hivemq.com/contact/?btn=contact-nav).  We'd love to feature your story in a blog post or video and you'll get some sweet HiveMQ swag (and publicity) along the way._
 
 ## What is this?
 
