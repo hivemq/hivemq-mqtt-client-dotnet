@@ -129,7 +129,7 @@ public partial class ConnectionManager : IDisposable
         this.ConnectionWriterTask = this.ConnectionWriterAsync(this.cancellationTokenSource.Token);
         this.ConnectionReaderTask = this.ConnectionReaderAsync(this.cancellationTokenSource.Token);
         this.ReceivedPacketsHandlerTask = this.ReceivedPacketsHandlerAsync(this.cancellationTokenSource.Token);
-        this.ConnectionMonitorThread = this.LaunchConnectionMonitorThread();
+        this.ConnectionMonitorThread = this.LaunchConnectionMonitorThreadAsync(this.cancellationTokenSource.Token);
 
         return true;
     }
@@ -184,7 +184,7 @@ public partial class ConnectionManager : IDisposable
             Logger.Trace("ReceivedPacketsHandlerTask did not complete in time");
         }
 
-        if (this.ConnectionMonitorThread is not null && !this.ConnectionMonitorThread.IsAlive)
+        if (this.ConnectionMonitorThread is not null && this.ConnectionMonitorThread.IsCompleted)
         {
             this.ConnectionMonitorThread = null;
         }

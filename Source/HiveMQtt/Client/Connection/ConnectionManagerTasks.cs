@@ -21,7 +21,7 @@ public partial class ConnectionManager
 
     internal Task? ReceivedPacketsHandlerTask { get; set; }
 
-    internal Thread? ConnectionMonitorThread { get; set; }
+    internal Task? ConnectionMonitorThread { get; set; }
 
     /// <summary>
     /// Health check method to assure that tasks haven't faulted unexpectedly.
@@ -43,18 +43,14 @@ public partial class ConnectionManager
         }
     }
 
-    private Thread LaunchConnectionMonitorThread()
-    {
-        var thread = new Thread(this.ConnectionMonitor);
-        thread.Start();
-        return thread;
-    }
+    private Task LaunchConnectionMonitorThreadAsync(CancellationToken cancellationToken) =>
+        Task.Run(() => this.ConnectionMonitorAsync(cancellationToken), cancellationToken);
 
     /// <summary>
     /// Asynchronous background task that monitors the connection state and sends PingReq packets when
     /// necessary.
     /// </summary>
-    private void ConnectionMonitor()
+    private async Task ConnectionMonitorAsync(CancellationToken cancellationToken)
     {
         Logger.Trace($"{this.Client.Options.ClientId}-(CM)- Starting...{this.State}");
         if (this.Client.Options.KeepAlive == 0)
@@ -65,7 +61,7 @@ public partial class ConnectionManager
         var keepAlivePeriod = this.Client.Options.KeepAlive;
         this.lastCommunicationTimer.Start();
 
-        while (true)
+        while (!cancellationToken.IsCancellationRequested)
         {
             try
             {
@@ -97,7 +93,11 @@ public partial class ConnectionManager
                 this.RunTaskHealthCheck(this.ReceivedPacketsHandlerTask, "ReceivedPacketsHandler");
 
                 // Sleep cycle
-                Thread.Sleep(2000);
+                await Task.Delay(2000, cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                Logger.Debug($"{this.Client.Options.ClientId}-(CM)- Stopped by cancellation token");
             }
             catch (Exception ex)
             {
