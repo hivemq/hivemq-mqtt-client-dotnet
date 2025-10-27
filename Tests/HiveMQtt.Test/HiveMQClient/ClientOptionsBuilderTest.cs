@@ -67,7 +67,26 @@ public class ClientOptionsBuilderTest
         Assert.Equal(authMethod, options.AuthenticationMethod);
         Assert.Equal(Encoding.UTF8.GetBytes(authData), options.AuthenticationData);
         Assert.Equal(username, options.UserName);
-        Assert.Equal(password, options.Password);
+
+        // Convert SecureString to string for comparison
+        string? passwordString = null;
+        if (options.Password != null)
+        {
+            var ptr = IntPtr.Zero;
+            try
+            {
+                ptr = System.Runtime.InteropServices.Marshal.SecureStringToGlobalAllocUnicode(options.Password);
+                passwordString = System.Runtime.InteropServices.Marshal.PtrToStringUni(ptr);
+            }
+            finally
+            {
+                if (ptr != IntPtr.Zero)
+                {
+                    System.Runtime.InteropServices.Marshal.ZeroFreeGlobalAllocUnicode(ptr);
+                }
+            }
+        }
+        Assert.Equal(password, passwordString);
         Assert.Equal(preferIPv6, options.PreferIPv6);
         Assert.Equal(topicAliasMaximum, options.ClientTopicAliasMaximum);
         Assert.Equal(requestResponseInfo, options.RequestResponseInformation);
