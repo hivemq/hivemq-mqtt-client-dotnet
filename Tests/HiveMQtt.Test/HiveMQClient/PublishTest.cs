@@ -1,5 +1,6 @@
 namespace HiveMQtt.Test.HiveMQClient;
 
+using System.Collections.Concurrent;
 using System.Text;
 using System.Threading.Tasks;
 using HiveMQtt.Client;
@@ -560,6 +561,227 @@ public class PublishTest
         var publishResult = await client.PublishAsync("tests/PublishWithoutQoSAsync", msg).ConfigureAwait(false);
         Assert.NotNull(publishResult);
         Assert.Equal(publishResult.Message.QoS, QualityOfService.AtMostOnceDelivery);
+
+        var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
+        Assert.True(disconnectResult);
+
+        client.Dispose();
+    }
+
+    /// <summary>
+    /// Test to validate that concurrent write operations don't cause NotSupportedException.
+    /// This test specifically targets the fix for GitHub Issue #258 where concurrent writes
+    /// from ConnectionWriterAsync and ConnectionPublishWriterAsync caused race conditions.
+    /// </summary>
+    [Fact]
+    public async Task ConcurrentWriteOperations_ShouldNotThrowNotSupportedExceptionAsync()
+    {
+        const int concurrentTasks = 50;
+        const int messagesPerTask = 20;
+
+        var options = new HiveMQClientOptionsBuilder()
+            .WithClientId("ConcurrentWriteOperationsTest")
+            .WithAutomaticReconnect(true)
+            .Build();
+
+        var client = new HiveMQClient(options);
+        var connectResult = await client.ConnectAsync().ConfigureAwait(false);
+        Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
+
+        var exceptions = new ConcurrentBag<Exception>();
+        var successCount = 0;
+        var tasks = new List<Task>();
+
+        // Create multiple concurrent tasks that will trigger both publish and control packet writes
+        for (var i = 0; i < concurrentTasks; i++)
+        {
+            var taskId = i;
+            tasks.Add(Task.Run(async () =>
+            {
+                try
+                {
+                    for (var j = 0; j < messagesPerTask; j++)
+                    {
+                        // Mix of QoS levels to trigger different write paths
+                        var qos = (QualityOfService)(j % 3);
+                        var topic = $"tests/concurrent/{taskId}/{j}";
+                        var payload = $"{{\"taskId\":{taskId},\"messageId\":{j},\"timestamp\":\"{DateTime.UtcNow:O}\"}}";
+
+                        var result = await client.PublishAsync(topic, payload, qos).ConfigureAwait(false);
+                        Assert.NotNull(result);
+
+                        // Small delay to increase chance of concurrent writes
+                        if (j % 5 == 0)
+                        {
+                            await Task.Delay(1).ConfigureAwait(false);
+                        }
+                    }
+
+                    Interlocked.Increment(ref successCount);
+                }
+                catch (Exception ex)
+                {
+                    exceptions.Add(ex);
+                }
+            }));
+        }
+
+        // Wait for all tasks to complete
+        await Task.WhenAll(tasks).ConfigureAwait(false);
+
+        // Verify no NotSupportedException occurred
+        var notSupportedExceptions = exceptions.Where(ex =>
+            ex is NotSupportedException &&
+            ex.Message.Contains("WriteAsync method cannot be called when another write operation is pending"))
+            .ToList();
+
+        Assert.Empty(notSupportedExceptions);
+
+        // Verify most operations succeeded
+        Assert.True(successCount > concurrentTasks * 0.8, $"Only {successCount}/{concurrentTasks} tasks succeeded");
+
+        var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
+        Assert.True(disconnectResult);
+
+        client.Dispose();
+    }
+
+    /// <summary>
+    /// Test to validate QoS2 publish operations under high load, which was the specific
+    /// scenario reported in GitHub Issue #258.
+    /// </summary>
+    [Fact]
+    public async Task QoS2PublishUnderLoad_ShouldNotCauseConcurrentWriteExceptionAsync()
+    {
+        const int messageCount = 200;
+        const int concurrentPublishers = 10;
+
+        var options = new HiveMQClientOptionsBuilder()
+            .WithClientId("QoS2LoadTest")
+            .WithAutomaticReconnect(true)
+            .Build();
+
+        var client = new HiveMQClient(options);
+        var connectResult = await client.ConnectAsync().ConfigureAwait(false);
+        Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
+
+        var exceptions = new ConcurrentBag<Exception>();
+        var publishedCount = 0;
+        var tasks = new List<Task>();
+
+        // Create concurrent publishers that will generate QoS2 control packets
+        for (var i = 0; i < concurrentPublishers; i++)
+        {
+            var publisherId = i;
+            tasks.Add(Task.Run(async () =>
+            {
+                try
+                {
+                    var messagesPerPublisher = messageCount / concurrentPublishers;
+                    for (var j = 0; j < messagesPerPublisher; j++)
+                    {
+                        var topic = $"tests/qos2load/{publisherId}/{j}";
+                        var payload = $"{{\"publisherId\":{publisherId},\"messageId\":{j},\"qos\":2,\"timestamp\":\"{DateTime.UtcNow:O}\"}}";
+
+                        // Use QoS2 to trigger PUBREC/PUBREL/PUBCOMP control packets
+                        var result = await client.PublishAsync(topic, payload, QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
+                        Assert.NotNull(result);
+                        Assert.NotNull(result.QoS2ReasonCode);
+
+                        Interlocked.Increment(ref publishedCount);
+
+                        // Small random delay to increase concurrency
+                        if (j % 3 == 0)
+                        {
+                            await Task.Delay(Random.Shared.Next(1, 5)).ConfigureAwait(false);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    exceptions.Add(ex);
+                }
+            }));
+        }
+
+        // Wait for all publishers to complete
+        await Task.WhenAll(tasks).ConfigureAwait(false);
+
+        // Verify no concurrent write exceptions occurred
+        var concurrentWriteExceptions = exceptions.Where(ex =>
+            ex is NotSupportedException &&
+            ex.Message.Contains("WriteAsync method cannot be called when another write operation is pending"))
+            .ToList();
+
+        Assert.Empty(concurrentWriteExceptions);
+
+        // Verify most messages were published successfully
+        Assert.True(publishedCount > messageCount * 0.9, $"Only {publishedCount}/{messageCount} messages published successfully");
+
+        var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
+        Assert.True(disconnectResult);
+
+        client.Dispose();
+    }
+
+    /// <summary>
+    /// Test to validate that rapid publish operations with mixed QoS levels
+    /// don't cause concurrent write issues.
+    /// </summary>
+    [Fact]
+    public async Task RapidMixedQoSPublish_ShouldNotCauseConcurrentWriteExceptionAsync()
+    {
+        const int totalMessages = 100;
+
+        var options = new HiveMQClientOptionsBuilder()
+            .WithClientId("RapidMixedQoSTest")
+            .WithAutomaticReconnect(true)
+            .Build();
+
+        var client = new HiveMQClient(options);
+        var connectResult = await client.ConnectAsync().ConfigureAwait(false);
+        Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
+
+        var exceptions = new ConcurrentBag<Exception>();
+        var publishedCount = 0;
+
+        // Rapid-fire publishes with different QoS levels
+        var publishTasks = new List<Task>();
+        for (var i = 0; i < totalMessages; i++)
+        {
+            var messageId = i;
+            var qos = (QualityOfService)(i % 3); // Cycle through QoS 0, 1, 2
+            var topic = $"tests/rapid/{messageId}";
+            var payload = $"{{\"messageId\":{messageId},\"qos\":{(int)qos},\"timestamp\":\"{DateTime.UtcNow:O}\"}}";
+
+            publishTasks.Add(Task.Run(async () =>
+            {
+                try
+                {
+                    var result = await client.PublishAsync(topic, payload, qos).ConfigureAwait(false);
+                    Assert.NotNull(result);
+                    Interlocked.Increment(ref publishedCount);
+                }
+                catch (Exception ex)
+                {
+                    exceptions.Add(ex);
+                }
+            }));
+        }
+
+        // Wait for all publishes to complete
+        await Task.WhenAll(publishTasks).ConfigureAwait(false);
+
+        // Verify no concurrent write exceptions occurred
+        var concurrentWriteExceptions = exceptions.Where(ex =>
+            ex is NotSupportedException &&
+            ex.Message.Contains("WriteAsync method cannot be called when another write operation is pending"))
+            .ToList();
+
+        Assert.Empty(concurrentWriteExceptions);
+
+        // Verify all messages were published successfully
+        Assert.Equal(totalMessages, publishedCount);
 
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
