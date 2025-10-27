@@ -36,6 +36,9 @@ public class TCPTransport : BaseTransport, IDisposable
 
     internal HiveMQClientOptions Options { get; }
 
+    // Semaphore to serialize write operations and prevent concurrent writes
+    private readonly SemaphoreSlim writeSemaphore = new(1, 1);
+
     public TCPTransport(HiveMQClientOptions options) => this.Options = options;
 
     /// <summary>
@@ -275,16 +278,25 @@ public class TCPTransport : BaseTransport, IDisposable
             throw new HiveMQttClientException("TCP Transport Writer is null");
         }
 
-        var source = new ReadOnlyMemory<byte>(buffer);
-        var writeResult = await this.Writer.WriteAsync(source, cancellationToken).ConfigureAwait(false);
-
-        if (writeResult.IsCompleted || writeResult.IsCanceled)
+        // Serialize write operations to prevent concurrent writes that cause NotSupportedException
+        await this.writeSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
         {
-            Logger.Debug($"-(TCP)- WriteAsync: The party is over. IsCompleted={writeResult.IsCompleted} IsCancelled={writeResult.IsCanceled}");
-            return false;
-        }
+            var source = new ReadOnlyMemory<byte>(buffer);
+            var writeResult = await this.Writer.WriteAsync(source, cancellationToken).ConfigureAwait(false);
 
-        return true;
+            if (writeResult.IsCompleted || writeResult.IsCanceled)
+            {
+                Logger.Debug($"-(TCP)- WriteAsync: The party is over. IsCompleted={writeResult.IsCompleted} IsCancelled={writeResult.IsCanceled}");
+                return false;
+            }
+
+            return true;
+        }
+        finally
+        {
+            this.writeSemaphore.Release();
+        }
     }
 
     /// <summary>
@@ -334,7 +346,8 @@ public class TCPTransport : BaseTransport, IDisposable
     /// </summary>
     public void Dispose()
     {
-        this.Dispose();
+        // Dispose of the write semaphore
+        this.writeSemaphore?.Dispose();
         /*
           This object will be cleaned up by the Dispose method.
           Therefore, you should call GC.SuppressFinalize to
