@@ -17,6 +17,7 @@ namespace HiveMQtt.Client.Options;
 
 using System;
 using System.Linq;
+using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using HiveMQtt.Client;
 using HiveMQtt.Client.Exceptions;
@@ -97,7 +98,8 @@ public class HiveMQClientOptions
     // The MQTT CONNECT packet supports basic authentication of a Network Connection using the User Name
     // and Password fields. While these fields are named for a simple password authentication, they can
     // be used to carry other forms of authentication such as passing a token as the Password.
-    public string? Password { get; set; }
+    // Note: Password is stored securely using SecureString to prevent memory exposure.
+    public SecureString? Password { get; set; }
 
     /// <summary>
     /// Gets or sets a value that represents the session expiration interval in use by the MQTT broker.
@@ -353,5 +355,32 @@ public class HiveMQClientOptions
         }
 
         return value;
+    }
+
+    /// <summary>
+    /// Gets the password as a string for MQTT protocol use.
+    /// Note: This creates a temporary string that should be cleared after use.
+    /// </summary>
+    /// <returns>The password as a string, or null if no password is set.</returns>
+    internal string? GetPasswordAsString()
+    {
+        if (this.Password == null)
+        {
+            return null;
+        }
+
+        var ptr = IntPtr.Zero;
+        try
+        {
+            ptr = System.Runtime.InteropServices.Marshal.SecureStringToGlobalAllocUnicode(this.Password);
+            return System.Runtime.InteropServices.Marshal.PtrToStringUni(ptr);
+        }
+        finally
+        {
+            if (ptr != IntPtr.Zero)
+            {
+                System.Runtime.InteropServices.Marshal.ZeroFreeGlobalAllocUnicode(ptr);
+            }
+        }
     }
 }

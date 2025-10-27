@@ -15,6 +15,7 @@
  */
 namespace HiveMQtt.Client;
 
+using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using HiveMQtt.Client.Options;
 
@@ -468,7 +469,55 @@ public class HiveMQClientOptionsBuilder
     }
 
     /// <summary>
-    /// Sets the password.
+    /// Sets the password using a SecureString for enhanced security.
+    /// <para>
+    /// The Password is an optional parameter that can be included in the CONNECT packet during the
+    /// connection establishment process. It is used for client authentication in conjunction with the
+    /// Username or other authentication mechanisms.
+    /// </para>
+    /// <para>
+    /// The Password field allows clients to provide a secret credential or authentication token
+    /// associated with the provided Username. The format and interpretation of the Password are
+    /// specific to the chosen authentication method and agreed upon by the client and the broker.
+    /// </para>
+    /// <para>
+    /// The broker will use the provided Password, along with the Username or other authentication
+    /// information, to verify the client's identity and grant access to the MQTT communication based on
+    /// the configured authentication rules.
+    /// </para>
+    /// <para>
+    /// If the client does not require authentication or the chosen authentication method does not involve
+    /// a password, the Password field may be omitted from the CONNECT packet.
+    /// </para>
+    /// <para>
+    /// This method accepts a SecureString for enhanced security, preventing password exposure in memory.
+    /// </para>
+    /// </summary>
+    /// <param name="password">The password as a SecureString for enhanced security.</param>
+    /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
+    public HiveMQClientOptionsBuilder WithPassword(SecureString password)
+    {
+        if (password == null)
+        {
+            throw new ArgumentNullException(nameof(password));
+        }
+
+        if (password.Length > 65535)
+        {
+            Logger.Error("Password must be between 0 and 65535 characters.");
+            throw new ArgumentException("Password must be between 0 and 65535 characters.");
+        }
+
+        this.options.Password = password;
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the password using a plain string (for backward compatibility).
+    /// <para>
+    /// WARNING: This method stores the password as a plain string in memory, which is less secure.
+    /// Consider using WithPassword(SecureString) for enhanced security.
+    /// </para>
     /// <para>
     /// The Password is an optional parameter that can be included in the CONNECT packet during the
     /// connection establishment process. It is used for client authentication in conjunction with the
@@ -489,17 +538,31 @@ public class HiveMQClientOptionsBuilder
     /// a password, the Password field may be omitted from the CONNECT packet.
     /// </para>
     /// </summary>
-    /// <param name="password">The password value.</param>
+    /// <param name="password">The password value as a plain string.</param>
     /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
+    [Obsolete("Use WithPassword(SecureString) for enhanced security. This method stores passwords as plain text in memory.")]
     public HiveMQClientOptionsBuilder WithPassword(string password)
     {
+        if (password == null)
+        {
+            throw new ArgumentNullException(nameof(password));
+        }
+
         if (password.Length is < 0 or > 65535)
         {
             Logger.Error("Password must be between 0 and 65535 characters.");
             throw new ArgumentException("Password must be between 0 and 65535 characters.");
         }
 
-        this.options.Password = password;
+        // Convert string to SecureString
+        var securePassword = new SecureString();
+        foreach (char c in password)
+        {
+            securePassword.AppendChar(c);
+        }
+        securePassword.MakeReadOnly();
+
+        this.options.Password = securePassword;
         return this;
     }
 

@@ -93,9 +93,12 @@ public class ConnectPacket : ControlPacket
             }
 
             // Password
-            if (this.clientOptions.Password != null)
+            var passwordString = this.clientOptions.GetPasswordAsString();
+            if (passwordString != null)
             {
-                _ = EncodeUTF8String(vhAndPayloadStream, this.clientOptions.Password);
+                _ = EncodeUTF8String(vhAndPayloadStream, passwordString);
+                // Clear the temporary password string from memory
+                Array.Clear(passwordString.ToCharArray(), 0, passwordString.Length);
             }
 
             // Construct the final packet
@@ -148,9 +151,12 @@ public class ConnectPacket : ControlPacket
             }
         }
 
-        if (this.clientOptions.Password != null)
+        var passwordString = this.clientOptions.GetPasswordAsString();
+        if (passwordString != null)
         {
             this.flags |= 0x40;
+            // Clear the temporary password string from memory
+            Array.Clear(passwordString.ToCharArray(), 0, passwordString.Length);
         }
 
         if (this.clientOptions.UserName != null)
