@@ -8,8 +8,7 @@ jobs:
     steps:
     - uses: actions/first-interaction@v3
       with:
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-        pr-message:  'Hello @${{ github.actor }}, thank you for submitting a PR! We will respond as soon as possible.'
-        issue-message: |
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        pr_message:  'Hello @${{ github.actor }}, thank you for submitting a PR! We will respond as soon as possible.'
+        issue_message: |
           Hello @${{ github.actor }}, thanks for contributing to the HiveMQ community!  We will respond as soon as possible.
-
