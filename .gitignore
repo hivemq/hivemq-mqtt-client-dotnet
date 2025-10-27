@@ -762,3 +762,6 @@ MigrationBackup/
 .ionide/
 
 Artifacts/
+
+*.lic
+*.plic
