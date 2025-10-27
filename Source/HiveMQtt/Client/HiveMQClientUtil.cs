@@ -174,8 +174,19 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 if (this.Connection.State == Internal.ConnectState.Connected)
                 {
                     Logger.Trace("HiveMQClient Dispose: Disconnecting connected client.");
-                    _ = Task.Run(async () => await this.DisconnectAsync().ConfigureAwait(false));
+                    try
+                    {
+                        // Use Task.Run to handle the async disconnect without blocking
+                        Task.Run(async () => await this.DisconnectAsync().ConfigureAwait(false)).Wait(5000);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Warn($"Error disconnecting during dispose: {ex.Message}");
+                    }
                 }
+
+                // Dispose the connection manager
+                this.Connection?.Dispose();
             }
 
             // Call the appropriate methods to clean up

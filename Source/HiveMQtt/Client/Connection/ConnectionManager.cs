@@ -113,7 +113,8 @@ public partial class ConnectionManager : IDisposable
         }
 
         // Reset the CancellationTokenSource in case this is a reconnect
-        this.cancellationTokenSource.Dispose();
+        this.cancellationTokenSource?.Cancel();
+        this.cancellationTokenSource?.Dispose();
         this.cancellationTokenSource = new CancellationTokenSource();
 
         var connected = await this.Transport.ConnectAsync().ConfigureAwait(false);
@@ -199,11 +200,7 @@ public partial class ConnectionManager : IDisposable
     /// </summary>
     public void Dispose()
     {
-        // Dispose managed resources.
-        this.cancellationTokenSource.Cancel();
-        this.cancellationTokenSource.Dispose();
-
-        this.Dispose();
+        this.Dispose(disposing: true);
         /*
           This object will be cleaned up by the Dispose method.
           Therefore, you should call GC.SuppressFinalize to
@@ -213,4 +210,51 @@ public partial class ConnectionManager : IDisposable
         */
         GC.SuppressFinalize(this);
     }
+
+    /// <summary>
+    /// https://learn.microsoft.com/en-us/dotnet/api/system.idisposable?view=net-6.0
+    /// Dispose(bool disposing) executes in two distinct scenarios.
+    /// If disposing equals true, the method has been called directly
+    /// or indirectly by a user's code. Managed and unmanaged resources
+    /// can be disposed.
+    /// If disposing equals false, the method has been called by the
+    /// runtime from inside finalize and you should not reference
+    /// other objects. Only unmanaged resources can be disposed.
+    /// </summary>
+    /// <param name="disposing">True if called from user code.</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        Logger.Trace("Disposing ConnectionManager");
+
+        // Check to see if Dispose has already been called.
+        if (!this.disposed)
+        {
+            // If disposing equals true, dispose all managed
+            // and unmanaged resources.
+            if (disposing)
+            {
+                // Cancel and dispose the cancellation token source
+                this.cancellationTokenSource?.Cancel();
+                this.cancellationTokenSource?.Dispose();
+
+                // Dispose transport if it implements IDisposable
+                if (this.Transport is IDisposable disposableTransport)
+                {
+                    disposableTransport.Dispose();
+                }
+
+                // Dispose queues
+                this.OutgoingPublishQueue?.Dispose();
+                this.SendQueue?.Dispose();
+                this.ReceivedQueue?.Dispose();
+                this.IPubTransactionQueue?.Dispose();
+                this.OPubTransactionQueue?.Dispose();
+            }
+
+            // Note disposing has been done.
+            this.disposed = true;
+        }
+    }
+
+    private bool disposed;
 }

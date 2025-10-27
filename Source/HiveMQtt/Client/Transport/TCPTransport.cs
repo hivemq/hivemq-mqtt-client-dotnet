@@ -346,8 +346,7 @@ public class TCPTransport : BaseTransport, IDisposable
     /// </summary>
     public void Dispose()
     {
-        // Dispose of the write semaphore
-        this.writeSemaphore?.Dispose();
+        this.Dispose(disposing: true);
         /*
           This object will be cleaned up by the Dispose method.
           Therefore, you should call GC.SuppressFinalize to
@@ -357,4 +356,84 @@ public class TCPTransport : BaseTransport, IDisposable
         */
         GC.SuppressFinalize(this);
     }
+
+    /// <summary>
+    /// https://learn.microsoft.com/en-us/dotnet/api/system.idisposable?view=net-6.0
+    /// Dispose(bool disposing) executes in two distinct scenarios.
+    /// If disposing equals true, the method has been called directly
+    /// or indirectly by a user's code. Managed and unmanaged resources
+    /// can be disposed.
+    /// If disposing equals false, the method has been called by the
+    /// runtime from inside finalize and you should not reference
+    /// other objects. Only unmanaged resources can be disposed.
+    /// </summary>
+    /// <param name="disposing">True if called from user code.</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        Logger.Trace("Disposing TCPTransport");
+
+        // Check to see if Dispose has already been called.
+        if (!this.disposed)
+        {
+            // If disposing equals true, dispose all managed
+            // and unmanaged resources.
+            if (disposing)
+            {
+                // Dispose of the write semaphore
+                this.writeSemaphore?.Dispose();
+
+                // Dispose of the PipeReader and PipeWriter
+                this.Reader?.Complete();
+                this.Writer?.Complete();
+                this.Reader = null;
+                this.Writer = null;
+
+                // Dispose of the Stream
+                if (this.Stream != null)
+                {
+                    try
+                    {
+                        this.Stream.Flush();
+                        this.Stream.Close();
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Warn($"Error closing stream: {ex.Message}");
+                    }
+                    finally
+                    {
+                        this.Stream.Dispose();
+                        this.Stream = null;
+                    }
+                }
+
+                // Dispose of the Socket
+                if (this.Socket != null)
+                {
+                    try
+                    {
+                        if (this.Socket.Connected)
+                        {
+                            this.Socket.Shutdown(SocketShutdown.Both);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Warn($"Error shutting down socket: {ex.Message}");
+                    }
+                    finally
+                    {
+                        this.Socket.Close();
+                        this.Socket.Dispose();
+                        this.Socket = null;
+                    }
+                }
+            }
+
+            // Note disposing has been done.
+            this.disposed = true;
+        }
+    }
+
+    private bool disposed;
 }
