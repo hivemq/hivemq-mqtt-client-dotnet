@@ -51,7 +51,7 @@ public class ClientOptionsBuilderTest
             .WithTopicAliasMaximum(topicAliasMaximum)
             .WithRequestResponseInformation(requestResponseInfo)
             .WithRequestProblemInformation(requestProblemInfo)
-            .WithClientCertificate(clientCertificatePath);
+            .WithClientCertificate(clientCertificatePath, (string?)null);
 
         // Act
         var options = builder.Build();
@@ -106,7 +106,7 @@ public class ClientOptionsBuilderTest
         var nonExistentFilePath = "nonexistent-file.pem";
 
         // Act & Assert
-        Assert.Throws<FileNotFoundException>(() => builder.WithClientCertificate(nonExistentFilePath));
+        Assert.Throws<FileNotFoundException>(() => builder.WithClientCertificate(nonExistentFilePath, (string?)null));
     }
 
     [Fact]
@@ -117,6 +117,6 @@ public class ClientOptionsBuilderTest
         var nonExistentDirectoryPath = "/this/nonexistent/file.pem";
 
         // Act & Assert
-        Assert.Throws<FileNotFoundException>(() => builder.WithClientCertificate(nonExistentDirectoryPath));
+        Assert.Throws<FileNotFoundException>(() => builder.WithClientCertificate(nonExistentDirectoryPath, (string?)null));
     }
 }

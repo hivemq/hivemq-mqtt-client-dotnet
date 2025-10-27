@@ -32,6 +32,7 @@
 
 ### 🔒 Security
 * **Secure Password Storage**: Passwords are stored using `SecureString` to prevent exposure in memory dumps and process memory. Use `WithPassword(SecureString)` for enhanced security.
+* **Secure Certificate Password Handling**: Certificate passwords are handled securely using `SecureString`. Use `WithClientCertificate(path, SecureString)` for enhanced security.
 * **Memory-Safe Password Handling**: Temporary password strings are automatically cleared from memory after use, ensuring no sensitive data persists in memory.
 * **Backward Compatibility**: Existing code using string passwords continues to work while being automatically converted to secure storage internally.
 * **TLS/SSL Support**: Full support for encrypted connections with configurable certificate validation and custom certificate handling.
