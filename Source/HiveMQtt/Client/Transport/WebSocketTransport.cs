@@ -152,7 +152,7 @@ public class WebSocketTransport : BaseTransport, IDisposable
     /// </summary>
     public void Dispose()
     {
-        this.Dispose();
+        this.Dispose(disposing: true);
         /*
           This object will be cleaned up by the Dispose method.
           Therefore, you should call GC.SuppressFinalize to
@@ -162,4 +162,55 @@ public class WebSocketTransport : BaseTransport, IDisposable
         */
         GC.SuppressFinalize(this);
     }
+
+    /// <summary>
+    /// https://learn.microsoft.com/en-us/dotnet/api/system.idisposable?view=net-6.0
+    /// Dispose(bool disposing) executes in two distinct scenarios.
+    /// If disposing equals true, the method has been called directly
+    /// or indirectly by a user's code. Managed and unmanaged resources
+    /// can be disposed.
+    /// If disposing equals false, the method has been called by the
+    /// runtime from inside finalize and you should not reference
+    /// other objects. Only unmanaged resources can be disposed.
+    /// </summary>
+    /// <param name="disposing">True if called from user code.</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        Logger.Trace("Disposing WebSocketTransport");
+
+        // Check to see if Dispose has already been called.
+        if (!this.disposed)
+        {
+            // If disposing equals true, dispose all managed
+            // and unmanaged resources.
+            if (disposing)
+            {
+                // Dispose WebSocket if it's not null
+                if (this.Socket != null)
+                {
+                    try
+                    {
+                        if (this.Socket.State == WebSocketState.Open)
+                        {
+                            this.Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Disposing", CancellationToken.None).Wait(1000);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Warn($"Error closing WebSocket: {ex.Message}");
+                    }
+                    finally
+                    {
+                        this.Socket.Dispose();
+                        this.Socket = null!;
+                    }
+                }
+            }
+
+            // Note disposing has been done.
+            this.disposed = true;
+        }
+    }
+
+    private bool disposed;
 }
