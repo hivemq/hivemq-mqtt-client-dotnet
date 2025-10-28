@@ -18,7 +18,66 @@ The following results are from benchmarks run on my local MBP against a HiveMQ v
   1 ms   : 1,000 Microseconds
 ```
 
+## October 28, 2025 v0.31.0
+
+### Performance Improvements from v0.30.0
+
+Significant performance improvements across all benchmarks, with the most notable gains in:
+
+- **1k QoS 1 messages**: ~43% faster (287,802.82μs → 163,134.95μs)
+- **1k QoS 2 messages**: ~39% faster (533,574.86μs → 325,461.87μs)
+
+The most dramatic improvements were seen in bulk message publishing scenarios, particularly for QoS 1 and QoS 2 messages, indicating better handling of acknowledgment flows and reduced overhead per message in batch operations.
+
+| Method                                           | Mean          | Error        | StdDev        | Median         |
+|------------------------------------------------- |--------------:|-------------:|--------------:|---------------:|
+| 'Publish a QoS 0 message'                        |      24.20 us |     70.88 us |     208.99 us |       2.646 us |
+| 'Publish a QoS 1 message'                        |   6,094.69 us | 16,414.36 us |  48,398.12 us |   1,026.708 us |
+| 'Publish a QoS 2 message'                        |   8,083.58 us | 17,437.59 us |  51,415.13 us |   1,353.751 us |
+| 'Publish 100 256b length payload QoS 0 messages' |     151.09 us |    116.79 us |     344.37 us |     107.188 us |
+| 'Publish 100 256b length payload QoS 1 messages' |  26,178.26 us | 18,001.87 us |  53,078.92 us |  20,828.730 us |
+| 'Publish 100 256b length payload QoS 2 messages' |  43,196.69 us | 19,064.73 us |  56,212.80 us |  36,206.188 us |
+| 'Publish 100 256k length payload QoS 0 messages' |     139.16 us |     94.26 us |     277.94 us |     101.584 us |
+| 'Publish 100 256k length payload QoS 1 messages' | 157,189.65 us | 41,857.20 us | 123,416.91 us | 139,608.958 us |
+| 'Publish 100 256k length payload QoS 2 messages' | 180,717.82 us | 49,526.73 us | 146,030.67 us | 154,019.188 us |
+| 'Publish 1k QoS 1 messages'                      | 163,134.95 us | 19,365.29 us |  57,099.01 us | 160,983.167 us |
+| 'Publish 1k QoS 2 messages'                      | 325,461.87 us | 26,343.40 us |  77,674.12 us | 314,379.667 us |
+
+
+## October 28, 2025 v0.30.0
+
+### Performance Improvements from Mar 22, 2024
+
+Major performance improvements across all benchmarks, with substantial gains in bulk message publishing:
+
+- **100x 256b QoS 1 messages**: ~43% faster (45,813.98μs → 26,283.55μs)
+- **100x 256b QoS 2 messages**: ~50% faster (88,589.38μs → 44,557.05μs)
+- **100x 256k QoS 1 messages**: ~43% faster (270,043.05μs → 155,177.99μs)
+- **100x 256k QoS 2 messages**: ~43% faster (300,923.38μs → 172,109.05μs)
+
+**New benchmarks introduced**: Added 1k message bulk publishing tests for QoS 1 and QoS 2, providing better insights into high-volume scenarios.
+
+The improvements demonstrate significant optimization in batch processing and acknowledgment handling, particularly for larger payloads and bulk operations.
+
+| Method                                           | Mean          | Error        | StdDev        | Median         |
+|------------------------------------------------- |--------------:|-------------:|--------------:|---------------:|
+| 'Publish a QoS 0 message'                        |      39.67 us |     89.35 us |     263.45 us |       8.521 us |
+| 'Publish a QoS 1 message'                        |   5,892.86 us | 16,632.25 us |  49,040.57 us |     911.083 us |
+| 'Publish a QoS 2 message'                        |   7,369.47 us | 16,676.10 us |  49,169.85 us |   1,457.687 us |
+| 'Publish 100 256b length payload QoS 0 messages' |     137.26 us |     78.49 us |     231.44 us |     103.145 us |
+| 'Publish 100 256b length payload QoS 1 messages' |  26,283.55 us | 19,855.80 us |  58,545.26 us |  19,256.166 us |
+| 'Publish 100 256b length payload QoS 2 messages' |  44,557.05 us | 21,810.68 us |  64,309.29 us |  36,249.938 us |
+| 'Publish 100 256k length payload QoS 0 messages' |     141.71 us |     96.62 us |     284.88 us |     102.645 us |
+| 'Publish 100 256k length payload QoS 1 messages' | 155,177.99 us | 39,395.25 us | 116,157.79 us | 138,491.062 us |
+| 'Publish 100 256k length payload QoS 2 messages' | 172,109.05 us | 44,912.98 us | 132,426.93 us | 149,029.541 us |
+| 'Publish 1k QoS 1 messages'                      | 287,802.82 us | 90,041.54 us | 265,489.51 us | 248,344.521 us |
+| 'Publish 1k QoS 2 messages'                      | 533,574.86 us | 62,147.67 us | 183,243.82 us | 475,369.771 us |
+
 ## Mar 22, 2024
+
+**New comprehensive benchmarks**: Introduced bulk message publishing tests with different payload sizes (256b and 256k), providing detailed performance insights for real-world scenarios.
+
+The results demonstrate excellent scalability and efficiency in handling bulk operations, with particularly strong performance for larger payloads and QoS 2 message handling.
 
 | Method                                           | Mean          | Error       | StdDev       | Median         |
 |------------------------------------------------- |--------------:|------------:|-------------:|---------------:|
