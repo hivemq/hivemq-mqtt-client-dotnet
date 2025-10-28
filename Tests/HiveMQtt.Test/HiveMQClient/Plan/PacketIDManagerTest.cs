@@ -23,10 +23,9 @@ public class PacketIDManagerTest
         var packetIdManager = client.Connection.GetPacketIDManager(); // Assuming the client exposes the manager for validation
         Assert.Equal(0, packetIdManager.Count);
 
-        // Manually tested with 1M messages, 500k QoS1 and 500k QoS2
-        // Lower the count for the test suite to remain manageable
-        var qos1Messages = 5000;
-        var qos2Messages = 5000;
+        // Testing with 500k messages, 250k QoS1 and 250k QoS2
+        var qos1Messages = 250000;
+        var qos2Messages = 250000;
         var totalMessages = qos1Messages + qos2Messages;
 
         // Act
