@@ -26,10 +26,12 @@ const config = {
   trailingSlash: false,
 
   onBrokenLinks: 'warn',
-  onBrokenMarkdownLinks: 'warn',
 
   markdown: {
-    format: 'detect'
+    format: 'detect',
+    hooks: {
+      onBrokenMarkdownLinks: 'warn'
+    }
   },
 
   // Even if you don't use internationalization, you can use this field to set
