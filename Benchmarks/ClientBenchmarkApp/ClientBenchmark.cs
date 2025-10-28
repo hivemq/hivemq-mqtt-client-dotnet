@@ -169,5 +169,29 @@ public class ClientBenchmarks : IDisposable
         }
     }
 
+    [Benchmark(Description = "Publish 1k QoS 1 messages")]
+    public async Task Publish1kQoS1MessageAsync()
+    {
+        for (var i = 0; i < 1000; i++)
+        {
+            await this.client.PublishAsync(
+                "benchmarks/PublishQoS1Messages",
+                this.smallPayload,
+                QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
+        }
+    }
+
+    [Benchmark(Description = "Publish 1k QoS 2 messages")]
+    public async Task Publish1kQoS2MessageAsync()
+    {
+        for (var i = 0; i < 1000; i++)
+        {
+            await this.client.PublishAsync(
+                "benchmarks/PublishQoS2Messages",
+                this.smallPayload,
+                QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
+        }
+    }
+
     public void Dispose() => GC.SuppressFinalize(this);
 }
