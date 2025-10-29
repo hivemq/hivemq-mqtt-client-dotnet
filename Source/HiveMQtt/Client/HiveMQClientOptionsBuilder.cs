@@ -190,12 +190,12 @@ public class HiveMQClientOptionsBuilder
     }
 
     /// <summary>
-    /// Adds an X.509 certificate to be used for client authentication.
+    /// Adds an X.509 certificate to be used for client authentication with secure password handling.
     /// </summary>
     /// <param name="clientCertificatePath">The path to the client X.509 certificate to be used for client authentication.</param>
-    /// <param name="password">The optional password for the client X.509 certificate.</param>
+    /// <param name="password">The optional password for the client X.509 certificate as a SecureString for enhanced security.</param>
     /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
-    public HiveMQClientOptionsBuilder WithClientCertificate(string clientCertificatePath, string? password = null)
+    public HiveMQClientOptionsBuilder WithClientCertificate(string clientCertificatePath, SecureString? password = null)
     {
         if (File.Exists(clientCertificatePath))
         {
@@ -231,7 +231,59 @@ public class HiveMQClientOptionsBuilder
         else
         {
             Logger.Error("WithClientCertificate: The specified client certificate file does not exist.");
-            throw new FileNotFoundException();
+            throw new FileNotFoundException($"The specified client certificate file does not exist: {clientCertificatePath}");
+        }
+    }
+
+    /// <summary>
+    /// Adds an X.509 certificate to be used for client authentication (for backward compatibility).
+    /// </summary>
+    /// <param name="clientCertificatePath">The path to the client X.509 certificate to be used for client authentication.</param>
+    /// <param name="password">The optional password for the client X.509 certificate as a plain string.</param>
+    /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
+    [Obsolete("Use WithClientCertificate(string, SecureString) for enhanced security. This method stores passwords as plain text in memory.")]
+    public HiveMQClientOptionsBuilder WithClientCertificate(string clientCertificatePath, string? password = null)
+    {
+        if (File.Exists(clientCertificatePath))
+        {
+            // Check if the file is readable
+            try
+            {
+                using (var fileStream = File.OpenRead(clientCertificatePath))
+                {
+                    // File exists and is readable.
+                    // Convert string password to SecureString for secure handling
+                    SecureString? securePassword = null;
+                    if (!string.IsNullOrEmpty(password))
+                    {
+                        securePassword = new SecureString();
+                        foreach (var c in password)
+                        {
+                            securePassword.AppendChar(c);
+                        }
+
+                        securePassword.MakeReadOnly();
+                    }
+
+                    this.options.ClientCertificates.Add(new X509Certificate2(clientCertificatePath, securePassword));
+                    return this;
+                }
+            }
+            catch (UnauthorizedAccessException)
+            {
+                Logger.Error("WithClientCertificate: File exists but is not readable due to access permissions.");
+                throw;
+            }
+            catch (IOException)
+            {
+                Logger.Error("WithClientCertificate: An I/O error occurred while trying to read the file.");
+                throw;
+            }
+        }
+        else
+        {
+            Logger.Error("WithClientCertificate: The specified client certificate file does not exist.");
+            throw new FileNotFoundException($"The specified client certificate file does not exist: {clientCertificatePath}");
         }
     }
 
