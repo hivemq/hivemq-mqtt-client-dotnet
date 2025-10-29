@@ -30,6 +30,7 @@ public class ClientOptionsBuilderTest
         string clientCertificatePath)
     {
         // Arrange
+#pragma warning disable CS0618 // Test validates obsolete method still works
         var builder = new HiveMQClientOptionsBuilder()
             .WithBroker(broker)
             .WithPort(port)
@@ -52,6 +53,7 @@ public class ClientOptionsBuilderTest
             .WithRequestResponseInformation(requestResponseInfo)
             .WithRequestProblemInformation(requestProblemInfo)
             .WithClientCertificate(clientCertificatePath);
+#pragma warning restore CS0618
 
         // Act
         var options = builder.Build();
@@ -86,6 +88,7 @@ public class ClientOptionsBuilderTest
                 }
             }
         }
+
         Assert.Equal(password, passwordString);
         Assert.Equal(preferIPv6, options.PreferIPv6);
         Assert.Equal(topicAliasMaximum, options.ClientTopicAliasMaximum);

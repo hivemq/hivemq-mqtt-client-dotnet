@@ -573,6 +573,7 @@ public class PublishTest
     /// This test specifically targets the fix for GitHub Issue #258 where concurrent writes
     /// from ConnectionWriterAsync and ConnectionPublishWriterAsync caused race conditions.
     /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous test operation.</returns>
     [Fact]
     public async Task ConcurrentWriteOperations_ShouldNotThrowNotSupportedExceptionAsync()
     {
@@ -650,6 +651,7 @@ public class PublishTest
     /// Test to validate QoS2 publish operations under high load, which was the specific
     /// scenario reported in GitHub Issue #258.
     /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous test operation.</returns>
     [Fact]
     public async Task QoS2PublishUnderLoad_ShouldNotCauseConcurrentWriteExceptionAsync()
     {
@@ -728,6 +730,7 @@ public class PublishTest
     /// Test to validate that rapid publish operations with mixed QoS levels
     /// don't cause concurrent write issues.
     /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous test operation.</returns>
     [Fact]
     public async Task RapidMixedQoSPublish_ShouldNotCauseConcurrentWriteExceptionAsync()
     {

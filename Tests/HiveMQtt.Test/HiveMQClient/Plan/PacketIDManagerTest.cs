@@ -31,18 +31,22 @@ public class PacketIDManagerTest
         // Act
         for (var i = 0; i < qos1Messages; i++)
         {
+#pragma warning disable IDE0300 // Collection initialization can be simplified - not available in .NET 6
             await client.PublishAsync(
                 topic: "test/qos1",
                 payload: new byte[] { 0x01 },
                 qos: QualityOfService.AtLeastOnceDelivery).ConfigureAwait(true);
+#pragma warning restore IDE0300
         }
 
         for (var i = 0; i < qos2Messages; i++)
         {
+#pragma warning disable IDE0300 // Collection initialization can be simplified - not available in .NET 6
             await client.PublishAsync(
                 topic: "test/qos2",
                 payload: new byte[] { 0x02 },
                 qos: QualityOfService.ExactlyOnceDelivery).ConfigureAwait(true);
+#pragma warning restore IDE0300
         }
 
         await client.DisconnectAsync().ConfigureAwait(true);

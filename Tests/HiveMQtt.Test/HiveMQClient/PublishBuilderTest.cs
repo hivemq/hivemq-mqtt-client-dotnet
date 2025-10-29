@@ -8,7 +8,9 @@ using Xunit;
 
 public class PublishBuilderTest
 {
-    private readonly byte[] payload = { 0x01, 0x02, 0x03 };
+#pragma warning disable IDE0300 // Collection initialization can be simplified - not available in .NET 6
+    private readonly byte[] payload = new byte[] { 0x01, 0x02, 0x03 };
+#pragma warning restore IDE0300
 
     [Fact]
     public async Task MostBasicPublishWithQoS0Async()
