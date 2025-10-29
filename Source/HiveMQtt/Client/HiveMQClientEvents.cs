@@ -278,7 +278,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         try
         {
             this.SubscriptionsSemaphore.Wait();
+#pragma warning disable IDE0305 // Collection initialization - ToList() is appropriate for .NET 6
             tempList = this.Subscriptions.ToList();
+#pragma warning restore IDE0305
         }
         finally
         {

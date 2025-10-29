@@ -545,7 +545,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         try
         {
             await this.SubscriptionsSemaphore.WaitAsync().ConfigureAwait(false);
+#pragma warning disable IDE0305 // Collection initialization - ToHashSet() is appropriate for .NET 6
             currentSubscriptions = this.Subscriptions.ToHashSet();
+#pragma warning restore IDE0305
         }
         finally
         {
@@ -625,7 +627,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             if (reasonCode == UnsubAckReasonCode.Success)
             {
                 // Collect subscriptions which need to be removed
-               subscriptionsToRemove.Add(unsubscribeResult.Subscriptions[counter]);
+                subscriptionsToRemove.Add(unsubscribeResult.Subscriptions[counter]);
             }
         }
 

@@ -97,6 +97,7 @@ public class ConnectPacket : ControlPacket
             if (passwordString != null)
             {
                 _ = EncodeUTF8String(vhAndPayloadStream, passwordString);
+
                 // Clear the temporary password string from memory
                 Array.Clear(passwordString.ToCharArray(), 0, passwordString.Length);
             }
@@ -155,6 +156,7 @@ public class ConnectPacket : ControlPacket
         if (passwordString != null)
         {
             this.flags |= 0x40;
+
             // Clear the temporary password string from memory
             Array.Clear(passwordString.ToCharArray(), 0, passwordString.Length);
         }

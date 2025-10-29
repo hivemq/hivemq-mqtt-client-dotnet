@@ -35,7 +35,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         try
         {
             this.SubscriptionsSemaphore.Wait();
+#pragma warning disable IDE0305 // Collection initialization - ToList() is appropriate for .NET 6
             tempList = this.Subscriptions.ToList();
+#pragma warning restore IDE0305
         }
         finally
         {
@@ -56,7 +58,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         try
         {
             this.SubscriptionsSemaphore.Wait();
+#pragma warning disable IDE0305 // Collection initialization - ToList() is appropriate for .NET 6
             tempList = this.Subscriptions.ToList();
+#pragma warning restore IDE0305
         }
         finally
         {
@@ -177,7 +181,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     try
                     {
                         // Use Task.Run to handle the async disconnect without blocking
+#pragma warning disable VSTHRD002 // Synchronous Wait in dispose pattern is intentional to ensure cleanup
                         Task.Run(async () => await this.DisconnectAsync().ConfigureAwait(false)).Wait(5000);
+#pragma warning restore VSTHRD002
                     }
                     catch (Exception ex)
                     {
