@@ -192,7 +192,9 @@ public class WebSocketTransport : BaseTransport, IDisposable
                     {
                         if (this.Socket.State == WebSocketState.Open)
                         {
+#pragma warning disable VSTHRD002 // Synchronous Wait in dispose pattern is intentional to ensure cleanup
                             this.Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Disposing", CancellationToken.None).Wait(1000);
+#pragma warning restore VSTHRD002
                         }
                     }
                     catch (Exception ex)

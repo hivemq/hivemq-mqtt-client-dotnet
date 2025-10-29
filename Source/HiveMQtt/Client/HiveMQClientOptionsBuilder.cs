@@ -205,7 +205,15 @@ public class HiveMQClientOptionsBuilder
                 using (var fileStream = File.OpenRead(clientCertificatePath))
                 {
                     // File exists and is readable.
+#if NET9_0_OR_GREATER
+#pragma warning disable SYSLIB0057 // X509Certificate2 constructor obsolete in .NET 9 - using X509Certificate2.CreateFromPemFile would require different API for PFX files
+                    // Use X509Certificate2 constructor for .NET 9 compatibility with .NET 6-8
+                    // X509CertificateLoader requires .NET 9+, and CreateFromPemFile doesn't support password-protected PFX files
                     this.options.ClientCertificates.Add(new X509Certificate2(clientCertificatePath, password));
+#pragma warning restore SYSLIB0057
+#else
+                    this.options.ClientCertificates.Add(new X509Certificate2(clientCertificatePath, password));
+#endif
                     return this;
                 }
             }
@@ -548,10 +556,7 @@ public class HiveMQClientOptionsBuilder
     /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
     public HiveMQClientOptionsBuilder WithPassword(SecureString password)
     {
-        if (password == null)
-        {
-            throw new ArgumentNullException(nameof(password));
-        }
+        ArgumentNullException.ThrowIfNull(password);
 
         if (password.Length > 65535)
         {
@@ -594,10 +599,7 @@ public class HiveMQClientOptionsBuilder
     [Obsolete("Use WithPassword(SecureString) for enhanced security. This method stores passwords as plain text in memory.")]
     public HiveMQClientOptionsBuilder WithPassword(string password)
     {
-        if (password == null)
-        {
-            throw new ArgumentNullException(nameof(password));
-        }
+        ArgumentNullException.ThrowIfNull(password);
 
         if (password.Length is < 0 or > 65535)
         {
@@ -607,10 +609,11 @@ public class HiveMQClientOptionsBuilder
 
         // Convert string to SecureString
         var securePassword = new SecureString();
-        foreach (char c in password)
+        foreach (var c in password)
         {
             securePassword.AppendChar(c);
         }
+
         securePassword.MakeReadOnly();
 
         this.options.Password = securePassword;
