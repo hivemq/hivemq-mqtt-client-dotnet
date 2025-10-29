@@ -113,7 +113,9 @@ public partial class ConnectionManager : IDisposable
         }
 
         // Reset the CancellationTokenSource in case this is a reconnect
+#pragma warning disable VSTHRD103 // Cancel() used for .NET 6 compatibility - CancelAsync() requires .NET 8
         this.cancellationTokenSource?.Cancel();
+#pragma warning restore VSTHRD103
         this.cancellationTokenSource?.Dispose();
         this.cancellationTokenSource = new CancellationTokenSource();
 
@@ -143,7 +145,9 @@ public partial class ConnectionManager : IDisposable
     {
         // Don't use CancelAsync here to maintain backwards compatibility
         // with >=.net6.0.  CancelAsync was introduced in .net8.0
+#pragma warning disable VSTHRD103 // Cancel() used for .NET 6 compatibility - CancelAsync() requires .NET 8
         this.cancellationTokenSource.Cancel();
+#pragma warning restore VSTHRD103
 
         // Delay for a short period to allow the tasks to cancel
         await Task.Delay(1000).ConfigureAwait(false);

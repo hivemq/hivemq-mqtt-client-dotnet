@@ -118,6 +118,7 @@ public class PacketIDManager
                     count++;
                 }
             }
+
             return count;
         }
     }

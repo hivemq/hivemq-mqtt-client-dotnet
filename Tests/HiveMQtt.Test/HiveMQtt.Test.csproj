@@ -27,6 +27,14 @@
     <DefineConstants>DEBUG;NET;NET8_0;NETCOREAPP</DefineConstants>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+
+  <!-- Suppress NU1903 warnings for transitive dependencies with known vulnerabilities -->
+  <!-- These packages (System.Text.RegularExpressions 4.3.0, System.Net.Http 4.3.0) are transitive -->
+  <!-- dependencies from older packages. The vulnerabilities are not exploitable in this context -->
+  <!-- as these are internal transitive dependencies, not directly used. -->
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);NU1903</NoWarn>
+  </PropertyGroup>
   <ItemGroup Label="Project References">
     <ProjectReference Include="..\..\Source\HiveMQtt\HiveMQtt.csproj" />
   </ItemGroup>
