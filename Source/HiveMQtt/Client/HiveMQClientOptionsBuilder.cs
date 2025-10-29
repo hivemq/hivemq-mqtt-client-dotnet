@@ -257,10 +257,11 @@ public class HiveMQClientOptionsBuilder
                     if (!string.IsNullOrEmpty(password))
                     {
                         securePassword = new SecureString();
-                        foreach (char c in password)
+                        foreach (var c in password)
                         {
                             securePassword.AppendChar(c);
                         }
+
                         securePassword.MakeReadOnly();
                     }
 

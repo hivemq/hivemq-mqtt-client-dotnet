@@ -200,10 +200,11 @@ public class ClientOptionsBuilderTest
         var builder = new HiveMQClientOptionsBuilder();
         var tempFile = Path.GetTempFileName();
         var testPassword = new SecureString();
-        foreach (char c in "testPassword123")
+        foreach (var c in "testPassword123")
         {
             testPassword.AppendChar(c);
         }
+
         testPassword.MakeReadOnly();
 
         try
@@ -240,6 +241,7 @@ public class ClientOptionsBuilderTest
     {
         // Arrange
         var builder = new HiveMQClientOptionsBuilder();
+
         // Use a temporary file approach to create a certificate object
         // The actual certificate validity is not what we're testing - we're testing the builder method
         var tempFile = Path.GetTempFileName();
@@ -251,7 +253,9 @@ public class ClientOptionsBuilderTest
             X509Certificate2? certificate = null;
             try
             {
+#pragma warning disable SYSLIB0057 // X509Certificate2 constructor is obsolete - using for test purposes
                 certificate = new X509Certificate2(tempFile);
+#pragma warning restore SYSLIB0057
             }
             catch (CryptographicException)
             {
@@ -266,6 +270,7 @@ public class ClientOptionsBuilderTest
 
             // Assert - Verify the certificate was added to the collection
             Assert.Single(options.ClientCertificates);
+
             // Verify it's the same certificate instance by reference
             Assert.Same(certificate, options.ClientCertificates[0]);
         }
@@ -296,8 +301,10 @@ public class ClientOptionsBuilderTest
 
             try
             {
+#pragma warning disable SYSLIB0057 // X509Certificate2 constructor is obsolete - using for test purposes
                 certificate1 = new X509Certificate2(tempFile1);
                 certificate2 = new X509Certificate2(tempFile2);
+#pragma warning restore SYSLIB0057
             }
             catch (CryptographicException)
             {
@@ -314,6 +321,7 @@ public class ClientOptionsBuilderTest
 
             // Assert
             Assert.Equal(2, options.ClientCertificates.Count);
+
             // Verify both certificates are in the collection by reference
             var certCollection = options.ClientCertificates.Cast<X509Certificate2>().ToList();
             Assert.Contains(certificate1, certCollection);
@@ -344,7 +352,7 @@ public class ClientOptionsBuilderTest
         try
         {
             // Create temporary files for certificates
-            for (int i = 0; i < 3; i++)
+            for (var i = 0; i < 3; i++)
             {
                 var tempFile = Path.GetTempFileName();
                 File.WriteAllText(tempFile, $"-----BEGIN CERTIFICATE-----\nTEST{i}\n-----END CERTIFICATE-----");
@@ -352,7 +360,9 @@ public class ClientOptionsBuilderTest
 
                 try
                 {
+#pragma warning disable SYSLIB0057 // X509Certificate2 constructor is obsolete - using for test purposes
                     certificates.Add(new X509Certificate2(tempFile));
+#pragma warning restore SYSLIB0057
                 }
                 catch (CryptographicException)
                 {
@@ -369,6 +379,7 @@ public class ClientOptionsBuilderTest
 
             // Assert
             Assert.Equal(3, options.ClientCertificates.Count);
+
             // Verify all certificates are in the collection
             var certCollection = options.ClientCertificates.Cast<X509Certificate2>().ToList();
             foreach (var cert in certificates)
