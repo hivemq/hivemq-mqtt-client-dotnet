@@ -16,6 +16,7 @@
 namespace HiveMQtt.Client.Transport;
 
 using System.IO.Pipelines;
+using System.Linq;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
@@ -78,10 +79,8 @@ public class TCPTransport : BaseTransport, IDisposable
         X509Chain? chain,
         SslPolicyErrors sslPolicyErrors)
     {
-        // Ignore the unused parameters
+        // Ignore the sender parameter
         _ = sender;
-        _ = certificate;
-        _ = chain;
 
         if (sslPolicyErrors == SslPolicyErrors.None)
         {
@@ -89,6 +88,21 @@ public class TCPTransport : BaseTransport, IDisposable
         }
 
         Logger.Warn("Broker TLS Certificate error: {0}", sslPolicyErrors);
+
+        // Log additional certificate details for debugging
+        if (certificate != null)
+        {
+            Logger.Debug("Certificate Subject: {0}", certificate.Subject);
+            Logger.Debug("Certificate Issuer: {0}", certificate.Issuer);
+            Logger.Debug("Certificate Serial Number: {0}", certificate.GetSerialNumberString());
+        }
+
+        // Validate certificate chain if provided
+        if (chain != null)
+        {
+            var chainStatus = chain.ChainStatus.Length > 0 ? string.Join(", ", chain.ChainStatus.Select(cs => cs.Status)) : "Valid";
+            Logger.Debug("Certificate chain validation status: {0}", chainStatus);
+        }
 
         // Do not allow this client to communicate with unauthenticated servers.
         return false;
