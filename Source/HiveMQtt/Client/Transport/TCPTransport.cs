@@ -16,6 +16,7 @@
 namespace HiveMQtt.Client.Transport;
 
 using System.IO.Pipelines;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.Security;
@@ -92,16 +93,16 @@ public class TCPTransport : BaseTransport, IDisposable
         // Log additional certificate details for debugging
         if (certificate != null)
         {
-            Logger.Debug("Certificate Subject: {0}", certificate.Subject);
-            Logger.Debug("Certificate Issuer: {0}", certificate.Issuer);
-            Logger.Debug("Certificate Serial Number: {0}", certificate.GetSerialNumberString());
+            Logger.Debug(CultureInfo.InvariantCulture, "Certificate Subject: {0}", certificate.Subject);
+            Logger.Debug(CultureInfo.InvariantCulture, "Certificate Issuer: {0}", certificate.Issuer);
+            Logger.Debug(CultureInfo.InvariantCulture, "Certificate Serial Number: {0}", certificate.GetSerialNumberString());
         }
 
         // Validate certificate chain if provided
         if (chain != null)
         {
             var chainStatus = chain.ChainStatus.Length > 0 ? string.Join(", ", chain.ChainStatus.Select(cs => cs.Status)) : "Valid";
-            Logger.Debug("Certificate chain validation status: {0}", chainStatus);
+            Logger.Debug(CultureInfo.InvariantCulture, "Certificate chain validation status: {0}", chainStatus);
         }
 
         // Do not allow this client to communicate with unauthenticated servers.
