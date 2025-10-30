@@ -119,11 +119,11 @@ public partial class ConnectionManager
             {
                 try
                 {
-                    while (this.State != ConnectState.Connected)
+                    // Await connection readiness without polling to avoid arbitrary delay
+                    if (this.State != ConnectState.Connected)
                     {
                         Logger.Trace($"{this.Client.Options.ClientId}-(PW)- Not connected.  Waiting for connect...");
-                        await Task.Delay(500).ConfigureAwait(false);
-                        continue;
+                        await this.WaitUntilConnectedAsync(cancellationToken).ConfigureAwait(false);
                     }
 
                     var writeSuccess = true;

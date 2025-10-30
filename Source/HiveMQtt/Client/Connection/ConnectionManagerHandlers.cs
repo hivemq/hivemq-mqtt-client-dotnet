@@ -39,6 +39,7 @@ public partial class ConnectionManager
         }
 
         this.ConnectionProperties = connAckPacket.Properties;
+
         this.Client.OnConnAckReceivedEventLauncher(connAckPacket);
     }
 
@@ -386,6 +387,9 @@ public partial class ConnectionManager
 
         // Cancel all background tasks and close the socket
         this.State = ConnectState.Disconnected;
+
+        // Reset the connection-ready signal for the next connect cycle
+        this.ResetConnectedSignal();
 
         // Cancel all background tasks
         await this.CancelBackgroundTasksAsync().ConfigureAwait(false);
