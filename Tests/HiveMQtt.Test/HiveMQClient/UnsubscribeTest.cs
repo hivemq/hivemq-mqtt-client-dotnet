@@ -94,7 +94,7 @@ public class UnsubscribeTest
         Assert.True(client.Subscriptions.Count == 1);
         Assert.Equal(SubAckReasonCode.GrantedQoS0, subResult.Subscriptions[0].SubscribeReasonCode);
 
-        var subscribeResult = client.UnsubscribeAsync("tests/Test_Unsubscribe_Events_Async").ConfigureAwait(false);
+        var unsubscribeResult = await client.UnsubscribeAsync("tests/Test_Unsubscribe_Events_Async").ConfigureAwait(false);
 
         // Wait for event handlers to finish
         await Task.Delay(1000).ConfigureAwait(false);
@@ -123,7 +123,10 @@ public class UnsubscribeTest
         if (sender is not null)
         {
             var client = (HiveMQClient)sender;
-            client.LocalStore.Add("BeforeUnsubscribeHandlerCalled", "true");
+            lock (client.LocalStore)
+            {
+                client.LocalStore["BeforeUnsubscribeHandlerCalled"] = "true";
+            }
         }
 
         Assert.NotNull(eventArgs.Subscriptions);
@@ -135,7 +138,10 @@ public class UnsubscribeTest
         if (sender is not null)
         {
             var client = (HiveMQClient)sender;
-            client.LocalStore.Add("OnUnsubscribeSentHandlerCalled", "true");
+            lock (client.LocalStore)
+            {
+                client.LocalStore["OnUnsubscribeSentHandlerCalled"] = "true";
+            }
         }
 
         Assert.NotNull(eventArgs.UnsubscribePacket);
@@ -147,7 +153,10 @@ public class UnsubscribeTest
         if (sender is not null)
         {
             var client = (HiveMQClient)sender;
-            client.LocalStore.Add("OnUnsubAckReceivedHandlerCalled", "true");
+            lock (client.LocalStore)
+            {
+                client.LocalStore["OnUnsubAckReceivedHandlerCalled"] = "true";
+            }
         }
 
         Assert.NotNull(eventArgs.UnsubAckPacket);
@@ -159,7 +168,10 @@ public class UnsubscribeTest
         if (sender is not null)
         {
             var client = (HiveMQClient)sender;
-            client.LocalStore.Add("AfterUnsubscribeHandlerCalled", "true");
+            lock (client.LocalStore)
+            {
+                client.LocalStore["AfterUnsubscribeHandlerCalled"] = "true";
+            }
         }
 
         Assert.NotNull(eventArgs.UnsubscribeResult);

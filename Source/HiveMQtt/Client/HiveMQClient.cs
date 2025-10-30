@@ -72,6 +72,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// Clear all tracked subscriptions in a thread-safe manner.
     /// Intended for internal use when the broker indicates Session Present = false on CONNACK.
     /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     internal async Task ClearSubscriptionsAsync()
     {
         try
@@ -503,7 +504,12 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         try
         {
             await this.SubscriptionsSemaphore.WaitAsync().ConfigureAwait(false);
-            this.Subscriptions.AddRange(subscribeResult.Subscriptions);
+            foreach (var newSubscription in subscribeResult.Subscriptions)
+            {
+                // Replace any existing subscription with the same topic filter to avoid duplicates
+                _ = this.Subscriptions.RemoveAll(s => s.TopicFilter.Topic == newSubscription.TopicFilter.Topic);
+                this.Subscriptions.Add(newSubscription);
+            }
         }
         finally
         {
