@@ -133,7 +133,10 @@ public class ConnectTest
         if (sender is not null)
         {
             var client = (HiveMQClient)sender;
-            client.LocalStore.Add("BeforeConnectHandlerCalled", "true");
+            lock (client.LocalStore)
+            {
+                client.LocalStore["BeforeConnectHandlerCalled"] = "true";
+            }
         }
 
         Assert.NotNull(eventArgs.Options);
@@ -145,7 +148,10 @@ public class ConnectTest
         if (sender is not null)
         {
             var client = (HiveMQClient)sender;
-            client.LocalStore.Add("OnConnectSentHandlerCalled", "true");
+            lock (client.LocalStore)
+            {
+                client.LocalStore["OnConnectSentHandlerCalled"] = "true";
+            }
         }
 
         Assert.NotNull(eventArgs.ConnectPacket);
@@ -157,7 +163,10 @@ public class ConnectTest
         if (sender is not null)
         {
             var client = (HiveMQClient)sender;
-            client.LocalStore.Add("OnConnAckReceivedHandlerCalled", "true");
+            lock (client.LocalStore)
+            {
+                client.LocalStore["OnConnAckReceivedHandlerCalled"] = "true";
+            }
         }
 
         Assert.NotNull(eventArgs.ConnAckPacket);
@@ -169,7 +178,10 @@ public class ConnectTest
         if (sender is not null)
         {
             var client = (HiveMQClient)sender;
-            client.LocalStore.Add("AfterConnectHandlerCalled", "true");
+            lock (client.LocalStore)
+            {
+                client.LocalStore["AfterConnectHandlerCalled"] = "true";
+            }
         }
 
         Assert.NotNull(eventArgs.ConnectResult);
@@ -181,7 +193,10 @@ public class ConnectTest
         if (sender is not null)
         {
             var client = (HiveMQClient)sender;
-            client.LocalStore.Add("BeforeDisconnectHandlerCalled", "true");
+            lock (client.LocalStore)
+            {
+                client.LocalStore["BeforeDisconnectHandlerCalled"] = "true";
+            }
         }
     }
 
@@ -192,16 +207,19 @@ public class ConnectTest
         {
             var client = (HiveMQClient)sender;
 
-            if (client.LocalStore.TryGetValue("AfterDisconnectHandlerCalled", out var value))
+            lock (client.LocalStore)
             {
-                var count = Convert.ToInt16(value, CultureInfo.InvariantCulture);
-                count++;
-                client.LocalStore.Add("AfterDisconnectHandlerCalledCount", count.ToString(CultureInfo.InvariantCulture));
-            }
-            else
-            {
-                client.LocalStore.Add("AfterDisconnectHandlerCalled", "true");
-                client.LocalStore.Add("AfterDisconnectHandlerCalledCount", "1");
+                if (client.LocalStore.TryGetValue("AfterDisconnectHandlerCalled", out var value))
+                {
+                    var count = Convert.ToInt16(value, CultureInfo.InvariantCulture);
+                    count++;
+                    client.LocalStore["AfterDisconnectHandlerCalledCount"] = count.ToString(CultureInfo.InvariantCulture);
+                }
+                else
+                {
+                    client.LocalStore["AfterDisconnectHandlerCalled"] = "true";
+                    client.LocalStore["AfterDisconnectHandlerCalledCount"] = "1";
+                }
             }
         }
     }
@@ -213,16 +231,19 @@ public class ConnectTest
         {
             var client = (HiveMQClient)sender;
 
-            if (client.LocalStore.TryGetValue("OnDisconnectSentHandlerCalled", out var value))
+            lock (client.LocalStore)
             {
-                var count = Convert.ToInt16(value, CultureInfo.InvariantCulture);
-                count++;
-                client.LocalStore.Add("OnDisconnectSentHandlerCalledCount", count.ToString(CultureInfo.InvariantCulture));
-            }
-            else
-            {
-                client.LocalStore.Add("OnDisconnectSentHandlerCalled", "true");
-                client.LocalStore.Add("OnDisconnectSentHandlerCalledCount", "1");
+                if (client.LocalStore.TryGetValue("OnDisconnectSentHandlerCalled", out var value))
+                {
+                    var count = Convert.ToInt16(value, CultureInfo.InvariantCulture);
+                    count++;
+                    client.LocalStore["OnDisconnectSentHandlerCalledCount"] = count.ToString(CultureInfo.InvariantCulture);
+                }
+                else
+                {
+                    client.LocalStore["OnDisconnectSentHandlerCalled"] = "true";
+                    client.LocalStore["OnDisconnectSentHandlerCalledCount"] = "1";
+                }
             }
         }
 
@@ -235,7 +256,10 @@ public class ConnectTest
         if (sender is not null)
         {
             var client = (HiveMQClient)sender;
-            client.LocalStore.Add("OnDisconnectReceivedHandlerCalled", "true");
+            lock (client.LocalStore)
+            {
+                client.LocalStore["OnDisconnectReceivedHandlerCalled"] = "true";
+            }
         }
 
         Assert.NotNull(eventArgs.DisconnectPacket);

@@ -28,6 +28,9 @@ public partial class ConnectionManager
         {
             this.IPubTransactionQueue.Clear();
             this.OPubTransactionQueue.Clear();
+
+            // Session is not present on the broker; clear local subscription tracking
+            _ = this.Client.ClearSubscriptionsAsync();
         }
 
         if (connAckPacket.ReasonCode == ConnAckReasonCode.Success && connAckPacket.Properties.ReceiveMaximum != null)

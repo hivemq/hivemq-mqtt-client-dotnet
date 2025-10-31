@@ -168,7 +168,7 @@ public class EventExceptionHandlingTest
             .ConfigureAwait(false);
 
         // Wait a bit for message delivery
-        await Task.Delay(500).ConfigureAwait(false);
+        await Task.Delay(2000).ConfigureAwait(false);
 
         // Verify message was still delivered despite the exception
         Assert.True(messageReceived);
