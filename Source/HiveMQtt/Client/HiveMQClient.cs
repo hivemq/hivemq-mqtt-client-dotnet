@@ -152,6 +152,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         if (connAck.ReasonCode == ConnAckReasonCode.Success)
         {
             this.Connection.State = ConnectState.Connected;
+
+            // Ensure connection-ready signal is set for any writers awaiting readiness
+            this.Connection.SignalConnected();
         }
         else
         {

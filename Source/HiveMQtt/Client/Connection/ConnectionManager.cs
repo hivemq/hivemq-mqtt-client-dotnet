@@ -16,6 +16,8 @@
 namespace HiveMQtt.Client.Connection;
 
 using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 using HiveMQtt.Client.Internal;
 using HiveMQtt.Client.Transport;
 using HiveMQtt.MQTT5;
@@ -68,6 +70,9 @@ public partial class ConnectionManager : IDisposable
     // This is used to know if and when we need to send a MQTT PingReq
     private readonly Stopwatch lastCommunicationTimer = new();
 
+    // Event-like signal to indicate the connection reached Connected state
+    private TaskCompletionSource<bool> connectedSignal = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
     /// <summary>
     /// Initializes a new instance of the <see cref="ConnectionManager"/> class.
     /// </summary>
@@ -79,6 +84,7 @@ public partial class ConnectionManager : IDisposable
         this.IPubTransactionQueue = new BoundedDictionaryX<int, List<ControlPacket>>(this.Client.Options.ClientReceiveMaximum);
         this.OPubTransactionQueue = new BoundedDictionaryX<int, List<ControlPacket>>(65535);
         this.State = ConnectState.Disconnected;
+        this.ResetConnectedSignal();
 
         // Connect the appropriate transport
         if (this.Client.Options.Host.StartsWith("ws://", StringComparison.OrdinalIgnoreCase) ||
@@ -99,6 +105,18 @@ public partial class ConnectionManager : IDisposable
         Logger.Trace("    -(CM)-  == ConnectionMonitor");
         Logger.Trace("    -(RPH)- == ReceivedPacketsHandler");
     }
+
+    internal Task WaitUntilConnectedAsync(CancellationToken cancellationToken) => this.connectedSignal.Task.WaitAsync(cancellationToken);
+
+    internal void SignalConnected()
+    {
+        if (!this.connectedSignal.Task.IsCompleted)
+        {
+            this.connectedSignal.TrySetResult(true);
+        }
+    }
+
+    internal void ResetConnectedSignal() => this.connectedSignal = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
     internal async Task<bool> ConnectAsync()
     {
