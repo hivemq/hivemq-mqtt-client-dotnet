@@ -15,6 +15,7 @@
  */
 namespace HiveMQtt.Client.Internal;
 
+using System.Text;
 using System.Text.RegularExpressions;
 
 using HiveMQtt.Client.Exceptions;
@@ -29,9 +30,10 @@ public class Validator
     {
         ArgumentNullException.ThrowIfNull(clientId);
 
-        if (clientId.Length > 65535)
+        var byteCount = Encoding.UTF8.GetByteCount(clientId);
+        if (byteCount > 65535)
         {
-            throw new HiveMQttClientException("Client identifier must not be longer than 65535 characters.");
+            throw new HiveMQttClientException("Client identifier must not be longer than 65535 bytes (UTF-8 encoded).");
         }
 
         if (clientId.Length == 0)
@@ -57,16 +59,17 @@ public class Validator
     /// </summary>
     /// <param name="topic">The topic name string to validate.</param>
     /// <exception cref="ArgumentNullException">Thrown when the topic name is null.</exception>
-    /// <exception cref="HiveMQttClientException">Thrown when the topic name is longer than 65535 characters or empty.</exception>
+    /// <exception cref="HiveMQttClientException">Thrown when the topic name is longer than 65535 bytes (UTF-8 encoded) or empty.</exception>
     /// <exception cref="HiveMQttClientException">Thrown when the topic name contains any wildcard characters.</exception>
     /// <exception cref="HiveMQttClientException">Thrown when the topic name contains any null characters.</exception>
     public static void ValidateTopicName(string topic)
     {
         ArgumentNullException.ThrowIfNull(topic);
 
-        if (topic.Length > 65535)
+        var byteCount = Encoding.UTF8.GetByteCount(topic);
+        if (byteCount > 65535)
         {
-            throw new HiveMQttClientException("A topic string must not be longer than 65535 characters.");
+            throw new HiveMQttClientException("A topic string must not be longer than 65535 bytes (UTF-8 encoded).");
         }
 
         if (topic.Length == 0)
@@ -91,16 +94,17 @@ public class Validator
     /// </summary>
     /// <param name="topic">The topic filter string to validate.</param>
     /// <exception cref="ArgumentNullException">Thrown when the topic filter is null.</exception>
-    /// <exception cref="HiveMQttClientException">Thrown when the topic filter is longer than 65535 characters or empty.</exception>
+    /// <exception cref="HiveMQttClientException">Thrown when the topic filter is longer than 65535 bytes (UTF-8 encoded) or empty.</exception>
     /// <exception cref="HiveMQttClientException">Thrown when the topic filter contains any null characters.</exception>
     /// <exception cref="ArgumentException">Thrown when the topic filter contains invalid wildcard usage.</exception>
     public static void ValidateTopicFilter(string topic)
     {
         ArgumentNullException.ThrowIfNull(topic);
 
-        if (topic.Length > 65535)
+        var byteCount = Encoding.UTF8.GetByteCount(topic);
+        if (byteCount > 65535)
         {
-            throw new HiveMQttClientException("A topic string must not be longer than 65535 characters.");
+            throw new HiveMQttClientException("A topic string must not be longer than 65535 bytes (UTF-8 encoded).");
         }
 
         if (topic.Length == 0)
