@@ -48,12 +48,14 @@ public class WebSocketTransport : BaseTransport, IDisposable
         }
         catch (WebSocketException ex)
         {
-            Logger.Error(ex, "Failed to connect to the WebSocket server");
+            // Log at Debug level since ConnectionManager will log the error and HiveMQClient will throw exception
+            Logger.Debug(ex, "Failed to connect to the WebSocket server");
             return false;
         }
         catch (OperationCanceledException ex)
         {
-            Logger.Error(ex, "Failed to connect to the WebSocket server");
+            // Log at Debug level since ConnectionManager will log the error and HiveMQClient will throw exception
+            Logger.Debug(ex, "Failed to connect to the WebSocket server");
             return false;
         }
 
@@ -67,7 +69,44 @@ public class WebSocketTransport : BaseTransport, IDisposable
     /// <returns>True if the close was successful, false otherwise.</returns>
     public override async Task<bool> CloseAsync(bool? shutdownPipeline = true)
     {
-        await this.Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None).ConfigureAwait(false);
+        try
+        {
+            // Close the WebSocket if it's in a state that allows closing
+            if (this.Socket.State is WebSocketState.Open or WebSocketState.CloseReceived or WebSocketState.CloseSent)
+            {
+                await this.Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None).ConfigureAwait(false);
+            }
+            else if (this.Socket.State == WebSocketState.Aborted)
+            {
+                Logger.Debug("WebSocket is already aborted");
+            }
+            else if (this.Socket.State == WebSocketState.Closed)
+            {
+                Logger.Debug("WebSocket is already closed");
+            }
+            else
+            {
+                Logger.Debug($"WebSocket is in state: {this.Socket.State}");
+            }
+        }
+        catch (WebSocketException ex)
+        {
+            // WebSocket may have been closed by the server or already in an invalid state
+            Logger.Warn(ex, "Error closing WebSocket connection");
+
+            // Don't return false here - the socket is likely already closed
+        }
+        catch (ObjectDisposedException ex)
+        {
+            // Socket has already been disposed
+            Logger.Debug(ex, "WebSocket has already been disposed");
+        }
+        catch (InvalidOperationException ex)
+        {
+            // WebSocket may already be closed or in a closing state
+            Logger.Debug(ex, "WebSocket is already closed or closing");
+        }
+
         return true;
     }
 
@@ -108,32 +147,80 @@ public class WebSocketTransport : BaseTransport, IDisposable
     /// <exception cref="OperationCanceledException">Thrown when the operation is canceled.</exception>
     public override async Task<TransportReadResult> ReadAsync(CancellationToken cancellationToken = default)
     {
+        // Check if socket is in a valid state for reading
+        if (this.Socket.State is not WebSocketState.Open and not WebSocketState.CloseReceived)
+        {
+            Logger.Debug($"WebSocket is not in a readable state: {this.Socket.State}");
+            return new TransportReadResult(true);
+        }
+
         var buffer = new ArraySegment<byte>(new byte[8192]);
         WebSocketReceiveResult result;
 
-        using (var ms = new MemoryStream())
+        try
         {
-            // Read until the end of the message
-            do
+            using (var ms = new MemoryStream())
             {
-                result = await this.Socket.ReceiveAsync(buffer, CancellationToken.None).ConfigureAwait(false);
-                await ms.WriteAsync(buffer.AsMemory(buffer.Offset, result.Count), cancellationToken).ConfigureAwait(false);
-            }
-            while (!result.EndOfMessage);
+                // Read until the end of the message
+                do
+                {
+                    result = await this.Socket.ReceiveAsync(buffer, cancellationToken).ConfigureAwait(false);
 
-            Logger.Trace($"Received {ms.Length} bytes");
+                    // Check if we received a close message
+                    if (result.MessageType is WebSocketMessageType.Close)
+                    {
+                        Logger.Debug($"WebSocket received close message: {result.CloseStatus}");
+                        return new TransportReadResult(true);
+                    }
 
-            // Development
-            // ms.Seek(0, SeekOrigin.Begin);
-            if (result.MessageType == WebSocketMessageType.Binary)
-            {
-                // Prepare the result and return
-                return new TransportReadResult(new ReadOnlySequence<byte>(ms.ToArray()));
+                    // Only write if we got actual data
+                    if (result.Count > 0)
+                    {
+                        await ms.WriteAsync(buffer.AsMemory(buffer.Offset, result.Count), cancellationToken).ConfigureAwait(false);
+                    }
+                }
+                while (!result.EndOfMessage && result.MessageType is not WebSocketMessageType.Close);
+
+                Logger.Trace($"Received {ms.Length} bytes");
+
+                // Check if connection was closed during read
+                if (result.CloseStatus.HasValue)
+                {
+                    Logger.Debug($"WebSocket connection closed during read: {result.CloseStatus}");
+                    return new TransportReadResult(true);
+                }
+
+                // Return data only for binary messages (MQTT uses binary)
+                if (result.MessageType is WebSocketMessageType.Binary)
+                {
+                    // Prepare the result and return
+                    return new TransportReadResult(new ReadOnlySequence<byte>(ms.ToArray()));
+                }
+                else
+                {
+                    // Text or other message types are not expected for MQTT
+                    Logger.Warn($"Received unexpected WebSocket message type: {result.MessageType}");
+                    return new TransportReadResult(true);
+                }
             }
-            else
-            {
-                return new TransportReadResult(true);
-            }
+        }
+        catch (WebSocketException ex)
+        {
+            // Log at Debug level since ConnectionManager handles read failures gracefully
+            // WebSocketException can occur during expected disconnections
+            Logger.Debug(ex, "Failed to read from the WebSocket server");
+            return new TransportReadResult(true);
+        }
+        catch (OperationCanceledException ex)
+        {
+            Logger.Debug(ex, "Read operation was canceled");
+            return new TransportReadResult(true);
+        }
+        catch (InvalidOperationException ex)
+        {
+            // Socket may have been closed or aborted
+            Logger.Debug(ex, "WebSocket operation is invalid - socket may be closed");
+            return new TransportReadResult(true);
         }
     }
 

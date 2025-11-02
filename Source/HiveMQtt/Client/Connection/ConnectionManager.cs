@@ -87,16 +87,9 @@ public partial class ConnectionManager : IDisposable
         this.ResetConnectedSignal();
 
         // Connect the appropriate transport
-        if (this.Client.Options.Host.StartsWith("ws://", StringComparison.OrdinalIgnoreCase) ||
-            this.Client.Options.Host.StartsWith("wss://", StringComparison.OrdinalIgnoreCase))
-        {
-            // this.Transport = new WebSocketTransport(this.Client.Options);
-            this.Transport = new TCPTransport(this.Client.Options);
-        }
-        else
-        {
-            this.Transport = new TCPTransport(this.Client.Options);
-        }
+        // Note: The actual transport is selected in ConnectAsync() based on WebSocketServer option.
+        // For now, initialize with TCPTransport as a placeholder - it will be replaced during ConnectAsync()
+        this.Transport = new TCPTransport(this.Client.Options);
 
         Logger.Trace("Trace Level Logging Legend:");
         Logger.Trace("    -(W)-   == ConnectionWriter");
