@@ -21,6 +21,7 @@
 
 ### 🚀 Features
 * **MQTT 5.0 Support**: Fully compliant with the latest [MQTT 5.0 specification](https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.html), ensuring compatibility with modern MQTT brokers.
+* **Multiple Transport Options**: Support for both TCP and WebSocket connections (ws:// and wss://), ideal for network environments that restrict TCP traffic or require HTTP-compatible transport.
 * **Back Pressure Management**: Automatically manages back pressure to prevent overwhelming the broker (or client), ensuring reliable and efficient communication.
 * **Asynchronous Design**: Designed for high-performance and low-latency communication, allowing your application to process multiple messages concurrently.
 * **Extensive Event System**: Hook into all parts of the client down to the packet level with [built in events](https://hivemq.github.io/hivemq-mqtt-client-dotnet/docs/events).
@@ -35,8 +36,9 @@
 * **Secure Certificate Password Handling**: Certificate passwords are handled securely using `SecureString`. Use `WithClientCertificate(path, SecureString)` for enhanced security.
 * **Memory-Safe Password Handling**: Temporary password strings are automatically cleared from memory after use, ensuring no sensitive data persists in memory.
 * **Backward Compatibility**: Existing code using string passwords continues to work while being automatically converted to secure storage internally.
-* **TLS/SSL Support**: Full support for encrypted connections with configurable certificate validation and custom certificate handling.
-* **X.509 Certificate Authentication**: Complete support for client certificate authentication with secure private key handling.
+* **TLS/SSL Support**: Full support for encrypted connections (both TCP and WebSocket) with configurable certificate validation and custom certificate handling.
+* **Secure WebSocket (wss://)**: Complete support for secure WebSocket connections with client certificate authentication and configurable certificate validation.
+* **X.509 Certificate Authentication**: Complete support for client certificate authentication with secure private key handling for both TCP and WebSocket connections.
 
 ### 🏝️ Ease of Use
 * **Easy to Use**: Smart defaults, excellent interfaces and intelligent automation makes implementing a breeze.
@@ -131,6 +133,42 @@ var subscribeResult = await client.SubscribeAsync(subscribeOptions);
 
 // Publish a message
 var publishResult = await client.PublishAsync("topic1/example", "Hello Payload");
+```
+
+### WebSocket Connection Example
+
+The client also supports WebSocket connections (ws:// and wss://). WebSocket is useful when:
+- Network policies only allow HTTP/HTTPS traffic (firewalls, proxies that block TCP)
+- You need to leverage existing WebSocket infrastructure
+- You're building server-side .NET applications that require HTTP-compatible transport
+
+```csharp
+using HiveMQtt.Client;
+using HiveMQtt.MQTT5.Types;
+
+// Connect via WebSocket (ws://)
+var options = new HiveMQClientOptionsBuilder()
+    .WithWebSocketServer("ws://localhost:8000/mqtt")
+    .WithClientId("WebSocketClient")
+    .Build();
+
+// Or connect via secure WebSocket (wss://) with TLS
+var secureOptions = new HiveMQClientOptionsBuilder()
+    .WithWebSocketServer("wss://broker.hivemq.com:8884/mqtt")
+    .WithClientId("SecureWebSocketClient")
+    .Build();
+
+var client = new HiveMQClient(secureOptions);
+var connectResult = await client.ConnectAsync().ConfigureAwait(false);
+
+// Use the same API for publish/subscribe - works identically to TCP connections
+client.OnMessageReceived += (sender, args) =>
+{
+    Console.WriteLine("WebSocket Message: {}", args.PublishMessage.PayloadAsString);
+};
+
+await client.SubscribeAsync("my/topic");
+await client.PublishAsync("my/topic", "Hello from WebSocket!");
 ```
 
 For a Quickstart, more examples and walkthroughs, see [the documentation](https://hivemq.github.io/hivemq-mqtt-client-dotnet/docs/quickstart).

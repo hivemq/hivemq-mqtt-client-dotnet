@@ -49,10 +49,8 @@ public class ValidatorTest
     }
 
     [Fact]
-    public void ValidateClientId_WithNull_ThrowsArgumentNullException()
-    {
+    public void ValidateClientId_WithNull_ThrowsArgumentNullException() =>
         Assert.Throws<ArgumentNullException>(() => Validator.ValidateClientId(null!));
-    }
 
     [Fact]
     public void ValidateClientId_WithEmptyString_ThrowsHiveMQttClientException()
@@ -200,10 +198,8 @@ public class ValidatorTest
     }
 
     [Fact]
-    public void ValidateTopicName_WithNull_ThrowsArgumentNullException()
-    {
+    public void ValidateTopicName_WithNull_ThrowsArgumentNullException() =>
         Assert.Throws<ArgumentNullException>(() => Validator.ValidateTopicName(null!));
-    }
 
     [Fact]
     public void ValidateTopicName_WithEmptyString_ThrowsHiveMQttClientException()
@@ -351,10 +347,8 @@ public class ValidatorTest
     }
 
     [Fact]
-    public void ValidateTopicFilter_WithNull_ThrowsArgumentNullException()
-    {
+    public void ValidateTopicFilter_WithNull_ThrowsArgumentNullException() =>
         Assert.Throws<ArgumentNullException>(() => Validator.ValidateTopicFilter(null!));
-    }
 
     [Fact]
     public void ValidateTopicFilter_WithEmptyString_ThrowsHiveMQttClientException()

@@ -17,7 +17,10 @@ namespace HiveMQtt.Client.Transport;
 
 using HiveMQtt.Client.Options;
 using System.Buffers;
+using System.Globalization;
+using System.Linq;
 using System.Net.WebSockets;
+using System.Security.Cryptography.X509Certificates;
 
 public class WebSocketTransport : BaseTransport, IDisposable
 {
@@ -37,6 +40,89 @@ public class WebSocketTransport : BaseTransport, IDisposable
         {
             throw new ArgumentException("Invalid WebSocket URI scheme");
         }
+
+        // Configure TLS options for secure WebSocket (wss://)
+        if (uri.Scheme == "wss")
+        {
+            this.ConfigureTlsOptions();
+        }
+    }
+
+    /// <summary>
+    /// SSLStream Callback.  This is used to validate TLS certificates for WebSocket connections.
+    /// </summary>
+    /// <param name="sender">An object that contains state information for this validation.</param>
+    /// <param name="certificate">The certificate used to authenticate the remote party.</param>
+    /// <param name="chain">The chain of certificate authorities associated with the remote certificate.</param>
+    /// <param name="sslPolicyErrors">One or more errors associated with the remote certificate.</param>
+    /// <returns>A Boolean indicating whether the TLS certificate is valid.</returns>
+    private static bool ValidateWebSocketServerCertificate(
+        object sender,
+        X509Certificate? certificate,
+        X509Chain? chain,
+        System.Net.Security.SslPolicyErrors sslPolicyErrors)
+    {
+        // Ignore the sender parameter
+        _ = sender;
+
+        if (sslPolicyErrors == System.Net.Security.SslPolicyErrors.None)
+        {
+            return true;
+        }
+
+        Logger.Warn("Broker TLS Certificate error for WebSocket: {0}", sslPolicyErrors);
+
+        // Log additional certificate details for debugging
+        if (certificate != null)
+        {
+            Logger.Debug(CultureInfo.InvariantCulture, "WebSocket Certificate Subject: {0}", certificate.Subject);
+            Logger.Debug(CultureInfo.InvariantCulture, "WebSocket Certificate Issuer: {0}", certificate.Issuer);
+            Logger.Debug(CultureInfo.InvariantCulture, "WebSocket Certificate Serial Number: {0}", certificate.GetSerialNumberString());
+        }
+
+        // Validate certificate chain if provided
+        if (chain != null)
+        {
+            var chainStatus = chain.ChainStatus.Length > 0 ? string.Join(", ", chain.ChainStatus.Select(cs => cs.Status)) : "Valid";
+            Logger.Debug(CultureInfo.InvariantCulture, "WebSocket Certificate chain validation status: {0}", chainStatus);
+        }
+
+        // Do not allow this client to communicate with unauthenticated servers.
+        return false;
+    }
+
+    /// <summary>
+    /// Configure TLS options for secure WebSocket connections.
+    /// </summary>
+    private void ConfigureTlsOptions()
+    {
+        // Configure client certificates if provided
+        if (this.Options.ClientCertificates != null && this.Options.ClientCertificates.Count > 0)
+        {
+            foreach (var certificate in this.Options.ClientCertificates)
+            {
+                if (certificate is X509Certificate2 x509Cert2)
+                {
+                    this.Socket.Options.ClientCertificates.Add(x509Cert2);
+                }
+            }
+
+            Logger.Trace($"Added {this.Options.ClientCertificates.Count} client certificate(s) for WebSocket connection");
+        }
+
+        // Configure certificate validation callback
+        if (this.Options.AllowInvalidBrokerCertificates)
+        {
+            Logger.Trace("Allowing invalid broker certificates for WebSocket connection");
+#pragma warning disable CA5359 // Do not disable certificate validation
+            this.Socket.Options.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
+#pragma warning restore CA5359
+        }
+        else
+        {
+            // Use the same validation logic as TCPTransport
+            this.Socket.Options.RemoteCertificateValidationCallback = ValidateWebSocketServerCertificate;
+        }
     }
 
     public override async Task<bool> ConnectAsync(CancellationToken cancellationToken = default)
@@ -48,12 +134,14 @@ public class WebSocketTransport : BaseTransport, IDisposable
         }
         catch (WebSocketException ex)
         {
-            Logger.Error(ex, "Failed to connect to the WebSocket server");
+            // Log at Debug level since ConnectionManager will log the error and HiveMQClient will throw exception
+            Logger.Debug(ex, "Failed to connect to the WebSocket server");
             return false;
         }
         catch (OperationCanceledException ex)
         {
-            Logger.Error(ex, "Failed to connect to the WebSocket server");
+            // Log at Debug level since ConnectionManager will log the error and HiveMQClient will throw exception
+            Logger.Debug(ex, "Failed to connect to the WebSocket server");
             return false;
         }
 
@@ -67,7 +155,44 @@ public class WebSocketTransport : BaseTransport, IDisposable
     /// <returns>True if the close was successful, false otherwise.</returns>
     public override async Task<bool> CloseAsync(bool? shutdownPipeline = true)
     {
-        await this.Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None).ConfigureAwait(false);
+        try
+        {
+            // Close the WebSocket if it's in a state that allows closing
+            if (this.Socket.State is WebSocketState.Open or WebSocketState.CloseReceived or WebSocketState.CloseSent)
+            {
+                await this.Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None).ConfigureAwait(false);
+            }
+            else if (this.Socket.State == WebSocketState.Aborted)
+            {
+                Logger.Debug("WebSocket is already aborted");
+            }
+            else if (this.Socket.State == WebSocketState.Closed)
+            {
+                Logger.Debug("WebSocket is already closed");
+            }
+            else
+            {
+                Logger.Debug($"WebSocket is in state: {this.Socket.State}");
+            }
+        }
+        catch (WebSocketException ex)
+        {
+            // WebSocket may have been closed by the server or already in an invalid state
+            Logger.Warn(ex, "Error closing WebSocket connection");
+
+            // Don't return false here - the socket is likely already closed
+        }
+        catch (ObjectDisposedException ex)
+        {
+            // Socket has already been disposed
+            Logger.Debug(ex, "WebSocket has already been disposed");
+        }
+        catch (InvalidOperationException ex)
+        {
+            // WebSocket may already be closed or in a closing state
+            Logger.Debug(ex, "WebSocket is already closed or closing");
+        }
+
         return true;
     }
 
@@ -108,32 +233,80 @@ public class WebSocketTransport : BaseTransport, IDisposable
     /// <exception cref="OperationCanceledException">Thrown when the operation is canceled.</exception>
     public override async Task<TransportReadResult> ReadAsync(CancellationToken cancellationToken = default)
     {
+        // Check if socket is in a valid state for reading
+        if (this.Socket.State is not WebSocketState.Open and not WebSocketState.CloseReceived)
+        {
+            Logger.Debug($"WebSocket is not in a readable state: {this.Socket.State}");
+            return new TransportReadResult(true);
+        }
+
         var buffer = new ArraySegment<byte>(new byte[8192]);
         WebSocketReceiveResult result;
 
-        using (var ms = new MemoryStream())
+        try
         {
-            // Read until the end of the message
-            do
+            using (var ms = new MemoryStream())
             {
-                result = await this.Socket.ReceiveAsync(buffer, CancellationToken.None).ConfigureAwait(false);
-                await ms.WriteAsync(buffer.AsMemory(buffer.Offset, result.Count), cancellationToken).ConfigureAwait(false);
-            }
-            while (!result.EndOfMessage);
+                // Read until the end of the message
+                do
+                {
+                    result = await this.Socket.ReceiveAsync(buffer, cancellationToken).ConfigureAwait(false);
 
-            Logger.Trace($"Received {ms.Length} bytes");
+                    // Check if we received a close message
+                    if (result.MessageType is WebSocketMessageType.Close)
+                    {
+                        Logger.Debug($"WebSocket received close message: {result.CloseStatus}");
+                        return new TransportReadResult(true);
+                    }
 
-            // Development
-            // ms.Seek(0, SeekOrigin.Begin);
-            if (result.MessageType == WebSocketMessageType.Binary)
-            {
-                // Prepare the result and return
-                return new TransportReadResult(new ReadOnlySequence<byte>(ms.ToArray()));
+                    // Only write if we got actual data
+                    if (result.Count > 0)
+                    {
+                        await ms.WriteAsync(buffer.AsMemory(buffer.Offset, result.Count), cancellationToken).ConfigureAwait(false);
+                    }
+                }
+                while (!result.EndOfMessage && result.MessageType is not WebSocketMessageType.Close);
+
+                Logger.Trace($"Received {ms.Length} bytes");
+
+                // Check if connection was closed during read
+                if (result.CloseStatus.HasValue)
+                {
+                    Logger.Debug($"WebSocket connection closed during read: {result.CloseStatus}");
+                    return new TransportReadResult(true);
+                }
+
+                // Return data only for binary messages (MQTT uses binary)
+                if (result.MessageType is WebSocketMessageType.Binary)
+                {
+                    // Prepare the result and return
+                    return new TransportReadResult(new ReadOnlySequence<byte>(ms.ToArray()));
+                }
+                else
+                {
+                    // Text or other message types are not expected for MQTT
+                    Logger.Warn($"Received unexpected WebSocket message type: {result.MessageType}");
+                    return new TransportReadResult(true);
+                }
             }
-            else
-            {
-                return new TransportReadResult(true);
-            }
+        }
+        catch (WebSocketException ex)
+        {
+            // Log at Debug level since ConnectionManager handles read failures gracefully
+            // WebSocketException can occur during expected disconnections
+            Logger.Debug(ex, "Failed to read from the WebSocket server");
+            return new TransportReadResult(true);
+        }
+        catch (OperationCanceledException ex)
+        {
+            Logger.Debug(ex, "Read operation was canceled");
+            return new TransportReadResult(true);
+        }
+        catch (InvalidOperationException ex)
+        {
+            // Socket may have been closed or aborted
+            Logger.Debug(ex, "WebSocket operation is invalid - socket may be closed");
+            return new TransportReadResult(true);
         }
     }
 
