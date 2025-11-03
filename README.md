@@ -21,7 +21,7 @@
 
 ### 🚀 Features
 * **MQTT 5.0 Support**: Fully compliant with the latest [MQTT 5.0 specification](https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.html), ensuring compatibility with modern MQTT brokers.
-* **Multiple Transport Options**: Support for both TCP and WebSocket connections (ws:// and wss://), making it perfect for web applications and traditional IoT deployments.
+* **Multiple Transport Options**: Support for both TCP and WebSocket connections (ws:// and wss://), ideal for network environments that restrict TCP traffic or require HTTP-compatible transport.
 * **Back Pressure Management**: Automatically manages back pressure to prevent overwhelming the broker (or client), ensuring reliable and efficient communication.
 * **Asynchronous Design**: Designed for high-performance and low-latency communication, allowing your application to process multiple messages concurrently.
 * **Extensive Event System**: Hook into all parts of the client down to the packet level with [built in events](https://hivemq.github.io/hivemq-mqtt-client-dotnet/docs/events).
@@ -137,7 +137,10 @@ var publishResult = await client.PublishAsync("topic1/example", "Hello Payload")
 
 ### WebSocket Connection Example
 
-The client also supports WebSocket connections, perfect for web applications and browser-based deployments:
+The client also supports WebSocket connections (ws:// and wss://). WebSocket is useful when:
+- Network policies only allow HTTP/HTTPS traffic (firewalls, proxies that block TCP)
+- You need to leverage existing WebSocket infrastructure
+- You're building server-side .NET applications that require HTTP-compatible transport
 
 ```csharp
 using HiveMQtt.Client;
