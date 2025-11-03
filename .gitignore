@@ -765,3 +765,5 @@ Artifacts/
 
 *.lic
 *.plic
+docker-hivemq-config.xml
+.tool-versions
