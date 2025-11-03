@@ -17,7 +17,10 @@ namespace HiveMQtt.Client.Transport;
 
 using HiveMQtt.Client.Options;
 using System.Buffers;
+using System.Globalization;
+using System.Linq;
 using System.Net.WebSockets;
+using System.Security.Cryptography.X509Certificates;
 
 public class WebSocketTransport : BaseTransport, IDisposable
 {
@@ -36,6 +39,89 @@ public class WebSocketTransport : BaseTransport, IDisposable
         if (uri.Scheme is not "ws" and not "wss")
         {
             throw new ArgumentException("Invalid WebSocket URI scheme");
+        }
+
+        // Configure TLS options for secure WebSocket (wss://)
+        if (uri.Scheme == "wss")
+        {
+            this.ConfigureTlsOptions();
+        }
+    }
+
+    /// <summary>
+    /// SSLStream Callback.  This is used to validate TLS certificates for WebSocket connections.
+    /// </summary>
+    /// <param name="sender">An object that contains state information for this validation.</param>
+    /// <param name="certificate">The certificate used to authenticate the remote party.</param>
+    /// <param name="chain">The chain of certificate authorities associated with the remote certificate.</param>
+    /// <param name="sslPolicyErrors">One or more errors associated with the remote certificate.</param>
+    /// <returns>A Boolean indicating whether the TLS certificate is valid.</returns>
+    private static bool ValidateWebSocketServerCertificate(
+        object sender,
+        X509Certificate? certificate,
+        X509Chain? chain,
+        System.Net.Security.SslPolicyErrors sslPolicyErrors)
+    {
+        // Ignore the sender parameter
+        _ = sender;
+
+        if (sslPolicyErrors == System.Net.Security.SslPolicyErrors.None)
+        {
+            return true;
+        }
+
+        Logger.Warn("Broker TLS Certificate error for WebSocket: {0}", sslPolicyErrors);
+
+        // Log additional certificate details for debugging
+        if (certificate != null)
+        {
+            Logger.Debug(CultureInfo.InvariantCulture, "WebSocket Certificate Subject: {0}", certificate.Subject);
+            Logger.Debug(CultureInfo.InvariantCulture, "WebSocket Certificate Issuer: {0}", certificate.Issuer);
+            Logger.Debug(CultureInfo.InvariantCulture, "WebSocket Certificate Serial Number: {0}", certificate.GetSerialNumberString());
+        }
+
+        // Validate certificate chain if provided
+        if (chain != null)
+        {
+            var chainStatus = chain.ChainStatus.Length > 0 ? string.Join(", ", chain.ChainStatus.Select(cs => cs.Status)) : "Valid";
+            Logger.Debug(CultureInfo.InvariantCulture, "WebSocket Certificate chain validation status: {0}", chainStatus);
+        }
+
+        // Do not allow this client to communicate with unauthenticated servers.
+        return false;
+    }
+
+    /// <summary>
+    /// Configure TLS options for secure WebSocket connections.
+    /// </summary>
+    private void ConfigureTlsOptions()
+    {
+        // Configure client certificates if provided
+        if (this.Options.ClientCertificates != null && this.Options.ClientCertificates.Count > 0)
+        {
+            foreach (var certificate in this.Options.ClientCertificates)
+            {
+                if (certificate is X509Certificate2 x509Cert2)
+                {
+                    this.Socket.Options.ClientCertificates.Add(x509Cert2);
+                }
+            }
+
+            Logger.Trace($"Added {this.Options.ClientCertificates.Count} client certificate(s) for WebSocket connection");
+        }
+
+        // Configure certificate validation callback
+        if (this.Options.AllowInvalidBrokerCertificates)
+        {
+            Logger.Trace("Allowing invalid broker certificates for WebSocket connection");
+#pragma warning disable CA5359 // Do not disable certificate validation
+            this.Socket.Options.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
+#pragma warning restore CA5359
+        }
+        else
+        {
+            // Use the same validation logic as TCPTransport
+            this.Socket.Options.RemoteCertificateValidationCallback = ValidateWebSocketServerCertificate;
         }
     }
 
