@@ -28,6 +28,9 @@ public class WebSocketTransport : BaseTransport, IDisposable
 
     internal ClientWebSocket Socket { get; private set; }
 
+    // Semaphore to serialize write operations and prevent concurrent writes
+    private readonly SemaphoreSlim writeSemaphore = new(1, 1);
+
     public WebSocketTransport(HiveMQClientOptions options)
     {
         this.Options = options;
@@ -206,6 +209,8 @@ public class WebSocketTransport : BaseTransport, IDisposable
     /// <exception cref="OperationCanceledException">Thrown when the operation is canceled.</exception>
     public override async Task<bool> WriteAsync(byte[] buffer, CancellationToken cancellationToken = default)
     {
+        // Serialize write operations to prevent concurrent writes that cause NotSupportedException
+        await this.writeSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             await this.Socket.SendAsync(buffer, WebSocketMessageType.Binary, true, cancellationToken).ConfigureAwait(false);
@@ -219,6 +224,10 @@ public class WebSocketTransport : BaseTransport, IDisposable
         {
             Logger.Error(ex, "Failed to write to the WebSocket server");
             return false;
+        }
+        finally
+        {
+            this.writeSemaphore.Release();
         }
 
         return true;
@@ -358,6 +367,9 @@ public class WebSocketTransport : BaseTransport, IDisposable
             // and unmanaged resources.
             if (disposing)
             {
+                // Dispose of the write semaphore
+                this.writeSemaphore?.Dispose();
+
                 // Dispose WebSocket if it's not null
                 if (this.Socket != null)
                 {
