@@ -28,12 +28,35 @@ public class WebSocketTransport : BaseTransport, IDisposable
 
     internal ClientWebSocket Socket { get; private set; }
 
+    // Semaphore to serialize write operations and prevent concurrent writes
+    private readonly SemaphoreSlim writeSemaphore = new(1, 1);
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="WebSocketTransport"/> class.
+    /// </summary>
+    /// <param name="options">The HiveMQ client options containing WebSocket server URI and configuration.</param>
+    /// <exception cref="ArgumentException">Thrown when the WebSocket URI scheme is invalid (must be "ws://" or "wss://").</exception>
+    /// <remarks>
+    /// <para>
+    /// This constructor configures the WebSocket transport with the MQTT subprotocol. The "mqtt" subprotocol is required
+    /// for MQTT over WebSocket connections as specified in the MQTT specification. The WebSocket server must support this
+    /// subprotocol for the connection to succeed. If the server does not support the "mqtt" subprotocol, the WebSocket
+    /// handshake will fail and the connection will be rejected.
+    /// </para>
+    /// <para>
+    /// For secure WebSocket connections (wss://), TLS options are automatically configured based on the provided
+    /// <paramref name="options"/>, including client certificates and certificate validation settings.
+    /// </para>
+    /// </remarks>
     public WebSocketTransport(HiveMQClientOptions options)
     {
         this.Options = options;
         this.Socket = new ClientWebSocket();
 
         var uri = new Uri(this.Options.WebSocketServer);
+
+        // Add the MQTT subprotocol as required by the MQTT specification for WebSocket connections
+        // The server must support this subprotocol or the connection will fail during handshake
         this.Socket.Options.AddSubProtocol("mqtt");
 
         if (uri.Scheme is not "ws" and not "wss")
@@ -152,15 +175,16 @@ public class WebSocketTransport : BaseTransport, IDisposable
     /// Close the WebSocket connection.
     /// </summary>
     /// <param name="shutdownPipeline">Whether to shutdown the pipeline.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>True if the close was successful, false otherwise.</returns>
-    public override async Task<bool> CloseAsync(bool? shutdownPipeline = true)
+    public override async Task<bool> CloseAsync(bool? shutdownPipeline = true, CancellationToken cancellationToken = default)
     {
         try
         {
             // Close the WebSocket if it's in a state that allows closing
             if (this.Socket.State is WebSocketState.Open or WebSocketState.CloseReceived or WebSocketState.CloseSent)
             {
-                await this.Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None).ConfigureAwait(false);
+                await this.Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, cancellationToken).ConfigureAwait(false);
             }
             else if (this.Socket.State == WebSocketState.Aborted)
             {
@@ -192,6 +216,12 @@ public class WebSocketTransport : BaseTransport, IDisposable
             // WebSocket may already be closed or in a closing state
             Logger.Debug(ex, "WebSocket is already closed or closing");
         }
+        catch (OperationCanceledException ex)
+        {
+            // Operation was cancelled
+            Logger.Debug(ex, "Close operation was cancelled");
+            return false;
+        }
 
         return true;
     }
@@ -206,19 +236,44 @@ public class WebSocketTransport : BaseTransport, IDisposable
     /// <exception cref="OperationCanceledException">Thrown when the operation is canceled.</exception>
     public override async Task<bool> WriteAsync(byte[] buffer, CancellationToken cancellationToken = default)
     {
+        // Serialize write operations to prevent concurrent writes that cause NotSupportedException
         try
         {
+            await this.writeSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // Semaphore wait was cancelled
+            Logger.Debug("Write operation was cancelled while waiting for semaphore");
+            return false;
+        }
+
+        try
+        {
+            // Check if socket is in a valid state for writing
+            if (this.Socket.State != WebSocketState.Open)
+            {
+                Logger.Debug($"WebSocket is not in a writable state: {this.Socket.State}");
+                return false;
+            }
+
             await this.Socket.SendAsync(buffer, WebSocketMessageType.Binary, true, cancellationToken).ConfigureAwait(false);
         }
         catch (WebSocketException ex)
         {
-            Logger.Error(ex, "Failed to write to the WebSocket server");
+            // Log at Debug level since ConnectionManager will log the error and write failures can be expected during disconnection
+            Logger.Debug(ex, "Failed to write to the WebSocket server");
             return false;
         }
         catch (OperationCanceledException ex)
         {
-            Logger.Error(ex, "Failed to write to the WebSocket server");
+            // Log at Debug level since ConnectionManager will log the error and write failures can be expected during disconnection
+            Logger.Debug(ex, "Failed to write to the WebSocket server");
             return false;
+        }
+        finally
+        {
+            this.writeSemaphore.Release();
         }
 
         return true;
@@ -310,14 +365,49 @@ public class WebSocketTransport : BaseTransport, IDisposable
         }
     }
 
+    /// <summary>
+    /// Advances the reader's examined position to the specified position.
+    /// </summary>
+    /// <param name="consumed">The position to advance the consumed position to.</param>
+    /// <remarks>
+    /// <para>
+    /// This method is a no-op for WebSocket transport. The AdvanceTo method is part of the
+    /// <see cref="System.IO.Pipelines.PipeReader"/> API used by TCPTransport for buffering and backpressure management.
+    /// </para>
+    /// <para>
+    /// WebSocket transport does not use the Pipelines API because the WebSocket API provides its own message
+    /// framing and buffering. Messages are read directly from the WebSocket connection and returned as complete
+    /// <see cref="ReadOnlySequence{T}"/> buffers. There is no need to track consumed/examined positions since
+    /// each read operation returns a complete message boundary.
+    /// </para>
+    /// </remarks>
     public override void AdvanceTo(SequencePosition consumed)
     {
-        // No-op in websocket
+        // No-op in websocket - WebSocket API handles message boundaries directly
+        // Unlike TCPTransport which uses PipeReader, WebSocket reads return complete messages
     }
 
+    /// <summary>
+    /// Advances the reader's consumed and examined positions to the specified positions.
+    /// </summary>
+    /// <param name="consumed">The position to advance the consumed position to.</param>
+    /// <param name="examined">The position to advance the examined position to.</param>
+    /// <remarks>
+    /// <para>
+    /// This method is a no-op for WebSocket transport. The AdvanceTo method is part of the
+    /// <see cref="System.IO.Pipelines.PipeReader"/> API used by TCPTransport for buffering and backpressure management.
+    /// </para>
+    /// <para>
+    /// WebSocket transport does not use the Pipelines API because the WebSocket API provides its own message
+    /// framing and buffering. Messages are read directly from the WebSocket connection and returned as complete
+    /// <see cref="ReadOnlySequence{T}"/> buffers. There is no need to track consumed/examined positions since
+    /// each read operation returns a complete message boundary.
+    /// </para>
+    /// </remarks>
     public override void AdvanceTo(SequencePosition consumed, SequencePosition examined)
     {
-        // No-op in websocket
+        // No-op in websocket - WebSocket API handles message boundaries directly
+        // Unlike TCPTransport which uses PipeReader, WebSocket reads return complete messages
     }
 
     /// <summary>
@@ -358,6 +448,9 @@ public class WebSocketTransport : BaseTransport, IDisposable
             // and unmanaged resources.
             if (disposing)
             {
+                // Dispose of the write semaphore
+                this.writeSemaphore?.Dispose();
+
                 // Dispose WebSocket if it's not null
                 if (this.Socket != null)
                 {

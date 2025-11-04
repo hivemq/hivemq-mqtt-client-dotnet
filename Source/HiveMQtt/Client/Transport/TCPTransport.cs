@@ -240,8 +240,9 @@ public class TCPTransport : BaseTransport, IDisposable
     /// Close the TCP connection.
     /// </summary>
     /// <param name="shutdownPipeline">A boolean indicating whether to shutdown the pipeline.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A boolean indicating whether the operation was successful.</returns>
-    public override async Task<bool> CloseAsync(bool? shutdownPipeline = true)
+    public override async Task<bool> CloseAsync(bool? shutdownPipeline = true, CancellationToken cancellationToken = default)
     {
         if (shutdownPipeline == true)
         {
@@ -260,7 +261,7 @@ public class TCPTransport : BaseTransport, IDisposable
         if (this.Stream != null)
         {
             // Dispose of the Stream
-            await this.Stream.FlushAsync().ConfigureAwait(false);
+            await this.Stream.FlushAsync(cancellationToken).ConfigureAwait(false);
             this.Stream.Close();
             await this.Stream.DisposeAsync().ConfigureAwait(false);
             this.Stream = null;
