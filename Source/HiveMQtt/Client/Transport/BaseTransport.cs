@@ -25,7 +25,7 @@ public abstract class BaseTransport
 
     public abstract Task<bool> ConnectAsync(CancellationToken cancellationToken = default);
 
-    public abstract Task<bool> CloseAsync(bool? shutdownPipeline = true);
+    public abstract Task<bool> CloseAsync(bool? shutdownPipeline = true, CancellationToken cancellationToken = default);
 
     public abstract Task<bool> WriteAsync(byte[] buffer, CancellationToken cancellationToken = default);
 

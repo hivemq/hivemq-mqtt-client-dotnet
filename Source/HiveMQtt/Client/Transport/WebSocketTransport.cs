@@ -155,15 +155,16 @@ public class WebSocketTransport : BaseTransport, IDisposable
     /// Close the WebSocket connection.
     /// </summary>
     /// <param name="shutdownPipeline">Whether to shutdown the pipeline.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>True if the close was successful, false otherwise.</returns>
-    public override async Task<bool> CloseAsync(bool? shutdownPipeline = true)
+    public override async Task<bool> CloseAsync(bool? shutdownPipeline = true, CancellationToken cancellationToken = default)
     {
         try
         {
             // Close the WebSocket if it's in a state that allows closing
             if (this.Socket.State is WebSocketState.Open or WebSocketState.CloseReceived or WebSocketState.CloseSent)
             {
-                await this.Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None).ConfigureAwait(false);
+                await this.Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, cancellationToken).ConfigureAwait(false);
             }
             else if (this.Socket.State == WebSocketState.Aborted)
             {
@@ -194,6 +195,12 @@ public class WebSocketTransport : BaseTransport, IDisposable
         {
             // WebSocket may already be closed or in a closing state
             Logger.Debug(ex, "WebSocket is already closed or closing");
+        }
+        catch (OperationCanceledException ex)
+        {
+            // Operation was cancelled
+            Logger.Debug(ex, "Close operation was cancelled");
+            return false;
         }
 
         return true;

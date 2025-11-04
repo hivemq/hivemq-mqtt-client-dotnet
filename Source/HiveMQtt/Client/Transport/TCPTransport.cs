@@ -240,8 +240,9 @@ public class TCPTransport : BaseTransport, IDisposable
     /// Close the TCP connection.
     /// </summary>
     /// <param name="shutdownPipeline">A boolean indicating whether to shutdown the pipeline.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A boolean indicating whether the operation was successful.</returns>
-    public override async Task<bool> CloseAsync(bool? shutdownPipeline = true)
+    public override async Task<bool> CloseAsync(bool? shutdownPipeline = true, CancellationToken cancellationToken = default)
     {
         if (shutdownPipeline == true)
         {
