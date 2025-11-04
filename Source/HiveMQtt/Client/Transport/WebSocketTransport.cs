@@ -224,12 +224,14 @@ public class WebSocketTransport : BaseTransport, IDisposable
         }
         catch (WebSocketException ex)
         {
-            Logger.Error(ex, "Failed to write to the WebSocket server");
+            // Log at Debug level since ConnectionManager will log the error and write failures can be expected during disconnection
+            Logger.Debug(ex, "Failed to write to the WebSocket server");
             return false;
         }
         catch (OperationCanceledException ex)
         {
-            Logger.Error(ex, "Failed to write to the WebSocket server");
+            // Log at Debug level since ConnectionManager will log the error and write failures can be expected during disconnection
+            Logger.Debug(ex, "Failed to write to the WebSocket server");
             return false;
         }
         finally
