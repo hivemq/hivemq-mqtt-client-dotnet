@@ -217,7 +217,17 @@ public class WebSocketTransport : BaseTransport, IDisposable
     public override async Task<bool> WriteAsync(byte[] buffer, CancellationToken cancellationToken = default)
     {
         // Serialize write operations to prevent concurrent writes that cause NotSupportedException
-        await this.writeSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await this.writeSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // Semaphore wait was cancelled
+            Logger.Debug("Write operation was cancelled while waiting for semaphore");
+            return false;
+        }
+
         try
         {
             // Check if socket is in a valid state for writing
