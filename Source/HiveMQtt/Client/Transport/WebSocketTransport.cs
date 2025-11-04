@@ -213,6 +213,13 @@ public class WebSocketTransport : BaseTransport, IDisposable
         await this.writeSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            // Check if socket is in a valid state for writing
+            if (this.Socket.State != WebSocketState.Open)
+            {
+                Logger.Debug($"WebSocket is not in a writable state: {this.Socket.State}");
+                return false;
+            }
+
             await this.Socket.SendAsync(buffer, WebSocketMessageType.Binary, true, cancellationToken).ConfigureAwait(false);
         }
         catch (WebSocketException ex)
