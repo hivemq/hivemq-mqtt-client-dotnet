@@ -14,9 +14,9 @@ using Xunit;
 /// </summary>
 public class WebSocketTLSTest
 {
-    // Rate limiting: Minimum delay between connection attempts (2 seconds)
+    // Rate limiting: Minimum delay between connection attempts (12 seconds)
     // broker.hivemq.com has rate limiting to prevent ConnectionRateExceeded errors
-    private static readonly TimeSpan MinConnectionDelay = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan MinConnectionDelay = TimeSpan.FromSeconds(12);
 #pragma warning disable IDE0090 // Use 'new(...)' - SemaphoreSlim requires explicit constructor parameters
     private static readonly SemaphoreSlim RateLimitSemaphore = new SemaphoreSlim(1, 1);
 #pragma warning restore IDE0090
