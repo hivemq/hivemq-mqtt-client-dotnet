@@ -295,15 +295,59 @@ public class WebSocketTransport : BaseTransport, IDisposable
             return new TransportReadResult(true);
         }
 
-        var buffer = new ArraySegment<byte>(new byte[8192]);
+        // Use ArrayPool to reuse buffers and reduce GC pressure
+        const int bufferSize = 8192;
+        var rentedBuffer = ArrayPool<byte>.Shared.Rent(bufferSize);
+        var buffer = new ArraySegment<byte>(rentedBuffer, 0, bufferSize);
         WebSocketReceiveResult result;
 
         try
         {
+            // First read to determine if message is fragmented
+            result = await this.Socket.ReceiveAsync(buffer, cancellationToken).ConfigureAwait(false);
+
+            // Check if we received a close message
+            if (result.MessageType is WebSocketMessageType.Close)
+            {
+                Logger.Debug($"WebSocket received close message: {result.CloseStatus}");
+                return new TransportReadResult(true);
+            }
+
+            // Check if connection was closed during read
+            if (result.CloseStatus.HasValue)
+            {
+                Logger.Debug($"WebSocket connection closed during read: {result.CloseStatus}");
+                return new TransportReadResult(true);
+            }
+
+            // Optimize for single-read messages (no fragmentation)
+            if (result.EndOfMessage && result.MessageType is WebSocketMessageType.Binary)
+            {
+                // Single read message - copy directly from rented buffer
+                if (result.Count > 0)
+                {
+                    var resultArray = new byte[result.Count];
+                    Buffer.BlockCopy(rentedBuffer, 0, resultArray, 0, result.Count);
+                    Logger.Trace($"Received {result.Count} bytes (single read)");
+                    return new TransportReadResult(new ReadOnlySequence<byte>(resultArray));
+                }
+                else
+                {
+                    return new TransportReadResult(true);
+                }
+            }
+
+            // Message is fragmented - use MemoryStream to accumulate
             using (var ms = new MemoryStream())
             {
-                // Read until the end of the message
-                do
+                // Write the first chunk
+                if (result.Count > 0)
+                {
+                    await ms.WriteAsync(rentedBuffer.AsMemory(0, result.Count), cancellationToken).ConfigureAwait(false);
+                }
+
+                // Continue reading if message is not complete
+                while (!result.EndOfMessage && result.MessageType is not WebSocketMessageType.Close)
                 {
                     result = await this.Socket.ReceiveAsync(buffer, cancellationToken).ConfigureAwait(false);
 
@@ -314,28 +358,28 @@ public class WebSocketTransport : BaseTransport, IDisposable
                         return new TransportReadResult(true);
                     }
 
+                    // Check if connection was closed during read
+                    if (result.CloseStatus.HasValue)
+                    {
+                        Logger.Debug($"WebSocket connection closed during read: {result.CloseStatus}");
+                        return new TransportReadResult(true);
+                    }
+
                     // Only write if we got actual data
                     if (result.Count > 0)
                     {
-                        await ms.WriteAsync(buffer.AsMemory(buffer.Offset, result.Count), cancellationToken).ConfigureAwait(false);
+                        await ms.WriteAsync(rentedBuffer.AsMemory(0, result.Count), cancellationToken).ConfigureAwait(false);
                     }
                 }
-                while (!result.EndOfMessage && result.MessageType is not WebSocketMessageType.Close);
 
-                Logger.Trace($"Received {ms.Length} bytes");
-
-                // Check if connection was closed during read
-                if (result.CloseStatus.HasValue)
-                {
-                    Logger.Debug($"WebSocket connection closed during read: {result.CloseStatus}");
-                    return new TransportReadResult(true);
-                }
+                Logger.Trace($"Received {ms.Length} bytes (fragmented)");
 
                 // Return data only for binary messages (MQTT uses binary)
                 if (result.MessageType is WebSocketMessageType.Binary)
                 {
-                    // Prepare the result and return
-                    return new TransportReadResult(new ReadOnlySequence<byte>(ms.ToArray()));
+                    // Copy from MemoryStream to final array
+                    var resultArray = ms.ToArray();
+                    return new TransportReadResult(new ReadOnlySequence<byte>(resultArray));
                 }
                 else
                 {
@@ -362,6 +406,11 @@ public class WebSocketTransport : BaseTransport, IDisposable
             // Socket may have been closed or aborted
             Logger.Debug(ex, "WebSocket operation is invalid - socket may be closed");
             return new TransportReadResult(true);
+        }
+        finally
+        {
+            // Always return the rented buffer to the pool
+            ArrayPool<byte>.Shared.Return(rentedBuffer);
         }
     }
 
