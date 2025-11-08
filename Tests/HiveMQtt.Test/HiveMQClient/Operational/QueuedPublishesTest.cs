@@ -1,16 +1,33 @@
 namespace HiveMQtt.Test.HiveMQClient;
 
 using System.Text;
+using System.Threading.Tasks;
 using HiveMQtt.Client;
 using HiveMQtt.MQTT5.Types;
 using Xunit;
 
 public class QueuedPublishesTest
 {
+    // Synchronization for subscriptions to be ready before publishing
+#pragma warning disable IDE0090 // Use 'new(...)' instead of 'new Type(...)'
+    private TaskCompletionSource<bool> subscriptionsReady = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    // Synchronization for all messages to be relayed
+    private TaskCompletionSource<bool> allMessagesRelayed = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    // Synchronization for all messages to be received
+    private TaskCompletionSource<bool> allMessagesReceived = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+#pragma warning restore IDE0090
+
     [Fact]
     public async Task Queued_Messages_Chain_Async()
     {
         var batchSize = 1000;
+
+        // Reset synchronization sources for this test run
+        this.subscriptionsReady = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        this.allMessagesRelayed = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        this.allMessagesReceived = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         var tasks = new[]
         {
@@ -41,8 +58,8 @@ public class QueuedPublishesTest
         var publishClient = new HiveMQClient(publisherOptions);
         await publishClient.ConnectAsync().ConfigureAwait(false);
 
-        // Wait for 1 second to allow other tasks to subscribe
-        await Task.Delay(1000).ConfigureAwait(false);
+        // Wait for subscriptions to be ready instead of fixed delay
+        await this.subscriptionsReady.Task.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
 
         for (var i = 0; i < batchSize; i++)
         {
@@ -73,6 +90,7 @@ public class QueuedPublishesTest
         var subscribeClient = new HiveMQClient(subscriberOptions);
 
         var relayCount = 0;
+        var batchSize = 1000;
 #pragma warning disable CS8652
 #pragma warning disable CS8604
         subscribeClient.OnMessageReceived += async (sender, args) =>
@@ -83,7 +101,13 @@ public class QueuedPublishesTest
             Assert.NotNull(publishResult?.QoS2ReasonCode);
 
             // Atomically increment the relayCount
-            Interlocked.Increment(ref relayCount);
+            var count = Interlocked.Increment(ref relayCount);
+
+            // Signal when all messages are relayed
+            if (count == batchSize)
+            {
+                this.allMessagesRelayed.TrySetResult(true);
+            }
         };
 #pragma warning restore CS8652
 #pragma warning restore CS8604
@@ -91,8 +115,11 @@ public class QueuedPublishesTest
         await subscribeClient.ConnectAsync().ConfigureAwait(false);
         await subscribeClient.SubscribeAsync(firstTopic, QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
 
-        // Wait until all messages are relayed
-        await Task.Delay(5000).ConfigureAwait(false);
+        // Signal that subscription is ready
+        this.subscriptionsReady.TrySetResult(true);
+
+        // Wait until all messages are relayed with timeout instead of fixed delay
+        await this.allMessagesRelayed.Task.WaitAsync(TimeSpan.FromSeconds(30)).ConfigureAwait(false);
         await subscribeClient.DisconnectAsync().ConfigureAwait(false);
         return relayCount;
     }
@@ -112,13 +139,26 @@ public class QueuedPublishesTest
         var receiverClient = new HiveMQClient(receiverOptions);
 
         var receivedCount = 0;
-        receiverClient.OnMessageReceived += (sender, args) => Interlocked.Increment(ref receivedCount);
+        var batchSize = 1000;
+        receiverClient.OnMessageReceived += (sender, args) =>
+        {
+            var count = Interlocked.Increment(ref receivedCount);
+
+            // Signal when all messages are received
+            if (count == batchSize)
+            {
+                this.allMessagesReceived.TrySetResult(true);
+            }
+        };
 
         await receiverClient.ConnectAsync().ConfigureAwait(false);
         await receiverClient.SubscribeAsync(secondTopic, QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
 
-        // Wait for the receiver to receive all messages
-        await Task.Delay(5000).ConfigureAwait(false);
+        // Signal that subscription is ready
+        this.subscriptionsReady.TrySetResult(true);
+
+        // Wait for the receiver to receive all messages with timeout instead of fixed delay
+        await this.allMessagesReceived.Task.WaitAsync(TimeSpan.FromSeconds(30)).ConfigureAwait(false);
         await receiverClient.DisconnectAsync().ConfigureAwait(false);
 
         return receivedCount;

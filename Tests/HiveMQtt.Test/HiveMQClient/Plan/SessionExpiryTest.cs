@@ -48,8 +48,8 @@ public class SessionExpiryTest
         disconnectResult = await client.DisconnectAsync(disconnectOptions).ConfigureAwait(false);
         disconnectResult.Should().BeTrue();
 
-        // Delay longer than the session expiry
-        await Task.Delay(10000).ConfigureAwait(false);
+        // Wait for session to expire on broker (session expiry is 5 seconds, wait 6 seconds for safety margin)
+        await Task.Delay(6000).ConfigureAwait(false);
 
         // Reconnect.  We should get session not present
         var connectResult3 = await client.ConnectAsync(connectOptions).ConfigureAwait(false);
