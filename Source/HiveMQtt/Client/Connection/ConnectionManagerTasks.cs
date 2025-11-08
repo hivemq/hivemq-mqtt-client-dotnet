@@ -38,7 +38,46 @@ public partial class ConnectionManager
             {
                 Logger.Error($"{this.Client.Options.ClientId}-(CM)- {taskName} Faulted: {task.Exception}");
                 Logger.Error($"{this.Client.Options.ClientId}-(CM)- {taskName} died.  Disconnecting.");
-                _ = Task.Run(async () => await this.HandleDisconnectionAsync(false).ConfigureAwait(false));
+
+                // Use semaphore to prevent concurrent disconnection attempts
+                // Fire-and-forget but with proper synchronization and exception handling
+                _ = Task.Run(async () =>
+                {
+                    // Check if already disconnected before attempting
+                    if (this.State == ConnectState.Disconnected)
+                    {
+                        Logger.Trace($"{this.Client.Options.ClientId}-(CM)- Already disconnected, skipping disconnection.");
+                        return;
+                    }
+
+                    // Try to acquire semaphore with zero timeout (non-blocking)
+                    if (!await this.disconnectionSemaphore.WaitAsync(0).ConfigureAwait(false))
+                    {
+                        Logger.Trace($"{this.Client.Options.ClientId}-(CM)- Disconnection already in progress, skipping duplicate call.");
+                        return;
+                    }
+
+                    try
+                    {
+                        // Double-check state after acquiring semaphore
+                        if (this.State == ConnectState.Disconnected)
+                        {
+                            Logger.Trace($"{this.Client.Options.ClientId}-(CM)- Already disconnected after acquiring semaphore.");
+                            return;
+                        }
+
+                        // Start disconnection
+                        await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Error($"{this.Client.Options.ClientId}-(CM)- Exception during disconnection from health check: {ex}");
+                    }
+                    finally
+                    {
+                        this.disconnectionSemaphore.Release();
+                    }
+                });
             }
         }
     }

@@ -35,6 +35,12 @@ public partial class ConnectionManager : IDisposable
     // The HiveMQClient this ConnectionManager is associated with
     internal HiveMQClient Client { get; }
 
+    // This is used to know if and when we need to send a MQTT PingReq
+    private readonly Stopwatch lastCommunicationTimer = new();
+
+    // Semaphore to prevent concurrent disconnection attempts
+    private readonly SemaphoreSlim disconnectionSemaphore = new(1, 1);
+
     // This is how we kill innocent and not so innocent Tasks
     private CancellationTokenSource cancellationTokenSource;
 
@@ -67,9 +73,6 @@ public partial class ConnectionManager : IDisposable
     internal PacketIDManager PacketIDManager { get; } = new();
 
     public PacketIDManager GetPacketIDManager() => this.PacketIDManager;
-
-    // This is used to know if and when we need to send a MQTT PingReq
-    private readonly Stopwatch lastCommunicationTimer = new();
 
     // Event-like signal to indicate the connection reached Connected state
     private TaskCompletionSource<bool> connectedSignal = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -324,6 +327,9 @@ public partial class ConnectionManager : IDisposable
                 this.ReceivedQueue?.Dispose();
                 this.IPubTransactionQueue?.Dispose();
                 this.OPubTransactionQueue?.Dispose();
+
+                // Dispose semaphore
+                this.disconnectionSemaphore?.Dispose();
             }
 
             // Note disposing has been done.
