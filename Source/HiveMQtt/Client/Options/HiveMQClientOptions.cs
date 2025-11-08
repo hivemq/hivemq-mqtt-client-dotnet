@@ -16,7 +16,9 @@
 namespace HiveMQtt.Client.Options;
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using HiveMQtt.Client;
@@ -213,6 +215,59 @@ public class HiveMQClientOptions
     /// Reconnection attempts will be made with a retry back off strategy.
     /// </summary>
     public bool AutomaticReconnect { get; set; }
+
+    /// <summary>
+    /// Gets or sets the WebSocket keep-alive interval.
+    /// <para>
+    /// This specifies the interval at which the WebSocket client will send keep-alive pings to the server
+    /// to maintain the connection. If not set, the default WebSocket keep-alive behavior is used.
+    /// </para>
+    /// <para>
+    /// This option is only applicable when using WebSocket transport (ws:// or wss://).
+    /// </para>
+    /// </summary>
+    public TimeSpan? WebSocketKeepAliveInterval { get; set; }
+
+    /// <summary>
+    /// Gets or sets custom HTTP headers to be sent during the WebSocket handshake.
+    /// <para>
+    /// This dictionary allows you to add custom headers such as Authorization, X-API-Key, or any other
+    /// custom headers required by your WebSocket server. Headers are sent during the initial WebSocket
+    /// connection handshake.
+    /// </para>
+    /// <para>
+    /// This option is only applicable when using WebSocket transport (ws:// or wss://).
+    /// </para>
+    /// <para>
+    /// Example:
+    /// <code>
+    /// options.WebSocketRequestHeaders = new Dictionary&lt;string, string&gt;
+    /// {
+    ///     { "Authorization", "Bearer token123" },
+    ///     { "X-API-Key", "api-key-value" }
+    /// };
+    /// </code>
+    /// </para>
+    /// </summary>
+    public Dictionary<string, string>? WebSocketRequestHeaders { get; set; }
+
+    /// <summary>
+    /// Gets or sets the proxy configuration for WebSocket connections.
+    /// <para>
+    /// This allows you to configure a proxy server for WebSocket connections. If not set, the system's
+    /// default proxy settings are used.
+    /// </para>
+    /// <para>
+    /// This option is only applicable when using WebSocket transport (ws:// or wss://).
+    /// </para>
+    /// <para>
+    /// Example:
+    /// <code>
+    /// options.WebSocketProxy = new WebProxy("http://proxy.example.com:8080");
+    /// </code>
+    /// </para>
+    /// </summary>
+    public IWebProxy? WebSocketProxy { get; set; }
 
     /// <summary>
     /// Generate a semi-random client identifier to be used in <c>Client</c> connections.

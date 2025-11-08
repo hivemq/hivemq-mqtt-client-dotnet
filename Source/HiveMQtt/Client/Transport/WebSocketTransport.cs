@@ -64,6 +64,9 @@ public class WebSocketTransport : BaseTransport, IDisposable
             throw new ArgumentException("Invalid WebSocket URI scheme");
         }
 
+        // Configure WebSocket-specific options
+        this.ConfigureWebSocketOptions();
+
         // Configure TLS options for secure WebSocket (wss://)
         if (uri.Scheme == "wss")
         {
@@ -112,6 +115,37 @@ public class WebSocketTransport : BaseTransport, IDisposable
 
         // Do not allow this client to communicate with unauthenticated servers.
         return false;
+    }
+
+    /// <summary>
+    /// Configure WebSocket-specific options from HiveMQClientOptions.
+    /// </summary>
+    private void ConfigureWebSocketOptions()
+    {
+        // Configure keep-alive interval if specified
+        if (this.Options.WebSocketKeepAliveInterval.HasValue)
+        {
+            this.Socket.Options.KeepAliveInterval = this.Options.WebSocketKeepAliveInterval.Value;
+            Logger.Trace($"WebSocket keep-alive interval set to {this.Options.WebSocketKeepAliveInterval.Value}");
+        }
+
+        // Configure custom request headers if specified
+        if (this.Options.WebSocketRequestHeaders != null && this.Options.WebSocketRequestHeaders.Count > 0)
+        {
+            foreach (var header in this.Options.WebSocketRequestHeaders)
+            {
+                this.Socket.Options.SetRequestHeader(header.Key, header.Value);
+            }
+
+            Logger.Trace($"Added {this.Options.WebSocketRequestHeaders.Count} custom header(s) for WebSocket connection");
+        }
+
+        // Configure proxy if specified
+        if (this.Options.WebSocketProxy != null)
+        {
+            this.Socket.Options.Proxy = this.Options.WebSocketProxy;
+            Logger.Trace($"WebSocket proxy configured: {this.Options.WebSocketProxy}");
+        }
     }
 
     /// <summary>

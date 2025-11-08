@@ -15,6 +15,9 @@
  */
 namespace HiveMQtt.Client;
 
+using System;
+using System.Collections.Generic;
+using System.Net;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using HiveMQtt.Client.Options;
@@ -88,6 +91,81 @@ public class HiveMQClientOptionsBuilder
     public HiveMQClientOptionsBuilder WithWebSocketServer(string webSocketServer)
     {
         this.options.WebSocketServer = webSocketServer;
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the WebSocket keep-alive interval.
+    /// <para>
+    /// This specifies the interval at which the WebSocket client will send keep-alive pings to the server
+    /// to maintain the connection. If not set, the default WebSocket keep-alive behavior is used.
+    /// </para>
+    /// <para>
+    /// This option is only applicable when using WebSocket transport (ws:// or wss://).
+    /// </para>
+    /// </summary>
+    /// <param name="keepAliveInterval">The keep-alive interval.</param>
+    /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
+    public HiveMQClientOptionsBuilder WithWebSocketKeepAliveInterval(TimeSpan keepAliveInterval)
+    {
+        this.options.WebSocketKeepAliveInterval = keepAliveInterval;
+        return this;
+    }
+
+    /// <summary>
+    /// Sets custom HTTP headers to be sent during the WebSocket handshake.
+    /// <para>
+    /// This allows you to add custom headers such as Authorization, X-API-Key, or any other
+    /// custom headers required by your WebSocket server. Headers are sent during the initial WebSocket
+    /// connection handshake.
+    /// </para>
+    /// <para>
+    /// This option is only applicable when using WebSocket transport (ws:// or wss://).
+    /// </para>
+    /// </summary>
+    /// <param name="headers">A dictionary of header names and values.</param>
+    /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
+    public HiveMQClientOptionsBuilder WithWebSocketRequestHeaders(Dictionary<string, string> headers)
+    {
+        this.options.WebSocketRequestHeaders = headers;
+        return this;
+    }
+
+    /// <summary>
+    /// Adds a custom HTTP header to be sent during the WebSocket handshake.
+    /// <para>
+    /// This is a convenience method for adding a single header. For multiple headers, use
+    /// <see cref="WithWebSocketRequestHeaders(Dictionary{string, string})"/>.
+    /// </para>
+    /// <para>
+    /// This option is only applicable when using WebSocket transport (ws:// or wss://).
+    /// </para>
+    /// </summary>
+    /// <param name="name">The header name.</param>
+    /// <param name="value">The header value.</param>
+    /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
+    public HiveMQClientOptionsBuilder WithWebSocketRequestHeader(string name, string value)
+    {
+        this.options.WebSocketRequestHeaders ??= new Dictionary<string, string>();
+        this.options.WebSocketRequestHeaders[name] = value;
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the proxy configuration for WebSocket connections.
+    /// <para>
+    /// This allows you to configure a proxy server for WebSocket connections. If not set, the system's
+    /// default proxy settings are used.
+    /// </para>
+    /// <para>
+    /// This option is only applicable when using WebSocket transport (ws:// or wss://).
+    /// </para>
+    /// </summary>
+    /// <param name="proxy">The proxy configuration.</param>
+    /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
+    public HiveMQClientOptionsBuilder WithWebSocketProxy(IWebProxy proxy)
+    {
+        this.options.WebSocketProxy = proxy;
         return this;
     }
 
