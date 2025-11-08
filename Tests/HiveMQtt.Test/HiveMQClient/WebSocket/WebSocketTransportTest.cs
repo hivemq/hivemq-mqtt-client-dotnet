@@ -1,6 +1,9 @@
 namespace HiveMQtt.Test.HiveMQClient.WebSocket;
 
+using System;
+using System.Collections.Generic;
 using System.Buffers;
+using System.Net;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -84,6 +87,182 @@ public class WebSocketTransportTest
 
         // TLS options should be configured (we can't easily verify the callback, but we can verify it doesn't throw)
         transport.Socket.Options.RemoteCertificateValidationCallback.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void Constructor_WithWebSocketKeepAliveInterval_ConfiguresKeepAlive()
+    {
+        // Arrange
+        var keepAliveInterval = TimeSpan.FromSeconds(30);
+        var options = new HiveMQClientOptionsBuilder()
+            .WithWebSocketServer("ws://localhost:8000/mqtt")
+            .WithClientId("test")
+            .WithWebSocketKeepAliveInterval(keepAliveInterval)
+            .Build();
+
+        // Act
+        var transport = new WebSocketTransport(options);
+
+        // Assert
+        transport.Should().NotBeNull();
+        transport.Socket.Options.KeepAliveInterval.Should().Be(keepAliveInterval);
+    }
+
+    [Fact]
+    public void Constructor_WithWebSocketRequestHeaders_ConfiguresHeaders()
+    {
+        // Arrange
+        var headers = new Dictionary<string, string>
+        {
+            { "Authorization", "Bearer token123" },
+            { "X-API-Key", "api-key-value" },
+            { "Custom-Header", "custom-value" },
+        };
+
+        var options = new HiveMQClientOptionsBuilder()
+            .WithWebSocketServer("ws://localhost:8000/mqtt")
+            .WithClientId("test")
+            .WithWebSocketRequestHeaders(headers)
+            .Build();
+
+        // Act
+        var transport = new WebSocketTransport(options);
+
+        // Assert
+        transport.Should().NotBeNull();
+
+        // Verify headers are set (ClientWebSocket.Options doesn't expose headers directly,
+        // but we can verify the transport was created without errors and the options are stored)
+        options.WebSocketRequestHeaders.Should().NotBeNull();
+        options.WebSocketRequestHeaders.Should().HaveCount(3);
+        options.WebSocketRequestHeaders.Should().ContainKey("Authorization");
+        options.WebSocketRequestHeaders.Should().ContainKey("X-API-Key");
+        options.WebSocketRequestHeaders.Should().ContainKey("Custom-Header");
+        options.WebSocketRequestHeaders!["Authorization"].Should().Be("Bearer token123");
+        options.WebSocketRequestHeaders!["X-API-Key"].Should().Be("api-key-value");
+        options.WebSocketRequestHeaders!["Custom-Header"].Should().Be("custom-value");
+    }
+
+    [Fact]
+    public void Constructor_WithWebSocketRequestHeader_AddsSingleHeader()
+    {
+        // Arrange
+        var options = new HiveMQClientOptionsBuilder()
+            .WithWebSocketServer("ws://localhost:8000/mqtt")
+            .WithClientId("test")
+            .WithWebSocketRequestHeader("Authorization", "Bearer token456")
+            .Build();
+
+        // Act
+        var transport = new WebSocketTransport(options);
+
+        // Assert
+        transport.Should().NotBeNull();
+        options.WebSocketRequestHeaders.Should().NotBeNull();
+        options.WebSocketRequestHeaders.Should().HaveCount(1);
+        options.WebSocketRequestHeaders.Should().ContainKey("Authorization");
+        options.WebSocketRequestHeaders!["Authorization"].Should().Be("Bearer token456");
+    }
+
+    [Fact]
+    public void Constructor_WithMultipleWebSocketRequestHeaders_AddsAllHeaders()
+    {
+        // Arrange
+        var options = new HiveMQClientOptionsBuilder()
+            .WithWebSocketServer("ws://localhost:8000/mqtt")
+            .WithClientId("test")
+            .WithWebSocketRequestHeader("Header1", "Value1")
+            .WithWebSocketRequestHeader("Header2", "Value2")
+            .WithWebSocketRequestHeader("Header3", "Value3")
+            .Build();
+
+        // Act
+        var transport = new WebSocketTransport(options);
+
+        // Assert
+        transport.Should().NotBeNull();
+        options.WebSocketRequestHeaders.Should().NotBeNull();
+        options.WebSocketRequestHeaders.Should().HaveCount(3);
+        options.WebSocketRequestHeaders!["Header1"].Should().Be("Value1");
+        options.WebSocketRequestHeaders!["Header2"].Should().Be("Value2");
+        options.WebSocketRequestHeaders!["Header3"].Should().Be("Value3");
+    }
+
+    [Fact]
+    public void Constructor_WithWebSocketProxy_ConfiguresProxy()
+    {
+        // Arrange
+        var proxyUri = new Uri("http://proxy.example.com:8080");
+        var proxy = new WebProxy(proxyUri);
+        var options = new HiveMQClientOptionsBuilder()
+            .WithWebSocketServer("ws://localhost:8000/mqtt")
+            .WithClientId("test")
+            .WithWebSocketProxy(proxy)
+            .Build();
+
+        // Act
+        var transport = new WebSocketTransport(options);
+
+        // Assert
+        transport.Should().NotBeNull();
+        transport.Socket.Options.Proxy.Should().Be(proxy);
+    }
+
+    [Fact]
+    public void Constructor_WithAllWebSocketOptions_ConfiguresAllOptions()
+    {
+        // Arrange
+        var keepAliveInterval = TimeSpan.FromSeconds(45);
+        var headers = new Dictionary<string, string>
+        {
+            { "Authorization", "Bearer token789" },
+            { "X-Custom", "value" },
+        };
+        var proxy = new WebProxy("http://proxy.test.com:3128");
+
+        var options = new HiveMQClientOptionsBuilder()
+            .WithWebSocketServer("ws://localhost:8000/mqtt")
+            .WithClientId("test")
+            .WithWebSocketKeepAliveInterval(keepAliveInterval)
+            .WithWebSocketRequestHeaders(headers)
+            .WithWebSocketProxy(proxy)
+            .Build();
+
+        // Act
+        var transport = new WebSocketTransport(options);
+
+        // Assert
+        transport.Should().NotBeNull();
+        transport.Socket.Options.KeepAliveInterval.Should().Be(keepAliveInterval);
+        transport.Socket.Options.Proxy.Should().Be(proxy);
+        options.WebSocketRequestHeaders.Should().NotBeNull();
+        options.WebSocketRequestHeaders.Should().HaveCount(2);
+        options.WebSocketRequestHeaders!["Authorization"].Should().Be("Bearer token789");
+        options.WebSocketRequestHeaders!["X-Custom"].Should().Be("value");
+    }
+
+    [Fact]
+    public void Constructor_WithoutWebSocketOptions_UsesDefaults()
+    {
+        // Arrange
+        var options = new HiveMQClientOptionsBuilder()
+            .WithWebSocketServer("ws://localhost:8000/mqtt")
+            .WithClientId("test")
+            .Build();
+
+        // Act
+        var transport = new WebSocketTransport(options);
+
+        // Assert
+        transport.Should().NotBeNull();
+
+        // Verify defaults (keep-alive uses system default, headers are null, proxy uses system default)
+        options.WebSocketKeepAliveInterval.Should().BeNull();
+        options.WebSocketRequestHeaders.Should().BeNull();
+        options.WebSocketProxy.Should().BeNull();
+
+        // Socket should still be created (defaults are applied by the system)
+        transport.Socket.Should().NotBeNull();
     }
 
     [Fact]
