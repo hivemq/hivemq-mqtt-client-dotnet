@@ -180,15 +180,22 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                     Logger.Trace("HiveMQClient Dispose: Disconnecting connected client.");
                     try
                     {
-                        // Use Task.Run to handle the async disconnect without blocking
-                        // Use a reasonable timeout to avoid hanging indefinitely
-#pragma warning disable VSTHRD002 // Synchronous Wait in dispose pattern is intentional to ensure cleanup
+                        // Use Task.Run to avoid synchronization context deadlocks
+                        // Task.Run executes on thread pool, avoiding sync context capture
+                        // WaitAsync with timeout prevents indefinite blocking
                         var disconnectTask = Task.Run(async () => await this.DisconnectAsync().ConfigureAwait(false));
-                        if (!disconnectTask.Wait(5000))
+                        try
+                        {
+                            // WaitAsync throws TimeoutException if timeout is exceeded
+                            // GetAwaiter().GetResult() is safe here because Task.Run avoids sync context
+#pragma warning disable VSTHRD002 // Synchronous wait is safe here - Task.Run avoids sync context deadlock
+                            disconnectTask.WaitAsync(TimeSpan.FromMilliseconds(5000)).GetAwaiter().GetResult();
+#pragma warning restore VSTHRD002
+                        }
+                        catch (TimeoutException)
                         {
                             Logger.Warn("Disconnect operation timed out during dispose");
                         }
-#pragma warning restore VSTHRD002
                     }
                     catch (Exception ex)
                     {
