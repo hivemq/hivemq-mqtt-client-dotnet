@@ -15,6 +15,7 @@
  */
 namespace HiveMQtt.Client.Connection;
 
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -160,53 +161,112 @@ public partial class ConnectionManager : IDisposable
         this.cancellationTokenSource.Cancel();
 #pragma warning restore VSTHRD103
 
-        // Delay for a short period to allow the tasks to cancel
-        await Task.Delay(1000).ConfigureAwait(false);
-
-        // Reset the tasks
-        if (this.ConnectionPublishWriterTask is not null && this.ConnectionPublishWriterTask.IsCompleted)
+        // Collect all active tasks
+        var tasksToWait = new List<Task>();
+        if (this.ConnectionPublishWriterTask is not null && !this.ConnectionPublishWriterTask.IsCompleted)
         {
+            tasksToWait.Add(this.ConnectionPublishWriterTask);
+        }
+
+        if (this.ConnectionWriterTask is not null && !this.ConnectionWriterTask.IsCompleted)
+        {
+            tasksToWait.Add(this.ConnectionWriterTask);
+        }
+
+        if (this.ConnectionReaderTask is not null && !this.ConnectionReaderTask.IsCompleted)
+        {
+            tasksToWait.Add(this.ConnectionReaderTask);
+        }
+
+        if (this.ReceivedPacketsHandlerTask is not null && !this.ReceivedPacketsHandlerTask.IsCompleted)
+        {
+            tasksToWait.Add(this.ReceivedPacketsHandlerTask);
+        }
+
+        if (this.ConnectionMonitorThread is not null && !this.ConnectionMonitorThread.IsCompleted)
+        {
+            tasksToWait.Add(this.ConnectionMonitorThread);
+        }
+
+        // Actually await all tasks with a timeout
+        if (tasksToWait.Count > 0)
+        {
+            try
+            {
+                // Wait for all tasks to complete with a 5 second timeout
+                await Task.WhenAll(tasksToWait).WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+                Logger.Trace("All background tasks completed successfully");
+            }
+            catch (TimeoutException)
+            {
+                Logger.Warn($"Background tasks did not complete within timeout. {tasksToWait.Count} task(s) may still be running.");
+            }
+            catch (Exception ex)
+            {
+                // Observe exceptions from tasks to prevent unobserved task exceptions
+                Logger.Warn($"Exception while waiting for background tasks to complete: {ex.Message}");
+
+                // Log individual task exceptions if any are faulted
+                foreach (var task in tasksToWait)
+                {
+                    if (task.IsFaulted && task.Exception != null)
+                    {
+                        Logger.Warn($"Task faulted during cancellation: {task.Exception.GetBaseException().Message}");
+                    }
+                }
+            }
+        }
+
+        // Clean up task references and observe any remaining exceptions
+        if (this.ConnectionPublishWriterTask is not null)
+        {
+            if (this.ConnectionPublishWriterTask.IsFaulted)
+            {
+                // Observe the exception to prevent unobserved task exceptions
+                _ = this.ConnectionPublishWriterTask.Exception;
+            }
+
             this.ConnectionPublishWriterTask = null;
         }
-        else
-        {
-            Logger.Trace("ConnectionPublishWriterTask did not complete in time");
-        }
 
-        if (this.ConnectionWriterTask is not null && this.ConnectionWriterTask.IsCompleted)
+        if (this.ConnectionWriterTask is not null)
         {
+            if (this.ConnectionWriterTask.IsFaulted)
+            {
+                _ = this.ConnectionWriterTask.Exception;
+            }
+
             this.ConnectionWriterTask = null;
         }
-        else
-        {
-            Logger.Trace("ConnectionWriterTask did not complete in time");
-        }
 
-        if (this.ConnectionReaderTask is not null && this.ConnectionReaderTask.IsCompleted)
+        if (this.ConnectionReaderTask is not null)
         {
+            if (this.ConnectionReaderTask.IsFaulted)
+            {
+                _ = this.ConnectionReaderTask.Exception;
+            }
+
             this.ConnectionReaderTask = null;
         }
-        else
-        {
-            Logger.Trace("ConnectionReaderTask did not complete in time");
-        }
 
-        if (this.ReceivedPacketsHandlerTask is not null && this.ReceivedPacketsHandlerTask.IsCompleted)
+        if (this.ReceivedPacketsHandlerTask is not null)
         {
+            if (this.ReceivedPacketsHandlerTask.IsFaulted)
+            {
+                _ = this.ReceivedPacketsHandlerTask.Exception;
+            }
+
             this.ReceivedPacketsHandlerTask = null;
         }
-        else
-        {
-            Logger.Trace("ReceivedPacketsHandlerTask did not complete in time");
-        }
 
-        if (this.ConnectionMonitorThread is not null && this.ConnectionMonitorThread.IsCompleted)
+        if (this.ConnectionMonitorThread is not null)
         {
+            if (this.ConnectionMonitorThread.IsFaulted)
+            {
+                _ = this.ConnectionMonitorThread.Exception;
+            }
+
             this.ConnectionMonitorThread = null;
-        }
-        else
-        {
-            Logger.Trace("ConnectionMonitorThread did not complete in time");
         }
     }
 
