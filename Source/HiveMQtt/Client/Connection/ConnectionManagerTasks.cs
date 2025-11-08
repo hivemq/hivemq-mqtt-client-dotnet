@@ -98,11 +98,26 @@ public partial class ConnectionManager
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
                 Logger.Debug($"{this.Client.Options.ClientId}-(CM)- Stopped by cancellation token");
+                break;
             }
             catch (Exception ex)
             {
                 Logger.Error($"{this.Client.Options.ClientId}-(CM)- Exception: {ex}");
-                throw;
+
+                // Handle exception gracefully - trigger disconnection and exit
+                if (this.State == ConnectState.Connected)
+                {
+                    try
+                    {
+                        await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
+                    }
+                    catch (Exception disconnectEx)
+                    {
+                        Logger.Warn($"{this.Client.Options.ClientId}-(CM)- Exception during disconnection: {disconnectEx.Message}");
+                    }
+                }
+
+                break;
             }
         } // while (true)
     }
@@ -184,7 +199,21 @@ public partial class ConnectionManager
                     else
                     {
                         Logger.Error($"{this.Client.Options.ClientId}-(PW)- Exception: {ex}");
-                        throw;
+
+                        // Handle exception gracefully - trigger disconnection and exit
+                        if (this.State == ConnectState.Connected)
+                        {
+                            try
+                            {
+                                await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
+                            }
+                            catch (Exception disconnectEx)
+                            {
+                                Logger.Warn($"{this.Client.Options.ClientId}-(PW)- Exception during disconnection: {disconnectEx.Message}");
+                            }
+                        }
+
+                        break;
                     }
                 }
             } // while(true)
@@ -299,7 +328,21 @@ public partial class ConnectionManager
                     else
                     {
                         Logger.Error($"{this.Client.Options.ClientId}-(W)- Exception: {ex}");
-                        throw;
+
+                        // Handle exception gracefully - trigger disconnection and exit
+                        if (this.State == ConnectState.Connected)
+                        {
+                            try
+                            {
+                                await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
+                            }
+                            catch (Exception disconnectEx)
+                            {
+                                Logger.Warn($"{this.Client.Options.ClientId}-(W)- Exception during disconnection: {disconnectEx.Message}");
+                            }
+                        }
+
+                        break;
                     }
                 }
             } // while(true)
@@ -440,7 +483,21 @@ public partial class ConnectionManager
                     else
                     {
                         Logger.Error($"{this.Client.Options.ClientId}-(R)- Exception: {ex}");
-                        throw;
+
+                        // Handle exception gracefully - trigger disconnection and exit
+                        if (this.State == ConnectState.Connected)
+                        {
+                            try
+                            {
+                                await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
+                            }
+                            catch (Exception disconnectEx)
+                            {
+                                Logger.Warn($"{this.Client.Options.ClientId}-(R)- Exception during disconnection: {disconnectEx.Message}");
+                            }
+                        }
+
+                        break;
                     }
                 }
             } // while (this.State is ConnectState.Connecting or ConnectState.Connected)
@@ -525,7 +582,21 @@ public partial class ConnectionManager
                     else
                     {
                         Logger.Error($"{this.Client.Options.ClientId}-(RPH)- Exception: {ex}");
-                        throw;
+
+                        // Handle exception gracefully - trigger disconnection and exit
+                        if (this.State == ConnectState.Connected)
+                        {
+                            try
+                            {
+                                await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
+                            }
+                            catch (Exception disconnectEx)
+                            {
+                                Logger.Warn($"{this.Client.Options.ClientId}-(RPH)- Exception during disconnection: {disconnectEx.Message}");
+                            }
+                        }
+
+                        break;
                     }
                 }
             } // while (true)
