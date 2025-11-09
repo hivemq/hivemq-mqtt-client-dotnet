@@ -1,6 +1,7 @@
 namespace HiveMQtt.Test.HiveMQClient;
 
 using HiveMQtt.Client;
+using HiveMQtt.Client.Events;
 using HiveMQtt.Client.Internal;
 using Xunit;
 
@@ -66,11 +67,27 @@ public class ClientTest
         // *************************************
         // Connect and validate internals again
         // *************************************
+        // Set up event handler BEFORE connecting to catch the event
+        var afterConnectSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        void AfterConnectHandler(object? sender, AfterConnectEventArgs args) => afterConnectSource.TrySetResult(true);
+        client.AfterConnect += AfterConnectHandler;
+
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.Equal(MQTT5.ReasonCodes.ConnAckReasonCode.Success, connectResult.ReasonCode);
 
-        // Wait for connack
-        await Task.Delay(1000).ConfigureAwait(false);
+        try
+        {
+            // Wait for AfterConnect event to ensure connection is fully established
+            // The event is fired synchronously but handlers run asynchronously, so we wait for the handler
+            await afterConnectSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+            // Small delay to allow async event handlers to complete
+            await Task.Delay(100).ConfigureAwait(false);
+        }
+        finally
+        {
+            client.AfterConnect -= AfterConnectHandler;
+        }
 
         // Task Stuff
         Assert.NotNull(client.Connection.ConnectionWriterTask);
@@ -127,10 +144,26 @@ public class ClientTest
         // *************************************
         // Disconnect and validate internals again
         // *************************************
+        // Set up event handler BEFORE disconnecting to catch the event
+        var afterDisconnectSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        void AfterDisconnectHandler(object? sender, AfterDisconnectEventArgs args) => afterDisconnectSource.TrySetResult(true);
+        client.AfterDisconnect += AfterDisconnectHandler;
+
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
 
-        // Wait for disconnect to take affect
-        await Task.Delay(1000).ConfigureAwait(false);
+        try
+        {
+            // Wait for AfterDisconnect event to ensure disconnection is fully complete
+            // The event is fired synchronously but handlers run asynchronously, so we wait for the handler
+            await afterDisconnectSource.Task.WaitAsync(TimeSpan.FromSeconds(6)).ConfigureAwait(false);
+
+            // Small delay to allow async event handlers to complete
+            await Task.Delay(100).ConfigureAwait(false);
+        }
+        finally
+        {
+            client.AfterDisconnect -= AfterDisconnectHandler;
+        }
 
         // Task Stuff
         Assert.Null(client.Connection.ConnectionWriterTask);

@@ -142,10 +142,17 @@ public class SubscribeTest
         var result = await client.ConnectAsync().ConfigureAwait(false);
         Assert.Equal(ConnAckReasonCode.Success, result.ReasonCode);
 
-        var subscribeResult = client.SubscribeAsync("tests/Test_Subscribe_Events_Async").ConfigureAwait(false);
+        // Set up TaskCompletionSource to wait for event handlers to finish
+        var afterSubscribeSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        client.AfterSubscribe += (sender, args) => afterSubscribeSource.TrySetResult(true);
 
-        // Wait for event handlers to finish
-        await Task.Delay(1000).ConfigureAwait(false);
+        var subscribeResult = await client.SubscribeAsync("tests/Test_Subscribe_Events_Async").ConfigureAwait(false);
+
+        // Wait for AfterSubscribe event to complete instead of fixed delay
+        await afterSubscribeSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+        // Small delay to allow async event handlers to complete (they run via Task.Run)
+        await Task.Delay(100).ConfigureAwait(false);
 
         // Assert that all Events were called
         Assert.True(client.LocalStore.ContainsKey("BeforeSubscribeHandlerCalled"));
