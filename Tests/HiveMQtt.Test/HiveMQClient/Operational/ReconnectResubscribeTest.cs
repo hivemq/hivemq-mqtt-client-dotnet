@@ -61,11 +61,16 @@ public class ReconnectResubscribeTest
         const string topic = "tests/reconnect/duplicate-handlers";
 
         var handlerInvokeCount = 0;
+        var messageReceived = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         void OnMessage(object? sender, OnMessageReceivedEventArgs e)
         {
             if (e.PublishMessage.Topic == topic)
             {
-                Interlocked.Increment(ref handlerInvokeCount);
+                var count = Interlocked.Increment(ref handlerInvokeCount);
+                if (count == 1)
+                {
+                    messageReceived.TrySetResult(true);
+                }
             }
         }
 
@@ -90,7 +95,8 @@ public class ReconnectResubscribeTest
         var publishResult = await client.PublishAsync(topic, "hello", QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
         Assert.NotNull(publishResult.QoS1ReasonCode);
 
-        await Task.Delay(1000).ConfigureAwait(false);
+        // Wait for message to be received with timeout instead of fixed delay
+        await messageReceived.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
         Assert.Equal(1, handlerInvokeCount);
 
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
@@ -236,9 +242,6 @@ public class ReconnectResubscribeTest
         var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
         Assert.True(disconnectResult);
 
-        // Small delay to ensure clean disconnect
-        await Task.Delay(100).ConfigureAwait(false);
-
         // Reconnect - this should preserve subscriptions due to Session Present = true
         var connectResult2 = await client.ConnectAsync().ConfigureAwait(false);
         Assert.Equal(ConnAckReasonCode.Success, connectResult2.ReasonCode);
@@ -263,10 +266,35 @@ public class ReconnectResubscribeTest
 
     private static async Task WaitForReconnectAsync(HiveMQClient client, int timeoutMs = 30000)
     {
-        var start = DateTime.UtcNow;
-        while (!client.IsConnected() && DateTime.UtcNow - start < TimeSpan.FromMilliseconds(timeoutMs))
+        // Use event-based waiting instead of polling
+        var reconnectComplete = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        void OnConnect(object? sender, AfterConnectEventArgs args)
         {
-            await Task.Delay(200).ConfigureAwait(false);
+            if (client.IsConnected())
+            {
+                reconnectComplete.TrySetResult(true);
+                client.AfterConnect -= OnConnect;
+            }
+        }
+
+        client.AfterConnect += OnConnect;
+
+        // If already connected, signal immediately
+        if (client.IsConnected())
+        {
+            reconnectComplete.TrySetResult(true);
+            client.AfterConnect -= OnConnect;
+        }
+
+        try
+        {
+            await reconnectComplete.Task.WaitAsync(TimeSpan.FromMilliseconds(timeoutMs)).ConfigureAwait(false);
+        }
+        catch (TimeoutException)
+        {
+            client.AfterConnect -= OnConnect;
+            throw new TimeoutException($"Reconnect did not complete within {timeoutMs}ms");
         }
 
         Assert.True(client.IsConnected());

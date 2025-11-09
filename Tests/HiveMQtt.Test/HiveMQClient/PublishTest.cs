@@ -44,10 +44,7 @@ public class PublishTest
             return result;
         });
 
-        // Small delay to ensure publish task starts first
-        await Task.Delay(100).ConfigureAwait(false);
-
-        // Connect in separate task
+        // Connect - publish task will wait for connection automatically
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
@@ -266,45 +263,59 @@ public class PublishTest
         var subscribeResult = await client2.SubscribeAsync("HMQ/3NodeQoS0FirstTopic", QualityOfService.AtMostOnceDelivery).ConfigureAwait(false);
         var client2MessageCount = 0;
 
+        // client 3 Subscribe to the secondary topic (declare before handlers to allow cross-referencing)
+        subscribeResult = await client3.SubscribeAsync("HMQ/3NodeQoS0SecondTopic", QualityOfService.AtMostOnceDelivery).ConfigureAwait(false);
+        var client3MessageCount = 0;
+
+        // Use TaskCompletionSource to wait for all messages instead of fixed delay
+        var allMessagesReceived = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
         // client 2 will receive the message and republish it to another topic
 #pragma warning disable VSTHRD100 // Avoid async void methods
         async void Client2MessageHandler(object? sender, OnMessageReceivedEventArgs eventArgs)
         {
-            Interlocked.Increment(ref client2MessageCount);
+            var count = Interlocked.Increment(ref client2MessageCount);
             if (sender is HiveMQClient client)
             {
                 var publishResult = await client.PublishAsync("HMQ/3NodeQoS0SecondTopic", eventArgs.PublishMessage.PayloadAsString, QualityOfService.AtMostOnceDelivery).ConfigureAwait(true);
                 Assert.NotNull(publishResult);
+            }
+
+            // Check if all messages received (check in both handlers to handle race conditions)
+            if (count == 10 && client3MessageCount == 10)
+            {
+                allMessagesReceived.TrySetResult(true);
             }
         }
 #pragma warning restore VSTHRD100 // Avoid async void methods
 
         client2.OnMessageReceived += Client2MessageHandler;
 
-        // client 3 Subscribe to the secondary topic
-        subscribeResult = await client3.SubscribeAsync("HMQ/3NodeQoS0SecondTopic", QualityOfService.AtMostOnceDelivery).ConfigureAwait(false);
-        var client3MessageCount = 0;
-
         // client 3 will receive the final message
-#pragma warning disable VSTHRD100 // Avoid async void methods
         void Client3MessageHandler(object? sender, OnMessageReceivedEventArgs eventArgs)
         {
-            Interlocked.Increment(ref client3MessageCount);
+            var count = Interlocked.Increment(ref client3MessageCount);
             Assert.NotNull(eventArgs.PublishMessage);
             Assert.Equal("Hello World", eventArgs.PublishMessage.PayloadAsString);
+
+            // Check if all messages received (check in both handlers to handle race conditions)
+            if (count == 10 && client2MessageCount == 10)
+            {
+                allMessagesReceived.TrySetResult(true);
+            }
         }
-#pragma warning restore VSTHRD100 // Avoid async void methods
 
         client3.OnMessageReceived += Client3MessageHandler;
 
-        // client 1 Publish 100 messages
+        // client 1 Publish 10 messages
         for (var i = 1; i <= 10; i++)
         {
             var publishResult = await client1.PublishAsync("HMQ/3NodeQoS0FirstTopic", "Hello World", QualityOfService.AtMostOnceDelivery).ConfigureAwait(false);
             Assert.NotNull(publishResult);
         }
 
-        await Task.Delay(3000).ConfigureAwait(false);
+        // Wait for all messages to be received with timeout instead of fixed delay
+        await allMessagesReceived.Task.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
 
         Assert.Equal(10, client2MessageCount);
         Assert.Equal(10, client3MessageCount);
@@ -370,33 +381,47 @@ public class PublishTest
         var subscribeResult = await client2.SubscribeAsync("HMQ/3NodeQoS1FirstTopic", QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
         var client2MessageCount = 0;
 
+        // client 3 Subscribe to the secondary topic (declare before handlers to allow cross-referencing)
+        subscribeResult = await client3.SubscribeAsync("HMQ/3NodeQoS1SecondTopic", QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
+        var client3MessageCount = 0;
+
+        // Use TaskCompletionSource to wait for all messages instead of fixed delay
+        var allMessagesReceived = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
         // client 2 will receive the message and republish it to another topic
 #pragma warning disable VSTHRD100 // Avoid async void methods
         async void Client2MessageHandler(object? sender, OnMessageReceivedEventArgs eventArgs)
         {
-            Interlocked.Increment(ref client2MessageCount);
+            var count = Interlocked.Increment(ref client2MessageCount);
             if (sender is HiveMQClient client)
             {
                 var publishResult = await client.PublishAsync("HMQ/3NodeQoS1SecondTopic", eventArgs.PublishMessage.PayloadAsString, QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
                 Assert.NotNull(publishResult);
                 Assert.Equal(publishResult.QoS1ReasonCode, PubAckReasonCode.Success);
             }
+
+            // Check if all messages received (check in both handlers to handle race conditions)
+            if (count == 10 && client3MessageCount == 10)
+            {
+                allMessagesReceived.TrySetResult(true);
+            }
         }
 #pragma warning restore VSTHRD100 // Avoid async void methods
 
         client2.OnMessageReceived += Client2MessageHandler;
 
-        // client 3 Subscribe to the secondary topic
-        subscribeResult = await client3.SubscribeAsync("HMQ/3NodeQoS1SecondTopic", QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
-
-        var client3MessageCount = 0;
-
         // client 3 will receive the final message
         void Client3MessageHandler(object? sender, OnMessageReceivedEventArgs eventArgs)
         {
-            Interlocked.Increment(ref client3MessageCount);
+            var count = Interlocked.Increment(ref client3MessageCount);
             Assert.NotNull(eventArgs.PublishMessage);
             Assert.Equal("Hello World", eventArgs.PublishMessage.PayloadAsString);
+
+            // Check if all messages received (check in both handlers to handle race conditions)
+            if (count == 10 && client2MessageCount == 10)
+            {
+                allMessagesReceived.TrySetResult(true);
+            }
         }
 
         client3.OnMessageReceived += Client3MessageHandler;
@@ -408,7 +433,8 @@ public class PublishTest
             Assert.NotNull(publishResult);
         }
 
-        await Task.Delay(2000).ConfigureAwait(false);
+        // Wait for all messages to be received with timeout instead of fixed delay
+        await allMessagesReceived.Task.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
 
         Assert.Equal(10, client2MessageCount);
         Assert.Equal(10, client3MessageCount);
@@ -474,32 +500,47 @@ public class PublishTest
         var subscribeResult = await client2.SubscribeAsync("HMQ/3NodeQoS2FirstTopic", QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
         var client2MessageCount = 0;
 
+        // client 3 Subscribe to the secondary topic (declare before handlers to allow cross-referencing)
+        subscribeResult = await client3.SubscribeAsync("HMQ/3NodeQoS2SecondTopic", QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
+        var client3MessageCount = 0;
+
+        // Use TaskCompletionSource to wait for all messages instead of fixed delay
+        var allMessagesReceived = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
         // client 2 will receive the message and republish it to another topic
 #pragma warning disable VSTHRD100 // Avoid async void methods
         async void Client2MessageHandler(object? sender, OnMessageReceivedEventArgs eventArgs)
         {
-            Interlocked.Increment(ref client2MessageCount);
+            var count = Interlocked.Increment(ref client2MessageCount);
             var client = sender as HiveMQClient;
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
             var publishResult = await client.PublishAsync("HMQ/3NodeQoS2SecondTopic", eventArgs.PublishMessage.PayloadAsString, QualityOfService.ExactlyOnceDelivery).ConfigureAwait(true);
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
             Assert.NotNull(publishResult);
             Assert.Equal(publishResult.QoS2ReasonCode, PubRecReasonCode.Success);
+
+            // Check if all messages received (check in both handlers to handle race conditions)
+            if (count == 10 && client3MessageCount == 10)
+            {
+                allMessagesReceived.TrySetResult(true);
+            }
         }
 #pragma warning restore VSTHRD100 // Avoid async void methods
 
         client2.OnMessageReceived += Client2MessageHandler;
 
-        // client 3 Subscribe to the secondary topic
-        subscribeResult = await client3.SubscribeAsync("HMQ/3NodeQoS2SecondTopic", QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
-
         // client 3 will receive the final message
-        var client3MessageCount = 0;
         void Client3MessageHandler(object? sender, OnMessageReceivedEventArgs eventArgs)
         {
-            Interlocked.Increment(ref client3MessageCount);
+            var count = Interlocked.Increment(ref client3MessageCount);
             Assert.NotNull(eventArgs.PublishMessage);
             Assert.Equal("Hello World", eventArgs.PublishMessage.PayloadAsString);
+
+            // Check if all messages received (check in both handlers to handle race conditions)
+            if (count == 10 && client2MessageCount == 10)
+            {
+                allMessagesReceived.TrySetResult(true);
+            }
         }
 
         client3.OnMessageReceived += Client3MessageHandler;
@@ -511,7 +552,8 @@ public class PublishTest
             Assert.NotNull(publishResult);
         }
 
-        await Task.Delay(2000).ConfigureAwait(false);
+        // Wait for all messages to be received with timeout instead of fixed delay
+        await allMessagesReceived.Task.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
 
         Assert.Equal(10, client2MessageCount);
         Assert.Equal(10, client3MessageCount);
@@ -610,12 +652,6 @@ public class PublishTest
 
                         var result = await client.PublishAsync(topic, payload, qos).ConfigureAwait(false);
                         Assert.NotNull(result);
-
-                        // Small delay to increase chance of concurrent writes
-                        if (j % 5 == 0)
-                        {
-                            await Task.Delay(1).ConfigureAwait(false);
-                        }
                     }
 
                     Interlocked.Increment(ref successCount);
@@ -691,12 +727,6 @@ public class PublishTest
                         Assert.NotNull(result.QoS2ReasonCode);
 
                         Interlocked.Increment(ref publishedCount);
-
-                        // Small random delay to increase concurrency
-                        if (j % 3 == 0)
-                        {
-                            await Task.Delay(Random.Shared.Next(1, 5)).ConfigureAwait(false);
-                        }
                     }
                 }
                 catch (Exception ex)

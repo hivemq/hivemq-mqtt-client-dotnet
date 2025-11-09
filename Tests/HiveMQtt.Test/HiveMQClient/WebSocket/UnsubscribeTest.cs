@@ -103,10 +103,17 @@ public class UnsubscribeTest
         Assert.True(client.Subscriptions.Count == 1);
         Assert.Equal(SubAckReasonCode.GrantedQoS0, subResult.Subscriptions[0].SubscribeReasonCode);
 
-        var subscribeResult = client.UnsubscribeAsync("tests/Test_Unsubscribe_Events_Async").ConfigureAwait(false);
+        // Set up TaskCompletionSource to wait for event handlers to finish
+        var afterUnsubscribeSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        client.AfterUnsubscribe += (sender, args) => afterUnsubscribeSource.TrySetResult(true);
 
-        // Wait for event handlers to finish
-        await Task.Delay(1000).ConfigureAwait(false);
+        var subscribeResult = await client.UnsubscribeAsync("tests/Test_Unsubscribe_Events_Async").ConfigureAwait(false);
+
+        // Wait for AfterUnsubscribe event to complete instead of fixed delay
+        await afterUnsubscribeSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+        // Small delay to allow async event handlers to complete (they run via Task.Run)
+        await Task.Delay(100).ConfigureAwait(false);
 
         // Assert that all Events were called
         Assert.True(client.LocalStore.ContainsKey("BeforeUnsubscribeHandlerCalled"));

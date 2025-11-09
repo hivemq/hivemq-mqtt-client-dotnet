@@ -62,16 +62,22 @@ public class ConnectTest
         client.OnConnAckReceived += OnConnAckReceivedHandler;
 
         // Set up TaskCompletionSource to wait for event handlers to finish
-        var taskCompletionSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-        client.OnDisconnectSent += (sender, args) => taskCompletionSource.SetResult(true);
+        var disconnectSentSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var afterDisconnectSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        client.OnDisconnectSent += (sender, args) => disconnectSentSource.TrySetResult(true);
+        client.AfterDisconnect += (sender, args) => afterDisconnectSource.TrySetResult(true);
 
         // Connect and Disconnect
         var result = await client.ConnectAsync().ConfigureAwait(false);
         await client.DisconnectAsync().ConfigureAwait(false);
 
-        // Wait for event handlers to finish
-        await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
-        await Task.Delay(1000).ConfigureAwait(false);
+        // Wait for both disconnect events to complete instead of fixed delay
+        await disconnectSentSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        await afterDisconnectSource.Task.WaitAsync(TimeSpan.FromSeconds(6)).ConfigureAwait(false);
+
+        // Small delay to allow async event handlers to complete (they run via Task.Run)
+        await Task.Delay(100).ConfigureAwait(false);
 
         // Assert that all Events were called
         Assert.True(client.LocalStore.ContainsKey("BeforeConnectHandlerCalled"));
@@ -105,16 +111,22 @@ public class ConnectTest
         client.AfterDisconnect += AfterDisconnectHandler;
 
         // Set up TaskCompletionSource to wait for event handlers to finish
-        var taskCompletionSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-        client.OnDisconnectSent += (sender, args) => taskCompletionSource.SetResult(true);
+        var disconnectSentSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var afterDisconnectSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        client.OnDisconnectSent += (sender, args) => disconnectSentSource.TrySetResult(true);
+        client.AfterDisconnect += (sender, args) => afterDisconnectSource.TrySetResult(true);
 
         // Connect and Disconnect
         var result = await client.ConnectAsync().ConfigureAwait(false);
         await client.DisconnectAsync().ConfigureAwait(false);
 
-        // Wait for event handlers to finish
-        await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
-        await Task.Delay(1000).ConfigureAwait(false);
+        // Wait for both disconnect events to complete instead of fixed delay
+        await disconnectSentSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        await afterDisconnectSource.Task.WaitAsync(TimeSpan.FromSeconds(6)).ConfigureAwait(false);
+
+        // Small delay to allow async event handlers to complete (they run via Task.Run)
+        await Task.Delay(100).ConfigureAwait(false);
 
         // Assert that all Events were called
         Assert.True(client.LocalStore.ContainsKey("AfterDisconnectHandlerCalled"));

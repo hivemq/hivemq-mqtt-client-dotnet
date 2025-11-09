@@ -2,6 +2,7 @@ namespace HiveMQtt.Test.HiveMQClient;
 
 using System.Threading.Tasks;
 using HiveMQtt.Client;
+using HiveMQtt.Client.Events;
 using HiveMQtt.MQTT5.ReasonCodes;
 using HiveMQtt.MQTT5.Types;
 using Xunit;
@@ -160,6 +161,16 @@ public class EventExceptionHandlingTest
         // Add another event handler to verify message was still delivered
         client.OnMessageReceived += (sender, args) => messageReceived = true;
 
+        // Set up TaskCompletionSource to wait for message delivery
+        var messageReceivedSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        client.OnMessageReceived += (sender, args) =>
+        {
+            if (args.PublishMessage.Topic == "tests/OnMessageReceivedExceptionTest")
+            {
+                messageReceivedSource.TrySetResult(true);
+            }
+        };
+
         // Publish a message
         var publishResult = await client.PublishAsync(
             "tests/OnMessageReceivedExceptionTest",
@@ -167,8 +178,8 @@ public class EventExceptionHandlingTest
             QualityOfService.AtMostOnceDelivery)
             .ConfigureAwait(false);
 
-        // Wait a bit for message delivery
-        await Task.Delay(2000).ConfigureAwait(false);
+        // Wait for message delivery instead of fixed delay
+        await messageReceivedSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
 
         // Verify message was still delivered despite the exception
         Assert.True(messageReceived);
@@ -222,6 +233,12 @@ public class EventExceptionHandlingTest
         // Add another event handler to verify PubAck was still received
         client.OnPubAckReceived += (sender, args) => pubAckReceived = true;
 
+        // Set up TaskCompletionSource to wait for PubAck delivery
+        var pubAckReceivedSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        void PubAckHandler(object? sender, OnPubAckReceivedEventArgs args) => pubAckReceivedSource.TrySetResult(true);
+
+        client.OnPubAckReceived += PubAckHandler;
+
         // Publish a QoS 1 message
         var publishResult = await client.PublishAsync(
             "tests/OnPubAckReceivedExceptionTest",
@@ -229,8 +246,13 @@ public class EventExceptionHandlingTest
             QualityOfService.AtLeastOnceDelivery)
             .ConfigureAwait(false);
 
-        // Wait a bit for PubAck delivery
-        await Task.Delay(500).ConfigureAwait(false);
+        // Wait for PubAck delivery instead of fixed delay
+        await pubAckReceivedSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+        client.OnPubAckReceived -= PubAckHandler;
+
+        // Small delay to allow async event handlers to complete (they run via Task.Run)
+        await Task.Delay(100).ConfigureAwait(false);
 
         // Verify PubAck was still received despite the exception
         Assert.True(pubAckReceived);

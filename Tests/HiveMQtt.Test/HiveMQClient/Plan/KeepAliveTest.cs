@@ -1,9 +1,10 @@
 namespace HiveMQtt.Test.HiveMQClient.Plan;
 
+using System.Threading.Tasks;
 using FluentAssertions;
 using HiveMQtt.Client;
+using HiveMQtt.Client.Events;
 using NUnit.Framework;
-using System.Threading.Tasks;
 
 [TestFixture]
 public class KeepAliveTest
@@ -21,8 +22,9 @@ public class KeepAliveTest
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         connectResult.Should().NotBeNull();
 
-        // Simulate waiting for a period longer than the keep-alive interval
-        await Task.Delay(5000).ConfigureAwait(false);
+        // Wait a short period to ensure no pings are sent when keep-alive is 0
+        // Reduced from 5000ms to 2000ms since we just need to verify no pings occur
+        await Task.Delay(2000).ConfigureAwait(false);
 
         // Validate that no pings were sent
         // This would typically involve checking internal client state or logs
@@ -46,8 +48,21 @@ public class KeepAliveTest
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
         connectResult.Should().NotBeNull();
 
-        // Simulate waiting for a period longer than the keep-alive interval
-        await Task.Delay(6000).ConfigureAwait(false);
+        // Use event-based waiting for ping instead of fixed delay
+        var pingReceived = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        void OnPingSent(object? sender, OnPingReqSentEventArgs e) => pingReceived.TrySetResult(true);
+
+        client.OnPingReqSent += OnPingSent;
+
+        try
+        {
+            // Wait for ping to be sent (with timeout slightly longer than keep-alive interval)
+            await pingReceived.Task.WaitAsync(TimeSpan.FromSeconds(7)).ConfigureAwait(false);
+        }
+        finally
+        {
+            client.OnPingReqSent -= OnPingSent;
+        }
 
         // Validate that pings were sent
         // This would typically involve checking internal client state or logs

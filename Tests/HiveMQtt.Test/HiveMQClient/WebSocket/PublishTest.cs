@@ -301,7 +301,35 @@ public class PublishTest
         }
 #pragma warning restore VSTHRD100 // Avoid async void methods
 
-        client3.OnMessageReceived += Client3MessageHandler;
+        // Set up TaskCompletionSource to wait for all messages to be received
+        var allMessagesReceived = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+#pragma warning disable VSTHRD100 // Avoid async void methods
+        async void WrappedClient2Handler(object? sender, OnMessageReceivedEventArgs eventArgs)
+        {
+            Client2MessageHandler(sender, eventArgs);
+
+            // Check after a small delay to allow async handler to complete
+            await Task.Delay(10).ConfigureAwait(false);
+            if (client2MessageCount == 10 && client3MessageCount == 10)
+            {
+                allMessagesReceived.TrySetResult(true);
+            }
+        }
+#pragma warning restore VSTHRD100 // Avoid async void methods
+
+        void WrappedClient3Handler(object? sender, OnMessageReceivedEventArgs eventArgs)
+        {
+            Client3MessageHandler(sender, eventArgs);
+            if (client2MessageCount == 10 && client3MessageCount == 10)
+            {
+                allMessagesReceived.TrySetResult(true);
+            }
+        }
+
+        client2.OnMessageReceived -= Client2MessageHandler;
+        client2.OnMessageReceived += WrappedClient2Handler;
+        client3.OnMessageReceived -= Client3MessageHandler;
+        client3.OnMessageReceived += WrappedClient3Handler;
 
         // client 1 Publish 100 messages
         for (var i = 1; i <= 10; i++)
@@ -310,7 +338,7 @@ public class PublishTest
             Assert.NotNull(publishResult);
         }
 
-        await Task.Delay(3000).ConfigureAwait(false);
+        await allMessagesReceived.Task.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
 
         Assert.Equal(10, client2MessageCount);
         Assert.Equal(10, client3MessageCount);
@@ -411,7 +439,35 @@ public class PublishTest
             Assert.Equal("Hello World", eventArgs.PublishMessage.PayloadAsString);
         }
 
-        client3.OnMessageReceived += Client3MessageHandler;
+        // Set up TaskCompletionSource to wait for all messages to be received
+        var allMessagesReceived = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+#pragma warning disable VSTHRD100 // Avoid async void methods
+        async void WrappedClient2Handler(object? sender, OnMessageReceivedEventArgs eventArgs)
+        {
+            Client2MessageHandler(sender, eventArgs);
+
+            // Check after a small delay to allow async handler to complete
+            await Task.Delay(10).ConfigureAwait(false);
+            if (client2MessageCount == 10 && client3MessageCount == 10)
+            {
+                allMessagesReceived.TrySetResult(true);
+            }
+        }
+#pragma warning restore VSTHRD100 // Avoid async void methods
+
+        void WrappedClient3Handler(object? sender, OnMessageReceivedEventArgs eventArgs)
+        {
+            Client3MessageHandler(sender, eventArgs);
+            if (client2MessageCount == 10 && client3MessageCount == 10)
+            {
+                allMessagesReceived.TrySetResult(true);
+            }
+        }
+
+        client2.OnMessageReceived -= Client2MessageHandler;
+        client2.OnMessageReceived += WrappedClient2Handler;
+        client3.OnMessageReceived -= Client3MessageHandler;
+        client3.OnMessageReceived += WrappedClient3Handler;
 
         // client 1 Publish 10 messages
         for (var i = 1; i <= 10; i++)
@@ -420,7 +476,7 @@ public class PublishTest
             Assert.NotNull(publishResult);
         }
 
-        await Task.Delay(2000).ConfigureAwait(false);
+        await allMessagesReceived.Task.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
 
         Assert.Equal(10, client2MessageCount);
         Assert.Equal(10, client3MessageCount);
@@ -520,7 +576,35 @@ public class PublishTest
             Assert.Equal("Hello World", eventArgs.PublishMessage.PayloadAsString);
         }
 
-        client3.OnMessageReceived += Client3MessageHandler;
+        // Set up TaskCompletionSource to wait for all messages to be received
+        var allMessagesReceived = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+#pragma warning disable VSTHRD100 // Avoid async void methods
+        async void WrappedClient2Handler(object? sender, OnMessageReceivedEventArgs eventArgs)
+        {
+            Client2MessageHandler(sender, eventArgs);
+
+            // Check after a small delay to allow async handler to complete
+            await Task.Delay(10).ConfigureAwait(false);
+            if (client2MessageCount == 10 && client3MessageCount == 10)
+            {
+                allMessagesReceived.TrySetResult(true);
+            }
+        }
+#pragma warning restore VSTHRD100 // Avoid async void methods
+
+        void WrappedClient3Handler(object? sender, OnMessageReceivedEventArgs eventArgs)
+        {
+            Client3MessageHandler(sender, eventArgs);
+            if (client2MessageCount == 10 && client3MessageCount == 10)
+            {
+                allMessagesReceived.TrySetResult(true);
+            }
+        }
+
+        client2.OnMessageReceived -= Client2MessageHandler;
+        client2.OnMessageReceived += WrappedClient2Handler;
+        client3.OnMessageReceived -= Client3MessageHandler;
+        client3.OnMessageReceived += WrappedClient3Handler;
 
         // client 1 Publish 10 messages
         for (var i = 1; i <= 10; i++)
@@ -529,7 +613,7 @@ public class PublishTest
             Assert.NotNull(publishResult);
         }
 
-        await Task.Delay(2000).ConfigureAwait(false);
+        await allMessagesReceived.Task.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
 
         Assert.Equal(10, client2MessageCount);
         Assert.Equal(10, client3MessageCount);
