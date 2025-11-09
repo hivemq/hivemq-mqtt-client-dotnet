@@ -380,6 +380,7 @@ public partial class ConnectionManager
     /// <returns>A task that represents the asynchronous operation.</returns>
     internal async Task<bool> HandleDisconnectionAsync(bool clean = true)
     {
+        // Thread-safe check: if already disconnected, return early
         if (this.State == ConnectState.Disconnected)
         {
             Logger.Trace("HandleDisconnection: Already disconnected.");
@@ -388,17 +389,19 @@ public partial class ConnectionManager
 
         Logger.Debug($"HandleDisconnection: Handling disconnection. clean={clean}.");
 
-        // Cancel all background tasks and close the socket
-        this.State = ConnectState.Disconnected;
-
         // Reset the connection-ready signal for the next connect cycle
         this.ResetConnectedSignal();
 
-        // Cancel all background tasks
+        // Cancel all background tasks BEFORE setting state to Disconnected
+        // This prevents race conditions where tasks check state after it's set but before cancellation
         await this.CancelBackgroundTasksAsync().ConfigureAwait(false);
 
         // Close the Transport
         await this.Transport.CloseAsync().ConfigureAwait(false);
+
+        // Set state to Disconnected AFTER tasks are cancelled and transport is closed
+        // This ensures tasks see the correct state when they check during cancellation
+        this.State = ConnectState.Disconnected;
 
         if (clean)
         {

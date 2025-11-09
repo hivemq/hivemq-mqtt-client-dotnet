@@ -44,8 +44,18 @@ public partial class ConnectionManager : IDisposable
     // This is how we kill innocent and not so innocent Tasks
     private CancellationTokenSource cancellationTokenSource;
 
-    // The state of the connection
-    internal ConnectState State { get; set; }
+    // The state of the connection (thread-safe using Interlocked)
+    private int stateValue = (int)ConnectState.Disconnected;
+
+    /// <summary>
+    /// Gets or sets the connection state in a thread-safe manner.
+    /// Uses Volatile.Read for reads and Interlocked.Exchange for writes to ensure thread safety.
+    /// </summary>
+    internal ConnectState State
+    {
+        get => (ConnectState)Volatile.Read(ref this.stateValue);
+        set => Interlocked.Exchange(ref this.stateValue, (int)value);
+    }
 
     // The protocol specific transport layer (TCP, WebSocket, etc.)
     internal BaseTransport Transport { get; set; }
