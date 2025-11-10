@@ -93,6 +93,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     public async Task<ConnectResult> ConnectAsync(ConnectOptions? connectOptions = null)
     {
         this.Connection.State = ConnectState.Connecting;
+        this.Connection.SignalNotDisconnected();
 
         Logger.Info("Connecting to broker at {0}:{1}", this.Options.Host, this.Options.Port);
 
@@ -140,6 +141,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         catch (TimeoutException)
         {
             this.Connection.State = ConnectState.Disconnected;
+            this.Connection.ResetNotDisconnectedSignal();
             Logger.Error($"Connect timeout.  No response received in {this.Options.ConnectTimeoutInMs} milliseconds.");
             throw new HiveMQttClientException($"Connect timeout.  No response received in {this.Options.ConnectTimeoutInMs} milliseconds.");
         }
@@ -154,11 +156,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             this.Connection.State = ConnectState.Connected;
 
             // Ensure connection-ready signal is set for any writers awaiting readiness
+            this.Connection.SignalNotDisconnected(); // Signal that we're not disconnected (already signaled at Connecting, but safe to call again)
             this.Connection.SignalConnected();
         }
         else
         {
             this.Connection.State = ConnectState.Disconnected;
+            this.Connection.ResetNotDisconnectedSignal();
         }
 
         connectResult = new ConnectResult(connAck.ReasonCode, connAck.SessionPresent, connAck.Properties);
@@ -202,6 +206,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         // Once this is set, no more incoming packets or outgoing will be accepted
         this.Connection.State = ConnectState.Disconnecting;
+        this.Connection.SignalNotDisconnected();
 
         var taskCompletionSource = new TaskCompletionSource<DisconnectPacket>(TaskCreationOptions.RunContinuationsAsynchronously);
         void TaskHandler(object? sender, OnDisconnectSentEventArgs args) => taskCompletionSource.SetResult(args.DisconnectPacket);

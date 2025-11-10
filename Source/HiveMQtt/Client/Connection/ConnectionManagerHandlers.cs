@@ -402,6 +402,7 @@ public partial class ConnectionManager
         // Set state to Disconnected AFTER tasks are cancelled and transport is closed
         // This ensures tasks see the correct state when they check during cancellation
         this.State = ConnectState.Disconnected;
+        this.ResetNotDisconnectedSignal();
 
         if (clean)
         {

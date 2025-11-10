@@ -181,6 +181,9 @@ public class EventExceptionHandlingTest
         // Wait for message delivery instead of fixed delay
         await messageReceivedSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
 
+        // Small delay to allow async event handlers to complete (they run via Task.Run)
+        await Task.Delay(100).ConfigureAwait(false);
+
         // Verify message was still delivered despite the exception
         Assert.True(messageReceived);
 
