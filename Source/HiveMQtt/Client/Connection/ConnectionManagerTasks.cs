@@ -104,8 +104,11 @@ public partial class ConnectionManager
         {
             try
             {
+                // Capture state once to avoid race conditions
+                var currentState = this.State;
+
                 // If connected and no recent packets have been sent, send a ping
-                if (this.State == ConnectState.Connected)
+                if (currentState == ConnectState.Connected)
                 {
                     if (this.Client.Options.KeepAlive > 0 && this.lastCommunicationTimer.Elapsed > TimeSpan.FromSeconds(keepAlivePeriod))
                     {
@@ -144,7 +147,9 @@ public partial class ConnectionManager
                 Logger.Error($"{this.Client.Options.ClientId}-(CM)- Exception: {ex}");
 
                 // Handle exception gracefully - trigger disconnection and exit
-                if (this.State == ConnectState.Connected)
+                // Capture state once to avoid race conditions
+                var currentState = this.State;
+                if (currentState == ConnectState.Connected)
                 {
                     try
                     {
@@ -213,7 +218,9 @@ public partial class ConnectionManager
                     {
                         Logger.Trace($"{this.Client.Options.ClientId}-(PW)- ConnectionPublishWriter: Failed to write to transport.");
 
-                        if (this.State == ConnectState.Connected)
+                        // Capture state once to avoid race conditions
+                        var currentState = this.State;
+                        if (currentState == ConnectState.Connected)
                         {
                             // This is an unexpected exit and may be due to a network failure.
                             Logger.Debug($"{this.Client.Options.ClientId}-(PW)- ConnectionPublishWriter: unexpected exit.  Disconnecting...");
@@ -240,7 +247,9 @@ public partial class ConnectionManager
                         Logger.Error($"{this.Client.Options.ClientId}-(PW)- Exception: {ex}");
 
                         // Handle exception gracefully - trigger disconnection and exit
-                        if (this.State == ConnectState.Connected)
+                        // Capture state once to avoid race conditions
+                        var currentState = this.State;
+                        if (currentState == ConnectState.Connected)
                         {
                             try
                             {
@@ -342,7 +351,10 @@ public partial class ConnectionManager
                     if (!writeSuccess)
                     {
                         Logger.Error($"{this.Client.Options.ClientId}-(W)- Write failed.  Disconnecting...");
-                        if (this.State == ConnectState.Connected)
+
+                        // Capture state once to avoid race conditions
+                        var currentState = this.State;
+                        if (currentState == ConnectState.Connected)
                         {
                             await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
                         }
@@ -369,7 +381,9 @@ public partial class ConnectionManager
                         Logger.Error($"{this.Client.Options.ClientId}-(W)- Exception: {ex}");
 
                         // Handle exception gracefully - trigger disconnection and exit
-                        if (this.State == ConnectState.Connected)
+                        // Capture state once to avoid race conditions
+                        var currentState = this.State;
+                        if (currentState == ConnectState.Connected)
                         {
                             try
                             {
@@ -408,7 +422,10 @@ public partial class ConnectionManager
                     if (readResult.Failed)
                     {
                         Logger.Debug($"{this.Client.Options.ClientId}-(R)- ConnectionReader exiting: Read from transport failed.");
-                        if (this.State == ConnectState.Connected)
+
+                        // Capture state once to avoid race conditions
+                        var currentState = this.State;
+                        if (currentState == ConnectState.Connected)
                         {
                             await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
                         }
@@ -524,7 +541,9 @@ public partial class ConnectionManager
                         Logger.Error($"{this.Client.Options.ClientId}-(R)- Exception: {ex}");
 
                         // Handle exception gracefully - trigger disconnection and exit
-                        if (this.State == ConnectState.Connected)
+                        // Capture state once to avoid race conditions
+                        var currentState = this.State;
+                        if (currentState == ConnectState.Connected)
                         {
                             try
                             {
@@ -623,7 +642,9 @@ public partial class ConnectionManager
                         Logger.Error($"{this.Client.Options.ClientId}-(RPH)- Exception: {ex}");
 
                         // Handle exception gracefully - trigger disconnection and exit
-                        if (this.State == ConnectState.Connected)
+                        // Capture state once to avoid race conditions
+                        var currentState = this.State;
+                        if (currentState == ConnectState.Connected)
                         {
                             try
                             {
