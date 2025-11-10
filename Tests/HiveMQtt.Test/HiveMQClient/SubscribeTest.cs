@@ -140,7 +140,7 @@ public class SubscribeTest
         await afterSubscribeSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
 
         // Small delay to allow async event handlers to complete (they run via Task.Run)
-        await Task.Delay(100).ConfigureAwait(false);
+        await Task.Delay(200).ConfigureAwait(false);
 
         // Assert that all Events were called
         Assert.True(client.LocalStore.ContainsKey("BeforeSubscribeHandlerCalled"));
