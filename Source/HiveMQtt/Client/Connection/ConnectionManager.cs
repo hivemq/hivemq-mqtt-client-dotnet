@@ -87,6 +87,10 @@ public partial class ConnectionManager : IDisposable
     // Event-like signal to indicate the connection reached Connected state
     private TaskCompletionSource<bool> connectedSignal = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
+    // Event-like signal to indicate the connection state is not Disconnected (Connecting, Connected, or Disconnecting)
+    // This is used by ConnectionWriterAsync which needs to be active during Connecting state
+    private TaskCompletionSource<bool> notDisconnectedSignal = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
     /// <summary>
     /// Initializes a new instance of the <see cref="ConnectionManager"/> class.
     /// </summary>
@@ -99,6 +103,7 @@ public partial class ConnectionManager : IDisposable
         this.OPubTransactionQueue = new BoundedDictionaryX<int, List<ControlPacket>>(65535);
         this.State = ConnectState.Disconnected;
         this.ResetConnectedSignal();
+        this.ResetNotDisconnectedSignal();
 
         // Connect the appropriate transport
         // Note: The actual transport is selected in ConnectAsync() based on WebSocketServer option.
@@ -115,6 +120,25 @@ public partial class ConnectionManager : IDisposable
 
     internal Task WaitUntilConnectedAsync(CancellationToken cancellationToken) => this.connectedSignal.Task.WaitAsync(cancellationToken);
 
+    /// <summary>
+    /// Waits until the connection state is not Disconnected (i.e., Connecting, Connected, or Disconnecting).
+    /// This is used by ConnectionWriterAsync which needs to be active during Connecting state to send CONNECT packets.
+    /// Uses an event-driven signal instead of polling to avoid CPU waste during long disconnections.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task that completes when state is not Disconnected.</returns>
+    internal Task WaitUntilNotDisconnectedAsync(CancellationToken cancellationToken)
+    {
+        // Check state first - if already not disconnected, return immediately
+        if (this.State != ConnectState.Disconnected)
+        {
+            return Task.CompletedTask;
+        }
+
+        // Wait on the signal - this is event-driven and doesn't consume CPU while waiting
+        return this.notDisconnectedSignal.Task.WaitAsync(cancellationToken);
+    }
+
     internal void SignalConnected()
     {
         if (!this.connectedSignal.Task.IsCompleted)
@@ -124,6 +148,23 @@ public partial class ConnectionManager : IDisposable
     }
 
     internal void ResetConnectedSignal() => this.connectedSignal = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    /// <summary>
+    /// Signals that the connection state is not Disconnected (i.e., Connecting, Connected, or Disconnecting).
+    /// This is called when state transitions from Disconnected to any other state.
+    /// </summary>
+    internal void SignalNotDisconnected()
+    {
+        if (!this.notDisconnectedSignal.Task.IsCompleted)
+        {
+            this.notDisconnectedSignal.TrySetResult(true);
+        }
+    }
+
+    /// <summary>
+    /// Resets the not-disconnected signal. Called when state transitions to Disconnected.
+    /// </summary>
+    internal void ResetNotDisconnectedSignal() => this.notDisconnectedSignal = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
     internal async Task<bool> ConnectAsync()
     {
