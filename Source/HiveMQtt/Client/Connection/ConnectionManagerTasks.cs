@@ -104,8 +104,11 @@ public partial class ConnectionManager
         {
             try
             {
+                // Capture state once to avoid race conditions
+                var currentState = this.State;
+
                 // If connected and no recent packets have been sent, send a ping
-                if (this.State == ConnectState.Connected)
+                if (currentState == ConnectState.Connected)
                 {
                     if (this.Client.Options.KeepAlive > 0 && this.lastCommunicationTimer.Elapsed > TimeSpan.FromSeconds(keepAlivePeriod))
                     {
@@ -144,7 +147,9 @@ public partial class ConnectionManager
                 Logger.Error($"{this.Client.Options.ClientId}-(CM)- Exception: {ex}");
 
                 // Handle exception gracefully - trigger disconnection and exit
-                if (this.State == ConnectState.Connected)
+                // Capture state once to avoid race conditions
+                var currentState = this.State;
+                if (currentState == ConnectState.Connected)
                 {
                     try
                     {
