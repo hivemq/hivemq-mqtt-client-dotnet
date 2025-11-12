@@ -309,15 +309,8 @@ public class MQTT5PublishMessage
     /// <exception cref="HiveMQttClientException">The exception raised if some value is out of range or invalid.</exception>
     public void Validate()
     {
-        if (!this.PayloadFormatIndicator.HasValue)
-        {
-            this.PayloadFormatIndicator = MQTT5PayloadFormatIndicator.Unspecified;
-        }
-
-        if (!this.QoS.HasValue)
-        {
-            this.QoS = QualityOfService.AtMostOnceDelivery;
-        }
+        this.PayloadFormatIndicator ??= MQTT5PayloadFormatIndicator.Unspecified;
+        this.QoS ??= QualityOfService.AtMostOnceDelivery;
 
         if (this.Topic == null && this.TopicAlias.HasValue)
         {
