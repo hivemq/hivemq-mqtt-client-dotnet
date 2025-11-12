@@ -280,6 +280,73 @@ public abstract class ControlPacket
     }
 
     /// <summary>
+    /// Gets the size in bytes needed to encode a variable byte integer.
+    /// </summary>
+    /// <param name="number">The integer value.</param>
+    /// <returns>The number of bytes needed to encode the value.</returns>
+    protected static int GetVariableByteIntegerSize(int number)
+    {
+        if (number is < 0 or > 268435455)
+        {
+            throw new MQTTProtocolException("Value out of range for a variable byte integer: {value}");
+        }
+
+        if (number <= 0x7F)
+        {
+            return 1;
+        }
+
+        if (number <= 0x3FFF)
+        {
+            return 2;
+        }
+
+        if (number <= 0x1FFFFF)
+        {
+            return 3;
+        }
+
+        return 4;
+    }
+
+    /// <summary>
+    /// Encode an Integer into a <c>Span&lt;byte&gt;</c> as an MQTT Variable Byte Integer.
+    /// </summary>
+    /// <param name="span">The span to write the variable byte integer into.</param>
+    /// <param name="number">The integer to be encoded and written.</param>
+    /// <returns>The number of bytes written.</returns>
+    protected static int EncodeVariableByteIntegerToSpan(Span<byte> span, int number)
+    {
+        if (number is < 0 or > 268435455)
+        {
+            throw new MQTTProtocolException("Value out of range for a variable byte integer: {value}");
+        }
+
+        if (number <= 0x7F)
+        {
+            span[0] = (byte)number;
+            return 1;
+        }
+
+        var written = 0;
+        var value = number;
+        do
+        {
+            var encodedByte = value % 0x80;
+            value /= 0x80;
+            if (value > 0)
+            {
+                encodedByte |= 0x80;
+            }
+
+            span[written++] = (byte)encodedByte;
+        }
+        while (value > 0);
+
+        return written;
+    }
+
+    /// <summary>
     /// Encode an MQTT Binary Data data representation.
     ///
     /// See also <seealso href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901012">

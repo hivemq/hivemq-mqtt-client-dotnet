@@ -15,8 +15,6 @@
  */
 namespace HiveMQtt.MQTT5.Packets;
 
-using System.IO;
-
 /// <summary>
 /// An MQTT PingReq Control Packet.
 ///
@@ -33,13 +31,14 @@ public class PingReqPacket : ControlPacket
     /// <returns>An array of bytes ready to be sent.</returns>
     public static byte[] Encode()
     {
-        using (var stream = new MemoryStream(2))
-        {
-            // Fixed Header
-            stream.WriteByte(((byte)ControlPacketType.PingReq) << 4);
-            stream.WriteByte(0x0);
+        // PingReq is always 2 bytes - use stackalloc for zero allocation
+#pragma warning disable IDE0302 // Collection initialization - stackalloc is not a collection
+        Span<byte> buffer = stackalloc byte[2];
+#pragma warning restore IDE0302
+        buffer[0] = ((byte)ControlPacketType.PingReq) << 4;
+        buffer[1] = 0x0;
 
-            return stream.ToArray();
-        }
+        // Return a new array (required for async operations)
+        return buffer.ToArray();
     }
 }

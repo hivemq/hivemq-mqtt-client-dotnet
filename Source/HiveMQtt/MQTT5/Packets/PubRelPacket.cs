@@ -49,20 +49,39 @@ public class PubRelPacket : ControlPacket
             vhStream.WriteByte((byte)this.ReasonCode);
             this.EncodeProperties(vhStream);
 
-            // Construct the final packet
-            var constructedPacket = new MemoryStream((int)vhStream.Length + 5);
+            // Calculate the size needed for the final packet
+            var vhLength = (int)vhStream.Length;
+            var fixedHeaderSize = 1 + GetVariableByteIntegerSize(vhLength);
+            var totalSize = fixedHeaderSize + vhLength;
 
-            // Write the Fixed Header
-            var byte1 = (byte)ControlPacketType.PubRel << 4;
-            byte1 |= 0x2;
-            constructedPacket.WriteByte((byte)byte1);
-            _ = EncodeVariableByteInteger(constructedPacket, (int)vhStream.Length);
+            // Use ArrayPool for the final buffer
+            var rentedBuffer = ArrayPool<byte>.Shared.Rent(totalSize);
+            try
+            {
+                var bufferSpan = rentedBuffer.AsSpan(0, totalSize);
+                var offset = 0;
 
-            // Copy the Variable Header and Payload
-            vhStream.Position = 0;
-            vhStream.CopyTo(constructedPacket);
+                // Write the Fixed Header
+                var byte1 = (byte)((byte)ControlPacketType.PubRel << 4);
+                byte1 |= 0x2;
+                bufferSpan[offset++] = byte1;
+                offset += EncodeVariableByteIntegerToSpan(bufferSpan[offset..], vhLength);
 
-            return constructedPacket.ToArray();
+                // Copy the Variable Header directly from the stream
+                vhStream.Position = 0;
+                var vhBuffer = vhStream.GetBuffer();
+                var vhSpan = new Span<byte>(vhBuffer, 0, vhLength);
+                vhSpan.CopyTo(bufferSpan[offset..]);
+
+                // Return a properly sized array
+                var result = new byte[totalSize];
+                bufferSpan[..totalSize].CopyTo(result);
+                return result;
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(rentedBuffer);
+            }
         }
     }
 

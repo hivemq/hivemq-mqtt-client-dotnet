@@ -75,16 +75,37 @@ public class DisconnectPacket : ControlPacket
 
             // Disconnect has no payload
 
-            // Fixed Header - Add to the beginning of the stream
-            var remainingLength = stream.Length - 2;
+            // Fixed Header - Calculate remaining length
+            var remainingLength = (int)stream.Length - 2;
+            var fixedHeaderSize = 1 + GetVariableByteIntegerSize(remainingLength);
+            var totalSize = fixedHeaderSize + remainingLength;
 
-            // Go back to the beginning of the stream and write
-            // the first two bytes.
-            stream.Position = 0;
-            stream.WriteByte((byte)ControlPacketType.Disconnect << 4);
-            EncodeVariableByteInteger(stream, (int)remainingLength);
+            // Use ArrayPool for the final buffer
+            var rentedBuffer = ArrayPool<byte>.Shared.Rent(totalSize);
+            try
+            {
+                var bufferSpan = rentedBuffer.AsSpan(0, totalSize);
+                var offset = 0;
 
-            return stream.ToArray();
+                // Write the Fixed Header
+                bufferSpan[offset++] = (byte)ControlPacketType.Disconnect << 4;
+                offset += EncodeVariableByteIntegerToSpan(bufferSpan[offset..], remainingLength);
+
+                // Copy the Variable Header directly from the stream
+                stream.Position = 2;
+                var streamBuffer = stream.GetBuffer();
+                var variableHeaderSpan = new Span<byte>(streamBuffer, 2, remainingLength);
+                variableHeaderSpan.CopyTo(bufferSpan[offset..]);
+
+                // Return a properly sized array
+                var result = new byte[totalSize];
+                bufferSpan[..totalSize].CopyTo(result);
+                return result;
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(rentedBuffer);
+            }
         }
     }
 
