@@ -297,7 +297,7 @@ public class PublishPacket : ControlPacket
             }
 
             // Construct the Fixed Header
-            var byte1 = (byte)ControlPacketType.Publish << 4;
+            var byte1 = (byte)((byte)ControlPacketType.Publish << 4);
 
             // DUP Flag
             if (this.Message.Duplicate)
@@ -321,25 +321,37 @@ public class PublishPacket : ControlPacket
                 byte1 |= 0x1;
             }
 
-            // Largest possible size of a fixed header is (5):
-            // byte 1: MQTT Control Packet Type & Flags
-            // byte 2: Remaining Length encoded as a variable byte integer
-            // byte 3: Remaining Length encoded as a variable byte integer (max size is 4)
-            // byte 4: Remaining Length encoded as a variable byte integer (max size is 4)
-            // byte 5: Remaining Length encoded as a variable byte integer (max size is 4)
+            // Calculate the size needed for the final packet
+            var vhAndPayloadLength = (int)vhAndPayloadStream.Length;
+            var fixedHeaderSize = 1 + GetVariableByteIntegerSize(vhAndPayloadLength);
+            var totalSize = fixedHeaderSize + vhAndPayloadLength;
 
-            // Construct the final packet
-            var constructedPacket = new MemoryStream((int)vhAndPayloadStream.Length + 5);
+            // Use ArrayPool for the final buffer
+            var rentedBuffer = ArrayPool<byte>.Shared.Rent(totalSize);
+            try
+            {
+                var bufferSpan = rentedBuffer.AsSpan(0, totalSize);
+                var offset = 0;
 
-            // Write the Fixed Header
-            constructedPacket.WriteByte((byte)byte1);
-            _ = EncodeVariableByteInteger(constructedPacket, (int)vhAndPayloadStream.Length);
+                // Write the Fixed Header
+                bufferSpan[offset++] = byte1;
+                offset += EncodeVariableByteIntegerToSpan(bufferSpan[offset..], vhAndPayloadLength);
 
-            // Copy the Variable Header and Payload
-            vhAndPayloadStream.Position = 0;
-            vhAndPayloadStream.CopyTo(constructedPacket);
+                // Copy the Variable Header and Payload directly from the stream
+                vhAndPayloadStream.Position = 0;
+                var vhAndPayloadBuffer = vhAndPayloadStream.GetBuffer();
+                var vhAndPayloadSpan = new Span<byte>(vhAndPayloadBuffer, 0, vhAndPayloadLength);
+                vhAndPayloadSpan.CopyTo(bufferSpan[offset..]);
 
-            return constructedPacket.ToArray();
+                // Return a properly sized array
+                var result = new byte[totalSize];
+                bufferSpan[..totalSize].CopyTo(result);
+                return result;
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(rentedBuffer);
+            }
         }
     }
 

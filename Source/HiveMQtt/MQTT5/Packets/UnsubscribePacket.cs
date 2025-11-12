@@ -15,6 +15,7 @@
  */
 namespace HiveMQtt.MQTT5.Packets;
 
+using System.Buffers;
 using System.IO;
 using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.Types;
@@ -66,20 +67,39 @@ public class UnsubscribePacket : ControlPacket
                 EncodeUTF8String(vhAndPayloadStream, subscription.TopicFilter.Topic);
             }
 
-            // Construct the final packet
-            var constructedPacket = new MemoryStream((int)vhAndPayloadStream.Length + 5);
+            // Calculate the size needed for the final packet
+            var vhAndPayloadLength = (int)vhAndPayloadStream.Length;
+            var fixedHeaderSize = 1 + GetVariableByteIntegerSize(vhAndPayloadLength);
+            var totalSize = fixedHeaderSize + vhAndPayloadLength;
 
-            // Write the Fixed Header
-            var byte1 = (byte)ControlPacketType.Unsubscribe << 4;
-            byte1 |= 0x2;
-            constructedPacket.WriteByte((byte)byte1);
-            _ = EncodeVariableByteInteger(constructedPacket, (int)vhAndPayloadStream.Length);
+            // Use ArrayPool for the final buffer
+            var rentedBuffer = ArrayPool<byte>.Shared.Rent(totalSize);
+            try
+            {
+                var bufferSpan = rentedBuffer.AsSpan(0, totalSize);
+                var offset = 0;
 
-            // Copy the Variable Header and Payload
-            vhAndPayloadStream.Position = 0;
-            vhAndPayloadStream.CopyTo(constructedPacket);
+                // Write the Fixed Header
+                var byte1 = (byte)((byte)ControlPacketType.Unsubscribe << 4);
+                byte1 |= 0x2;
+                bufferSpan[offset++] = byte1;
+                offset += EncodeVariableByteIntegerToSpan(bufferSpan[offset..], vhAndPayloadLength);
 
-            return constructedPacket.ToArray();
+                // Copy the Variable Header and Payload directly from the stream
+                vhAndPayloadStream.Position = 0;
+                var vhAndPayloadBuffer = vhAndPayloadStream.GetBuffer();
+                var vhAndPayloadSpan = new Span<byte>(vhAndPayloadBuffer, 0, vhAndPayloadLength);
+                vhAndPayloadSpan.CopyTo(bufferSpan[offset..]);
+
+                // Return a properly sized array
+                var result = new byte[totalSize];
+                bufferSpan[..totalSize].CopyTo(result);
+                return result;
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(rentedBuffer);
+            }
         }
     }
 }
