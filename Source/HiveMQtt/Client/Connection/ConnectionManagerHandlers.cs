@@ -43,6 +43,9 @@ public partial class ConnectionManager
 
         this.ConnectionProperties = connAckPacket.Properties;
 
+        // Update cached connection properties for fast access during publish operations
+        this.Client.UpdateConnectionPropertyCache(connAckPacket.Properties);
+
         this.Client.OnConnAckReceivedEventLauncher(connAckPacket);
     }
 
@@ -403,6 +406,9 @@ public partial class ConnectionManager
         // This ensures tasks see the correct state when they check during cancellation
         this.State = ConnectState.Disconnected;
         this.ResetNotDisconnectedSignal();
+
+        // Clear cached connection properties since we're disconnected
+        this.Client.UpdateConnectionPropertyCache(null);
 
         if (clean)
         {

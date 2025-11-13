@@ -117,6 +117,9 @@ public class BrokerEnforcementTest
         // Manually override the connection properties to simulate a broker that does not support retained messages
         client.Connection.ConnectionProperties.RetainAvailable = false;
 
+        // Update cache to reflect the manual override
+        client.UpdateConnectionPropertyCache(client.Connection.ConnectionProperties);
+
         var message = new MQTT5PublishMessage
         {
             Topic = "test/topic",
@@ -162,6 +165,9 @@ public class BrokerEnforcementTest
 
         // Manually override the connection properties to simulate a broker that does not support retained messages
         client.Connection.ConnectionProperties.RetainAvailable = false;
+
+        // Update cache to reflect the manual override
+        client.UpdateConnectionPropertyCache(client.Connection.ConnectionProperties);
 
         var options = new SubscribeOptions();
         options.TopicFilters.Add(new TopicFilter("test/topic", retainAsPublished: true));
@@ -247,6 +253,9 @@ public class BrokerEnforcementTest
 
         // Manually override the connection properties to simulate a broker that does not support topic aliases
         client.Connection.ConnectionProperties.TopicAliasMaximum = 0;
+
+        // Update cache to reflect the manual override
+        client.UpdateConnectionPropertyCache(client.Connection.ConnectionProperties);
 
         var message = new MQTT5PublishMessage
         {
