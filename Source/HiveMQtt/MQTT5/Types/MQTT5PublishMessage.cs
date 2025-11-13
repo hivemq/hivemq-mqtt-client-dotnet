@@ -24,6 +24,8 @@ public class MQTT5PublishMessage
     {
         this.UserProperties = new Dictionary<string, string>();
         this.SubscriptionIdentifiers = new List<int>();
+        this.PayloadFormatIndicator = MQTT5PayloadFormatIndicator.Unspecified;
+        this.QoS = QualityOfService.AtMostOnceDelivery;
     }
 
     public MQTT5PublishMessage(string topic, QualityOfService? qos)
@@ -33,10 +35,8 @@ public class MQTT5PublishMessage
         this.Duplicate = false;
         this.Retain = false;
         this.Topic = topic;
-        if (qos.HasValue)
-        {
-            this.QoS = qos;
-        }
+        this.PayloadFormatIndicator = MQTT5PayloadFormatIndicator.Unspecified;
+        this.QoS = qos ?? QualityOfService.AtMostOnceDelivery;
     }
 
     /// <summary>
@@ -309,12 +309,10 @@ public class MQTT5PublishMessage
     /// <exception cref="HiveMQttClientException">The exception raised if some value is out of range or invalid.</exception>
     public void Validate()
     {
-        this.PayloadFormatIndicator ??= MQTT5PayloadFormatIndicator.Unspecified;
-        this.QoS ??= QualityOfService.AtMostOnceDelivery;
-
-        if (this.Topic == null && this.TopicAlias.HasValue)
+        // MQTT 5.0 requires either Topic Name or Topic Alias to be present
+        if (this.Topic == null && !this.TopicAlias.HasValue)
         {
-            throw new HiveMQttClientException("Topic Alias must be null if Topic is null.");
+            throw new HiveMQttClientException("Either Topic or TopicAlias must be specified.");
         }
     }
 }
