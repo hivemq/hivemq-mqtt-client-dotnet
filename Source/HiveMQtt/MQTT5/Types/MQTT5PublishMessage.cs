@@ -35,8 +35,8 @@ public class MQTT5PublishMessage
         this.Duplicate = false;
         this.Retain = false;
         this.Topic = topic;
-        this.PayloadFormatIndicator = MQTT5PayloadFormatIndicator.Unspecified;
         this.QoS = qos ?? QualityOfService.AtMostOnceDelivery;
+        this.PayloadFormatIndicator = MQTT5PayloadFormatIndicator.Unspecified;
     }
 
     /// <summary>

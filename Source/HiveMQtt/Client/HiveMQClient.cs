@@ -68,6 +68,36 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
     private SemaphoreSlim SubscriptionsSemaphore { get; } = new(1, 1);
 
+    // Cached connection properties for fast access during publish operations
+    // These are updated when ConnectionProperties change to avoid repeated property access
+    private int cachedTopicAliasMaximum;
+    private bool cachedRetainAvailable = true; // Default to true per MQTT spec
+    private int? cachedMaximumQoS;
+    private bool connectionPropertiesCached;
+
+    /// <summary>
+    /// Updates the cached connection properties for fast access during publish operations.
+    /// This method is called when connection properties are established or changed.
+    /// </summary>
+    /// <param name="properties">The connection properties to cache.</param>
+    internal void UpdateConnectionPropertyCache(MQTT5Properties? properties)
+    {
+        if (properties == null)
+        {
+            // Reset to defaults when disconnected
+            this.cachedTopicAliasMaximum = 0;
+            this.cachedRetainAvailable = true;
+            this.cachedMaximumQoS = null;
+            this.connectionPropertiesCached = false;
+            return;
+        }
+
+        this.cachedTopicAliasMaximum = properties.TopicAliasMaximum ?? 0;
+        this.cachedRetainAvailable = properties.RetainAvailable ?? true;
+        this.cachedMaximumQoS = properties.MaximumQoS;
+        this.connectionPropertiesCached = true;
+    }
+
     /// <summary>
     /// Clear all tracked subscriptions in a thread-safe manner.
     /// Intended for internal use when the broker indicates Session Present = false on CONNACK.
@@ -171,6 +201,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         // If the Session Expiry Interval is absent the value in the CONNECT Packet used.
         connectResult.Properties.SessionExpiryInterval ??= (uint)this.Options.SessionExpiryInterval;
 
+        // Update cached connection properties for fast access during publish operations
+        this.UpdateConnectionPropertyCache(connAck.Properties);
+
         // Fire the corresponding event
         this.AfterConnectEventLauncher(connectResult);
 
@@ -238,10 +271,29 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <inheritdoc />
     public async Task<PublishResult> PublishAsync(MQTT5PublishMessage message, CancellationToken cancellationToken = default)
     {
+        // Fast path for simple QoS 0 messages (most common case)
+        // Skip validation overhead for messages that don't need it
+        if (message.QoS == QualityOfService.AtMostOnceDelivery &&
+            !message.TopicAlias.HasValue &&
+            !message.Retain &&
+            this.Connection?.State == ConnectState.Connected &&
+            this.connectionPropertiesCached)
+        {
+            var publishPacket = new PublishPacket(message, 0);
+            this.Connection.OutgoingPublishQueue.Enqueue(publishPacket);
+            return new PublishResult(publishPacket.Message);
+        }
+
+        // Full validation path for complex cases
         message.Validate();
 
         // Check if topic alias is used but not supported by broker
-        var topicAliasMaximum = this.Connection?.ConnectionProperties?.TopicAliasMaximum ?? 0;
+        // Use cache as primary source for performance (avoids null-conditional property access)
+        // Fall back to ConnectionProperties only if cache is not set (before ConnAck received)
+        var topicAliasMaximum = this.connectionPropertiesCached
+            ? this.cachedTopicAliasMaximum
+            : (this.Connection?.ConnectionProperties?.TopicAliasMaximum ?? 0);
+
         if (message.TopicAlias.HasValue)
         {
             if (topicAliasMaximum == 0)
@@ -256,22 +308,33 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         }
 
         // Check if retain is used but not supported by broker
-        var retainSupported = this.Connection?.ConnectionProperties?.RetainAvailable ?? true;
+        // Use cache as primary source for performance (avoids null-conditional property access)
+        // Fall back to ConnectionProperties only if cache is not set (before ConnAck received)
+        var retainSupported = this.connectionPropertiesCached
+            ? this.cachedRetainAvailable
+            : (this.Connection?.ConnectionProperties?.RetainAvailable ?? true);
+
         if (!retainSupported && message.Retain)
         {
             throw new HiveMQttClientException("Retained messages are not supported by the broker");
         }
 
-        if (message.QoS.HasValue && this.Connection?.ConnectionProperties?.MaximumQoS.HasValue == true &&
-            (ushort)message.QoS.Value > this.Connection.ConnectionProperties.MaximumQoS.Value)
+        // Check QoS maximum
+        // Use cache as primary source for performance (avoids null-conditional property access)
+        // Fall back to ConnectionProperties only if cache is not set (before ConnAck received)
+        var maximumQoS = this.connectionPropertiesCached
+            ? this.cachedMaximumQoS
+            : this.Connection?.ConnectionProperties?.MaximumQoS;
+
+        if (maximumQoS.HasValue && (ushort)message.QoS.Value > maximumQoS.Value)
         {
             if (this.Connection == null)
             {
                 throw new HiveMQttClientException("Connection is not available");
             }
 
-            Logger.Debug($"Reducing message QoS from {message.QoS} to broker enforced maximum of {this.Connection.ConnectionProperties.MaximumQoS}");
-            message.QoS = (QualityOfService)this.Connection.ConnectionProperties.MaximumQoS.Value;
+            Logger.Debug($"Reducing message QoS from {message.QoS} to broker enforced maximum of {maximumQoS}");
+            message.QoS = (QualityOfService)maximumQoS.Value;
         }
 
         // QoS 0: Fast Service
