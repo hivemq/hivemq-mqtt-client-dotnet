@@ -37,8 +37,8 @@ public class SubscribeTest
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
         var subscribeOptions = new SubscribeOptions();
-        subscribeOptions.TopicFilters.Add(new TopicFilter("tests/MultiSubscribeAsync", MQTT5.Types.QualityOfService.AtLeastOnceDelivery));
-        subscribeOptions.TopicFilters.Add(new TopicFilter("tests/MultiSubscribeAsync2", MQTT5.Types.QualityOfService.AtLeastOnceDelivery));
+        subscribeOptions.TopicFilters.Add(new TopicFilter("tests/MultiSubscribeAsync", QualityOfService.AtLeastOnceDelivery));
+        subscribeOptions.TopicFilters.Add(new TopicFilter("tests/MultiSubscribeAsync2", QualityOfService.AtLeastOnceDelivery));
         subscribeOptions.UserProperties.Add("test", "test");
 
         var subResult = await subClient.SubscribeAsync(subscribeOptions).ConfigureAwait(false);
@@ -62,8 +62,8 @@ public class SubscribeTest
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
         var subscribeOptions = new SubscribeOptions();
-        subscribeOptions.TopicFilters.Add(new TopicFilter("tests/MultiSubscribeAsync", MQTT5.Types.QualityOfService.AtLeastOnceDelivery, true, true, MQTT5.Types.RetainHandling.SendAtSubscribe));
-        subscribeOptions.TopicFilters.Add(new TopicFilter("tests/MultiSubscribeAsync2", MQTT5.Types.QualityOfService.AtLeastOnceDelivery));
+        subscribeOptions.TopicFilters.Add(new TopicFilter("tests/MultiSubscribeAsync", QualityOfService.AtLeastOnceDelivery, true, true, RetainHandling.SendAtSubscribe));
+        subscribeOptions.TopicFilters.Add(new TopicFilter("tests/MultiSubscribeAsync2", QualityOfService.AtLeastOnceDelivery));
         subscribeOptions.UserProperties.Add("test", "test");
 
         var subResult = await subClient.SubscribeAsync(subscribeOptions).ConfigureAwait(false);
@@ -72,7 +72,7 @@ public class SubscribeTest
         Assert.Equal(SubAckReasonCode.GrantedQoS1, subResult.Subscriptions[0].SubscribeReasonCode);
         Assert.Equal(true, subResult.Subscriptions[0].TopicFilter.NoLocal);
         Assert.Equal(true, subResult.Subscriptions[0].TopicFilter.RetainAsPublished);
-        Assert.Equal(MQTT5.Types.RetainHandling.SendAtSubscribe, subResult.Subscriptions[0].TopicFilter.RetainHandling);
+        Assert.Equal(RetainHandling.SendAtSubscribe, subResult.Subscriptions[0].TopicFilter.RetainHandling);
         Assert.Equal(SubAckReasonCode.GrantedQoS1, subResult.Subscriptions[1].SubscribeReasonCode);
 
         var disconnectResult = await subClient.DisconnectAsync().ConfigureAwait(false);
@@ -87,7 +87,7 @@ public class SubscribeTest
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
-        var subResult = await subClient.SubscribeAsync("tests/SubscribeQoS1Async", MQTT5.Types.QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
+        var subResult = await subClient.SubscribeAsync("tests/SubscribeQoS1Async", QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
 
         Assert.NotEmpty(subResult.Subscriptions);
         Assert.Equal(SubAckReasonCode.GrantedQoS1, subResult.Subscriptions[0].SubscribeReasonCode);
@@ -104,7 +104,7 @@ public class SubscribeTest
         var connectResult = await subClient.ConnectAsync().ConfigureAwait(false);
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
-        var subResult = await subClient.SubscribeAsync("tests/SubscribeQoS2Async", MQTT5.Types.QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
+        var subResult = await subClient.SubscribeAsync("tests/SubscribeQoS2Async", QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
 
         Assert.NotEmpty(subResult.Subscriptions);
         Assert.Equal(SubAckReasonCode.GrantedQoS2, subResult.Subscriptions[0].SubscribeReasonCode);

@@ -3,6 +3,8 @@ namespace HiveMQtt.Test.HiveMQClient;
 using HiveMQtt.Client;
 using HiveMQtt.Client.Events;
 using HiveMQtt.Client.Internal;
+using HiveMQtt.MQTT5.ReasonCodes;
+using HiveMQtt.MQTT5.Types;
 using Xunit;
 
 public class ClientTest
@@ -35,7 +37,7 @@ public class ClientTest
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 
         Assert.NotNull(connectResult);
-        Assert.True(connectResult.ReasonCode == MQTT5.ReasonCodes.ConnAckReasonCode.Success);
+        Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
         var result = await client.DisconnectAsync().ConfigureAwait(false);
 
@@ -73,7 +75,7 @@ public class ClientTest
         client.AfterConnect += AfterConnectHandler;
 
         var connectResult = await client.ConnectAsync().ConfigureAwait(false);
-        Assert.Equal(MQTT5.ReasonCodes.ConnAckReasonCode.Success, connectResult.ReasonCode);
+        Assert.Equal(ConnAckReasonCode.Success, connectResult.ReasonCode);
 
         try
         {
@@ -118,13 +120,13 @@ public class ClientTest
 
         var subResult = await client.SubscribeAsync(
                                         "tests/ClientTest",
-                                        MQTT5.Types.QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
+                                        QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
 
         // Publish QoS 1 (At least once delivery)
         var pubResult = await client.PublishAsync(
                                         "tests/ClientTest",
                                         new string("♚ ♛ ♜ ♝ ♞ ♟ ♔ ♕ ♖ ♗ ♘ ♙"),
-                                        MQTT5.Types.QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
+                                        QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
 
         // Task Stuff
         Assert.NotNull(client.Connection.ConnectionWriterTask);

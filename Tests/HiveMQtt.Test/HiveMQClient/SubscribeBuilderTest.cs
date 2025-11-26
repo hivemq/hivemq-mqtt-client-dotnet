@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using HiveMQtt.Client;
 using HiveMQtt.Client.Events;
 using HiveMQtt.MQTT5.ReasonCodes;
+using HiveMQtt.MQTT5.Types;
 using Xunit;
 
 public class SubscribeBuilderTest
@@ -18,8 +19,8 @@ public class SubscribeBuilderTest
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
         var subscribeOptions = new SubscribeOptionsBuilder()
-            .WithSubscription("tests/MultiSubscribeAsync", MQTT5.Types.QualityOfService.AtLeastOnceDelivery)
-            .WithSubscription("tests/MultiSubscribeAsync2", MQTT5.Types.QualityOfService.AtLeastOnceDelivery)
+            .WithSubscription("tests/MultiSubscribeAsync", QualityOfService.AtLeastOnceDelivery)
+            .WithSubscription("tests/MultiSubscribeAsync2", QualityOfService.AtLeastOnceDelivery)
             .WithUserProperty("test", "test")
             .Build();
 
@@ -42,8 +43,8 @@ public class SubscribeBuilderTest
         Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
 
         var subscribeOptions = new SubscribeOptionsBuilder()
-            .WithSubscription("tests/MultiSubscribeAsync", MQTT5.Types.QualityOfService.AtLeastOnceDelivery, true, true, MQTT5.Types.RetainHandling.SendAtSubscribe)
-            .WithSubscription("tests/MultiSubscribeAsync2", MQTT5.Types.QualityOfService.AtLeastOnceDelivery)
+            .WithSubscription("tests/MultiSubscribeAsync", QualityOfService.AtLeastOnceDelivery, true, true, RetainHandling.SendAtSubscribe)
+            .WithSubscription("tests/MultiSubscribeAsync2", QualityOfService.AtLeastOnceDelivery)
             .WithUserProperty("test", "test")
             .Build();
 
@@ -53,7 +54,7 @@ public class SubscribeBuilderTest
         Assert.Equal(SubAckReasonCode.GrantedQoS1, subResult.Subscriptions[0].SubscribeReasonCode);
         Assert.Equal(true, subResult.Subscriptions[0].TopicFilter.NoLocal);
         Assert.Equal(true, subResult.Subscriptions[0].TopicFilter.RetainAsPublished);
-        Assert.Equal(MQTT5.Types.RetainHandling.SendAtSubscribe, subResult.Subscriptions[0].TopicFilter.RetainHandling);
+        Assert.Equal(RetainHandling.SendAtSubscribe, subResult.Subscriptions[0].TopicFilter.RetainHandling);
         Assert.Equal(SubAckReasonCode.GrantedQoS1, subResult.Subscriptions[1].SubscribeReasonCode);
 
         var disconnectResult = await subClient.DisconnectAsync().ConfigureAwait(false);
@@ -71,7 +72,7 @@ public class SubscribeBuilderTest
         var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         var subscribeOptions = new SubscribeOptionsBuilder()
-            .WithSubscription("tests/PerSubscriptionHandler", MQTT5.Types.QualityOfService.AtLeastOnceDelivery, messageReceivedHandler: (sender, args) =>
+            .WithSubscription("tests/PerSubscriptionHandler", QualityOfService.AtLeastOnceDelivery, messageReceivedHandler: (sender, args) =>
             {
                 Assert.Equal("tests/PerSubscriptionHandler", args.PublishMessage.Topic);
                 Assert.Equal("test", args.PublishMessage.PayloadAsString);
@@ -117,7 +118,7 @@ public class SubscribeBuilderTest
 
         // Setup a per-subscription handler
         var subscribeOptions = new SubscribeOptionsBuilder()
-            .WithSubscription("tests/PerSubscriptionHandler", MQTT5.Types.QualityOfService.AtLeastOnceDelivery, messageReceivedHandler: (sender, args) =>
+            .WithSubscription("tests/PerSubscriptionHandler", QualityOfService.AtLeastOnceDelivery, messageReceivedHandler: (sender, args) =>
             {
                 Assert.Equal("tests/PerSubscriptionHandler", args.PublishMessage.Topic);
                 Assert.Equal("test", args.PublishMessage.PayloadAsString);
@@ -190,7 +191,7 @@ public class SubscribeBuilderTest
         var messageCount = 0;
 
         var subscribeOptions = new SubscribeOptionsBuilder()
-            .WithSubscription("tests/PerSubHandlerWithSingleLevelWildcard/+/msg", MQTT5.Types.QualityOfService.AtLeastOnceDelivery, messageReceivedHandler: (sender, args) =>
+            .WithSubscription("tests/PerSubHandlerWithSingleLevelWildcard/+/msg", QualityOfService.AtLeastOnceDelivery, messageReceivedHandler: (sender, args) =>
             {
                 var pattern = @"^tests/PerSubHandlerWithSingleLevelWildcard/[0-2]/msg$";
                 var regex = new Regex(pattern);
@@ -272,7 +273,7 @@ public class SubscribeBuilderTest
         var subscribeOptions = new SubscribeOptionsBuilder()
             .WithSubscription(
                 "tests/PerSubHandlerWithMultiLevelWildcard/#",
-                MQTT5.Types.QualityOfService.AtLeastOnceDelivery,
+                QualityOfService.AtLeastOnceDelivery,
                 messageReceivedHandler: (sender, args) =>
             {
                 var pattern = @"\Atests/PerSubHandlerWithMultiLevelWildcard/(/?|.+)\z";

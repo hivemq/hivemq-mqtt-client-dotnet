@@ -1,10 +1,10 @@
 ﻿namespace HiveMQtt.Test.HiveMQClient;
 
 using System.Collections.Concurrent;
-using Client;
-using Client.Options;
-using MQTT5.ReasonCodes;
-using MQTT5.Types;
+using HiveMQtt.Client;
+using HiveMQtt.Client.Options;
+using HiveMQtt.MQTT5.ReasonCodes;
+using HiveMQtt.MQTT5.Types;
 using Xunit;
 using Xunit.Abstractions;
 
