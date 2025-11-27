@@ -17,7 +17,7 @@ namespace HiveMQtt.Client;
 
 using System;
 using System.Threading.Tasks;
-
+using Microsoft.Extensions.Logging;
 using HiveMQtt.Client.Events;
 using HiveMQtt.Client.Exceptions;
 using HiveMQtt.MQTT5.ReasonCodes;
@@ -31,15 +31,18 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// </summary>
     private static async void AutomaticReconnectHandler(object? sender, AfterDisconnectEventArgs e)
     {
+        // Use NullLogger for static method - logging is optional for automatic reconnect
+        var logger = Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
+
         if (e.CleanDisconnect)
         {
-            Logger.Debug("AutomaticReconnectHandler: Clean disconnect.  No need to reconnect.");
+            logger.LogDebug("AutomaticReconnectHandler: Clean disconnect.  No need to reconnect.");
             return;
         }
 
         if (sender is null)
         {
-            Logger.Warn("AutomaticReconnectHandler: Sender(client) is null.  Cannot reconnect.");
+            logger.LogWarning("AutomaticReconnectHandler: Sender(client) is null.  Cannot reconnect.");
             return;
         }
 
@@ -48,6 +51,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         var reconnectAttempts = 0;
         var client = (HiveMQClient)sender;
 
+        // Get logger from client instance if available
+        var clientLogger = (ILogger)client.logger ?? logger;
+
         while (true)
         {
             await Task.Delay(delay).ConfigureAwait(false);
@@ -55,30 +61,30 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
             try
             {
-                Logger.Info($"--> Attempting to reconnect to broker.  Attempt #{reconnectAttempts}.");
+                clientLogger.LogInformation("--> Attempting to reconnect to broker.  Attempt #{AttemptNumber}.", reconnectAttempts);
                 var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 
                 if (connectResult.ReasonCode != ConnAckReasonCode.Success)
                 {
-                    Logger.Info($"--> Failed to reconnect to broker: {connectResult.ReasonCode}/{connectResult.ReasonString}");
+                    clientLogger.LogInformation("--> Failed to reconnect to broker: {ReasonCode}/{ReasonString}", connectResult.ReasonCode, connectResult.ReasonString);
 
                     // Double the delay with each failed retry to a maximum
                     delay = Math.Min(delay * 2, maxDelay);
-                    Logger.Debug($"--> Will delay for {delay / 1000} seconds until next try.");
+                    clientLogger.LogDebug("--> Will delay for {DelaySeconds} seconds until next try.", delay / 1000);
                 }
                 else
                 {
-                    Logger.Info("--> Reconnected successfully.");
+                    clientLogger.LogInformation("--> Reconnected successfully.");
                     break;
                 }
             }
             catch (HiveMQttClientException ex)
             {
-                Logger.Info($"--> Failed to reconnect: {ex.Message}");
+                clientLogger.LogInformation(ex, "--> Failed to reconnect");
 
                 // Double the delay with each failed retry to a maximum
                 delay = Math.Min(delay * 2, 60000);
-                Logger.Debug($"--> Will delay for {delay / 1000} seconds until next try.");
+                clientLogger.LogDebug("--> Will delay for {DelaySeconds} seconds until next try.", delay / 1000);
             }
         }
     }

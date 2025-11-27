@@ -15,8 +15,8 @@
  */
 namespace HiveMQtt.Client.Transport;
 
+using Microsoft.Extensions.Logging;
 using System.IO.Pipelines;
-using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.Security;
@@ -41,7 +41,8 @@ public class TCPTransport : BaseTransport, IDisposable
     // Semaphore to serialize write operations and prevent concurrent writes
     private readonly SemaphoreSlim writeSemaphore = new(1, 1);
 
-    public TCPTransport(HiveMQClientOptions options) => this.Options = options;
+    public TCPTransport(HiveMQClientOptions options)
+        : base(options.LoggerFactory) => this.Options = options;
 
     /// <summary>
     /// SSLStream Callback.  This is used to always allow invalid broker certificates.
@@ -69,12 +70,14 @@ public class TCPTransport : BaseTransport, IDisposable
     /// <summary>
     /// SSLStream Callback.  This is used to validate TLS certificates.
     /// </summary>
+    /// <param name="logger">The logger instance to use for logging.</param>
     /// <param name="sender">An object that contains state information for this validation.</param>
     /// <param name="certificate">The certificate used to authenticate the remote party.</param>
     /// <param name="chain">The chain of certificate authorities associated with the remote certificate.</param>
     /// <param name="sslPolicyErrors">One or more errors associated with the remote certificate.</param>
     /// <returns>A Boolean indicating whether the TLS certificate is valid.</returns>
-    internal static bool ValidateServerCertificate(
+    private static bool ValidateServerCertificate(
+        ILogger logger,
         object sender,
         X509Certificate? certificate,
         X509Chain? chain,
@@ -88,21 +91,21 @@ public class TCPTransport : BaseTransport, IDisposable
             return true;
         }
 
-        Logger.Warn("Broker TLS Certificate error: {0}", sslPolicyErrors);
+        logger.LogWarning("Broker TLS Certificate error: {SslPolicyErrors}", sslPolicyErrors);
 
         // Log additional certificate details for debugging
         if (certificate != null)
         {
-            Logger.Debug(CultureInfo.InvariantCulture, "Certificate Subject: {0}", certificate.Subject);
-            Logger.Debug(CultureInfo.InvariantCulture, "Certificate Issuer: {0}", certificate.Issuer);
-            Logger.Debug(CultureInfo.InvariantCulture, "Certificate Serial Number: {0}", certificate.GetSerialNumberString());
+            logger.LogDebug("Certificate Subject: {Subject}", certificate.Subject);
+            logger.LogDebug("Certificate Issuer: {Issuer}", certificate.Issuer);
+            logger.LogDebug("Certificate Serial Number: {SerialNumber}", certificate.GetSerialNumberString());
         }
 
         // Validate certificate chain if provided
         if (chain != null)
         {
             var chainStatus = chain.ChainStatus.Length > 0 ? string.Join(", ", chain.ChainStatus.Select(cs => cs.Status)) : "Valid";
-            Logger.Debug(CultureInfo.InvariantCulture, "Certificate chain validation status: {0}", chainStatus);
+            logger.LogDebug("Certificate chain validation status: {ChainStatus}", chainStatus);
         }
 
         // Do not allow this client to communicate with unauthenticated servers.
@@ -111,7 +114,7 @@ public class TCPTransport : BaseTransport, IDisposable
 
     private async Task<bool> CreateTLSConnectionAsync(Stream stream)
     {
-        Logger.Trace("Creating TLS connection");
+        this.Logger.LogTrace("Creating TLS connection");
 
         var tlsOptions = new SslClientAuthenticationOptions
         {
@@ -122,7 +125,7 @@ public class TCPTransport : BaseTransport, IDisposable
 
         if (this.Options.AllowInvalidBrokerCertificates)
         {
-            Logger.Trace("Allowing invalid broker certificates");
+            this.Logger.LogTrace("Allowing invalid broker certificates");
 #pragma warning disable CA5359
             var yesMan = new RemoteCertificateValidationCallback((sender, certificate, chain, errors) => true);
 #pragma warning restore CA5359
@@ -130,43 +133,45 @@ public class TCPTransport : BaseTransport, IDisposable
         }
         else
         {
-            tlsOptions.RemoteCertificateValidationCallback = ValidateServerCertificate;
+            var logger = this.Logger;
+            tlsOptions.RemoteCertificateValidationCallback = (sender, certificate, chain, errors) =>
+                ValidateServerCertificate(logger, sender, certificate, chain, errors);
         }
 
         try
         {
-            Logger.Trace("Authenticating TLS connection");
+            this.Logger.LogTrace("Authenticating TLS connection");
             this.Stream = new SslStream(stream);
             await ((SslStream)this.Stream).AuthenticateAsClientAsync(tlsOptions).ConfigureAwait(false);
 
-            Logger.Info($"Connected via TLS: {((SslStream)this.Stream).IsEncrypted}");
-            Logger.Debug($"Cipher Algorithm: {((SslStream)this.Stream).CipherAlgorithm}");
-            Logger.Debug($"Cipher Strength: {((SslStream)this.Stream).CipherStrength}");
-            Logger.Debug($"Hash Algorithm: {((SslStream)this.Stream).HashAlgorithm}");
-            Logger.Debug($"Hash Strength: {((SslStream)this.Stream).HashStrength}");
-            Logger.Debug($"Key Exchange Algorithm: {((SslStream)this.Stream).KeyExchangeAlgorithm}");
-            Logger.Debug($"Key Exchange Strength: {((SslStream)this.Stream).KeyExchangeStrength}");
+            this.Logger.LogInformation("Connected via TLS: {IsEncrypted}", ((SslStream)this.Stream).IsEncrypted);
+            this.Logger.LogDebug("Cipher Algorithm: {CipherAlgorithm}", ((SslStream)this.Stream).CipherAlgorithm);
+            this.Logger.LogDebug("Cipher Strength: {CipherStrength}", ((SslStream)this.Stream).CipherStrength);
+            this.Logger.LogDebug("Hash Algorithm: {HashAlgorithm}", ((SslStream)this.Stream).HashAlgorithm);
+            this.Logger.LogDebug("Hash Strength: {HashStrength}", ((SslStream)this.Stream).HashStrength);
+            this.Logger.LogDebug("Key Exchange Algorithm: {KeyExchangeAlgorithm}", ((SslStream)this.Stream).KeyExchangeAlgorithm);
+            this.Logger.LogDebug("Key Exchange Strength: {KeyExchangeStrength}", ((SslStream)this.Stream).KeyExchangeStrength);
 
             var remoteCertificate = ((SslStream)this.Stream).RemoteCertificate;
             if (remoteCertificate != null)
             {
-                Logger.Info($"Remote Certificate Subject: {remoteCertificate.Subject}");
-                Logger.Info($"Remote Certificate Issuer: {remoteCertificate.Issuer}");
-                Logger.Info($"Remote Certificate Serial Number: {remoteCertificate.GetSerialNumberString()}");
+                this.Logger.LogInformation("Remote Certificate Subject: {Subject}", remoteCertificate.Subject);
+                this.Logger.LogInformation("Remote Certificate Issuer: {Issuer}", remoteCertificate.Issuer);
+                this.Logger.LogInformation("Remote Certificate Serial Number: {SerialNumber}", remoteCertificate.GetSerialNumberString());
             }
 
-            Logger.Info($"TLS Protocol: {((SslStream)this.Stream).SslProtocol}");
+            this.Logger.LogInformation("TLS Protocol: {SslProtocol}", ((SslStream)this.Stream).SslProtocol);
             return true;
         }
         catch (Exception e)
         {
-            Logger.Error(e.Message);
+            this.Logger.LogError(e, "TLS connection error");
             if (e.InnerException != null)
             {
-                Logger.Error(e.InnerException.Message);
+                this.Logger.LogError(e.InnerException, "TLS connection inner exception");
             }
 
-            Logger.Error("Error while establishing TLS connection - closing the connection.");
+            this.Logger.LogError("Error while establishing TLS connection - closing the connection.");
             return false;
         }
     }
@@ -186,7 +191,7 @@ public class TCPTransport : BaseTransport, IDisposable
         }
         else
         {
-            var lookupResult = await LookupHostNameAsync(this.Options.Host, this.Options.PreferIPv6).ConfigureAwait(false);
+            var lookupResult = await this.LookupHostNameAsync(this.Options.Host, this.Options.PreferIPv6).ConfigureAwait(false);
 
             if (lookupResult != null)
             {
@@ -232,7 +237,7 @@ public class TCPTransport : BaseTransport, IDisposable
         this.Reader = PipeReader.Create(this.Stream);
         this.Writer = PipeWriter.Create(this.Stream);
 
-        Logger.Trace($"Socket connected to {this.Socket.RemoteEndPoint}");
+        this.Logger.LogTrace("Socket connected to {RemoteEndPoint}", this.Socket.RemoteEndPoint);
         return socketConnected;
     }
 
@@ -303,7 +308,7 @@ public class TCPTransport : BaseTransport, IDisposable
 
             if (writeResult.IsCompleted || writeResult.IsCanceled)
             {
-                Logger.Debug($"-(TCP)- WriteAsync: The party is over. IsCompleted={writeResult.IsCompleted} IsCancelled={writeResult.IsCanceled}");
+                this.Logger.LogDebug("-(TCP)- WriteAsync: The party is over. IsCompleted={IsCompleted} IsCancelled={IsCancelled}", writeResult.IsCompleted, writeResult.IsCanceled);
                 return false;
             }
 
@@ -335,18 +340,18 @@ public class TCPTransport : BaseTransport, IDisposable
 
             if (readResult.IsCanceled || readResult.IsCompleted)
             {
-                Logger.Debug($"-(TCP)- ReadAsync: The party is over. IsCompleted={readResult.IsCompleted} IsCancelled={readResult.IsCanceled}");
+                this.Logger.LogDebug("-(TCP)- ReadAsync: The party is over. IsCompleted={IsCompleted} IsCancelled={IsCancelled}", readResult.IsCompleted, readResult.IsCanceled);
                 return new TransportReadResult(true);
             }
         }
         catch (SocketException ex)
         {
-            Logger.Debug($"SocketException in ReadAsync: {ex.Message}");
+            this.Logger.LogDebug(ex, "SocketException in ReadAsync: {Message}", ex.Message);
             return new TransportReadResult(true);
         }
         catch (IOException ex)
         {
-            Logger.Debug($"SocketException in ReadAsync: {ex.Message}");
+            this.Logger.LogDebug(ex, "SocketException in ReadAsync: {Message}", ex.Message);
             return new TransportReadResult(true);
         }
 
@@ -386,7 +391,7 @@ public class TCPTransport : BaseTransport, IDisposable
     /// <param name="disposing">True if called from user code.</param>
     protected virtual void Dispose(bool disposing)
     {
-        Logger.Trace("Disposing TCPTransport");
+        this.Logger.LogTrace("Disposing TCPTransport");
 
         // Check to see if Dispose has already been called.
         if (!this.disposed)
@@ -414,7 +419,7 @@ public class TCPTransport : BaseTransport, IDisposable
                     }
                     catch (Exception ex)
                     {
-                        Logger.Warn($"Error closing stream: {ex.Message}");
+                        this.Logger.LogWarning(ex, "Error closing stream: {Message}", ex.Message);
                     }
                     finally
                     {
@@ -435,7 +440,7 @@ public class TCPTransport : BaseTransport, IDisposable
                     }
                     catch (Exception ex)
                     {
-                        Logger.Warn($"Error shutting down socket: {ex.Message}");
+                        this.Logger.LogWarning(ex, "Error shutting down socket: {Message}", ex.Message);
                     }
                     finally
                     {

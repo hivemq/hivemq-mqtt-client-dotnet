@@ -19,6 +19,7 @@ namespace HiveMQtt.Client;
 using System;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using HiveMQtt.Client.Connection;
 using HiveMQtt.Client.Events;
 using HiveMQtt.Client.Exceptions;
@@ -35,7 +36,7 @@ using HiveMQtt.MQTT5.Types;
 /// </summary>
 public partial class HiveMQClient : IDisposable, IHiveMQClient
 {
-    private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+    internal readonly ILogger<HiveMQClient> logger;
 
     internal ConnectionManager Connection { get; set; }
 
@@ -44,7 +45,14 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         options ??= new HiveMQClientOptions();
         options.Validate();
 
-        Logger.Trace($"New client created: Client ID: {options.ClientId}");
+        // Create logger from factory or use NullLogger if not provided
+        var loggerFactory = options.LoggerFactory ?? Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance;
+        this.logger = loggerFactory.CreateLogger<HiveMQClient>();
+
+        // Initialize static loggers for classes that need them (builders, static utilities)
+        InitializeStaticLoggers(loggerFactory);
+
+        this.logger.LogTrace("New client created: Client ID: {ClientId}", options.ClientId);
 
         this.Options = options;
 
@@ -125,7 +133,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         this.Connection.State = ConnectState.Connecting;
         this.Connection.SignalNotDisconnected();
 
-        Logger.Info("Connecting to broker at {0}:{1}", this.Options.Host, this.Options.Port);
+        this.logger.LogInformation("Connecting to broker at {Host}:{Port}", this.Options.Host, this.Options.Port);
 
         // Apply the connect override options if provided
         if (connectOptions != null)
@@ -159,7 +167,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         // Construct the MQTT Connect packet and queue to send
         var connPacket = new ConnectPacket(this.Options);
-        Logger.Trace($"Queuing CONNECT packet for send.");
+        this.logger.LogTrace("Queuing CONNECT packet for send.");
         this.Connection.SendQueue.Enqueue(connPacket);
 
         ConnAckPacket connAck;
@@ -172,7 +180,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         {
             this.Connection.State = ConnectState.Disconnected;
             this.Connection.ResetNotDisconnectedSignal();
-            Logger.Error($"Connect timeout.  No response received in {this.Options.ConnectTimeoutInMs} milliseconds.");
+            this.logger.LogError("Connect timeout.  No response received in {TimeoutMs} milliseconds.", this.Options.ConnectTimeoutInMs);
             throw new HiveMQttClientException($"Connect timeout.  No response received in {this.Options.ConnectTimeoutInMs} milliseconds.");
         }
         finally
@@ -221,13 +229,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         if (this.Connection.State != ConnectState.Connected)
         {
-            Logger.Warn($"DisconnectAsync called but this client is not connected.  State is {this.Connection.State}.");
+            this.logger.LogWarning("DisconnectAsync called but this client is not connected.  State is {State}.", this.Connection.State);
             return false;
         }
 
         options ??= new DisconnectOptions();
 
-        Logger.Info("Disconnecting from broker at {0}:{1}", this.Options.Host, this.Options.Port);
+        this.logger.LogInformation("Disconnecting from broker at {Host}:{Port}", this.Options.Host, this.Options.Port);
 
         // Fire the corresponding event
         this.BeforeDisconnectEventLauncher();
@@ -246,7 +254,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         EventHandler<OnDisconnectSentEventArgs> eventHandler = TaskHandler;
         this.OnDisconnectSent += eventHandler;
 
-        Logger.Trace($"Queuing DISCONNECT packet for send.");
+        this.logger.LogTrace("Queuing DISCONNECT packet for send.");
         this.Connection.SendQueue.Enqueue(disconnectPacket);
 
         try
@@ -326,14 +334,14 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             ? this.cachedMaximumQoS
             : this.Connection?.ConnectionProperties?.MaximumQoS;
 
-        if (maximumQoS.HasValue && (ushort)message.QoS.Value > maximumQoS.Value)
+        if (maximumQoS.HasValue && message.QoS.HasValue && (ushort)message.QoS.Value > maximumQoS.Value)
         {
             if (this.Connection == null)
             {
                 throw new HiveMQttClientException("Connection is not available");
             }
 
-            Logger.Debug($"Reducing message QoS from {message.QoS} to broker enforced maximum of {maximumQoS}");
+            this.logger.LogDebug("Reducing message QoS from {OriginalQoS} to broker enforced maximum of {MaximumQoS}", message.QoS, maximumQoS);
             message.QoS = (QualityOfService)maximumQoS.Value;
         }
 
@@ -341,7 +349,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         if (message.QoS == QualityOfService.AtMostOnceDelivery)
         {
             var publishPacket = new PublishPacket(message, 0);
-            Logger.Trace($"Queuing QoS 0 publish packet for send: {publishPacket.GetType().Name}");
+            this.logger.LogTrace("Queuing QoS 0 publish packet for send: {PacketType}", publishPacket.GetType().Name);
 
             this.Connection?.OutgoingPublishQueue.Enqueue(publishPacket);
             return new PublishResult(publishPacket.Message);
@@ -358,7 +366,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             var publishPacket = new PublishPacket(message, (ushort)packetIdentifier);
             PubAckPacket pubAckPacket;
 
-            Logger.Trace($"Queuing QoS 1 publish packet for send: {publishPacket.GetType().Name} id={publishPacket.PacketIdentifier}");
+            this.logger.LogTrace("Queuing QoS 1 publish packet for send: {PacketType} id={PacketId}", publishPacket.GetType().Name, publishPacket.PacketIdentifier);
             this.Connection.OutgoingPublishQueue.Enqueue(publishPacket);
 
             try
@@ -370,7 +378,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             }
             catch (OperationCanceledException)
             {
-                Logger.Debug("PublishAsync: Operation cancelled by user.");
+                this.logger.LogDebug("PublishAsync: Operation cancelled by user.");
                 throw;
             }
 
@@ -388,7 +396,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             var publishPacket = new PublishPacket(message, (ushort)packetIdentifier);
             var publishResult = new PublishResult(publishPacket.Message);
 
-            Logger.Trace($"Queuing QoS 2 publish packet for send: {publishPacket.GetType().Name} id={publishPacket.PacketIdentifier}");
+            this.logger.LogTrace("Queuing QoS 2 publish packet for send: {PacketType} id={PacketId}", publishPacket.GetType().Name, publishPacket.PacketIdentifier);
             this.Connection.OutgoingPublishQueue.Enqueue(publishPacket);
 
             List<ControlPacket> packetList;
@@ -401,7 +409,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             }
             catch (OperationCanceledException)
             {
-                Logger.Debug("PublishAsync: Operation cancelled by user.");
+                this.logger.LogDebug("PublishAsync: Operation cancelled by user.");
                 throw;
             }
 
@@ -548,7 +556,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         }
         catch (TimeoutException)
         {
-            Logger.Error("Subscribe timeout.  No SUBACK response received in time.");
+            this.logger.LogError("Subscribe timeout.  No SUBACK response received in time.");
             throw;
         }
         finally
@@ -746,4 +754,18 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
     // Method to check if ping are sent based on the KeepAlive option
     public bool IsPingSent() => this.Options.KeepAlive > 0;
+
+    /// <summary>
+    /// Initializes static loggers for classes that need them.
+    /// This includes builder classes (used before client creation) and static utility classes.
+    /// </summary>
+    /// <param name="loggerFactory">The logger factory to use for creating loggers.</param>
+    private static void InitializeStaticLoggers(ILoggerFactory loggerFactory)
+    {
+        // Initialize builders (used before client creation)
+        DisconnectOptionsBuilder.SetLoggerFactory(loggerFactory);
+        HiveMQClientOptionsBuilder.SetLoggerFactory(loggerFactory);
+
+        // Note: ControlPacket is initialized by ConnectionManager since it's tied to connection lifecycle
+    }
 }

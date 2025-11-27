@@ -19,6 +19,7 @@ using System;
 using System.Buffers;
 using System.IO;
 using System.Text;
+using Microsoft.Extensions.Logging;
 using HiveMQtt.MQTT5.Exceptions;
 using HiveMQtt.MQTT5.Types;
 
@@ -27,7 +28,43 @@ using HiveMQtt.MQTT5.Types;
 /// </summary>
 public abstract class ControlPacket
 {
-    internal static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+    // Static logger factory that can be set to enable logging from ControlPacket instances
+    // Set by ConnectionManager when it's initialized with a logger factory
+    private static ILoggerFactory? loggerFactory;
+
+    // Cached logger instance (created lazily when factory is set)
+    private static ILogger? cachedLogger;
+
+    // Logger instance created from the factory (or NullLogger if no factory is set)
+    internal static ILogger Logger
+    {
+        get
+        {
+            if (cachedLogger != null)
+            {
+                return cachedLogger;
+            }
+
+            if (loggerFactory != null)
+            {
+                cachedLogger = loggerFactory.CreateLogger("HiveMQtt.MQTT5.ControlPacket");
+                return cachedLogger;
+            }
+
+            return Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
+        }
+    }
+
+    /// <summary>
+    /// Sets the logger factory for ControlPacket logging.
+    /// This is called by ConnectionManager to enable packet-level logging.
+    /// </summary>
+    /// <param name="factory">The logger factory to use for creating loggers, or null to disable logging.</param>
+    internal static void SetLoggerFactory(ILoggerFactory? factory)
+    {
+        loggerFactory = factory;
+        cachedLogger = null; // Reset cached logger so it will be recreated with new factory
+    }
 
     public ControlPacket() => this.Properties = new MQTT5Properties();
 

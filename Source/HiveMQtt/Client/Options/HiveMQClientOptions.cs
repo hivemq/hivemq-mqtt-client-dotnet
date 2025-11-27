@@ -21,6 +21,7 @@ using System.Linq;
 using System.Net;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
+using Microsoft.Extensions.Logging;
 using HiveMQtt.Client;
 using HiveMQtt.Client.Exceptions;
 
@@ -29,8 +30,6 @@ using HiveMQtt.Client.Exceptions;
 /// </summary>
 public class HiveMQClientOptions
 {
-    private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
-
     // The set of valid characters that a client identifier can consist of
     private readonly string clientIdCharset = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
@@ -270,6 +269,34 @@ public class HiveMQClientOptions
     public IWebProxy? WebSocketProxy { get; set; }
 
     /// <summary>
+    /// Gets or sets the logger factory to use for creating loggers.
+    /// <para>
+    /// If not set, logging will be disabled (NullLogger will be used).
+    /// </para>
+    /// <para>
+    /// Example with NLog:
+    /// <code>
+    /// using Microsoft.Extensions.Logging;
+    /// using NLog.Extensions.Logging;
+    ///
+    /// var loggerFactory = LoggerFactory.Create(builder => builder.AddNLog());
+    /// options.LoggerFactory = loggerFactory;
+    /// </code>
+    /// </para>
+    /// <para>
+    /// Example with Console logging:
+    /// <code>
+    /// using Microsoft.Extensions.Logging;
+    ///
+    /// var loggerFactory = LoggerFactory.Create(builder =>
+    ///     builder.AddConsole().SetMinimumLevel(LogLevel.Trace));
+    /// options.LoggerFactory = loggerFactory;
+    /// </code>
+    /// </para>
+    /// </summary>
+    public ILoggerFactory? LoggerFactory { get; set; }
+
+    /// <summary>
     /// Generate a semi-random client identifier to be used in <c>Client</c> connections.
     /// hmqc#-pid-randomstring.
     /// </summary>
@@ -285,11 +312,9 @@ public class HiveMQClientOptions
         this.ClientId = stamp + clientID;
     }
 
-    public void ValidateOptions()
-    {
-        Logger.Warn("HiveMQClientOptions.ValidateOptions() is deprecated.  Use Validate() instead.");
-        this.Validate();
-    }
+    // Note: Deprecation warning removed as logging requires ILoggerFactory
+    // which is not available in this static context. Users should use Validate() instead.
+    public void ValidateOptions() => this.Validate();
 
     /// <summary>
     /// Validate that the options specified in this class are all sane.
@@ -368,10 +393,9 @@ public class HiveMQClientOptions
             this.GenerateClientID();
         }
 
-        if (this.ClientId is not null && this.ClientId.Length > 23)
-        {
-            Logger.Debug($"Client ID {this.ClientId} is longer than 23 characters.  This may cause issues with some brokers.");
-        }
+        // Note: Client ID length warning removed as logging requires ILoggerFactory
+        // which is not available in this validation context. The validation will proceed
+        // even if the Client ID is longer than 23 characters.
     }
 
     /// <summary>

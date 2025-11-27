@@ -44,8 +44,13 @@
   <!-- These packages (System.Text.RegularExpressions 4.3.0, System.Net.Http 4.3.0) are transitive -->
   <!-- dependencies from older packages. The vulnerabilities are not exploitable in this context -->
   <!-- as these are internal transitive dependencies, not directly used. -->
+  <!-- Suppress CA1848 warnings for LoggerMessage delegates - using extension methods is acceptable -->
+  <!-- Implementing LoggerMessage delegates for 300+ logging calls would be a significant refactoring -->
+  <!-- Suppress CA2254 warnings for varying logging templates - some templates vary based on context -->
+  <!-- Suppress StyleCop warnings for logger field - needs to be internal for static method access -->
+  <!-- Suppress IDE1006 - naming rule violation for logger field -->
   <PropertyGroup>
-    <NoWarn>$(NoWarn);NU1903</NoWarn>
+    <NoWarn>$(NoWarn);NU1903;CA1848;CA2254;SA1401;SA1304;SA1307;IDE1006</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' " />
   <ItemGroup>
@@ -54,8 +59,6 @@
     <None Remove="MQTT5\" />
     <None Remove="System.IO.Pipelines" />
     <None Remove="Microsoft.Extensions.Logging.Abstractions" />
-    <None Remove="NLog" />
-    <None Remove="NLog.config" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Connect\" />
@@ -64,7 +67,6 @@
   <ItemGroup>
     <PackageReference Include="System.IO.Pipelines" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.1" />
-    <PackageReference Include="NLog" Version="5.2.3" />
     <PackageReference Include="Websocket.Client" Version="5.1.2" />
   </ItemGroup>
 
@@ -72,11 +74,5 @@
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
       <_Parameter1>HiveMQtt.Test</_Parameter1>
     </AssemblyAttribute>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="NLog.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
 </Project>

@@ -15,13 +15,25 @@
  */
 namespace HiveMQtt.Client.Transport;
 
+using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Net.Sockets;
 using HiveMQtt.Client.Exceptions;
 
 public abstract class BaseTransport
 {
-    protected static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+    /// <summary>
+    /// Gets the logger instance for this transport.
+    /// </summary>
+    protected ILogger Logger { get; }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BaseTransport"/> class.
+    /// </summary>
+    /// <param name="loggerFactory">Optional logger factory for logging. If not provided, NullLogger will be used.</param>
+    protected BaseTransport(ILoggerFactory? loggerFactory = null)
+        => this.Logger = loggerFactory?.CreateLogger(this.GetType())
+            ?? Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance.CreateLogger(this.GetType());
 
     public abstract Task<bool> ConnectAsync(CancellationToken cancellationToken = default);
 
@@ -42,7 +54,7 @@ public abstract class BaseTransport
     /// <param name="preferIPv6">A value indicating whether to prefer IPv6 addresses.</param>
     /// <returns>The IP address of the hostname.</returns>
     /// <exception cref="HiveMQttClientException">Thrown when the hostname cannot be resolved.</exception>
-    protected static async Task<IPAddress?> LookupHostNameAsync(string host, bool preferIPv6)
+    protected async Task<IPAddress?> LookupHostNameAsync(string host, bool preferIPv6)
     {
         try
         {
@@ -87,7 +99,7 @@ public abstract class BaseTransport
         }
         catch (SocketException socketException)
         {
-            Logger.Debug(socketException.Message);
+            this.Logger.LogDebug(socketException, "Socket exception");
             return null;
         }
     }

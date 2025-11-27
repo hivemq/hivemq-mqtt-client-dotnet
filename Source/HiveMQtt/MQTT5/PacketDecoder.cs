@@ -16,6 +16,7 @@
 namespace HiveMQtt.MQTT5;
 
 using System.Buffers;
+using Microsoft.Extensions.Logging;
 using HiveMQtt.MQTT5.Packets;
 
 /// <summary>
@@ -23,7 +24,8 @@ using HiveMQtt.MQTT5.Packets;
 /// </summary>
 internal class PacketDecoder
 {
-    private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+    // Logger instance created from ControlPacket's logger factory
+    private static ILogger Logger => ControlPacket.Logger;
 
     public static bool TryDecode(ReadOnlySequence<byte> buffer, out ControlPacket decodedPacket, out SequencePosition consumed)
     {
@@ -54,7 +56,7 @@ internal class PacketDecoder
             if (buffer.Length < packetLength)
             {
                 // Not all data for this packet has arrived yet.  Try again...
-                Logger.Trace($"PacketDecoder.TryDecode: Waiting on more data: {buffer.Length} < {packetLength} - Returning PartialPacket.");
+                Logger.LogTrace("PacketDecoder.TryDecode: Waiting on more data: {BufferLength} < {PacketLength} - Returning PartialPacket.", buffer.Length, packetLength);
                 decodedPacket = new PartialPacket();
                 consumed = default;
                 return false;
@@ -85,7 +87,7 @@ internal class PacketDecoder
         }
         catch (Exception ex)
         {
-            Logger.Error(ex, $"PacketDecoder.Decode: Exception caught.  Returning MalformedPacket.");
+            Logger.LogError(ex, "PacketDecoder.Decode: Exception caught.  Returning MalformedPacket.");
             consumed = buffer.Start;
             decodedPacket = new MalformedPacket(buffer);
             return false;

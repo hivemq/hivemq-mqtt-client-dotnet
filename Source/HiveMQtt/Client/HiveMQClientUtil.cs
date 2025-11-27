@@ -17,6 +17,7 @@ namespace HiveMQtt.Client;
 
 using System;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
 using HiveMQtt.MQTT5.Types;
 
 /// <inheritdoc />
@@ -166,7 +167,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     /// <param name="disposing">True if called from user code.</param>
     protected virtual void Dispose(bool disposing)
     {
-        Logger.Trace("Disposing HiveMQClient");
+        this.logger.LogTrace("Disposing HiveMQClient");
 
         // Check to see if Dispose has already been called.
         if (!this.disposed)
@@ -177,7 +178,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             {
                 if (this.Connection?.State == Internal.ConnectState.Connected)
                 {
-                    Logger.Trace("HiveMQClient Dispose: Disconnecting connected client.");
+                    this.logger.LogTrace("HiveMQClient Dispose: Disconnecting connected client.");
                     try
                     {
                         // Use Task.Run to avoid synchronization context deadlocks
@@ -194,12 +195,12 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                         }
                         catch (TimeoutException)
                         {
-                            Logger.Warn("Disconnect operation timed out during dispose");
+                            this.logger.LogWarning("Disconnect operation timed out during dispose");
                         }
                     }
                     catch (Exception ex)
                     {
-                        Logger.Warn($"Error disconnecting during dispose: {ex.Message}");
+                        this.logger.LogWarning(ex, "Error disconnecting during dispose");
                     }
                 }
 
