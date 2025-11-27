@@ -119,12 +119,12 @@ public partial class ConnectionManager : IDisposable
         // For now, initialize with TCPTransport as a placeholder - it will be replaced during ConnectAsync()
         this.Transport = new TCPTransport(this.Client.Options);
 
-        this.logger.LogTrace("Trace Level Logging Legend:");
-        this.logger.LogTrace("    -(W)-   == ConnectionWriter");
-        this.logger.LogTrace("    -(PW)-  == ConnectionPublishWriter");
-        this.logger.LogTrace("    -(R)-   == ConnectionReader");
-        this.logger.LogTrace("    -(CM)-  == ConnectionMonitor");
-        this.logger.LogTrace("    -(RPH)- == ReceivedPacketsHandler");
+        LogTraceLevelLoggingLegend(this.logger);
+        LogLegendConnectionWriter(this.logger);
+        LogLegendConnectionPublishWriter(this.logger);
+        LogLegendConnectionReader(this.logger);
+        LogLegendConnectionMonitor(this.logger);
+        LogLegendReceivedPacketsHandler(this.logger);
     }
 
     internal Task WaitUntilConnectedAsync(CancellationToken cancellationToken) => this.connectedSignal.Task.WaitAsync(cancellationToken);
@@ -198,7 +198,7 @@ public partial class ConnectionManager : IDisposable
 
         if (!connected)
         {
-            this.logger.LogError("Failed to connect to broker");
+            LogFailedToConnectToBroker(this.logger);
             return false;
         }
 
@@ -258,23 +258,23 @@ public partial class ConnectionManager : IDisposable
             {
                 // Wait for all tasks to complete with a 5 second timeout
                 await Task.WhenAll(tasksToWait).WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
-                this.logger.LogTrace("All background tasks completed successfully");
+                LogAllBackgroundTasksCompleted(this.logger);
             }
             catch (TimeoutException)
             {
-                this.logger.LogWarning("Background tasks did not complete within timeout. {TaskCount} task(s) may still be running.", tasksToWait.Count);
+                LogBackgroundTasksTimeout(this.logger, tasksToWait.Count);
             }
             catch (Exception ex)
             {
                 // Observe exceptions from tasks to prevent unobserved task exceptions
-                this.logger.LogWarning(ex, "Exception while waiting for background tasks to complete");
+                LogExceptionWhileWaitingForBackgroundTasks(this.logger, ex);
 
                 // Log individual task exceptions if any are faulted
                 foreach (var task in tasksToWait)
                 {
                     if (task.IsFaulted && task.Exception != null)
                     {
-                        this.logger.LogWarning(task.Exception, "Task faulted during cancellation");
+                        LogTaskFaultedDuringCancellation(this.logger, task.Exception);
                     }
                 }
             }
@@ -362,7 +362,7 @@ public partial class ConnectionManager : IDisposable
     /// <param name="disposing">True if called from user code.</param>
     protected virtual void Dispose(bool disposing)
     {
-        this.logger.LogTrace("Disposing ConnectionManager");
+        LogDisposingConnectionManager(this.logger);
 
         // Check to see if Dispose has already been called.
         if (!this.disposed)

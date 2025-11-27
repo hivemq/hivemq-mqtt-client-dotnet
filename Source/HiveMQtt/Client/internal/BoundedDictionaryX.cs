@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 /// </summary>
 /// <typeparam name="TKey">The type of items to index with.</typeparam>
 /// <typeparam name="TVal">The type of items to store as values.</typeparam>
-public class BoundedDictionaryX<TKey, TVal> : IDisposable
+public partial class BoundedDictionaryX<TKey, TVal> : IDisposable
     where TKey : notnull
 {
     private readonly ILogger logger;
@@ -56,8 +56,11 @@ public class BoundedDictionaryX<TKey, TVal> : IDisposable
     {
         bool errorDetected;
 
-        this.logger.LogTrace("Adding item {Key}", key);
-        this.logger.LogTrace("Open slots: {OpenSlots}  Dictionary Count: {Count}", this.semaphore.CurrentCount, this.dictionary.Count);
+        if (this.logger.IsEnabled(LogLevel.Trace))
+        {
+            LogAddingItem(this.logger, key);
+            LogOpenSlots(this.logger, this.semaphore.CurrentCount, this.dictionary.Count);
+        }
 
         // Wait for an available slot
         await this.semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -70,19 +73,19 @@ public class BoundedDictionaryX<TKey, TVal> : IDisposable
             }
             else
             {
-                this.logger.LogWarning("Duplicate key: {Key}", key);
+                LogDuplicateKey(this.logger, key);
 
                 errorDetected = true;
             }
         }
         catch (ArgumentNullException ex)
         {
-            this.logger.LogWarning(ex, "ArgumentNull Exception");
+            LogArgumentNullException(this.logger, ex);
             errorDetected = true;
         }
         catch (OverflowException ex)
         {
-            this.logger.LogWarning(ex, "Overflow Exception");
+            LogOverflowException(this.logger, ex);
             errorDetected = true;
         }
 
@@ -103,8 +106,11 @@ public class BoundedDictionaryX<TKey, TVal> : IDisposable
     /// <returns><c>true</c> if the item was removed; otherwise, <c>false</c>.</returns>
     public bool Remove(TKey key, out TVal value)
     {
-        this.logger.LogTrace("Removing item {Key}", key);
-        this.logger.LogTrace("Open slots: {OpenSlots}  Dictionary Count: {Count}", this.semaphore.CurrentCount, this.dictionary.Count);
+        if (this.logger.IsEnabled(LogLevel.Trace))
+        {
+            LogRemovingItem(this.logger, key);
+            LogOpenSlots(this.logger, this.semaphore.CurrentCount, this.dictionary.Count);
+        }
 
         try
         {
@@ -117,16 +123,16 @@ public class BoundedDictionaryX<TKey, TVal> : IDisposable
             }
             else
             {
-                this.logger.LogWarning("Key not found: {Key}", key);
+                LogKeyNotFound(this.logger, key);
             }
         }
         catch (ArgumentNullException ex)
         {
-            this.logger.LogWarning(ex, "ArgumentNull Exception");
+            LogArgumentNullException(this.logger, ex);
         }
         catch (OverflowException ex)
         {
-            this.logger.LogWarning(ex, "Overflow Exception");
+            LogOverflowException(this.logger, ex);
         }
 
         value = default!;
@@ -182,15 +188,15 @@ public class BoundedDictionaryX<TKey, TVal> : IDisposable
         }
         catch (ArgumentNullException ex)
         {
-            this.logger.LogWarning(ex, "ArgumentNull Exception");
+            LogArgumentNullException(this.logger, ex);
         }
         catch (OverflowException ex)
         {
-            this.logger.LogWarning(ex, "Overflow Exception");
+            LogOverflowException(this.logger, ex);
         }
         catch (Exception ex)
         {
-            this.logger.LogWarning(ex, "Exception");
+            LogException(this.logger, ex);
         }
 
         return false;

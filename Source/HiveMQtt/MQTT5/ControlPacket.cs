@@ -26,7 +26,7 @@ using HiveMQtt.MQTT5.Types;
 /// <summary>
 /// A base class for all MQTT Control Packet types.
 /// </summary>
-public abstract class ControlPacket
+public abstract partial class ControlPacket
 {
     // Static logger factory that can be set to enable logging from ControlPacket instances
     // Set by ConnectionManager when it's initialized with a logger factory

@@ -61,7 +61,7 @@ using HiveMQtt.Client.Options;
 ///     .Build();
 /// </code>
 /// </summary>
-public class HiveMQClientOptionsBuilder
+public partial class HiveMQClientOptionsBuilder
 {
     // Static logger factory that can be set to enable logging from HiveMQClientOptionsBuilder
     // Set by HiveMQClient when it's initialized with a logger factory
@@ -244,7 +244,7 @@ public class HiveMQClientOptionsBuilder
     {
         if (clientId.Length is < 0 or > 65535)
         {
-            HiveMQClientOptionsBuilder.Logger.LogError("Client Id must be between 0 and 65535 characters.");
+            LogClientIdInvalidLength(HiveMQClientOptionsBuilder.Logger);
             throw new ArgumentException("Client Id must be between 0 and 65535 characters.");
         }
 
@@ -335,18 +335,18 @@ public class HiveMQClientOptionsBuilder
             }
             catch (UnauthorizedAccessException)
             {
-                HiveMQClientOptionsBuilder.Logger.LogError("WithClientCertificate: File exists but is not readable due to access permissions.");
+                LogClientCertificateFileNotReadable(HiveMQClientOptionsBuilder.Logger);
                 throw;
             }
             catch (IOException)
             {
-                HiveMQClientOptionsBuilder.Logger.LogError("WithClientCertificate: An I/O error occurred while trying to read the file.");
+                LogClientCertificateIOError(HiveMQClientOptionsBuilder.Logger);
                 throw;
             }
         }
         else
         {
-            HiveMQClientOptionsBuilder.Logger.LogError("WithClientCertificate: The specified client certificate file does not exist.");
+            LogClientCertificateFileNotFound(HiveMQClientOptionsBuilder.Logger);
             throw new FileNotFoundException($"The specified client certificate file does not exist: {clientCertificatePath}");
         }
     }
@@ -387,18 +387,18 @@ public class HiveMQClientOptionsBuilder
             }
             catch (UnauthorizedAccessException)
             {
-                Logger.LogError("WithClientCertificate: File exists but is not readable due to access permissions.");
+                LogClientCertificateFileNotReadable(Logger);
                 throw;
             }
             catch (IOException)
             {
-                Logger.LogError("WithClientCertificate: An I/O error occurred while trying to read the file.");
+                LogClientCertificateIOError(Logger);
                 throw;
             }
         }
         else
         {
-            Logger.LogError("WithClientCertificate: The specified client certificate file does not exist.");
+            LogClientCertificateFileNotFound(Logger);
             throw new FileNotFoundException($"The specified client certificate file does not exist: {clientCertificatePath}");
         }
     }
@@ -463,7 +463,7 @@ public class HiveMQClientOptionsBuilder
     {
         if (method.Length is < 1 or > 65535)
         {
-            Logger.LogError("Authentication method must be between 1 and 65535 characters.");
+            LogAuthenticationMethodInvalidLength(Logger);
             throw new ArgumentException("Authentication method must be between 1 and 65535 characters.");
         }
 
@@ -501,13 +501,13 @@ public class HiveMQClientOptionsBuilder
     {
         if (key.Length is < 1 or > 65535)
         {
-            Logger.LogError("User property key must be between 1 and 65535 characters.");
+            LogUserPropertyKeyInvalidLength(Logger);
             throw new ArgumentException("User property key must be between 1 and 65535 characters.");
         }
 
         if (value.Length is < 1 or > 65535)
         {
-            Logger.LogError("User property value must be between 1 and 65535 characters.");
+            LogUserPropertyValueInvalidLength(Logger);
             throw new ArgumentException("User property value must be between 1 and 65535 characters.");
         }
 
@@ -636,7 +636,7 @@ public class HiveMQClientOptionsBuilder
     {
         if (username.Length is < 0 or > 65535)
         {
-            Logger.LogError("Username must be between 0 and 65535 characters.");
+            LogUsernameInvalidLength(Logger);
             throw new ArgumentException("Username must be between 0 and 65535 characters.");
         }
 
@@ -677,7 +677,7 @@ public class HiveMQClientOptionsBuilder
 
         if (password.Length > 65535)
         {
-            Logger.LogError("Password must be between 0 and 65535 characters.");
+            LogPasswordInvalidLength(Logger);
             throw new ArgumentException("Password must be between 0 and 65535 characters.");
         }
 
@@ -720,7 +720,7 @@ public class HiveMQClientOptionsBuilder
 
         if (password.Length is < 0 or > 65535)
         {
-            Logger.LogError("Password must be between 0 and 65535 characters.");
+            LogPasswordInvalidLength(Logger);
             throw new ArgumentException("Password must be between 0 and 65535 characters.");
         }
 

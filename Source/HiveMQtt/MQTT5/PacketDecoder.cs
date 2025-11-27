@@ -22,7 +22,7 @@ using HiveMQtt.MQTT5.Packets;
 /// <summary>
 /// Decodes a Control Packet from a buffer.
 /// </summary>
-internal class PacketDecoder
+internal static partial class PacketDecoder
 {
     // Logger instance created from ControlPacket's logger factory
     private static ILogger Logger => ControlPacket.Logger;
@@ -56,7 +56,7 @@ internal class PacketDecoder
             if (buffer.Length < packetLength)
             {
                 // Not all data for this packet has arrived yet.  Try again...
-                Logger.LogTrace("PacketDecoder.TryDecode: Waiting on more data: {BufferLength} < {PacketLength} - Returning PartialPacket.", buffer.Length, packetLength);
+                LogWaitingOnMoreData(Logger, buffer.Length, packetLength);
                 decodedPacket = new PartialPacket();
                 consumed = default;
                 return false;
@@ -87,7 +87,7 @@ internal class PacketDecoder
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "PacketDecoder.Decode: Exception caught.  Returning MalformedPacket.");
+            LogDecodeException(Logger, ex);
             consumed = buffer.Start;
             decodedPacket = new MalformedPacket(buffer);
             return false;

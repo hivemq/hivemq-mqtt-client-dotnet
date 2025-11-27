@@ -17,7 +17,6 @@ namespace HiveMQtt.MQTT5.Packets;
 
 using System.Buffers;
 using System.IO;
-using Microsoft.Extensions.Logging;
 using HiveMQtt.Client.Events;
 using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.Types;
@@ -72,7 +71,7 @@ public class SubscribePacket : ControlPacket
         if (this.OnComplete != null && this.OnComplete.GetInvocationList().Length > 0)
         {
             var eventArgs = new OnSubAckReceivedEventArgs(packet);
-            ControlPacket.Logger.LogTrace("SubscribePacket.OnCompleteEventLauncher");
+            ControlPacketLogging.LogSubscribePacketOnCompleteEventLauncher(ControlPacket.Logger);
             _ = Task.Run(() => this.OnComplete?.Invoke(this, eventArgs)).ContinueWith(
                 t =>
                 {
@@ -80,10 +79,10 @@ public class SubscribePacket : ControlPacket
                     {
                         if (t.Exception is not null)
                         {
-                            ControlPacket.Logger.LogError(t.Exception, "SubscribePacket.OnCompleteEventLauncher exception");
+                            ControlPacketLogging.LogSubscribePacketOnCompleteEventLauncherException(ControlPacket.Logger, t.Exception);
                             foreach (var ex in t.Exception.InnerExceptions)
                             {
-                                ControlPacket.Logger.LogError(ex, "SubscribePacket.OnCompleteEventLauncher inner exception");
+                                ControlPacketLogging.LogSubscribePacketOnCompleteEventLauncherInnerException(ControlPacket.Logger, ex);
                             }
                         }
                     }

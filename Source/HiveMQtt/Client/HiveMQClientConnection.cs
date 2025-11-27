@@ -36,13 +36,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         if (e.CleanDisconnect)
         {
-            logger.LogDebug("AutomaticReconnectHandler: Clean disconnect.  No need to reconnect.");
+            LogAutomaticReconnectCleanDisconnect(logger);
             return;
         }
 
         if (sender is null)
         {
-            logger.LogWarning("AutomaticReconnectHandler: Sender(client) is null.  Cannot reconnect.");
+            LogAutomaticReconnectSenderNull(logger);
             return;
         }
 
@@ -61,30 +61,30 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
             try
             {
-                clientLogger.LogInformation("--> Attempting to reconnect to broker.  Attempt #{AttemptNumber}.", reconnectAttempts);
+                LogAutomaticReconnectAttempting(clientLogger, reconnectAttempts);
                 var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 
                 if (connectResult.ReasonCode != ConnAckReasonCode.Success)
                 {
-                    clientLogger.LogInformation("--> Failed to reconnect to broker: {ReasonCode}/{ReasonString}", connectResult.ReasonCode, connectResult.ReasonString);
+                    LogAutomaticReconnectFailed(clientLogger, connectResult.ReasonCode, connectResult.ReasonString);
 
                     // Double the delay with each failed retry to a maximum
                     delay = Math.Min(delay * 2, maxDelay);
-                    clientLogger.LogDebug("--> Will delay for {DelaySeconds} seconds until next try.", delay / 1000);
+                    LogAutomaticReconnectDelay(clientLogger, delay / 1000);
                 }
                 else
                 {
-                    clientLogger.LogInformation("--> Reconnected successfully.");
+                    LogAutomaticReconnectSuccess(clientLogger);
                     break;
                 }
             }
             catch (HiveMQttClientException ex)
             {
-                clientLogger.LogInformation(ex, "--> Failed to reconnect");
+                LogAutomaticReconnectException(clientLogger, ex);
 
                 // Double the delay with each failed retry to a maximum
                 delay = Math.Min(delay * 2, 60000);
-                clientLogger.LogDebug("--> Will delay for {DelaySeconds} seconds until next try.", delay / 1000);
+                LogAutomaticReconnectDelay(clientLogger, delay / 1000);
             }
         }
     }

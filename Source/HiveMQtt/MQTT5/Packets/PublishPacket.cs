@@ -17,7 +17,6 @@ namespace HiveMQtt.MQTT5.Packets;
 
 using System.Buffers;
 using System.IO;
-using Microsoft.Extensions.Logging;
 using HiveMQtt.Client.Events;
 using HiveMQtt.MQTT5.Types;
 
@@ -101,13 +100,13 @@ public class PublishPacket : ControlPacket
         if (this.OnPublishQoS1Complete != null && this.OnPublishQoS1Complete.GetInvocationList().Length > 0)
         {
             var eventArgs = new OnPublishQoS1CompleteEventArgs(packet);
-            ControlPacket.Logger.LogTrace("OnPublishQoS1CompleteEventLauncher");
+            ControlPacketLogging.LogOnPublishQoS1CompleteEventLauncher(ControlPacket.Logger);
             _ = Task.Run(() => this.OnPublishQoS1Complete?.Invoke(this, eventArgs)).ContinueWith(
                 t =>
                 {
                     if (t.IsFaulted)
                     {
-                        ControlPacket.Logger.LogError(t.Exception, "OnPublishQoS1CompleteEventLauncher exception");
+                        ControlPacketLogging.LogOnPublishQoS1CompleteEventLauncherException(ControlPacket.Logger, t.Exception);
                     }
                 },
                 TaskScheduler.Default);
@@ -132,13 +131,13 @@ public class PublishPacket : ControlPacket
         if (this.OnPublishQoS2Complete != null && this.OnPublishQoS2Complete.GetInvocationList().Length > 0)
         {
             var eventArgs = new OnPublishQoS2CompleteEventArgs(packetList);
-            ControlPacket.Logger.LogTrace("OnPublishQoS2CompleteEventLauncher");
+            ControlPacketLogging.LogOnPublishQoS2CompleteEventLauncher(ControlPacket.Logger);
             _ = Task.Run(() => this.OnPublishQoS2Complete?.Invoke(this, eventArgs)).ContinueWith(
                 t =>
                 {
                     if (t.IsFaulted)
                     {
-                        ControlPacket.Logger.LogError(t.Exception, "OnPublishQoS2CompleteEventLauncher exception");
+                        ControlPacketLogging.LogOnPublishQoS2CompleteEventLauncherException(ControlPacket.Logger, t.Exception);
                     }
                 },
                 TaskScheduler.Default);

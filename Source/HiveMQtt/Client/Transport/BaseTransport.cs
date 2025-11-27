@@ -54,7 +54,7 @@ public abstract class BaseTransport
     /// <param name="preferIPv6">A value indicating whether to prefer IPv6 addresses.</param>
     /// <returns>The IP address of the hostname.</returns>
     /// <exception cref="HiveMQttClientException">Thrown when the hostname cannot be resolved.</exception>
-    protected async Task<IPAddress?> LookupHostNameAsync(string host, bool preferIPv6)
+    protected static async Task<IPAddress?> LookupHostNameAsync(string host, bool preferIPv6)
     {
         try
         {
@@ -99,7 +99,8 @@ public abstract class BaseTransport
         }
         catch (SocketException socketException)
         {
-            this.Logger.LogDebug(socketException, "Socket exception");
+            // Socket exception during DNS lookup - return null to indicate failure
+            _ = socketException;
             return null;
         }
     }

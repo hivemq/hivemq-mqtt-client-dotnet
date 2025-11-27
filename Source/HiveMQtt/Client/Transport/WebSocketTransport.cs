@@ -22,7 +22,10 @@ using System.Linq;
 using System.Net.WebSockets;
 using System.Security.Cryptography.X509Certificates;
 
-public class WebSocketTransport : BaseTransport, IDisposable
+/// <summary>
+/// WebSocket transport implementation for MQTT over WebSocket connections.
+/// </summary>
+public partial class WebSocketTransport : BaseTransport, IDisposable
 {
     internal HiveMQClientOptions Options { get; }
 
@@ -99,21 +102,21 @@ public class WebSocketTransport : BaseTransport, IDisposable
             return true;
         }
 
-        logger.LogWarning("Broker TLS Certificate error for WebSocket: {SslPolicyErrors}", sslPolicyErrors);
+        LogBrokerTLSCertificateError(logger, sslPolicyErrors);
 
         // Log additional certificate details for debugging
         if (certificate != null)
         {
-            logger.LogDebug("WebSocket Certificate Subject: {Subject}", certificate.Subject);
-            logger.LogDebug("WebSocket Certificate Issuer: {Issuer}", certificate.Issuer);
-            logger.LogDebug("WebSocket Certificate Serial Number: {SerialNumber}", certificate.GetSerialNumberString());
+            LogWebSocketCertificateSubject(logger, certificate.Subject);
+            LogWebSocketCertificateIssuer(logger, certificate.Issuer);
+            LogWebSocketCertificateSerialNumber(logger, certificate.GetSerialNumberString());
         }
 
         // Validate certificate chain if provided
         if (chain != null)
         {
             var chainStatus = chain.ChainStatus.Length > 0 ? string.Join(", ", chain.ChainStatus.Select(cs => cs.Status)) : "Valid";
-            logger.LogDebug("WebSocket Certificate chain validation status: {ChainStatus}", chainStatus);
+            LogWebSocketCertificateChainStatus(logger, chainStatus);
         }
 
         // Do not allow this client to communicate with unauthenticated servers.
@@ -129,7 +132,7 @@ public class WebSocketTransport : BaseTransport, IDisposable
         if (this.Options.WebSocketKeepAliveInterval.HasValue)
         {
             this.Socket.Options.KeepAliveInterval = this.Options.WebSocketKeepAliveInterval.Value;
-            this.Logger.LogTrace("WebSocket keep-alive interval set to {KeepAliveInterval}", this.Options.WebSocketKeepAliveInterval.Value);
+            LogWebSocketKeepAliveInterval(this.Logger, this.Options.WebSocketKeepAliveInterval.Value);
         }
 
         // Configure custom request headers if specified
@@ -140,14 +143,14 @@ public class WebSocketTransport : BaseTransport, IDisposable
                 this.Socket.Options.SetRequestHeader(header.Key, header.Value);
             }
 
-            this.Logger.LogTrace("Added {HeaderCount} custom header(s) for WebSocket connection", this.Options.WebSocketRequestHeaders.Count);
+            LogWebSocketCustomHeadersAdded(this.Logger, this.Options.WebSocketRequestHeaders.Count);
         }
 
         // Configure proxy if specified
         if (this.Options.WebSocketProxy != null)
         {
             this.Socket.Options.Proxy = this.Options.WebSocketProxy;
-            this.Logger.LogTrace("WebSocket proxy configured: {Proxy}", this.Options.WebSocketProxy);
+            LogWebSocketProxyConfigured(this.Logger, this.Options.WebSocketProxy);
         }
     }
 
@@ -167,13 +170,13 @@ public class WebSocketTransport : BaseTransport, IDisposable
                 }
             }
 
-            this.Logger.LogTrace("Added {CertificateCount} client certificate(s) for WebSocket connection", this.Options.ClientCertificates.Count);
+            LogWebSocketClientCertificatesAdded(this.Logger, this.Options.ClientCertificates.Count);
         }
 
         // Configure certificate validation callback
         if (this.Options.AllowInvalidBrokerCertificates)
         {
-            this.Logger.LogTrace("Allowing invalid broker certificates for WebSocket connection");
+            LogWebSocketAllowingInvalidCertificates(this.Logger);
 #pragma warning disable CA5359 // Do not disable certificate validation
             this.Socket.Options.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
 #pragma warning restore CA5359
@@ -197,13 +200,13 @@ public class WebSocketTransport : BaseTransport, IDisposable
         catch (WebSocketException ex)
         {
             // Log at Debug level since ConnectionManager will log the error and HiveMQClient will throw exception
-            this.Logger.LogDebug(ex, "Failed to connect to the WebSocket server");
+            LogWebSocketConnectFailed(this.Logger, ex);
             return false;
         }
         catch (OperationCanceledException ex)
         {
             // Log at Debug level since ConnectionManager will log the error and HiveMQClient will throw exception
-            this.Logger.LogDebug(ex, "Failed to connect to the WebSocket server");
+            LogWebSocketConnectFailed(this.Logger, ex);
             return false;
         }
 
@@ -227,38 +230,38 @@ public class WebSocketTransport : BaseTransport, IDisposable
             }
             else if (this.Socket.State == WebSocketState.Aborted)
             {
-                this.Logger.LogDebug("WebSocket is already aborted");
+                LogWebSocketAlreadyAborted(this.Logger);
             }
             else if (this.Socket.State == WebSocketState.Closed)
             {
-                this.Logger.LogDebug("WebSocket is already closed");
+                LogWebSocketAlreadyClosed(this.Logger);
             }
             else
             {
-                this.Logger.LogDebug("WebSocket is in state: {State}", this.Socket.State);
+                LogWebSocketState(this.Logger, this.Socket.State);
             }
         }
         catch (WebSocketException ex)
         {
             // WebSocket may have been closed by the server or already in an invalid state
-            this.Logger.LogWarning(ex, "Error closing WebSocket connection");
+            LogWebSocketCloseError(this.Logger, ex);
 
             // Don't return false here - the socket is likely already closed
         }
         catch (ObjectDisposedException ex)
         {
             // Socket has already been disposed
-            this.Logger.LogDebug(ex, "WebSocket has already been disposed");
+            LogWebSocketAlreadyDisposed(this.Logger, ex);
         }
         catch (InvalidOperationException ex)
         {
             // WebSocket may already be closed or in a closing state
-            this.Logger.LogDebug(ex, "WebSocket is already closed or closing");
+            LogWebSocketAlreadyClosedOrClosing(this.Logger, ex);
         }
         catch (OperationCanceledException ex)
         {
             // Operation was cancelled
-            this.Logger.LogDebug(ex, "Close operation was cancelled");
+            LogWebSocketCloseCancelled(this.Logger, ex);
             return false;
         }
 
@@ -283,7 +286,7 @@ public class WebSocketTransport : BaseTransport, IDisposable
         catch (OperationCanceledException)
         {
             // Semaphore wait was cancelled
-            this.Logger.LogDebug("Write operation was cancelled while waiting for semaphore");
+            LogWebSocketWriteCancelled(this.Logger);
             return false;
         }
 
@@ -292,7 +295,7 @@ public class WebSocketTransport : BaseTransport, IDisposable
             // Check if socket is in a valid state for writing
             if (this.Socket.State != WebSocketState.Open)
             {
-                this.Logger.LogDebug("WebSocket is not in a writable state: {State}", this.Socket.State);
+                LogWebSocketNotWritable(this.Logger, this.Socket.State);
                 return false;
             }
 
@@ -301,13 +304,13 @@ public class WebSocketTransport : BaseTransport, IDisposable
         catch (WebSocketException ex)
         {
             // Log at Debug level since ConnectionManager will log the error and write failures can be expected during disconnection
-            this.Logger.LogDebug(ex, "Failed to write to the WebSocket server");
+            LogWebSocketWriteFailed(this.Logger, ex);
             return false;
         }
         catch (OperationCanceledException ex)
         {
             // Log at Debug level since ConnectionManager will log the error and write failures can be expected during disconnection
-            this.Logger.LogDebug(ex, "Failed to write to the WebSocket server");
+            LogWebSocketWriteFailed(this.Logger, ex);
             return false;
         }
         finally
@@ -330,7 +333,7 @@ public class WebSocketTransport : BaseTransport, IDisposable
         // Check if socket is in a valid state for reading
         if (this.Socket.State is not WebSocketState.Open and not WebSocketState.CloseReceived)
         {
-            this.Logger.LogDebug("WebSocket is not in a readable state: {State}", this.Socket.State);
+            LogWebSocketNotReadable(this.Logger, this.Socket.State);
             return new TransportReadResult(true);
         }
 
@@ -348,14 +351,14 @@ public class WebSocketTransport : BaseTransport, IDisposable
             // Check if we received a close message
             if (result.MessageType is WebSocketMessageType.Close)
             {
-                this.Logger.LogDebug("WebSocket received close message: {CloseStatus}", result.CloseStatus);
+                LogWebSocketReceivedCloseMessage(this.Logger, result.CloseStatus);
                 return new TransportReadResult(true);
             }
 
             // Check if connection was closed during read
             if (result.CloseStatus.HasValue)
             {
-                this.Logger.LogDebug("WebSocket connection closed during read: {CloseStatus}", result.CloseStatus);
+                LogWebSocketConnectionClosedDuringRead(this.Logger, result.CloseStatus);
                 return new TransportReadResult(true);
             }
 
@@ -367,7 +370,7 @@ public class WebSocketTransport : BaseTransport, IDisposable
                 {
                     var resultArray = new byte[result.Count];
                     Buffer.BlockCopy(rentedBuffer, 0, resultArray, 0, result.Count);
-                    this.Logger.LogTrace("Received {Count} bytes (single read)", result.Count);
+                    LogWebSocketReceivedBytesSingle(this.Logger, result.Count);
                     return new TransportReadResult(new ReadOnlySequence<byte>(resultArray));
                 }
                 else
@@ -393,14 +396,14 @@ public class WebSocketTransport : BaseTransport, IDisposable
                     // Check if we received a close message
                     if (result.MessageType is WebSocketMessageType.Close)
                     {
-                        this.Logger.LogDebug("WebSocket received close message: {CloseStatus}", result.CloseStatus);
+                        LogWebSocketReceivedCloseMessage(this.Logger, result.CloseStatus);
                         return new TransportReadResult(true);
                     }
 
                     // Check if connection was closed during read
                     if (result.CloseStatus.HasValue)
                     {
-                        this.Logger.LogDebug("WebSocket connection closed during read: {CloseStatus}", result.CloseStatus);
+                        LogWebSocketConnectionClosedDuringRead(this.Logger, result.CloseStatus);
                         return new TransportReadResult(true);
                     }
 
@@ -411,7 +414,7 @@ public class WebSocketTransport : BaseTransport, IDisposable
                     }
                 }
 
-                this.Logger.LogTrace("Received {Length} bytes (fragmented)", ms.Length);
+                LogWebSocketReceivedBytesFragmented(this.Logger, ms.Length);
 
                 // Return data only for binary messages (MQTT uses binary)
                 if (result.MessageType is WebSocketMessageType.Binary)
@@ -423,7 +426,7 @@ public class WebSocketTransport : BaseTransport, IDisposable
                 else
                 {
                     // Text or other message types are not expected for MQTT
-                    this.Logger.LogWarning("Received unexpected WebSocket message type: {MessageType}", result.MessageType);
+                    LogWebSocketUnexpectedMessageType(this.Logger, result.MessageType);
                     return new TransportReadResult(true);
                 }
             }
@@ -432,18 +435,18 @@ public class WebSocketTransport : BaseTransport, IDisposable
         {
             // Log at Debug level since ConnectionManager handles read failures gracefully
             // WebSocketException can occur during expected disconnections
-            this.Logger.LogDebug(ex, "Failed to read from the WebSocket server");
+            LogWebSocketReadFailed(this.Logger, ex);
             return new TransportReadResult(true);
         }
         catch (OperationCanceledException ex)
         {
-            this.Logger.LogDebug(ex, "Read operation was canceled");
+            LogWebSocketReadCancelled(this.Logger, ex);
             return new TransportReadResult(true);
         }
         catch (InvalidOperationException ex)
         {
             // Socket may have been closed or aborted
-            this.Logger.LogDebug(ex, "WebSocket operation is invalid - socket may be closed");
+            LogWebSocketOperationInvalid(this.Logger, ex);
             return new TransportReadResult(true);
         }
         finally
@@ -527,7 +530,7 @@ public class WebSocketTransport : BaseTransport, IDisposable
     /// <param name="disposing">True if called from user code.</param>
     protected virtual void Dispose(bool disposing)
     {
-        this.Logger.LogTrace("Disposing WebSocketTransport");
+        LogDisposingWebSocketTransport(this.Logger);
 
         // Check to see if Dispose has already been called.
         if (!this.disposed)
@@ -553,7 +556,7 @@ public class WebSocketTransport : BaseTransport, IDisposable
                     }
                     catch (Exception ex)
                     {
-                        this.Logger.LogWarning(ex, "Error closing WebSocket: {Message}", ex.Message);
+                        LogWebSocketDisposeCloseError(this.Logger, ex, ex.Message);
                     }
                     finally
                     {
