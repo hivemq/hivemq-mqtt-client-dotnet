@@ -84,25 +84,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download NuGet packages for .NET 6.0
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: nuget-packages-6.0.x
           path: ./Artifacts
 
       - name: Download NuGet packages for .NET 7.0
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: nuget-packages-7.0.x
           path: ./Artifacts
 
       - name: Download NuGet packages for .NET 8.0
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: nuget-packages-8.0.x
           path: ./Artifacts
 
       - name: Download NuGet packages for .NET 9.0
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: nuget-packages-9.0.x
           path: ./Artifacts
