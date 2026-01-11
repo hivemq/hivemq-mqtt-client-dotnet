@@ -103,7 +103,7 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
     Task IBaseMQTTClient.ClearSubscriptionsAsync() => Task.CompletedTask;
 
     /// <inheritdoc />
-    public bool IsConnected() => this.Connection.State == ConnectState.Connected;
+    public bool IsConnected() => !this.disposed && this.Connection != null && this.Connection.State == ConnectState.Connected;
 
     /// <inheritdoc />
     public async Task<ConnectResult> ConnectAsync(ConnectOptions? connectOptions = null)
@@ -334,6 +334,11 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
                 throw new HiveMQttClientException("Connection is not available");
             }
 
+            if (this.Connection.State != ConnectState.Connected)
+            {
+                throw new HiveMQttClientException("Client is not connected");
+            }
+
             var packetIdentifier = await this.Connection.PacketIDManager.GetAvailablePacketIDAsync().ConfigureAwait(false);
             var publishPacket = new PublishPacket(message, (ushort)packetIdentifier);
             PubAckPacket pubAckPacket;
@@ -362,6 +367,11 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
             if (this.Connection == null)
             {
                 throw new HiveMQttClientException("Connection is not available");
+            }
+
+            if (this.Connection.State != ConnectState.Connected)
+            {
+                throw new HiveMQttClientException("Client is not connected");
             }
 
             var packetIdentifier = await this.Connection.PacketIDManager.GetAvailablePacketIDAsync().ConfigureAwait(false);
@@ -496,6 +506,11 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
             throw new HiveMQttClientException("Connection is not available");
         }
 
+        if (this.Connection.State != ConnectState.Connected)
+        {
+            throw new HiveMQttClientException("Client is not connected");
+        }
+
         // Construct the MQTT Subscribe packet
         var packetIdentifier = await this.Connection.PacketIDManager.GetAvailablePacketIDAsync().ConfigureAwait(false);
         var subscribePacket = new SubscribePacket(options, (ushort)packetIdentifier);
@@ -551,6 +566,16 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
     {
         // Fire the corresponding event
         this.BeforeUnsubscribeEventLauncher(options.Subscriptions);
+
+        if (this.Connection == null)
+        {
+            throw new HiveMQttClientException("Connection is not available");
+        }
+
+        if (this.Connection.State != ConnectState.Connected)
+        {
+            throw new HiveMQttClientException("Client is not connected");
+        }
 
         var packetIdentifier = await this.Connection.PacketIDManager.GetAvailablePacketIDAsync().ConfigureAwait(false);
         var unsubscribePacket = new UnsubscribePacket(options, (ushort)packetIdentifier);
