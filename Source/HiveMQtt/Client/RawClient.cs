@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-present HiveMQ and the HiveMQ Community
+ * Copyright 2025-present HiveMQ and the HiveMQ Community
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,27 +31,28 @@ using HiveMQtt.MQTT5.ReasonCodes;
 using HiveMQtt.MQTT5.Types;
 
 /// <summary>
-/// The excellent, superb and slightly wonderful HiveMQ C# MQTT Client.
+/// A low-level MQTT client that provides direct access to MQTT v5 protocol
+/// without subscription management features. This client is performance-oriented and
+/// does not maintain subscription state.
 /// </summary>
-public partial class HiveMQClient : IDisposable, IHiveMQClient, IBaseMQTTClient
+public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
 {
     private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
     internal ConnectionManager Connection { get; set; }
 
-    public HiveMQClient(HiveMQClientOptions? options = null)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RawClient"/> class.
+    /// </summary>
+    /// <param name="options">The client options. If null, default options will be used.</param>
+    public RawClient(HiveMQClientOptions? options = null)
     {
         options ??= new HiveMQClientOptions();
         options.Validate();
 
-        Logger.Trace($"New client created: Client ID: {options.ClientId}");
+        Logger.Trace($"New RawClient created: Client ID: {options.ClientId}");
 
         this.Options = options;
-
-        if (this.Options.AutomaticReconnect)
-        {
-            this.AfterDisconnect += AutomaticReconnectHandler;
-        }
 
         // Initialize the connection manager
         this.Connection = new ConnectionManager(this);
@@ -62,11 +63,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient, IBaseMQTTClient
 
     /// <inheritdoc />
     public HiveMQClientOptions Options { get; set; }
-
-    /// <inheritdoc />
-    public List<Subscription> Subscriptions { get; } = new();
-
-    private SemaphoreSlim SubscriptionsSemaphore { get; } = new(1, 1);
 
     // Cached connection properties for fast access during publish operations
     // These are updated when ConnectionProperties change to avoid repeated property access
@@ -101,24 +97,10 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient, IBaseMQTTClient
     }
 
     /// <summary>
-    /// Clear all tracked subscriptions in a thread-safe manner.
-    /// Intended for internal use when the broker indicates Session Present = false on CONNACK.
+    /// Clear all tracked subscriptions. This is a no-op for RawClient as it doesn't track subscriptions.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    Task IBaseMQTTClient.ClearSubscriptionsAsync() => this.ClearSubscriptionsAsync();
-
-    internal async Task ClearSubscriptionsAsync()
-    {
-        try
-        {
-            await this.SubscriptionsSemaphore.WaitAsync().ConfigureAwait(false);
-            this.Subscriptions.Clear();
-        }
-        finally
-        {
-            _ = this.SubscriptionsSemaphore.Release();
-        }
-    }
+    Task IBaseMQTTClient.ClearSubscriptionsAsync() => Task.CompletedTask;
 
     /// <inheritdoc />
     public bool IsConnected() => this.Connection.State == ConnectState.Connected;
@@ -190,7 +172,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient, IBaseMQTTClient
             this.Connection.State = ConnectState.Connected;
 
             // Ensure connection-ready signal is set for any writers awaiting readiness
-            this.Connection.SignalNotDisconnected(); // Signal that we're not disconnected (already signaled at Connecting, but safe to call again)
+            this.Connection.SignalNotDisconnected();
             this.Connection.SignalConnected();
         }
         else
@@ -292,8 +274,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient, IBaseMQTTClient
         message.Validate();
 
         // Check if topic alias is used but not supported by broker
-        // Use cache as primary source for performance (avoids null-conditional property access)
-        // Fall back to ConnectionProperties only if cache is not set (before ConnAck received)
         var topicAliasMaximum = this.connectionPropertiesCached
             ? this.cachedTopicAliasMaximum
             : (this.Connection?.ConnectionProperties?.TopicAliasMaximum ?? 0);
@@ -312,8 +292,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient, IBaseMQTTClient
         }
 
         // Check if retain is used but not supported by broker
-        // Use cache as primary source for performance (avoids null-conditional property access)
-        // Fall back to ConnectionProperties only if cache is not set (before ConnAck received)
         var retainSupported = this.connectionPropertiesCached
             ? this.cachedRetainAvailable
             : (this.Connection?.ConnectionProperties?.RetainAvailable ?? true);
@@ -324,8 +302,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient, IBaseMQTTClient
         }
 
         // Check QoS maximum
-        // Use cache as primary source for performance (avoids null-conditional property access)
-        // Fall back to ConnectionProperties only if cache is not set (before ConnAck received)
         var maximumQoS = this.connectionPropertiesCached
             ? this.cachedMaximumQoS
             : this.Connection?.ConnectionProperties?.MaximumQoS;
@@ -439,7 +415,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient, IBaseMQTTClient
     /// <inheritdoc />
     public async Task<PublishResult> PublishAsync(string topic, byte[] payload, QualityOfService qos = QualityOfService.AtMostOnceDelivery)
     {
-        // Note: Should we validate encoding here?
         var message = new MQTT5PublishMessage
         {
             Topic = topic,
@@ -521,7 +496,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient, IBaseMQTTClient
             throw new HiveMQttClientException("Connection is not available");
         }
 
-        // FIXME: We should only ever have one subscribe in flight at any time (for now)
         // Construct the MQTT Subscribe packet
         var packetIdentifier = await this.Connection.PacketIDManager.GetAvailablePacketIDAsync().ConfigureAwait(false);
         var subscribePacket = new SubscribePacket(options, (ushort)packetIdentifier);
@@ -563,33 +537,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient, IBaseMQTTClient
 
         subscribeResult = new SubscribeResult(options, subAck);
 
-        // Add the subscriptions to the client
-        foreach (var subscription in subscribeResult.Subscriptions)
-        {
-            // If the user has registered a handler for this topic, add it to the subscription
-            foreach (var handler in options.Handlers)
-            {
-                if (handler.Key == subscription.TopicFilter.Topic)
-                {
-                    subscription.MessageReceivedHandler = handler.Value;
-                }
-            }
-        }
-
-        try
-        {
-            await this.SubscriptionsSemaphore.WaitAsync().ConfigureAwait(false);
-            foreach (var newSubscription in subscribeResult.Subscriptions)
-            {
-                // Replace any existing subscription with the same topic filter to avoid duplicates
-                _ = this.Subscriptions.RemoveAll(s => s.TopicFilter.Topic == newSubscription.TopicFilter.Topic);
-                this.Subscriptions.Add(newSubscription);
-            }
-        }
-        finally
-        {
-            _ = this.SubscriptionsSemaphore.Release();
-        }
+        // Note: RawClient does NOT maintain subscription state
+        // The subscription result is returned but not tracked
 
         // Fire the corresponding event
         this.AfterSubscribeEventLauncher(subscribeResult);
@@ -598,82 +547,13 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient, IBaseMQTTClient
     }
 
     /// <inheritdoc />
-    public async Task<UnsubscribeResult> UnsubscribeAsync(string topic)
-    {
-        var subscription = this.GetSubscriptionByTopic(topic);
-        if (subscription is not null)
-        {
-            var unsubOptions = new UnsubscribeOptionsBuilder()
-                .WithSubscription(subscription)
-                .Build();
-
-            return await this.UnsubscribeAsync(unsubOptions).ConfigureAwait(false);
-        }
-
-        throw new HiveMQttClientException($"No subscription found for topic: {topic}.  Make sure to refer to existing subscription in client.Subscriptions.");
-    }
-
-    /// <inheritdoc />
-    public async Task<UnsubscribeResult> UnsubscribeAsync(Subscription subscription)
-    {
-        try
-        {
-            await this.SubscriptionsSemaphore.WaitAsync().ConfigureAwait(false);
-            if (!this.Subscriptions.Contains(subscription))
-            {
-                throw new HiveMQttClientException("No such subscription found.  Make sure to take subscription(s) from HiveMQClient.Subscriptions[] or HiveMQClient.GetSubscriptionByTopic().");
-            }
-        }
-        finally
-        {
-            _ = this.SubscriptionsSemaphore.Release();
-        }
-
-        var unsubOptions = new UnsubscribeOptionsBuilder()
-            .WithSubscription(subscription)
-            .Build();
-
-        return await this.UnsubscribeAsync(unsubOptions).ConfigureAwait(false);
-    }
-
-    /// <inheritdoc />
-    public async Task<UnsubscribeResult> UnsubscribeAsync(List<Subscription> subscriptions)
-    {
-        HashSet<Subscription> currentSubscriptions;
-        try
-        {
-            await this.SubscriptionsSemaphore.WaitAsync().ConfigureAwait(false);
-#pragma warning disable IDE0305 // Collection initialization - ToHashSet() is appropriate for .NET 6
-            currentSubscriptions = this.Subscriptions.ToHashSet();
-#pragma warning restore IDE0305
-        }
-        finally
-        {
-            _ = this.SubscriptionsSemaphore.Release();
-        }
-
-        foreach (var sub in subscriptions)
-        {
-            if (!currentSubscriptions.Contains(sub))
-            {
-                throw new HiveMQttClientException("No such subscription found. Make sure to take subscription(s) from HiveMQClient.Subscriptions[] or HiveMQClient.GetSubscriptionByTopic().");
-            }
-        }
-
-        var unsubOptions = new UnsubscribeOptionsBuilder()
-            .WithSubscriptions(subscriptions)
-            .Build();
-
-        return await this.UnsubscribeAsync(unsubOptions).ConfigureAwait(false);
-    }
-
-    public async Task<UnsubscribeResult> UnsubscribeAsync(UnsubscribeOptions unsubOptions)
+    public async Task<UnsubscribeResult> UnsubscribeAsync(UnsubscribeOptions options)
     {
         // Fire the corresponding event
-        this.BeforeUnsubscribeEventLauncher(unsubOptions.Subscriptions);
+        this.BeforeUnsubscribeEventLauncher(options.Subscriptions);
 
         var packetIdentifier = await this.Connection.PacketIDManager.GetAvailablePacketIDAsync().ConfigureAwait(false);
-        var unsubscribePacket = new UnsubscribePacket(unsubOptions, (ushort)packetIdentifier);
+        var unsubscribePacket = new UnsubscribePacket(options, (ushort)packetIdentifier);
 
         var taskCompletionSource = new TaskCompletionSource<UnsubAckPacket>(TaskCreationOptions.RunContinuationsAsynchronously);
         void TaskHandler(object? sender, OnUnsubAckReceivedEventArgs args)
@@ -689,7 +569,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient, IBaseMQTTClient
 
         this.Connection.SendQueue.Enqueue(unsubscribePacket);
 
-        // FIXME: Cancellation token and better timeout value
         UnsubAckPacket unsubAck;
         UnsubscribeResult unsubscribeResult;
         try
@@ -697,12 +576,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient, IBaseMQTTClient
             unsubAck = await taskCompletionSource.Task
                                             .WaitAsync(TimeSpan.FromMilliseconds(this.Options.ResponseTimeoutInMs))
                                             .ConfigureAwait(false);
-
-            // FIXME: Validate that the packet identifier matches
         }
         catch (TimeoutException)
         {
-            // log.Error(string.Format("Connect timeout.  No response received in time.", ex);
             throw;
         }
         finally
@@ -718,36 +594,45 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient, IBaseMQTTClient
         };
 
         var counter = 0;
-        var subscriptionsToRemove = new List<Subscription>();
         foreach (var reasonCode in unsubAck.ReasonCodes)
         {
             unsubscribeResult.Subscriptions[counter].UnsubscribeReasonCode = reasonCode;
-            if (reasonCode == UnsubAckReasonCode.Success)
-            {
-                // Collect subscriptions which need to be removed
-                subscriptionsToRemove.Add(unsubscribeResult.Subscriptions[counter]);
-            }
+            counter++;
         }
 
-        if (subscriptionsToRemove.Count != 0)
-        {
-            try
-            {
-                // remove subscriptions from client while locking them
-                await this.SubscriptionsSemaphore.WaitAsync().ConfigureAwait(false);
-                _ = this.Subscriptions.RemoveAll(subscriptionsToRemove.Contains);
-            }
-            finally
-            {
-                _ = this.SubscriptionsSemaphore.Release();
-            }
-        }
+        // Note: RawClient does NOT maintain subscription state
+        // The unsubscribe result is returned but no subscription tracking is performed
 
         // Fire the corresponding event and return
         this.AfterUnsubscribeEventLauncher(unsubscribeResult);
         return unsubscribeResult;
     }
 
-    // Method to check if ping are sent based on the KeepAlive option
-    public bool IsPingSent() => this.Options.KeepAlive > 0;
+    private bool disposed;
+
+    /// <summary>
+    /// Disposes the client and releases all resources.
+    /// </summary>
+    public void Dispose()
+    {
+        this.Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Disposes the client and releases all resources.
+    /// </summary>
+    /// <param name="disposing">True if called from user code.</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!this.disposed)
+        {
+            if (disposing)
+            {
+                this.Connection?.Dispose();
+            }
+
+            this.disposed = true;
+        }
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-present HiveMQ and the HiveMQ Community
+ * Copyright 2025-present HiveMQ and the HiveMQ Community
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 namespace HiveMQtt.Client;
 
 using System;
+using System.Threading.Tasks;
 using HiveMQtt.Client.Events;
 using HiveMQtt.Client.Internal;
 using HiveMQtt.Client.Options;
@@ -24,7 +25,7 @@ using HiveMQtt.MQTT5.Packets;
 using HiveMQtt.MQTT5.Types;
 
 /// <inheritdoc />
-public partial class HiveMQClient : IDisposable, IHiveMQClient
+public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
 {
     /* ========================================================================================= */
     // MQTT Client Events
@@ -205,7 +206,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     }
 
     /// <summary>
-    /// Event that is fired before the client sends a subscribe request.
+    /// Event that is fired before the client sends an unsubscribe request.
     /// </summary>
     public event EventHandler<BeforeUnsubscribeEventArgs>? BeforeUnsubscribe;
 
@@ -234,7 +235,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     }
 
     /// <summary>
-    /// Event that is fired after the client sends a subscribe request.
+    /// Event that is fired after the client sends an unsubscribe request.
     /// </summary>
     public event EventHandler<AfterUnsubscribeEventArgs>? AfterUnsubscribe;
 
@@ -264,14 +265,15 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
     /// <summary>
     /// Event that is fired when a message is received from the broker.
+    /// <para>
+    /// Note: RawClient does not perform subscription matching. This event fires for all received PUBLISH packets.
+    /// </para>
     /// </summary>
     public event EventHandler<OnMessageReceivedEventArgs>? OnMessageReceived;
 
     internal virtual void OnMessageReceivedEventLauncher(PublishPacket packet)
     {
-        var messageHandled = false;
-
-        // Get all handlers - fast path if no handlers
+        // RawClient does not maintain subscription state, so we simply fire the event if handlers are registered
         if (this.OnMessageReceived != null)
         {
             Logger.Trace("OnMessageReceivedEventLauncher");
@@ -288,65 +290,6 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                         }
                     }, TaskScheduler.Default);
             }
-
-            messageHandled = true;
-        }
-
-        if (packet.Message.Topic is null)
-        {
-            return;
-        }
-
-        // Per Subscription Event Handler
-        // use ToList, so the iteration goes through a copy and changes at the list make not problems
-        // otherwise it would be necessary to lock the Subscriptions with the semaphore of HiveMQClient
-        List<Subscription> tempList;
-        try
-        {
-            this.SubscriptionsSemaphore.Wait();
-#pragma warning disable IDE0305 // Collection initialization - ToList() is appropriate for .NET 6
-            tempList = this.Subscriptions.ToList();
-#pragma warning restore IDE0305
-        }
-        finally
-        {
-            _ = this.SubscriptionsSemaphore.Release();
-        }
-
-        var matchingSubscriptions = tempList.Where(sub =>
-            sub.MessageReceivedHandler is not null &&
-            MatchTopic(sub.TopicFilter.Topic, packet.Message.Topic));
-
-        // Create eventArgs only if we have subscription handlers (optimization: avoid allocation if not needed)
-        if (matchingSubscriptions.Any())
-        {
-            var eventArgs = new OnMessageReceivedEventArgs(packet.Message);
-            foreach (var subscription in matchingSubscriptions)
-            {
-                // We have a per-subscription message handler.
-                _ = Task.Run(() =>
-                {
-                    try
-                    {
-                        subscription.MessageReceivedHandler?.Invoke(this, eventArgs);
-                    }
-                    catch (Exception e)
-                    {
-                        Logger.Error(
-                            $"per-subscription MessageReceivedEventLauncher faulted ({packet.Message.Topic}): {e.Message}");
-                    }
-                });
-
-                messageHandled = true;
-            }
-        }
-
-        if (!messageHandled)
-        {
-            // We received an application message for a subscription without a MessageReceivedHandler
-            // AND there is also no global OnMessageReceived event handler.  This publish is thus lost and unhandled.
-            // We warn here about the lost message, but we don't throw an exception.
-            Logger.Warn($"Lost Application Message ({packet.Message.Topic}): No global or subscription message handler found.  Register an event handler (before Subscribing) to receive all messages incoming.");
         }
     }
 
@@ -819,7 +762,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     }
 
     /// <summary>
-    /// Event that is fired after the client received a PubRel packet from the broker.
+    /// Event that is fired after the client receives a PubRel packet from the broker.
     /// </summary>
     public event EventHandler<OnPubRelReceivedEventArgs>? OnPubRelReceived;
 

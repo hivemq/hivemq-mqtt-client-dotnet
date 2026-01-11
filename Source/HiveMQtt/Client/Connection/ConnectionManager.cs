@@ -32,8 +32,8 @@ public partial class ConnectionManager : IDisposable
 {
     private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
-    // The HiveMQClient this ConnectionManager is associated with
-    internal HiveMQClient Client { get; }
+    // The MQTT client this ConnectionManager is associated with
+    internal IBaseMQTTClient Client { get; }
 
     // This is used to know if and when we need to send a MQTT PingReq
     private readonly Stopwatch lastCommunicationTimer = new();
@@ -94,8 +94,8 @@ public partial class ConnectionManager : IDisposable
     /// <summary>
     /// Initializes a new instance of the <see cref="ConnectionManager"/> class.
     /// </summary>
-    /// <param name="client">The HiveMQClient this ConnectionManager is associated with.</param>
-    public ConnectionManager(HiveMQClient client)
+    /// <param name="client">The MQTT client this ConnectionManager is associated with.</param>
+    internal ConnectionManager(IBaseMQTTClient client)
     {
         this.Client = client;
         this.cancellationTokenSource = new CancellationTokenSource();
