@@ -767,3 +767,5 @@ Artifacts/
 *.plic
 docker-hivemq-config.xml
 .tool-versions
+docker-compose.yml
+docker-entrypoint-init.sh
