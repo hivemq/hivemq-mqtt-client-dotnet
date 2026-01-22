@@ -23,7 +23,7 @@ using HiveMQtt.MQTT5.Types;
 
 | Namespace              | Description | Classes |
 |-----------------------|----------|----------|
-| `HiveMQtt.Client`       | Base namespace for the HiveMQClient and related classes. | `HiveMQClient`, `LastWillAndTestament`, etc...|
+| `HiveMQtt.Client`       | Base namespace for the HiveMQClient, RawClient and related classes. | `HiveMQClient`, `RawClient` (Beta), `LastWillAndTestament`, etc...|
 | `HiveMQtt.Client.Options`| Class that encapsulate options. | `ConnectOptions`, `DisconnectOptions`, `SubscribeOptions` etc...|
 | `HiveMQtt.Client.Events` | Classes related to the event subsystem. | _See events reference._|
 | `HiveMQtt.Client.Exceptions` | HiveMQtt Exceptions. | `HiveMQttClientException` |
