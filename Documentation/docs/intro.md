@@ -2,92 +2,129 @@
 sidebar_position: 10
 ---
 
-# The MQTT Client
+# The HiveMQ MQTT Client for .NET
 
-### 💽 Installation & Compatibility
-* **Easy-to-Install**: Available as a [Nuget package](https://www.nuget.org/packages/HiveMQtt).
-* **Globally Compatible**: Built to be a fully compliant MQTT 5.0 client compatible with all modern MQTT brokers.
-* **Multi-Targeted**: Supports .NET 6.0, 7.0 & 8.0
+The official HiveMQ MQTT client library for .NET applications. A fully-featured, high-performance MQTT 5.0 client designed for modern .NET development.
 
-### 🚀 Features
-* **MQTT 5.0 Support**: Fully compliant with the latest [MQTT 5.0 specification](https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.html), ensuring compatibility with modern MQTT brokers.
-* **Back Pressure Management**: Automatically manages back pressure to prevent overwhelming the broker (or client), ensuring reliable and efficient communication.
-* **Asynchronous Design**: Designed for high-performance and low-latency communication, allowing your application to process multiple messages concurrently.
-* **Extensive Event System**: Hook into all parts of the client down to the packet level with [built in events](https://hivemq.github.io/hivemq-mqtt-client-dotnet/docs/events).
-* **Global and Per-Subscription Message Handling**: Use multiple targeted handlers for more targeted and specialized message processing.
-* **Full Last Will & Testament Support**: Reliable message delivery and notification of client disconnections.
-* **Secure Client Identification**: Full support for [X.509 client certificates](https://hivemq.github.io/hivemq-mqtt-client-dotnet/docs/how-to/client-certificates) and TLS connections.
-* **Observable**: Configure up to [TRACE level logging](https://hivemq.github.io/hivemq-mqtt-client-dotnet/docs/how-to/debug) for package internals.
-* **Fast**: Optimized & benchmarked.  See the benchmark results [here](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Benchmarks/ClientBenchmarkApp/README.md).
-* **RawClient (Beta)**: A low-level, performance-oriented client for scenarios requiring minimal overhead. See [RawClient documentation](https://hivemq.github.io/hivemq-mqtt-client-dotnet/docs/rawclient).
+:::tip Quick Start
+Install via NuGet and connect in minutes:
+```bash
+dotnet add package HiveMQtt
+```
+Then check out the [Quickstart Guide](/docs/quickstart) to begin.
+:::
 
-### 🏝️ Ease of Use
-* **Easy to Use**: Smart defaults, excellent interfaces and intelligent automation makes implementing a breeze.
-* **Easy Integration**: Simple and intuitive API makes it easy to integrate with your .NET applications.
+## Installation & Compatibility
 
-### 🛟 Maintenance and Support
-* **Actively Maintained**: Built by the MQTT professionals that built HiveMQ (and do this for a living).
-* **Supported**: Contact us anytime in [this repository](https://github.com/hivemq/hivemq-mqtt-client-dotnet/issues), in the [community forum](https://community.hivemq.com) or [through support](https://www.hivemq.com/support/).
-* **Extensively Documented**: What good is it without [excellent documentation](https://hivemq.github.io/hivemq-mqtt-client-dotnet/)?
+| Feature | Details |
+|---------|---------|
+| **NuGet Package** | [HiveMQtt](https://www.nuget.org/packages/HiveMQtt) |
+| **MQTT Version** | Full [MQTT 5.0](https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.html) compliance |
+| **.NET Support** | .NET 6.0, 7.0, 8.0 & 9.0 |
+| **License** | Apache 2.0 (Open Source) |
 
-### 🐧 Opensource
-* **Opensource**: No blackbox code.  Only trusted, tested and reviewed opensource code.
+## Key Features
 
-## What is this?
+### Core Capabilities
+- **MQTT 5.0 Support**: Fully compliant with the latest specification, ensuring compatibility with all modern MQTT brokers
+- **Asynchronous Design**: High-performance, low-latency communication with concurrent message processing
+- **Back Pressure Management**: Automatically manages flow to prevent overwhelming the broker or client
+- **Automatic Reconnect**: Built-in reconnection with exponential backoff strategy
 
-MQTT is an [open standard protocol](https://mqtt.org) for publishing and consuming messages from IoT devices all the way up to mainframes.  It's binary, massively performant and easy to use.
+### Message Handling
+- **Global Message Handlers**: Process all incoming messages in one place
+- **Per-Subscription Callbacks**: Route messages to specific handlers based on topic
+- **Full QoS Support**: QoS 0, 1, and 2 for reliable message delivery
+- **Last Will & Testament**: Automatic notification of client disconnections
 
-This client library is used to publish and consume messages over MQTT.  So you can get a the temperature from a remote sensor, send a control message to a factory robot, tunnel WhatsApp messages to a Twitter account or anything else you can imagine.
+### Security
+- **TLS/SSL Encryption**: Secure connections out of the box
+- **X.509 Client Certificates**: [Full support](/docs/how-to/client-certificates) for certificate-based authentication
+- **Username/Password Auth**: Simple credential-based authentication
 
-This is the client library that speaks with an MQTT broker that delivers messages to their final destination.
+### Developer Experience
+- **Extensive Event System**: [Hook into all operations](/docs/events) from connection to packet level
+- **Detailed Logging**: [TRACE level logging](/docs/how-to/debug) for debugging
+- **Builder Pattern APIs**: Fluent interfaces for easy configuration
+- **Smart Defaults**: Works out of the box with sensible defaults
 
-Need a broker? Sign up for a free broker at [HiveMQ Cloud](https://www.hivemq.com/mqtt-cloud-broker/) and be up and running in a couple minutes.  Connect up to 100 devices - no credit card required.
+### Performance
+- **Optimized & Benchmarked**: See [benchmark results](/docs/benchmarks)
+- **RawClient (Beta)**: [Low-level client](/docs/rawclient) for maximum performance scenarios
 
-## MQTT Resources
+## Client Options
 
-* [MQTT Essentials](https://www.hivemq.com/mqtt-essentials/) (Great for beginners wanting an introduction)
-* [MQTT Toolbox](https://www.hivemq.com/mqtt-toolbox/)
-* [MQTT Client Library Encyclopedia](https://www.hivemq.com/mqtt-client-library-encyclopedia/)
-* HiveMQ [Public Broker](http://www.mqtt-dashboard.com)
-* HiveMQ [Support](https://www.hivemq.com/support/)
+This library provides two client implementations:
+
+| Client | Best For |
+|--------|----------|
+| [`HiveMQClient`](/docs/hivemqclient) | Most applications - full features including subscription tracking, per-subscription callbacks, and automatic reconnect |
+| [`RawClient`](/docs/rawclient) | Performance-critical scenarios - minimal overhead, no subscription tracking |
+
+## Support & Maintenance
+
+- **Actively Maintained**: Built by the MQTT professionals at HiveMQ
+- **Community Support**: [GitHub Issues](https://github.com/hivemq/hivemq-mqtt-client-dotnet/issues) and [Community Forum](https://community.hivemq.com)
+- **Professional Support**: [HiveMQ Support](https://www.hivemq.com/support/)
+- **Open Source**: Apache 2.0 licensed - transparent, trusted code
+
+## What is MQTT?
+
+MQTT is an [open standard protocol](https://mqtt.org) for publishing and consuming messages from IoT devices all the way up to mainframes. It's binary, massively performant, and easy to use.
+
+This client library enables you to publish and consume messages over MQTT. Use cases include:
+- Reading sensor data from remote IoT devices
+- Sending control commands to industrial equipment
+- Building real-time messaging applications
+- Implementing event-driven architectures
+
+The client communicates with an MQTT broker that routes messages to their destinations.
 
 ## Need an MQTT Broker?
 
-This client communicates with an MQTT broker to publish and consume messages.  It's built to be compatible with all major MQTT brokers but if you need a broker now run the HiveMQ Community Edition:
+### Quick Start with Docker
+
+Run HiveMQ Community Edition locally:
 
 ```bash
 docker run --name hivemq-ce -d -p 1883:1883 hivemq/hivemq-ce
 ```
 
-This will run the HiveMQ Community Edition broker on localhost port 1883.
+This starts a broker on `localhost:1883`.
 
-If you need advanced features, checkout our [premium editions](https://www.hivemq.com/hivemq/editions/) or alternatively [HiveMQ Cloud](https://www.hivemq.com/mqtt-cloud-broker/) which is free to connect up to 100 devices (no credit card required).
+### Cloud Option
 
-### More
+[HiveMQ Cloud](https://www.hivemq.com/mqtt-cloud-broker/) offers a free tier with up to 100 device connections - no credit card required. For advanced features, see [HiveMQ Editions](https://www.hivemq.com/hivemq/editions/).
 
-For more examples that you can easily copy/paste, see our [Examples](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Documentation/Examples.md).
+## Learning Resources
 
-There is even an https://github.com/hivemq/hivemq-mqtt-client-dotnet/tree/main/Examples/HiveMQtt-CLI to demonstrate usage of the package.
+### MQTT Fundamentals
+- [MQTT Essentials](https://www.hivemq.com/mqtt-essentials/) - Comprehensive introduction to MQTT
+- [MQTT Toolbox](https://www.hivemq.com/mqtt-toolbox/) - Useful tools for MQTT development
+- [HiveMQ Public Broker](http://www.mqtt-dashboard.com) - Free public broker for testing
 
+### Code Examples
+- [GitHub Examples](https://github.com/hivemq/hivemq-mqtt-client-dotnet/tree/main/Examples) - Sample applications
+- [CLI Example](https://github.com/hivemq/hivemq-mqtt-client-dotnet/tree/main/Examples/HiveMQtt-CLI) - Command-line interface demo
 
-## Other MQTT Clients
+## Other HiveMQ MQTT Clients
 
-* [Java](https://github.com/hivemq/hivemq-mqtt-client)
-* [Javascript](https://github.com/hivemq/hivemq-mqtt-web-client)
+- [Java Client](https://github.com/hivemq/hivemq-mqtt-client)
+- [JavaScript Client](https://github.com/hivemq/hivemq-mqtt-web-client)
 
-## 🛡 License
+## License
 
 [![License](https://img.shields.io/github/license/hivemq/hivemq-mqtt-client-dotnet)](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/LICENSE)
 
-This project is licensed under the terms of the `Apache Software License 2.0` license. See [LICENSE](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/LICENSE) for more details.
+This project is licensed under the **Apache Software License 2.0**. See [LICENSE](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/LICENSE) for details.
 
-## 📃 Citation
+## Citation
 
 ```bibtex
 @misc{hivemq-mqtt-client-dotnet,
   author = {HiveMQ GmbH},
   title = {The HiveMQ C# MQTT client for .NET},
-  year = {2025},
+  year = {2026},
   publisher = {GitHub},
   journal = {GitHub repository},
   howpublished = {\url{https://github.com/hivemq/hivemq-mqtt-client-dotnet}}

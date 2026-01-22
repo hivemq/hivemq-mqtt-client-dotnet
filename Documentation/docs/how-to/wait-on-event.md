@@ -1,6 +1,10 @@
-# Wait on an Event
+---
+sidebar_position: 7
+---
 
-Use a `TaskCompletionSource` in your event handlers to wait for events to complete.
+# Wait for an Event
+
+Use `TaskCompletionSource` to synchronize your code with async events. This is useful when you need to wait for an event to complete before continuing.
 
 ```csharp
 // The TaskCompletionSource setup
@@ -35,7 +39,3 @@ await taskCompletionSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwai
 * [Lifecycle Events](/docs/events)
 * [Events Source](https://github.com/hivemq/hivemq-mqtt-client-dotnet/tree/main/Source/HiveMQtt/Client/Events)
 * [TaskCompletionSource<TResult> Class (System.Threading.Tasks)](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.taskcompletionsource-1?view=net-8.0)
-
-
-
-

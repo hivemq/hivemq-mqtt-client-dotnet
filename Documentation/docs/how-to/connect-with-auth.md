@@ -1,10 +1,19 @@
-# Securely Connect to a Broker with Basic Authentication Credentials
+---
+sidebar_position: 1
+---
 
-To securely connect to an MQTT Broker with basic authentication credentials, use the `UserName` and `Password` fields in `HiveMQClientOptions`:
+# Connect with Username/Password Authentication
+
+Connect securely to an MQTT broker using basic authentication credentials.
+
+## Basic Example
 
 ```csharp
+using HiveMQtt.Client;
+using HiveMQtt.MQTT5.ReasonCodes;
+
 var options = new HiveMQClientOptionsBuilder()
-    .WithBroker("b273h09193b.s1.eu.hivemq.cloud")
+    .WithBroker("your-broker.hivemq.cloud")
     .WithPort(8883)
     .WithUseTls(true)
     .WithUserName("my-username")
@@ -13,12 +22,80 @@ var options = new HiveMQClientOptionsBuilder()
 
 var client = new HiveMQClient(options);
 var connectResult = await client.ConnectAsync().ConfigureAwait(false);
+
+if (connectResult.ReasonCode == ConnAckReasonCode.Success)
+{
+    Console.WriteLine("Connected successfully!");
+}
+```
+
+## Security Best Practices
+
+:::warning
+Never hardcode credentials in your source code. Use environment variables, configuration files, or a secrets manager.
+:::
+
+### Using Environment Variables
+
+```csharp
+var options = new HiveMQClientOptionsBuilder()
+    .WithBroker(Environment.GetEnvironmentVariable("MQTT_BROKER"))
+    .WithPort(8883)
+    .WithUseTls(true)
+    .WithUserName(Environment.GetEnvironmentVariable("MQTT_USERNAME"))
+    .WithPassword(Environment.GetEnvironmentVariable("MQTT_PASSWORD"))
+    .Build();
+```
+
+### Using Configuration (appsettings.json)
+
+```csharp
+// In appsettings.json:
+// {
+//   "Mqtt": {
+//     "Broker": "your-broker.hivemq.cloud",
+//     "Username": "your-username",
+//     "Password": "your-password"
+//   }
+// }
+
+var mqttConfig = configuration.GetSection("Mqtt");
+var options = new HiveMQClientOptionsBuilder()
+    .WithBroker(mqttConfig["Broker"])
+    .WithPort(8883)
+    .WithUseTls(true)
+    .WithUserName(mqttConfig["Username"])
+    .WithPassword(mqttConfig["Password"])
+    .Build();
+```
+
+## Handling Authentication Failures
+
+```csharp
+using HiveMQtt.MQTT5.ReasonCodes;
+
+var connectResult = await client.ConnectAsync().ConfigureAwait(false);
+
+switch (connectResult.ReasonCode)
+{
+    case ConnAckReasonCode.Success:
+        Console.WriteLine("Connected!");
+        break;
+    case ConnAckReasonCode.BadUserNameOrPassword:
+        Console.WriteLine("Invalid credentials");
+        break;
+    case ConnAckReasonCode.NotAuthorized:
+        Console.WriteLine("Not authorized to connect");
+        break;
+    default:
+        Console.WriteLine($"Connection failed: {connectResult.ReasonCode}");
+        break;
+}
 ```
 
 ## See Also
 
-* [Authentication with Username and Password - MQTT Security Fundamentals](https://www.hivemq.com/blog/mqtt-security-fundamentals-authentication-username-password/)
-* [Advanced Authentication Mechanisms - MQTT Security Fundamentals](https://www.hivemq.com/blog/mqtt-security-fundamentals-advanced-authentication-mechanisms/)
-* [HiveMQ Cloud / Authentication and Authorization](https://docs.hivemq.com/hivemq-cloud/authn-authz.html)
-* [HiveMQClientOptionsBuilder.cs](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Source/HiveMQtt/Client/HiveMQClientOptionsBuilder.cs)
-* [HiveMQClientOptions.cs](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Source/HiveMQtt/Client/Options/HiveMQClientOptions.cs)
+- [Authentication with Username and Password - MQTT Security Fundamentals](https://www.hivemq.com/blog/mqtt-security-fundamentals-authentication-username-password/)
+- [Advanced Authentication Mechanisms - MQTT Security Fundamentals](https://www.hivemq.com/blog/mqtt-security-fundamentals-advanced-authentication-mechanisms/)
+- [HiveMQ Cloud - Authentication and Authorization](https://docs.hivemq.com/hivemq-cloud/authn-authz.html)
+- [Client Certificates](/docs/how-to/client-certificates) - Certificate-based authentication

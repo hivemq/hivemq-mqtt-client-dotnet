@@ -1,6 +1,14 @@
-# How to set a Last Will & Testament
+---
+sidebar_position: 2
+---
 
-The Last Will and Testament support of MQTT can be used to notify subscribers that your client is offline.
+# Set a Last Will & Testament
+
+Last Will and Testament (LWT) allows your client to notify other subscribers when it disconnects unexpectedly.
+
+:::tip What is LWT?
+When a client connects with an LWT message, the broker stores it. If the client disconnects unexpectedly (network failure, crash, etc.), the broker publishes the LWT message on the client's behalf.
+:::
 
 For a more in-depth explanation, see [What is MQTT Last Will and Testament (LWT)? – MQTT Essentials: Part 9](https://www.hivemq.com/blog/mqtt-essentials-part-9-last-will-and-testament/).
 

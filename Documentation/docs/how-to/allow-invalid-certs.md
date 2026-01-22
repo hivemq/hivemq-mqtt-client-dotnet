@@ -1,10 +1,16 @@
-# Connecting with TLS and Allowing Invalid TLS Certificates
+---
+sidebar_position: 4
+---
 
-In certain development or testing scenarios, you might need to connect to an MQTT broker that uses TLS but has an invalid or self-signed certificate. The HiveMQtt client library provides an option to disable the TLS certificate check upon connection, which can be useful in these situations.
+# Allow Invalid TLS Certificates
 
-The `AllowInvalidBrokerCertificates` option in the `HiveMQClientOptions` class allows you to disable the TLS certificate check. 
+In development or testing scenarios, you may need to connect to an MQTT broker with a self-signed or invalid TLS certificate. This guide shows how to bypass certificate validation.
 
-Here's an example of how to use this option:
+:::danger Security Warning
+Disabling certificate validation exposes your application to man-in-the-middle attacks. **Only use this in controlled development environments, never in production.**
+:::
+
+## Example
 
 ```csharp
 var options = new HiveMQClientOptionsBuilder()
@@ -18,13 +24,7 @@ var client = new HiveMQClient(options);
 var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 ```
 
-In this example, we first create an instance of HiveMQClientOptionsBuilder. We then set the broker address, port, and enable TLS. The WithAllowInvalidBrokerCertificates(true) method call disables the TLS certificate check. Finally, we build the options and use them to create a new HiveMQClient.
-
-:::note
-
-Disabling the TLS certificate check can expose your application to security risks, such as man-in-the-middle attacks. Therefore, this option should only be used in controlled environments for development or testing purposes.
-
-::: 
+The `WithAllowInvalidBrokerCertificates(true)` call disables certificate validation, allowing connections to brokers with self-signed or expired certificates.
 
 ## See Also
 

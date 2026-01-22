@@ -1,65 +1,105 @@
 ---
 sidebar_position: 20
 ---
+
 # Quickstart
 
-## Install
+Get up and running with the HiveMQ MQTT Client for .NET in minutes.
 
-This package is [available on NuGet.org](https://www.nuget.org/packages/HiveMQtt/) and can be installed with:
+## Installation
 
-```sh
+Install the [HiveMQtt NuGet package](https://www.nuget.org/packages/HiveMQtt/):
+
+```bash
 dotnet add package HiveMQtt
 ```
 
-This client is 100% open-source.  Find the source code in the [Github repository](https://github.com/hivemq/hivemq-mqtt-client-dotnet).
+## Required Namespaces
 
-## Overview
+```csharp
+using HiveMQtt.Client;
+using HiveMQtt.MQTT5.Types;
+```
 
-This C# client provides a user-friendly builder pattern interface for simplified usage.
+## Key Classes Reference
 
-The following table serves as a handy reference for the most frequently utilized classes within the library:
+| Purpose | Class | Builder |
+|---------|-------|---------|
+| Main Client | [`HiveMQClient`](/docs/hivemqclient) | — |
+| Performance Client | [`RawClient`](/docs/rawclient) (Beta) | — |
+| Client Configuration | `HiveMQClientOptions` | `HiveMQClientOptionsBuilder` |
+| Subscribe Configuration | `SubscribeOptions` | `SubscribeOptionsBuilder` |
+| Unsubscribe Configuration | `UnsubscribeOptions` | `UnsubscribeOptionsBuilder` |
+| Publish Message | `MQTT5PublishMessage` | `PublishMessageBuilder` |
 
-| Description          | Core Class         | Builder Class      |
-|-----------------------|---------------|---------------------|
-| The Client | `HiveMQClient` ([Docs](/docs/hivemqclient), [Source](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Source/HiveMQtt/Client/HiveMQClient.cs)) | None |
-| Raw Client (Beta) | `RawClient` ([Docs](/docs/rawclient), [Source](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Source/HiveMQtt/Client/RawClient.cs)) | None |
-| Client Options | [`HiveMQClientOptions`](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Source/HiveMQtt/Client/Options/HiveMQClientOptions.cs) | [`HiveMQClientOptionsBuilder`](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Source/HiveMQtt/Client/HiveMQClientOptionsBuilder.cs) |
-| Subscribe Options | [`SubscribeOptions`](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Source/HiveMQtt/Client/Options/SubscribeOptions.cs) | [`SubscribeOptionsBuilder`](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/builder/Source/HiveMQtt/Client/SubscribeOptionsBuilder.cs) |
-| Unsubscribe Options | [`UnsubscribeOptions`](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Source/HiveMQtt/Client/Options/UnsubscribeOptions.cs) | [`UnsubscribeOptionsBuilder`](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/builder/Source/HiveMQtt/Client/UnsubscribeOptionsBuilder.cs) |
-| An Application Message | [`MQTT5PublishMessage`](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Source/HiveMQtt/MQTT5/Types/MQTT5PublishMessage.cs) | [`PublishMessageBuilder`](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Source/HiveMQtt/Client/PublishMessageBuilder.cs) |
+## Complete Example
 
-## Common Usage: Complete Example
-
-The example presented below illustrates the prevalent usage pattern for our client, offering a solid foundation from which you can build upon. This serves as a practical starting point, showcasing the most common workflows to guide and assist you in efficiently implementing and customizing the client based on your specific needs.
+This example demonstrates the typical workflow: configure, connect, subscribe, and publish.
 
 ```csharp
 using HiveMQtt.Client;
 using HiveMQtt.MQTT5.Types;
 
-// Setup Client options and instantiate
-var options = new HiveMQClientOptionsBuilder().
-                    WithBroker("candy.x39.eu.hivemq.cloud").
-                    WithPort(8883).
-                    WithUseTls(true).
-                    Build();
+// 1. Configure client options
+var options = new HiveMQClientOptionsBuilder()
+    .WithBroker("broker.hivemq.com")
+    .WithPort(1883)
+    .Build();
+
 var client = new HiveMQClient(options);
 
-// Setup an application message handlers BEFORE subscribing to a topic
+// 2. Set up message handler BEFORE subscribing
 client.OnMessageReceived += (sender, args) =>
 {
-    Console.WriteLine("Message Received: {}", args.PublishMessage.PayloadAsString);
+    Console.WriteLine($"Message Received: {args.PublishMessage.PayloadAsString}");
 };
 
-// Connect to the MQTT broker
+// 3. Connect to the broker
 var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 
-// Configure the subscriptions we want and subscribe
-var builder = new SubscribeOptionsBuilder();
-builder.WithSubscription("topic1", QualityOfService.AtLeastOnceDelivery)
-       .WithSubscription("topic2", QualityOfService.ExactlyOnceDelivery);
-var subscribeOptions = builder.Build();
-var subscribeResult = await client.SubscribeAsync(subscribeOptions);
+// 4. Subscribe to topics
+var subscribeOptions = new SubscribeOptionsBuilder()
+    .WithSubscription("topic1", QualityOfService.AtLeastOnceDelivery)
+    .WithSubscription("topic2", QualityOfService.ExactlyOnceDelivery)
+    .Build();
+
+var subscribeResult = await client.SubscribeAsync(subscribeOptions).ConfigureAwait(false);
+
+// 5. Publish a message
+var publishResult = await client.PublishAsync("topic1/example", "Hello, MQTT!").ConfigureAwait(false);
+
+// 6. Disconnect when done
+await client.DisconnectAsync().ConfigureAwait(false);
+client.Dispose();
+```
+
+:::tip Important
+Always set up your message handlers **before** subscribing to topics. The broker may send retained messages immediately upon subscription.
+:::
+
+## Minimal Example
+
+For quick testing with a local broker:
+
+```csharp
+using HiveMQtt.Client;
+
+// Connect to localhost:1883 with defaults
+var client = new HiveMQClient();
+await client.ConnectAsync();
 
 // Publish a message
-var publishResult = await client.PublishAsync("topic1/example", "Hello Payload");
+await client.PublishAsync("test/topic", "Hello World!");
+
+// Clean up
+await client.DisconnectAsync();
+client.Dispose();
 ```
+
+## Next Steps
+
+- [Connecting](/docs/connecting) - Connection options and TLS configuration
+- [Publishing](/docs/publishing) - Message publishing options
+- [Subscribing](/docs/subscribing) - Subscription management and callbacks
+- [Events](/docs/events) - Hook into client lifecycle events
+- [HiveMQClient Reference](/docs/hivemqclient) - Complete client documentation

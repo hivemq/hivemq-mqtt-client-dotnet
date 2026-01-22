@@ -31,9 +31,8 @@ Packet level events are triggered by the underlying MQTT packet activity. These 
 | ------------- | ------------------------ | -------------------- |
 | OnConnectSent        | `OnConnectSentEventArgs`     |  `ConnectPacket` |
 | OnConnAckReceived    | `OnConnAckReceivedEventArgs` |  `ConnAckPacket` |
-| OnConnectSent        | `OnConnectSentEventArgs`     |  `ConnectPacket` |
-| OnDisconnectReceived | `OnDisconnectReceivedEventArgs` |  `DisconnectPacket` |
 | OnDisconnectSent     | `OnDisconnectSentEventArgs`  |  `DisconnectPacket` |
+| OnDisconnectReceived | `OnDisconnectReceivedEventArgs` |  `DisconnectPacket` |
 | OnPingReqSent        | `OnPingReqSentEventArgs`     |  `PingReqPacket` |
 | OnPingRespReceived   | `OnPingRespReceivedEventArgs` |  `PingRespPacket` |
 | OnPublishSent        | `OnPublishSentEventArgs`     |  `PublishPacket` |
@@ -47,6 +46,6 @@ Packet level events are triggered by the underlying MQTT packet activity. These 
 | OnPubCompSent        | `OnPubCompSentEventArgs`    |  `PubCompPacket` |
 | OnPubCompReceived    | `OnPubCompReceivedEventArgs` |  `PubCompPacket` |
 | OnSubscribeSent      | `OnSubscribeSentEventArgs`    |  `SubscribePacket` |
-| OnSubAckSent         | `OnSubAckSentEventArgs`    |  `SubAckPacket` |
+| OnSubAckReceived     | `OnSubAckReceivedEventArgs`    |  `SubAckPacket` |
 | OnUnsubscribeSent    | `OnUnsubscribeSentEventArgs`    |  `UnsubscribePacket` |
-| OnUnsubAckSent       | `OnUnsubAckSentEventArgs`    |  `UnsubAckPacket` |
+| OnUnsubAckReceived   | `OnUnsubAckReceivedEventArgs`    |  `UnsubAckPacket` |

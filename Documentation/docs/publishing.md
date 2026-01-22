@@ -11,7 +11,7 @@ In MQTT, "publish" is an operation that allows an MQTT client to send a message 
 Use the PublishAsync method to publish a payload to the desired topic by providing the topic string and payload as parameters.
 
 ```csharp
-var publishResult = await client.PublishAsync("topic1/example", "Hello Payload")
+var publishResult = await client.PublishAsync("topic1/example", "Hello Payload").ConfigureAwait(false);
 ```
 
 Optionally, you can specify the desired quality of service (QoS) level for the publish. By default, the QoS level is set to `QualityOfService.AtMostOnceDelivery`.
@@ -19,7 +19,7 @@ Optionally, you can specify the desired quality of service (QoS) level for the p
 ```csharp
 using HiveMQtt.MQTT5.Types; // For the QualityOfService enum
 
-var publishResult = await client.PublishAsync("topic1/example", "Hello Payload", QualityOfService.ExactlyOnceDelivery)
+var publishResult = await client.PublishAsync("topic1/example", "Hello Payload", QualityOfService.ExactlyOnceDelivery);
 ```
 
 ## With Options
@@ -27,12 +27,12 @@ var publishResult = await client.PublishAsync("topic1/example", "Hello Payload",
 The `PublishMessageBuilder` class provides a convenient way to construct MQTT publish messages with various options and properties. It allows you to customize the topic, payload, quality of service (QoS) level, retain flag, and other attributes of the message.
 
 ```csharp
-var publishMessage = new PublishMessageBuilder().
-                            WithTopic("topic1/example").
-                            WithPayload("{'HiveMQ': '👍'}").
-                            WithContentType("application/json")
-                            WithResponseTopic("response/topic")
-                            Build();
+var publishMessage = new PublishMessageBuilder()
+    .WithTopic("topic1/example")
+    .WithPayload("{\"HiveMQ\": \"rocks\"}")
+    .WithContentType("application/json")
+    .WithResponseTopic("response/topic")
+    .Build();
 
 await client.PublishAsync(publishMessage).ConfigureAwait(false);
 ```
@@ -54,14 +54,14 @@ var publishMessage = new PublishMessageBuilder()
     .WithResponseTopic("response/topic")
     .WithCorrelationData(Encoding.UTF8.GetBytes("correlation-data"))
     .WithUserProperty("property1", "value1")
-    .WithUserProperties(new Dictionary<string, string> { { "property1", "value1" }, { "property2", "value2" } });
+    .WithUserProperties(new Dictionary<string, string> { { "property1", "value1" }, { "property2", "value2" } })
     .WithMessageExpiryInterval(3600)
     .WithSubscriptionIdentifier(123)
     .WithSubscriptionIdentifiers(1, 2, 3)
     .WithTopicAlias(456)
     .WithContentTypeAlias(789)
     .WithResponseTopicAlias(987)
-    .Build()
+    .Build();
 ```
 
 ## MQTT5PublishMessage
@@ -71,12 +71,12 @@ The [MQTT5PublishMessage](https://github.com/hivemq/hivemq-mqtt-client-dotnet/bl
 ```csharp
 var message = new MQTT5PublishMessage
 {
-    Topic = topic,
-    Payload = Encoding.ASCII.GetBytes(payload),
-    QoS = qos,
+    Topic = "topic1/example",
+    Payload = Encoding.UTF8.GetBytes("Hello, World!"),
+    QoS = QualityOfService.AtLeastOnceDelivery,
 };
 
-message.Retain = True
+message.Retain = true;
 message.UserProperties.Add("Client-Geo", "-33.8688, 151.2093");
 
 var result = await client.PublishAsync(message);
