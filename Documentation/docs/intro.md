@@ -19,6 +19,7 @@ sidebar_position: 10
 * **Secure Client Identification**: Full support for [X.509 client certificates](https://hivemq.github.io/hivemq-mqtt-client-dotnet/docs/how-to/client-certificates) and TLS connections.
 * **Observable**: Configure up to [TRACE level logging](https://hivemq.github.io/hivemq-mqtt-client-dotnet/docs/how-to/debug) for package internals.
 * **Fast**: Optimized & benchmarked.  See the benchmark results [here](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Benchmarks/ClientBenchmarkApp/README.md).
+* **RawClient (Beta)**: A low-level, performance-oriented client for scenarios requiring minimal overhead. See [RawClient documentation](https://hivemq.github.io/hivemq-mqtt-client-dotnet/docs/rawclient).
 
 ### 🏝️ Ease of Use
 * **Easy to Use**: Smart defaults, excellent interfaces and intelligent automation makes implementing a breeze.
@@ -38,7 +39,7 @@ MQTT is an [open standard protocol](https://mqtt.org) for publishing and consumi
 
 This client library is used to publish and consume messages over MQTT.  So you can get a the temperature from a remote sensor, send a control message to a factory robot, tunnel WhatsApp messages to a Twitter account or anything else you can imagine.
 
-This is the client library that speaks with an MQTT broker that delivers messages to their final destination.  
+This is the client library that speaks with an MQTT broker that delivers messages to their final destination.
 
 Need a broker? Sign up for a free broker at [HiveMQ Cloud](https://www.hivemq.com/mqtt-cloud-broker/) and be up and running in a couple minutes.  Connect up to 100 devices - no credit card required.
 
