@@ -8,6 +8,14 @@ sidebar_position: 25
 The `RawClient` is currently in **beta**. While fully functional, the API may change in future releases based on feedback. We encourage you to try it out and share your experiences.
 :::
 
+:::info Version Requirement
+The `RawClient` was introduced in **v0.37.0**. Make sure you have the latest [HiveMQtt NuGet package](https://www.nuget.org/packages/HiveMQtt) installed:
+
+```bash
+dotnet add package HiveMQtt
+```
+:::
+
 ## Overview
 
 The `RawClient` is a low-level, performance-oriented MQTT 5.0 client that provides direct access to the MQTT protocol without the subscription management features found in the standard `HiveMQClient`.
