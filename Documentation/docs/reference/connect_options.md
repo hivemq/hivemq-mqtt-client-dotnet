@@ -32,4 +32,3 @@ await client.ConnectAsync(connectOptions);
 
 * [HiveMQClientOptions Reference](/docs/reference/client_options)
 * [Connecting to an MQTT Broker](/docs/connecting)
-* [Session Handling](/docs/how-to/session-handling) 

@@ -65,4 +65,3 @@ await client.ConnectAsync(connectOptions);
 * [ConnectOptions Reference](/docs/reference/connect_options)
 * [HiveMQClientOptions Reference](/docs/reference/client_options)
 * [Connecting to an MQTT Broker](/docs/connecting)
-* [Session Handling](/docs/how-to/session-handling) 
