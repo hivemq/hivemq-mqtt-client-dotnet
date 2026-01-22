@@ -15,7 +15,7 @@ Use the SubscribeAsync method to subscribe to the desired topic by providing the
 await client.SubscribeAsync("instrument/x9284/boston").ConfigureAwait(false);
 ```
 
-Optionally, you can specify the desired quality of service (QoS) level for the subscription. By default, the QoS level is set to `QualityOfServiceLevel.AtMostOnce`.
+Optionally, you can specify the desired quality of service (QoS) level for the subscription. By default, the QoS level is set to `QualityOfService.AtMostOnceDelivery`.
 
 ```csharp
 using HiveMQtt.MQTT5.Types; // For QualityOfService enum
@@ -23,7 +23,7 @@ using HiveMQtt.MQTT5.Types; // For QualityOfService enum
 string topic = "my/topic";
 QualityOfService qos = QualityOfService.AtLeastOnceDelivery;
 
-await client.SubscribeAsync(topic, qosLevel);
+await client.SubscribeAsync(topic, qos).ConfigureAwait(false);
 ```
 
 :::tip
@@ -90,25 +90,23 @@ To illustrate _each and every possible call_ with `SubscribeOptionsBuilder`, see
 ```csharp
 using HiveMQtt.MQTT5.Types;
 
-var options = new SubscribeOptionsBuilder().
-                    .WithSubscription(
-                        "topic1",                             // Topic
-                        QualityOfService.ExactlyOnceDelivery, // Quality of Service Level
-                        true,                                 // NoLocal
-                        true,                                 // RetainAsPublished
-                        RetainHandling.SendAtSubscribe        // RetainHandling
-                    ).
-                    WithUserProperty("property1", "value1").
-                    WithUserProperties(
-                        new Dictionary<string, string> {
-                            { "property1", "value1" }, { "property2", "value2" } }).
-                    Build();
-
+var options = new SubscribeOptionsBuilder()
+    .WithSubscription(
+        "topic1",                             // Topic
+        QualityOfService.ExactlyOnceDelivery, // Quality of Service Level
+        true,                                 // NoLocal
+        true,                                 // RetainAsPublished
+        RetainHandling.SendAtSubscribe)       // RetainHandling
+    .WithUserProperty("property1", "value1")
+    .WithUserProperties(
+        new Dictionary<string, string> {
+            { "property1", "value1" }, { "property2", "value2" } })
+    .Build();
 ```
 
 In `WithSubscription`, the first two arguments are required.  The additional optional parameters are defined as:
 
-* `NoLoca`l: The NoLocal option, when set to true, indicates that the subscriber does not want to receive messages published by itself. This option is useful in scenarios where a client is publishing and subscribing to the same topic. By setting NoLocal to true, the client can avoid receiving its own published messages.
+* `NoLocal`: The NoLocal option, when set to true, indicates that the subscriber does not want to receive messages published by itself. This option is useful in scenarios where a client is publishing and subscribing to the same topic. By setting NoLocal to true, the client can avoid receiving its own published messages.
 
 * `RetainAsPublished`: The RetainAsPublished option, when set to false, indicates that the broker should not send retained messages to the subscriber when it first subscribes to a topic. Retained messages are those that are stored by the broker and sent to new subscribers upon subscription. By setting RetainAsPublished to false, the subscriber will not receive any retained messages for that topic.
 
@@ -132,7 +130,7 @@ Why is this order important? Once a connection is established, the broker may st
 // Message Handler
 client.OnMessageReceived += (sender, args) =>
 {
-    Console.WriteLine("Message Received: {}", args.PublishMessage.PayloadAsString)
+    Console.WriteLine($"Message Received: {args.PublishMessage.PayloadAsString}");
 };
 
 await client.ConnectAsync();
@@ -143,7 +141,7 @@ or alternatively:
 ```csharp
 private static void MessageHandler(object? sender, OnMessageReceivedEventArgs eventArgs)
 {
-    Console.WriteLine("Message Received: {}", eventArgs.PublishMessage.PayloadAsString)
+    Console.WriteLine($"Message Received: {eventArgs.PublishMessage.PayloadAsString}");
 }
 
 client.OnMessageReceived += MessageHandler;
@@ -213,7 +211,7 @@ var options = builder.WithSubscription(
         new TopicFilter("test/topic", QualityOfService.AtLeastOnceDelivery),
         (sender, e) =>
         {
-            Console.WriteLine($"Message received on topic {e.Topic}: {e.Message}");
+            Console.WriteLine($"Message received on topic {e.PublishMessage.Topic}: {e.PublishMessage.PayloadAsString}");
         })
     .Build();
 ```
@@ -225,7 +223,7 @@ Alternatively the message handler can be independently defined:
 ```csharp
 private static void MessageHandler(object? sender, OnMessageReceivedEventArgs eventArgs)
 {
-    Console.WriteLine("Message Received: {}", eventArgs.PublishMessage.PayloadAsString)
+    Console.WriteLine($"Message Received: {eventArgs.PublishMessage.PayloadAsString}");
 }
 
 var builder = new SubscribeOptionsBuilder();
@@ -233,7 +231,6 @@ var options = builder.WithSubscription(
         new TopicFilter("test/topic", QualityOfService.AtLeastOnceDelivery),
         MessageHandler)
     .Build();
-
 ```
 
 ## See Also
@@ -244,4 +241,3 @@ var options = builder.WithSubscription(
 * [SubscribeOptions.cs](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Source/HiveMQtt/Client/Options/SubscribeOptions.cs)
 * [SubscribeResult.cs](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Source/HiveMQtt/Client/Results/SubscribeResult.cs)
 * [SubscribeOptionsBuilder.cs](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Source/HiveMQtt/Client/SubscribeOptionsBuilder.cs)
-

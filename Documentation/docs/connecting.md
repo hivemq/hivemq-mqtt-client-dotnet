@@ -25,23 +25,23 @@ The `HiveMQClientOptions` class provides a set of options that can be used to co
 The easiest way to construct this class is to use `HiveMQClientOptionsBuilder`.
 
 ```csharp
-var options = new HiveMQClientOptionsBuilder().
-                    WithBroker('candy.x39.eu.hivemq.cloud').
-                    WithPort(8883).
-                    WithUseTLS(true).
-                    Build();
+var options = new HiveMQClientOptionsBuilder()
+    .WithBroker("candy.x39.eu.hivemq.cloud")
+    .WithPort(8883)
+    .WithUseTls(true)
+    .Build();
 
 var client = new HiveMQClient(options);
 var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 ```
 
-## With Automatic Reconnect 
+## With Automatic Reconnect
 
 ```csharp
-var options = new HiveMQClientOptionsBuilder().
-                    WithBroker('candy.x39.eu.hivemq.cloud').
-                    WithAutomaticReconnect(true)
-                    Build();
+var options = new HiveMQClientOptionsBuilder()
+    .WithBroker("candy.x39.eu.hivemq.cloud")
+    .WithAutomaticReconnect(true)
+    .Build();
 
 var client = new HiveMQClient(options);
 var connectResult = await client.ConnectAsync().ConfigureAwait(false);
@@ -64,7 +64,8 @@ Some embedded devices don't have DNS support and can only connect to static IPs.
 
 ```csharp
 var options = new HiveMQClientOptionsBuilder()
-    .WithBroker("10.0.12.222:8000")
+    .WithBroker("10.0.12.222")
+    .WithPort(8000)
     .Build();
 
 var client = new HiveMQClient(options);

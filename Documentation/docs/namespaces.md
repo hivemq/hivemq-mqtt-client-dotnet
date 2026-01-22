@@ -1,34 +1,94 @@
 ---
 sidebar_position: 30
 ---
+
 # Namespaces
 
-The HiveMQtt client is broken in to a few key namespaces that provides various functionality.  This page serves as a reference to these namespaces and what they encapsulate.
+The HiveMQ MQTT client library is organized into namespaces that group related functionality. This page helps you understand which namespaces to import for different use cases.
 
-# Definition
+## Quick Reference
 
-In C#, a namespace is a way to organize and group related classes, interfaces, structs, enums, and other types. It provides a hierarchical naming structure to avoid naming conflicts and to provide logical separation of code elements. Namespaces help in organizing code into logical units, improving code readability, and facilitating code reuse.
+For most applications, you only need these two imports:
 
-# Example
+```csharp
+using HiveMQtt.Client;       // Client classes and builders
+using HiveMQtt.MQTT5.Types;  // QoS levels, topic filters, etc.
+```
+
+## Namespace Reference
+
+### Core Namespaces
+
+| Namespace | Purpose | Common Classes |
+|-----------|---------|----------------|
+| `HiveMQtt.Client` | Main client classes and builders | `HiveMQClient`, `RawClient`, `HiveMQClientOptionsBuilder`, `SubscribeOptionsBuilder`, `PublishMessageBuilder` |
+| `HiveMQtt.MQTT5.Types` | MQTT protocol types and enums | `QualityOfService`, `RetainHandling`, `TopicFilter`, `MQTT5PublishMessage` |
+
+### Additional Namespaces
+
+| Namespace | Purpose | When to Use |
+|-----------|---------|-------------|
+| `HiveMQtt.Client.Options` | Options classes | When working directly with options classes instead of builders |
+| `HiveMQtt.Client.Results` | Operation result classes | When inspecting detailed results from operations |
+| `HiveMQtt.Client.Events` | Event argument classes | When creating typed event handlers |
+| `HiveMQtt.Client.Exceptions` | Exception classes | When catching specific client exceptions |
+| `HiveMQtt.Client.ReasonCodes` | Reason code enums | When checking specific QoS reason codes |
+| `HiveMQtt.MQTT5.Packets` | Low-level packet classes | For packet-level event handling or debugging |
+| `HiveMQtt.MQTT5.ReasonCodes` | Protocol-level reason codes | When checking specific MQTT reason codes |
+
+## Usage Examples
+
+### Basic Publishing and Subscribing
 
 ```csharp
 using HiveMQtt.Client;
 using HiveMQtt.MQTT5.Types;
 
-/// code
+var client = new HiveMQClient();
+await client.ConnectAsync();
+await client.SubscribeAsync("topic", QualityOfService.AtLeastOnceDelivery);
+await client.PublishAsync("topic", "Hello!");
 ```
 
-# List of Namespaces
+### Working with Events
 
+```csharp
+using HiveMQtt.Client;
+using HiveMQtt.Client.Events;
 
-| Namespace              | Description | Classes |
-|-----------------------|----------|----------|
-| `HiveMQtt.Client`       | Base namespace for the HiveMQClient, RawClient and related classes. | `HiveMQClient`, `RawClient` (Beta), `LastWillAndTestament`, etc...|
-| `HiveMQtt.Client.Options`| Class that encapsulate options. | `ConnectOptions`, `DisconnectOptions`, `SubscribeOptions` etc...|
-| `HiveMQtt.Client.Events` | Classes related to the event subsystem. | _See events reference._|
-| `HiveMQtt.Client.Exceptions` | HiveMQtt Exceptions. | `HiveMQttClientException` |
-| `HiveMQtt.Client.ReasonCodes` | Reason code exceptions. | `QoS1ReasonCode`, `QoS2ReasonCode`|
-| `HiveMQtt.Client.Results` | Result classes.| `ConnectResult`, `PublishResult`, `SubscribeResult`, `UnsubscribeResult`|
-| `HiveMQtt.MQTT5.Types`   | MQTT protocol types.| `QualityOfService`, `RetainHandling`, `TopicFilter` etc...|
-| `HiveMQtt.MQTT5.Packets` | MQTT packet classes. | `ConnectPacket`, `PingReqPacket` etc...|
-| `HiveMQtt.MQTT5.ReasonCodes` | Packet level reason codes. | `ConnAckReasonCode`, `PubRecReasonCode`|
+client.OnMessageReceived += (sender, args) =>
+{
+    // args is OnMessageReceivedEventArgs
+    Console.WriteLine(args.PublishMessage.PayloadAsString);
+};
+```
+
+### Checking Results
+
+```csharp
+using HiveMQtt.Client;
+using HiveMQtt.Client.Results;
+using HiveMQtt.MQTT5.ReasonCodes;
+
+var result = await client.ConnectAsync();
+if (result.ReasonCode == ConnAckReasonCode.Success)
+{
+    Console.WriteLine("Connected successfully!");
+}
+```
+
+### Exception Handling
+
+```csharp
+using HiveMQtt.Client;
+using HiveMQtt.Client.Exceptions;
+
+try
+{
+    await client.ConnectAsync();
+}
+catch (HiveMQttClientException ex)
+{
+    Console.WriteLine($"Client error: {ex.Message}");
+}
+```

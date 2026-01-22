@@ -1,6 +1,10 @@
+---
+sidebar_position: 5
+---
+
 # Configure Logging
 
-The HiveMQtt package uses [NLog](https://github.com/NLog/NLog) and can be configured with a configuration file (`NLog.config`).  Having this file in the same directory of your executable will configure the HiveMQtt logger to output as configured:
+The HiveMQ client uses [NLog](https://github.com/NLog/NLog) for logging. Configure it by placing an `NLog.config` file in your application's directory.
 
 ```xml
 <?xml version="1.0" encoding="utf-8" ?>

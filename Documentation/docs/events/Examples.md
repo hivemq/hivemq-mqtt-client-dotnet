@@ -12,7 +12,7 @@ All events are available on the client instance: `client.<event_name>`.
 Handlers can be assigned to the event by simply adding your handler to the list.  Handlers can be either a pre-defined function or a lambda (illustrated in the next section).
 
 ```csharp
-client.AfterDisconnect += MyAfterDisconnectHAndler
+client.AfterDisconnect += MyAfterDisconnectHandler;
 ```
 
 ...where `MyAfterDisconnectHandler` is an already-defined function in my application with the following signature:
@@ -29,7 +29,7 @@ An alternative to using a pre-defined function are lambdas:
 client.AfterUnsubscribe += (sender, args) =>
 {
     // code
-}
+};
 ```
 
 ### Event Arguments
@@ -48,8 +48,7 @@ private static void BeforeConnectHandler(object? sender, BeforeConnectEventArgs 
     if (sender is not null)
     {
         var client = (HiveMQClient)sender;
-        Console.WriteLine("Connecting to Broker with the Options: {}", eventArgs.Options)
-
+        Console.WriteLine($"Connecting to Broker with the Options: {eventArgs.Options}");
     }
 }
 
@@ -76,8 +75,7 @@ private static void AfterSubscribeHandler(object? sender, AfterSubscribeEventArg
         var client = (HiveMQClient)sender;
 
         // The result of the subscribe call
-        // eventArgs.SubcribeResult
-
+        // eventArgs.SubscribeResult
     }
 }
 
@@ -85,7 +83,7 @@ private static void AfterSubscribeHandler(object? sender, AfterSubscribeEventArg
 
 var client = new HiveMQClient();
 
-client.BeforeConnect += BeforeConnectHandler;
+client.AfterSubscribe += AfterSubscribeHandler;
 var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 var subscribeResult = await client.SubscribeAsync("district/9/level", MQTT5.Types.QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
 ```
@@ -143,6 +141,7 @@ private static void OnSubAckReceivedHandler(object? sender, OnSubAckReceivedEven
 // Later...
 
 var client = new HiveMQClient();
+client.OnSubAckReceived += OnSubAckReceivedHandler;
 var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 var subResult = await client.SubscribeAsync("district/9/level", MQTT5.Types.QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
 ```

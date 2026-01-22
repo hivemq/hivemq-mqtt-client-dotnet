@@ -1,6 +1,10 @@
-# Custom Client Certificates
+---
+sidebar_position: 3
+---
 
-The HiveMQtt client has the ability to use custom client certificates to identify itself to the MQTT broker that it connect to.
+# Use Client Certificates
+
+X.509 client certificates provide a more secure authentication method than username/password. The broker verifies the client's identity using the certificate during the TLS handshake.
 
 For more information on X.509 client certificates, see the following:
 
@@ -14,19 +18,19 @@ Adding certificates will cause the client to present these certificates to the b
 ## Using X509Certificate2
 
 ```csharp
-using HiveMQtt.Client.Options;
+using HiveMQtt.Client;
 using System.Security.Cryptography.X509Certificates;
 
 // Can pre-create a X509Certificate2 or alternatively pass a string path
 // to the certificate (see below)
-var clientCertificate = new X509Certificate2(
-                        'path/to/certificate-file-1.pem');
+var clientCertificate = new X509Certificate2("path/to/certificate-file-1.pem");
 
 var options = new HiveMQClientOptionsBuilder()
-                    .WithClientCertificate(clientCertificate);
-                    .WithClientCertificate('path/to/certificate-file-2.pem');
+    .WithClientCertificate(clientCertificate)
+    .WithClientCertificate("path/to/certificate-file-2.pem")
+    .Build();
 
-var client = new HiveMQttClient(options);
+var client = new HiveMQClient(options);
 ```
 
 ## Using Certificates with a Passwords
@@ -36,33 +40,33 @@ If your certificate and protected with a password, you can either instantiate th
 `WithClientCertificate`:
 
 ```csharp
-using HiveMQtt.Client.Options;
+using HiveMQtt.Client;
 using System.Security.Cryptography.X509Certificates;
 
 var clientCertificate = new X509Certificate2(
-                        'path/to/certificate-with-password.pem',
-                        'certificate-password');
+    "path/to/certificate-with-password.pem",
+    "certificate-password");
 
 var options = new HiveMQClientOptionsBuilder()
-                    .WithClientCertificate(clientCertificate);
+    .WithClientCertificate(clientCertificate)
+    .Build();
 
-var client = new HiveMQttClient(options);
+var client = new HiveMQClient(options);
 ```
 
 ...or alternatively, just pass the string path to the certificate with the password:
 
 ```csharp
-using HiveMQtt.Client.Options;
+using HiveMQtt.Client;
 using System.Security.Cryptography.X509Certificates;
 
-
 var options = new HiveMQClientOptionsBuilder()
-                    .WithClientCertificate(
-                        'path/to/certificate-with-password.pem',
-                        'certificate-password'
-                    );
+    .WithClientCertificate(
+        "path/to/certificate-with-password.pem",
+        "certificate-password")
+    .Build();
 
-var client = new HiveMQttClient(options);
+var client = new HiveMQClient(options);
 ```
 
 ## Security Tips
@@ -173,10 +177,10 @@ Configuration.GetSection("CertificateSettings").Bind(certSettings);
 var options = new HiveMQClientOptionsBuilder()
     .WithClientCertificate(
         certSettings.CertificatePath,
-        certSettings.CertificatePassword
-    );
+        certSettings.CertificatePassword)
+    .Build();
 
-var client = new HiveMQttClient(options);
+var client = new HiveMQClient(options);
 ```
 
 ### Notes

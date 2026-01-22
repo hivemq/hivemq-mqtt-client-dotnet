@@ -187,7 +187,7 @@ var result = await client.PublishAsync(message).ConfigureAwait(false);
 ```csharp
 var publishMessage = new PublishMessageBuilder()
     .WithTopic("topic/example")
-    .WithPayload("{'HiveMQ': 'rocks'}")
+    .WithPayload("{\"HiveMQ\": \"rocks\"}")
     .WithContentType("application/json")
     .WithQualityOfServiceLevel(QualityOfService.AtLeastOnceDelivery)
     .WithRetainFlag(true)
@@ -323,7 +323,7 @@ Set up a global handler for all incoming messages:
 client.OnMessageReceived += (sender, args) =>
 {
     var message = args.PublishMessage;
-    
+
     Console.WriteLine($"Topic: {message.Topic}");
     Console.WriteLine($"Payload: {message.PayloadAsString}");
     Console.WriteLine($"QoS: {message.QoS}");
@@ -531,7 +531,7 @@ try
 {
     // Connect
     var connectResult = await client.ConnectAsync().ConfigureAwait(false);
-    
+
     if (connectResult.ReasonCode != ConnAckReasonCode.Success)
     {
         Console.WriteLine($"Connection failed: {connectResult.ReasonCode}");
@@ -547,7 +547,7 @@ try
             new TopicFilter("sensors/humidity", QualityOfService.AtLeastOnceDelivery),
             (sender, args) => Console.WriteLine($"Humidity: {args.PublishMessage.PayloadAsString}"))
         .Build();
-    
+
     await client.SubscribeAsync(subscribeOptions).ConfigureAwait(false);
 
     // View tracked subscriptions

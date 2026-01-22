@@ -1,9 +1,37 @@
-# How to Debug
+---
+sidebar_position: 6
+---
 
-When working with the HiveMQtt client, there may be instances where deeper insight into the internal workings of the client is necessary to troubleshoot or understand its behavior. One of the most effective ways to gain this insight is through TRACE level logging.
+# Debug the Client
 
-# Understanding TRACE Level Logging
+When troubleshooting issues with the HiveMQ client, TRACE level logging provides detailed insight into the client's internal operations.
 
-TRACE level logging is the most detailed form of logging, providing comprehensive information about the events happening within the HiveMQtt client. Enabling TRACE logging allows you to see a fine-grained view of the client's operations, which can be invaluable for debugging complex issues.
+## Enable TRACE Logging
 
-See [How to Configure Logging](/docs/how-to/configure-logging) for the specifics on how to enable TRACE logging.
+TRACE logging shows comprehensive information about all client operations, including:
+
+- Connection establishment and teardown
+- Packet transmission and reception
+- Event handling
+- Queue processing
+
+This level of detail is invaluable for debugging complex issues.
+
+## Quick Setup
+
+Create an `NLog.config` file in your application directory:
+
+```xml
+<?xml version="1.0" encoding="utf-8" ?>
+<nlog xmlns="http://www.nlog-project.org/schemas/NLog.xsd"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <targets>
+    <target name="logconsole" xsi:type="Console" />
+  </targets>
+  <rules>
+    <logger name="HiveMQtt.*" minlevel="Trace" writeTo="logconsole" />
+  </rules>
+</nlog>
+```
+
+See [Configure Logging](/docs/how-to/configure-logging) for more detailed configuration options.

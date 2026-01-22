@@ -1,26 +1,87 @@
+---
+sidebar_position: 1
+---
+
 # Automatic Reconnect
 
-The HiveMQtt MQTT library provides an automatic reconnect functionality that allows the client to automatically reconnect to the MQTT broker in case of a disconnection. This feature is disabled by default.
+The HiveMQ MQTT client provides automatic reconnection functionality that allows the client to automatically recover from unexpected disconnections. This feature is **disabled by default** and must be explicitly enabled.
 
-# Example
+## Enabling Automatic Reconnect
 
 ```csharp
 var options = new HiveMQClientOptionsBuilder()
-                    .WithAutomaticReconnect(true)
-                    .Build();
+    .WithBroker("broker.hivemq.com")
+    .WithAutomaticReconnect(true)
+    .Build();
 
-// Create a new client with the configured options
-var client = new HiveMQttClient(options);
+var client = new HiveMQClient(options);
+await client.ConnectAsync();
 ```
 
-# Backoff Strategy
+## Backoff Strategy
 
-The automatic reconnect functionality uses a backoff strategy to attempt to reconnect to the MQTT broker periodically until success. The backoff strategy starts with a delay of 5 seconds and doubles the delay with each failed attempt, up to a maximum of 1 minute.
+The automatic reconnect uses an **exponential backoff** strategy:
 
-# Maximum Attempts
+| Attempt | Delay |
+|---------|-------|
+| 1st | 5 seconds |
+| 2nd | 10 seconds |
+| 3rd | 20 seconds |
+| 4th | 40 seconds |
+| 5th+ | 60 seconds (maximum) |
 
-The backoff strategy will attempt to reconnect a maximum of once per minute.  The client will attempt to reconnect indefinitely until successful.
+The client will continue attempting to reconnect **indefinitely** until successful.
 
-# Summary
+## Monitoring Reconnection
 
-The automatic reconnect functionality a convenient way to handle disconnections from the MQTT broker. Users can also use the `OnConnect` event handler to add custom logic when the client successfully reconnects to the MQTT broker.
+Use events to track reconnection status:
+
+```csharp
+var client = new HiveMQClient(options);
+
+// Triggered when reconnected successfully
+client.AfterConnect += (sender, args) =>
+{
+    Console.WriteLine($"Connected/Reconnected: {args.ConnectResult.ReasonCode}");
+};
+
+// Triggered when disconnected (before reconnect attempts begin)
+client.AfterDisconnect += (sender, args) =>
+{
+    if (!args.CleanDisconnect)
+    {
+        Console.WriteLine("Unexpected disconnection - reconnection will be attempted");
+    }
+};
+
+await client.ConnectAsync();
+```
+
+## Re-subscribing After Reconnect
+
+:::warning Important
+After reconnection, you may need to re-subscribe to topics depending on your session configuration. If using `CleanStart = true`, subscriptions are not preserved across reconnections.
+:::
+
+```csharp
+client.AfterConnect += async (sender, args) =>
+{
+    // Re-subscribe after reconnection
+    await client.SubscribeAsync("my/topic", QualityOfService.AtLeastOnceDelivery);
+};
+```
+
+## When to Use
+
+| Scenario | Recommendation |
+|----------|----------------|
+| IoT devices with unstable networks | Enable |
+| Long-running services | Enable |
+| Short-lived connections | Usually not needed |
+| Custom reconnect logic required | Disable and implement your own |
+
+## See Also
+
+- [Connecting to a Broker](/docs/connecting)
+- [Events](/docs/events) - Monitor connection state changes
+- [HiveMQClientOptionsBuilder Reference](/docs/reference/client_options_builder)
