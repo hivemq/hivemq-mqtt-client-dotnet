@@ -41,7 +41,7 @@ jobs:
         dotnet-version: ['6.0.x', '7.0.x', '8.0.x', '9.0.x']
     steps:
       - name: Checkout
-        uses: actions/checkout@v6.0.0
+        uses: actions/checkout@v6.0.1
         with:
           lfs: true
           fetch-depth: 0
@@ -74,7 +74,7 @@ jobs:
         shell: pwsh
 
       - name: Upload NuGet packages
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: nuget-packages-${{ matrix.dotnet-version }}
           path: ./Artifacts/*.nupkg
@@ -84,25 +84,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download NuGet packages for .NET 6.0
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: nuget-packages-6.0.x
           path: ./Artifacts
 
       - name: Download NuGet packages for .NET 7.0
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: nuget-packages-7.0.x
           path: ./Artifacts
 
       - name: Download NuGet packages for .NET 8.0
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: nuget-packages-8.0.x
           path: ./Artifacts
 
       - name: Download NuGet packages for .NET 9.0
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: nuget-packages-9.0.x
           path: ./Artifacts
