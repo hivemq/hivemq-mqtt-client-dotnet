@@ -31,5 +31,5 @@ These events cover a wide range of scenarios, including connection establishment
 
 ## Next Steps
 
-- [Event Reference](./Reference) - Complete list of all available events
-- [Usage Examples](./Examples) - Practical examples of using events
+- [Event Reference](/docs/events/Reference) - Complete list of all available events
+- [Usage Examples](/docs/events/Examples) - Practical examples of using events
