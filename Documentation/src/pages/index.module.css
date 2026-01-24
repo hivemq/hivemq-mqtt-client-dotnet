@@ -1,23 +1,632 @@
 /**
- * CSS files with the .module.css suffix will be treated as CSS modules
- * and scoped locally.
+ * HiveMQtt Documentation Landing Page Styles
  */
 
-.heroBanner {
-  padding: 4rem 0;
-  text-align: center;
+/* ==========================================================================
+   Hero Section
+   ========================================================================== */
+
+.hero {
   position: relative;
+  padding: 6rem 0 4rem;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  color: #fff;
   overflow: hidden;
 }
 
-@media screen and (max-width: 996px) {
-  .heroBanner {
-    padding: 2rem;
+.heroBackground {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 20% 80%, rgba(255, 193, 7, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 193, 7, 0.08) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.heroContent {
+  position: relative;
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.heroLogos {
+  margin-bottom: 1.5rem;
+}
+
+.heroLogo {
+  height: 80px;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+.heroTitle {
+  font-size: 4rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, #fff 0%, #ffc107 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.heroSubtitle {
+  font-size: 1.5rem;
+  color: #ffc107;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+}
+
+.heroDescription {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.7;
+  margin-bottom: 2rem;
+}
+
+.heroBadges {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.heroBadges img {
+  height: 28px;
+}
+
+.heroButtons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.heroButtons .button--primary {
+  background: #ffc107;
+  border-color: #ffc107;
+  color: #1a1a2e;
+  font-weight: 600;
+}
+
+.heroButtons .button--primary:hover {
+  background: #e5ac00;
+  border-color: #e5ac00;
+}
+
+.heroButtons .button--secondary {
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  color: #fff;
+}
+
+.heroButtons .button--secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #fff;
+}
+
+@media screen and (max-width: 768px) {
+  .hero {
+    padding: 3rem 1rem;
+  }
+
+  .heroTitle {
+    font-size: 2.5rem;
+  }
+
+  .heroSubtitle {
+    font-size: 1.2rem;
+  }
+
+  .heroDescription {
+    font-size: 1rem;
   }
 }
 
-.buttons {
+/* ==========================================================================
+   Install Section
+   ========================================================================== */
+
+.installSection {
+  padding: 3rem 0;
+  background: #f8f9fa;
+}
+
+[data-theme='dark'] .installSection {
+  background: #1e1e1e;
+}
+
+.installCard {
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.installHeader {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.installIcon {
+  font-size: 2rem;
+}
+
+.installHeader h2 {
+  margin: 0;
+}
+
+.installCode {
+  margin-bottom: 1rem;
+}
+
+.installCode pre {
+  font-size: 1.1rem;
+  border-radius: 8px;
+}
+
+.installNote {
+  color: #666;
+  font-size: 0.95rem;
+}
+
+[data-theme='dark'] .installNote {
+  color: #aaa;
+}
+
+.installNote a {
+  color: #ffc107;
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   Features Section
+   ========================================================================== */
+
+.featuresSection {
+  padding: 5rem 0;
+}
+
+.sectionHeader {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.sectionHeader h2 {
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.sectionHeader p {
+  font-size: 1.2rem;
+  color: #666;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+[data-theme='dark'] .sectionHeader p {
+  color: #aaa;
+}
+
+.featuresGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+@media screen and (max-width: 996px) {
+  .featuresGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .featuresGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.featureCard {
+  padding: 2rem;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.featureCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme='dark'] .featureCard {
+  background: #2a2a2a;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.featureIcon {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.featureCard h3 {
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.featureCard p {
+  color: #666;
+  line-height: 1.6;
+  margin: 0;
+}
+
+[data-theme='dark'] .featureCard p {
+  color: #aaa;
+}
+
+/* ==========================================================================
+   Code Example Section
+   ========================================================================== */
+
+.codeSection {
+  padding: 5rem 0;
+  background: #f8f9fa;
+}
+
+[data-theme='dark'] .codeSection {
+  background: #1a1a1a;
+}
+
+.codeDescription {
+  padding-right: 2rem;
+}
+
+.codeDescription h2 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.codeDescription > p {
+  font-size: 1.1rem;
+  color: #666;
+  line-height: 1.7;
+  margin-bottom: 1.5rem;
+}
+
+[data-theme='dark'] .codeDescription > p {
+  color: #aaa;
+}
+
+.codeFeatures {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 2rem;
+}
+
+.codeFeatures li {
+  padding: 0.5rem 0;
+  font-size: 1rem;
+  color: #333;
+}
+
+[data-theme='dark'] .codeFeatures li {
+  color: #ddd;
+}
+
+.codeBlock pre {
+  border-radius: 12px;
+  font-size: 0.9rem;
+}
+
+@media screen and (max-width: 996px) {
+  .codeDescription {
+    padding-right: 0;
+    margin-bottom: 2rem;
+  }
+}
+
+/* ==========================================================================
+   Use Cases Section
+   ========================================================================== */
+
+.useCasesSection {
+  padding: 5rem 0;
+}
+
+.useCasesGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+@media screen and (max-width: 996px) {
+  .useCasesGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .useCasesGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.useCaseCard {
+  text-align: center;
+  padding: 2rem 1.5rem;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  transition: border-color 0.2s ease;
+}
+
+.useCaseCard:hover {
+  border-color: #ffc107;
+}
+
+[data-theme='dark'] .useCaseCard {
+  border-color: #3a3a3a;
+}
+
+[data-theme='dark'] .useCaseCard:hover {
+  border-color: #ffc107;
+}
+
+.useCaseIcon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.useCaseCard h4 {
+  margin-bottom: 0.5rem;
+}
+
+.useCaseCard p {
+  color: #666;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+[data-theme='dark'] .useCaseCard p {
+  color: #aaa;
+}
+
+/* ==========================================================================
+   HiveMQ Section
+   ========================================================================== */
+
+.hivemqSection {
+  padding: 5rem 0;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  color: #fff;
+}
+
+.hivemqContent {
+  max-width: 900px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.hivemqText h2 {
+  font-size: 2.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.hivemqDescription {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.7;
+  margin-bottom: 2.5rem;
+}
+
+.hivemqFeatures {
+  display: flex;
+  justify-content: center;
+  gap: 4rem;
+  margin-bottom: 2.5rem;
+}
+
+@media screen and (max-width: 768px) {
+  .hivemqFeatures {
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+}
+
+.hivemqFeature {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hivemqFeature strong {
+  font-size: 2.5rem;
+  color: #ffc107;
+  font-weight: 700;
+}
+
+.hivemqFeature span {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 0.25rem;
+}
+
+.hivemqButtons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.hivemqButtons .button--primary {
+  background: #ffc107;
+  border-color: #ffc107;
+  color: #1a1a2e;
+  font-weight: 600;
+}
+
+.hivemqButtons .button--primary:hover {
+  background: #e5ac00;
+  border-color: #e5ac00;
+}
+
+.hivemqButtons .button--outline {
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  color: #fff;
+}
+
+.hivemqButtons .button--outline:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #fff;
+}
+
+/* ==========================================================================
+   Resources Section
+   ========================================================================== */
+
+.resourcesSection {
+  padding: 5rem 0;
+}
+
+.resourcesGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+@media screen and (max-width: 996px) {
+  .resourcesGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .resourcesGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.resourceCard {
+  display: block;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.resourceCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  text-decoration: none;
+  color: inherit;
+}
+
+[data-theme='dark'] .resourceCard {
+  background: #2a2a2a;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.resourceIcon {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.resourceCard h4 {
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+[data-theme='dark'] .resourceCard h4 {
+  color: #fff;
+}
+
+.resourceCard p {
+  color: #666;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+[data-theme='dark'] .resourceCard p {
+  color: #aaa;
+}
+
+/* ==========================================================================
+   CTA Section
+   ========================================================================== */
+
+.ctaSection {
+  padding: 5rem 0;
+  background: #f8f9fa;
+  text-align: center;
+}
+
+[data-theme='dark'] .ctaSection {
+  background: #1e1e1e;
+}
+
+.ctaContent {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.ctaContent h2 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.ctaContent > p {
+  font-size: 1.2rem;
+  color: #666;
+  line-height: 1.7;
+  margin-bottom: 2rem;
+}
+
+[data-theme='dark'] .ctaContent > p {
+  color: #aaa;
+}
+
+.ctaButtons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.ctaButtons .button--primary {
+  background: #ffc107;
+  border-color: #ffc107;
+  color: #1a1a2e;
+  font-weight: 600;
+}
+
+.ctaButtons .button--primary:hover {
+  background: #e5ac00;
+  border-color: #e5ac00;
+}
+
+.ctaButtons .button--secondary {
+  background: #1a1a2e;
+  border-color: #1a1a2e;
+  color: #fff;
+}
+
+.ctaButtons .button--secondary:hover {
+  background: #2a2a3e;
+  border-color: #2a2a3e;
+}
+
+[data-theme='dark'] .ctaButtons .button--secondary {
+  background: #3a3a4e;
+  border-color: #3a3a4e;
 }

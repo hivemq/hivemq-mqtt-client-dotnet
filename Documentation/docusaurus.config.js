@@ -9,11 +9,11 @@ import {themes as prismThemes} from 'prism-react-renderer';
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'HiveMQtt Documentation',
-  tagline: 'The Spectacular (BETA) C# MQTT Client for .NET',
+  tagline: 'The C# MQTT Client for .NET by HiveMQ',
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
-  url: 'https://your-docusaurus-site.example.com',
+  url: 'https://hivemq.github.io',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/hivemq-mqtt-client-dotnet',
