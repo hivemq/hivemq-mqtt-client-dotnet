@@ -35,6 +35,10 @@ if (connectResult.ReasonCode == ConnAckReasonCode.Success)
 Never hardcode credentials in your source code. Use environment variables, configuration files, or a secrets manager.
 :::
 
+:::tip SecureString Support
+For enhanced security, use `SecureString` to prevent password exposure in memory. See the [Security Best Practices](/docs/security#securestring-for-credentials) guide for details.
+:::
+
 ### Using Environment Variables
 
 ```csharp
@@ -95,6 +99,7 @@ switch (connectResult.ReasonCode)
 
 ## See Also
 
+- [Security Best Practices](/docs/security) - Comprehensive security guide including SecureString usage
 - [Authentication with Username and Password - MQTT Security Fundamentals](https://www.hivemq.com/blog/mqtt-security-fundamentals-authentication-username-password/)
 - [Advanced Authentication Mechanisms - MQTT Security Fundamentals](https://www.hivemq.com/blog/mqtt-security-fundamentals-advanced-authentication-mechanisms/)
 - [HiveMQ Cloud - Authentication and Authorization](https://docs.hivemq.com/hivemq-cloud/authn-authz.html)

@@ -33,11 +33,36 @@ var options = new HiveMQClientOptionsBuilder()
 var client = new HiveMQClient(options);
 ```
 
-## Using Certificates with a Passwords
+## Using Certificates with Passwords
 
-If your certificate and protected with a password, you can either instantiate the
-`X509Certificate2` object manually and pass it to the HiveMQtt client with
-`WithClientCertificate`:
+If your certificate is protected with a password, you can use `SecureString` for enhanced security (recommended), or pass the password directly.
+
+### Using SecureString (Recommended)
+
+For enhanced security, use `SecureString` to prevent password exposure in memory:
+
+```csharp
+using System.Security;
+using HiveMQtt.Client;
+
+// Create SecureString for the certificate password
+var certPassword = new SecureString();
+foreach (char c in GetPasswordFromSecureSource())
+{
+    certPassword.AppendChar(c);
+}
+certPassword.MakeReadOnly();
+
+var options = new HiveMQClientOptionsBuilder()
+    .WithClientCertificate("path/to/certificate-with-password.pfx", certPassword)
+    .Build();
+
+var client = new HiveMQClient(options);
+```
+
+### Using X509Certificate2 Directly
+
+You can also instantiate the `X509Certificate2` object manually:
 
 ```csharp
 using HiveMQtt.Client;
@@ -54,12 +79,16 @@ var options = new HiveMQClientOptionsBuilder()
 var client = new HiveMQClient(options);
 ```
 
-...or alternatively, just pass the string path to the certificate with the password:
+### Using String Password (Deprecated)
+
+:::warning
+The string password overload is deprecated. Use `SecureString` for enhanced security.
+:::
 
 ```csharp
 using HiveMQtt.Client;
-using System.Security.Cryptography.X509Certificates;
 
+// ⚠️ This generates a deprecation warning - use SecureString instead
 var options = new HiveMQClientOptionsBuilder()
     .WithClientCertificate(
         "path/to/certificate-with-password.pem",
@@ -198,6 +227,7 @@ TLS negotiation with client certificates is based on the `X509Certificate2` clas
 
 ## See Also
 
+* [Security Best Practices](/docs/security) - Comprehensive security guide including SecureString usage
 * [X509 Client Certificate Authentication - MQTT Security Fundamentals](https://www.hivemq.com/blog/mqtt-security-fundamentals-x509-client-certificate-authentication/)
 * [TLS/SSL - MQTT Security Fundamentals](https://www.hivemq.com/blog/mqtt-security-fundamentals-tls-ssl/)
 * [HiveMQClientOptionsBuilder.cs](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Source/HiveMQtt/Client/HiveMQClientOptionsBuilder.cs)

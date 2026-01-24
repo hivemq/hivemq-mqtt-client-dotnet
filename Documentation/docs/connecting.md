@@ -74,6 +74,7 @@ var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 
 ## See Also
 
+* [Security Best Practices](/docs/security) - Comprehensive security guide
 * [HiveMQClientOptionsBuilder Reference](/docs/reference/client_options_builder)
 * [Automatic Reconnect](/docs/reference/automatic_reconnect)
 * [How to Set a Last Will & Testament](/docs/how-to/set-lwt)

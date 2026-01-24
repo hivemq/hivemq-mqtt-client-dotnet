@@ -39,8 +39,10 @@ Then check out the [Quickstart Guide](/docs/quickstart) to begin.
 
 ### Security
 - **TLS/SSL Encryption**: Secure connections out of the box
+- **SecureString Support**: [Secure credential handling](/docs/security#securestring-for-credentials) to prevent password exposure in memory
 - **X.509 Client Certificates**: [Full support](/docs/how-to/client-certificates) for certificate-based authentication
 - **Username/Password Auth**: Simple credential-based authentication
+- **[Security Best Practices](/docs/security)**: Comprehensive guide for secure implementations
 
 ### Developer Experience
 - **Extensive Event System**: [Hook into all operations](/docs/events) from connection to packet level
