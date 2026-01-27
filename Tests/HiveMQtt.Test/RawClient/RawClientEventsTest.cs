@@ -2,7 +2,6 @@ namespace HiveMQtt.Test.RawClient;
 
 using System.Threading.Tasks;
 using HiveMQtt.Client;
-using HiveMQtt.Client.Events;
 using HiveMQtt.MQTT5.ReasonCodes;
 using HiveMQtt.MQTT5.Types;
 using Xunit;
@@ -62,7 +61,7 @@ public class RawClientEventsTest
 
         var onPublishSentCalled = false;
         var onPubRecReceivedCalled = false;
-        var onPubRelReceivedCalled = false;
+        var onPubRelSentCalled = false;
         var onPubCompReceivedCalled = false;
 
         client.OnPublishSent += (sender, args) =>
@@ -77,9 +76,9 @@ public class RawClientEventsTest
             Assert.NotNull(args.PubRecPacket);
         };
 
-        client.OnPubRelReceived += (sender, args) =>
+        client.OnPubRelSent += (sender, args) =>
         {
-            onPubRelReceivedCalled = true;
+            onPubRelSentCalled = true;
             Assert.NotNull(args.PubRelPacket);
         };
 
@@ -103,8 +102,8 @@ public class RawClientEventsTest
 
         Assert.True(onPublishSentCalled);
         Assert.True(onPubRecReceivedCalled);
-        // Note: PubRel and PubComp are sent by the client, not received
-        // These events fire when the client sends them, not when received from broker
+        Assert.True(onPubRelSentCalled);
+        Assert.True(onPubCompReceivedCalled);
 
         await client.DisconnectAsync().ConfigureAwait(false);
         client.Dispose();
@@ -177,7 +176,7 @@ public class RawClientEventsTest
 
         // Note: Broker may or may not send DISCONNECT, so this may or may not be called
         // This test verifies the event handler is set up correctly
-
+        _ = onDisconnectReceivedCalled;
         client.Dispose();
     }
 

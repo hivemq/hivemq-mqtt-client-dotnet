@@ -3,7 +3,6 @@ namespace HiveMQtt.Test.RawClient;
 using System.Threading.Tasks;
 using HiveMQtt.Client;
 using HiveMQtt.Client.Exceptions;
-using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.ReasonCodes;
 using Xunit;
 
@@ -32,7 +31,7 @@ public class RawClientEdgeCasesTest
     }
 
     [Fact]
-    public async Task OptionsPropertyGetSetAsync()
+    public void OptionsPropertyGetSet()
     {
         var options1 = new HiveMQClientOptionsBuilder().WithClientId("RawClientOptionsPropertyGetSetAsync1").Build();
         var client = new RawClient(options1);

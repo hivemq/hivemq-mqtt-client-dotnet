@@ -118,7 +118,7 @@ public class RawClientConnectDisconnectTest
         var results = await Task.WhenAll(disconnectTask1, disconnectTask2).ConfigureAwait(false);
 
         // Both should complete successfully (second one should return true immediately)
-        Assert.All(results, result => Assert.True(result));
+        Assert.All(results, Assert.True);
 
         client.Dispose();
     }

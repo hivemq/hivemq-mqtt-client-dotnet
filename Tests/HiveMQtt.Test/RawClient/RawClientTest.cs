@@ -79,14 +79,14 @@ public class RawClientTest
         await Task.Delay(100).ConfigureAwait(false);
 
         // Assert that all Events were called
-        Assert.True(client.LocalStore.ContainsKey("BeforeConnectHandlerCalled"));
-        Assert.True(client.LocalStore.ContainsKey("AfterConnectHandlerCalled"));
+        Assert.True(client.LocalStore.TryGetValue("BeforeConnectHandlerCalled", out _));
+        Assert.True(client.LocalStore.TryGetValue("AfterConnectHandlerCalled", out _));
 
-        Assert.True(client.LocalStore.ContainsKey("BeforeDisconnectHandlerCalled"));
-        Assert.True(client.LocalStore.ContainsKey("AfterDisconnectHandlerCalled"));
+        Assert.True(client.LocalStore.TryGetValue("BeforeDisconnectHandlerCalled", out _));
+        Assert.True(client.LocalStore.TryGetValue("AfterDisconnectHandlerCalled", out _));
 
-        Assert.True(client.LocalStore.ContainsKey("OnConnectSentHandlerCalled"));
-        Assert.True(client.LocalStore.ContainsKey("OnConnAckReceivedHandlerCalled"));
+        Assert.True(client.LocalStore.TryGetValue("OnConnectSentHandlerCalled", out _));
+        Assert.True(client.LocalStore.TryGetValue("OnConnAckReceivedHandlerCalled", out _));
 
         // Remove event handlers
         client.BeforeConnect -= BeforeConnectHandler;
@@ -128,8 +128,8 @@ public class RawClientTest
         await Task.Delay(100).ConfigureAwait(false);
 
         // Assert that all Events were called
-        Assert.True(client.LocalStore.ContainsKey("AfterDisconnectHandlerCalled"));
-        Assert.True(client.LocalStore.ContainsKey("AfterDisconnectHandlerCalledCount"));
+        Assert.True(client.LocalStore.TryGetValue("AfterDisconnectHandlerCalled", out _));
+        Assert.True(client.LocalStore.TryGetValue("AfterDisconnectHandlerCalledCount", out _));
         Assert.Equal("1", client.LocalStore["AfterDisconnectHandlerCalledCount"]);
 
         // Remove event handlers
