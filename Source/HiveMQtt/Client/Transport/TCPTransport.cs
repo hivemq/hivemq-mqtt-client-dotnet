@@ -23,6 +23,7 @@ using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using HiveMQtt.Client.Exceptions;
 using HiveMQtt.Client.Options;
 
@@ -172,42 +173,208 @@ public class TCPTransport : BaseTransport, IDisposable
     }
 
     /// <summary>
+    /// Connect to the target host through an HTTP proxy using the CONNECT method.
+    /// </summary>
+    /// <param name="stream">The network stream connected to the proxy.</param>
+    /// <param name="targetHost">The target host to tunnel to.</param>
+    /// <param name="targetPort">The target port to tunnel to.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>True if the tunnel was established successfully, false otherwise.</returns>
+    private async Task<bool> EstablishProxyTunnelAsync(NetworkStream stream, string targetHost, int targetPort, CancellationToken cancellationToken)
+    {
+        Logger.Trace($"Establishing HTTP CONNECT tunnel to {targetHost}:{targetPort}");
+
+        var targetAddress = string.Format(CultureInfo.InvariantCulture, "{0}:{1}", targetHost, targetPort);
+
+        // Build the CONNECT request
+        var requestBuilder = new StringBuilder();
+        requestBuilder.Append(CultureInfo.InvariantCulture, $"CONNECT {targetAddress} HTTP/1.1\r\n");
+        requestBuilder.Append(CultureInfo.InvariantCulture, $"Host: {targetAddress}\r\n");
+
+        // Add proxy authentication if credentials are provided
+        if (this.Options.Proxy != null)
+        {
+            var proxyUri = this.GetProxyUri();
+            if (proxyUri != null)
+            {
+                var credentials = this.Options.Proxy.Credentials?.GetCredential(proxyUri, "Basic");
+                if (credentials != null && !string.IsNullOrEmpty(credentials.UserName))
+                {
+                    var authString = string.Format(CultureInfo.InvariantCulture, "{0}:{1}", credentials.UserName, credentials.Password);
+                    var authBytes = Encoding.ASCII.GetBytes(authString);
+                    var authBase64 = Convert.ToBase64String(authBytes);
+                    requestBuilder.Append(CultureInfo.InvariantCulture, $"Proxy-Authorization: Basic {authBase64}\r\n");
+                    Logger.Trace("Added Proxy-Authorization header");
+                }
+            }
+        }
+
+        requestBuilder.Append("\r\n");
+
+        // Send the CONNECT request
+        var requestBytes = Encoding.ASCII.GetBytes(requestBuilder.ToString());
+        await stream.WriteAsync(requestBytes.AsMemory(), cancellationToken).ConfigureAwait(false);
+        await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
+
+        Logger.Trace("Sent HTTP CONNECT request");
+
+        // Read the proxy response
+        var responseBuffer = new byte[4096];
+        var responseBuilder = new StringBuilder();
+        var totalBytesRead = 0;
+        var headerComplete = false;
+
+        while (!headerComplete && totalBytesRead < responseBuffer.Length)
+        {
+            var bytesRead = await stream.ReadAsync(responseBuffer.AsMemory(totalBytesRead, responseBuffer.Length - totalBytesRead), cancellationToken).ConfigureAwait(false);
+            if (bytesRead == 0)
+            {
+                Logger.Error("Proxy closed connection before completing response");
+                throw new HiveMQttClientException("Proxy closed connection before completing response");
+            }
+
+            totalBytesRead += bytesRead;
+            var currentResponse = Encoding.ASCII.GetString(responseBuffer, 0, totalBytesRead);
+
+            // Check if we have received the complete header (ends with \r\n\r\n)
+            if (currentResponse.Contains("\r\n\r\n"))
+            {
+                headerComplete = true;
+                responseBuilder.Append(currentResponse);
+            }
+        }
+
+        var response = responseBuilder.ToString();
+        Logger.Trace($"Received proxy response: {response.Split('\r')[0]}");
+
+        // Parse the response status line
+        var statusLine = response.Split('\r')[0];
+        var statusParts = statusLine.Split(' ');
+
+        if (statusParts.Length < 2)
+        {
+            Logger.Error($"Invalid proxy response: {statusLine}");
+            throw new HiveMQttClientException($"Invalid proxy response: {statusLine}");
+        }
+
+        // Check for successful connection (HTTP/1.x 200)
+        var statusCode = statusParts[1];
+        if (statusCode != "200")
+        {
+            var errorMessage = string.Format(CultureInfo.InvariantCulture, "Proxy connection failed with status {0}: {1}", statusCode, statusLine);
+            Logger.Error(errorMessage);
+            throw new HiveMQttClientException(errorMessage);
+        }
+
+        Logger.Info($"HTTP CONNECT tunnel established to {targetAddress}");
+        return true;
+    }
+
+    /// <summary>
+    /// Gets the proxy URI from the configured proxy.
+    /// </summary>
+    /// <returns>The proxy URI, or null if not configured.</returns>
+    private Uri? GetProxyUri()
+    {
+        if (this.Options.Proxy == null)
+        {
+            return null;
+        }
+
+        // Try to get the proxy URI for the target host
+        var targetUri = new Uri($"http://{this.Options.Host}:{this.Options.Port}");
+        var proxyUri = this.Options.Proxy.GetProxy(targetUri);
+
+        return proxyUri;
+    }
+
+    /// <summary>
+    /// Resolves the proxy endpoint (host and port) from the configured proxy.
+    /// </summary>
+    /// <returns>A tuple containing the proxy host and port, or null if not configured.</returns>
+    private async Task<IPEndPoint?> ResolveProxyEndpointAsync()
+    {
+        var proxyUri = this.GetProxyUri();
+        if (proxyUri == null)
+        {
+            return null;
+        }
+
+        var proxyHost = proxyUri.Host;
+        var proxyPort = proxyUri.Port;
+
+        IPEndPoint? proxyEndPoint = null;
+
+        if (IPAddress.TryParse(proxyHost, out var parsedProxyIp))
+        {
+            proxyEndPoint = new IPEndPoint(parsedProxyIp, proxyPort);
+        }
+        else
+        {
+            var lookupResult = await LookupHostNameAsync(proxyHost, this.Options.PreferIPv6).ConfigureAwait(false);
+            if (lookupResult != null)
+            {
+                proxyEndPoint = new IPEndPoint(lookupResult, proxyPort);
+            }
+        }
+
+        return proxyEndPoint;
+    }
+
+    /// <summary>
     /// Make a TCP connection to a remote broker.
     /// </summary>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A boolean representing the success or failure of the operation.</returns>
     public override async Task<bool> ConnectAsync(CancellationToken cancellationToken = default)
     {
-        IPEndPoint? ipEndPoint = null;
+        IPEndPoint? connectionEndPoint = null;
+        var useProxy = this.Options.Proxy != null;
 
-        if (IPAddress.TryParse(this.Options.Host, out var parsedIp))
+        if (useProxy)
         {
-            ipEndPoint = new IPEndPoint(parsedIp, this.Options.Port);
+            // When using a proxy, connect to the proxy server first
+            connectionEndPoint = await this.ResolveProxyEndpointAsync().ConfigureAwait(false);
+            if (connectionEndPoint == null)
+            {
+                throw new HiveMQttClientException("Failed to resolve proxy server address. Check your proxy configuration.");
+            }
+
+            Logger.Trace($"Using HTTP proxy at {connectionEndPoint}");
         }
         else
         {
-            var lookupResult = await LookupHostNameAsync(this.Options.Host, this.Options.PreferIPv6).ConfigureAwait(false);
-
-            if (lookupResult != null)
+            // Direct connection to broker
+            if (IPAddress.TryParse(this.Options.Host, out var parsedIp))
             {
-                ipEndPoint = new IPEndPoint(lookupResult, this.Options.Port);
+                connectionEndPoint = new IPEndPoint(parsedIp, this.Options.Port);
+            }
+            else
+            {
+                var lookupResult = await LookupHostNameAsync(this.Options.Host, this.Options.PreferIPv6).ConfigureAwait(false);
+
+                if (lookupResult != null)
+                {
+                    connectionEndPoint = new IPEndPoint(lookupResult, this.Options.Port);
+                }
+            }
+
+            if (connectionEndPoint == null)
+            {
+                throw new HiveMQttClientException("Failed to create IPEndPoint. Broker is no valid IP address or hostname.");
             }
         }
 
-        if (ipEndPoint == null)
-        {
-            throw new HiveMQttClientException("Failed to create IPEndPoint. Broker is no valid IP address or hostname.");
-        }
-
-        this.Socket = new(ipEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+        this.Socket = new(connectionEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
         try
         {
-            await this.Socket.ConnectAsync(ipEndPoint).ConfigureAwait(false);
+            await this.Socket.ConnectAsync(connectionEndPoint).ConfigureAwait(false);
         }
         catch (SocketException socketException)
         {
-            throw new HiveMQttClientException("Failed to connect to broker", socketException);
+            var target = useProxy ? "proxy server" : "broker";
+            throw new HiveMQttClientException($"Failed to connect to {target}", socketException);
         }
 
         var socketConnected = this.Socket.Connected;
@@ -217,7 +384,18 @@ public class TCPTransport : BaseTransport, IDisposable
         }
 
         // Setup the stream
-        this.Stream = new NetworkStream(this.Socket);
+        var networkStream = new NetworkStream(this.Socket);
+        this.Stream = networkStream;
+
+        // If using a proxy, establish the HTTP CONNECT tunnel
+        if (useProxy)
+        {
+            var tunnelEstablished = await this.EstablishProxyTunnelAsync(networkStream, this.Options.Host, this.Options.Port, cancellationToken).ConfigureAwait(false);
+            if (!tunnelEstablished)
+            {
+                throw new HiveMQttClientException("Failed to establish HTTP CONNECT tunnel through proxy");
+            }
+        }
 
         if (this.Options.UseTLS)
         {
@@ -232,7 +410,15 @@ public class TCPTransport : BaseTransport, IDisposable
         this.Reader = PipeReader.Create(this.Stream);
         this.Writer = PipeWriter.Create(this.Stream);
 
-        Logger.Trace($"Socket connected to {this.Socket.RemoteEndPoint}");
+        if (useProxy)
+        {
+            Logger.Trace($"Socket connected to broker {this.Options.Host}:{this.Options.Port} through proxy");
+        }
+        else
+        {
+            Logger.Trace($"Socket connected to {this.Socket.RemoteEndPoint}");
+        }
+
         return socketConnected;
     }
 
