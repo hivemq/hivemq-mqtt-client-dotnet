@@ -6,6 +6,10 @@ sidebar_position: 8
 
 When deploying applications in corporate environments or certain hosting providers, network traffic may be routed through a proxy server. The HiveMQ MQTT .NET client supports connecting to MQTT brokers through HTTP proxy servers.
 
+:::info Version Note
+Proxy support for TCP connections (`WithProxy`) was added in **v0.38.0**. WebSocket proxy support (`WithWebSocketProxy`) has been available since earlier versions.
+:::
+
 ## Choosing a Transport: WebSocket vs TCP
 
 The HiveMQ MQTT client supports two transport protocols, each with different proxy capabilities:

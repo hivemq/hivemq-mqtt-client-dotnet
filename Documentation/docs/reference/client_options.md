@@ -159,6 +159,7 @@ The `HiveMQClientOptions` class provides options for configuring the HiveMQ MQTT
 
 * Type: `IWebProxy?`
 * Description: The proxy configuration for TCP connections. Uses the HTTP CONNECT method to tunnel MQTT traffic through the proxy. Only applicable when using TCP transport (not WebSocket). For WebSocket connections, use `WebSocketProxy` instead. See the [Configure a Proxy Server](/docs/how-to/configure-proxy) guide for details.
+* Added in: v0.38.0
 
 ## Constructors
 ---------------

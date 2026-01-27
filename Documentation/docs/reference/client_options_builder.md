@@ -248,6 +248,8 @@ Sets the proxy configuration for WebSocket connections.
 
 Sets the proxy configuration for TCP connections.
 
+**Added in:** v0.38.0
+
 **Description:** Configures an HTTP proxy server for TCP connections using the HTTP CONNECT method to tunnel MQTT traffic. This option exists as a fallback when WebSocket transport is not available. **For proxy support, prefer using WebSocket transport with `WithWebSocketProxy` when possible.** Only applicable when using TCP transport (not WebSocket). See the [Configure a Proxy Server](/docs/how-to/configure-proxy) guide for detailed usage.
 
 **Example:**
