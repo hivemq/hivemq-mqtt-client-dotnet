@@ -204,6 +204,63 @@ Sets whether to request problem information.
 
 **Example:** `WithRequestProblemInformation(true)`
 
+### `WithWebSocketServer(string webSocketServer)`
+
+Sets the WebSocket server to connect to.
+
+**Description:** The WebSocket server address must include the protocol (ws:// or wss://). When set, the client uses WebSocket transport instead of TCP.
+
+**Example:** `WithWebSocketServer("wss://broker.example.com:8884/mqtt")`
+
+### `WithWebSocketKeepAliveInterval(TimeSpan keepAliveInterval)`
+
+Sets the WebSocket keep-alive interval.
+
+**Description:** Specifies the interval at which the WebSocket client sends keep-alive pings to the server. Only applicable when using WebSocket transport.
+
+**Example:** `WithWebSocketKeepAliveInterval(TimeSpan.FromSeconds(30))`
+
+### `WithWebSocketRequestHeaders(Dictionary<string, string> headers)`
+
+Sets custom HTTP headers for the WebSocket handshake.
+
+**Description:** Adds custom headers such as Authorization or API keys that are sent during the initial WebSocket connection handshake. Only applicable when using WebSocket transport.
+
+**Example:** `WithWebSocketRequestHeaders(new Dictionary<string, string> { { "Authorization", "Bearer token123" } })`
+
+### `WithWebSocketRequestHeader(string name, string value)`
+
+Adds a single custom HTTP header for the WebSocket handshake.
+
+**Description:** Convenience method to add a single custom header for the WebSocket handshake.
+
+**Example:** `WithWebSocketRequestHeader("X-API-Key", "api-key-value")`
+
+### `WithWebSocketProxy(IWebProxy proxy)`
+
+Sets the proxy configuration for WebSocket connections.
+
+**Description:** Configures a proxy server for WebSocket connections. This is the **recommended** way to configure proxy support as WebSocket proxying is natively supported and well-tested. Only applicable when using WebSocket transport.
+
+**Example:** `WithWebSocketProxy(new WebProxy("http://proxy.example.com:8080"))`
+
+### `WithProxy(IWebProxy proxy)`
+
+Sets the proxy configuration for TCP connections.
+
+**Description:** Configures an HTTP proxy server for TCP connections using the HTTP CONNECT method to tunnel MQTT traffic. This option exists as a fallback when WebSocket transport is not available. **For proxy support, prefer using WebSocket transport with `WithWebSocketProxy` when possible.** Only applicable when using TCP transport (not WebSocket). See the [Configure a Proxy Server](/docs/how-to/configure-proxy) guide for detailed usage.
+
+**Example:**
+```csharp
+// Basic proxy
+WithProxy(new WebProxy("http://proxy.example.com:8080"))
+
+// Proxy with authentication
+var proxy = new WebProxy("http://proxy.example.com:8080");
+proxy.Credentials = new NetworkCredential("username", "password");
+WithProxy(proxy)
+```
+
 ### `Build()`
 
 Builds the `HiveMQClientOptions` instance.
