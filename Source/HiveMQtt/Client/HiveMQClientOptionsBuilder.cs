@@ -170,6 +170,46 @@ public class HiveMQClientOptionsBuilder
     }
 
     /// <summary>
+    /// Sets the proxy configuration for TCP connections.
+    /// <para>
+    /// This allows you to configure an HTTP proxy server for TCP connections. The client will use
+    /// the HTTP CONNECT method to tunnel the MQTT connection through the proxy.
+    /// </para>
+    /// <para>
+    /// This option is only applicable when using TCP transport (not WebSocket). For WebSocket
+    /// connections, use <see cref="WithWebSocketProxy(IWebProxy)"/> instead.
+    /// </para>
+    /// <para>
+    /// The proxy must support the HTTP CONNECT method for TCP tunneling.
+    /// </para>
+    /// <para>
+    /// Example:
+    /// <code>
+    /// // Basic proxy without authentication
+    /// var options = new HiveMQClientOptionsBuilder()
+    ///     .WithBroker("mqtt.example.com")
+    ///     .WithProxy(new WebProxy("http://proxy.example.com:8080"))
+    ///     .Build();
+    ///
+    /// // Proxy with authentication
+    /// var proxy = new WebProxy("http://proxy.example.com:8080");
+    /// proxy.Credentials = new NetworkCredential("username", "password");
+    /// var options = new HiveMQClientOptionsBuilder()
+    ///     .WithBroker("mqtt.example.com")
+    ///     .WithProxy(proxy)
+    ///     .Build();
+    /// </code>
+    /// </para>
+    /// </summary>
+    /// <param name="proxy">The proxy configuration.</param>
+    /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
+    public HiveMQClientOptionsBuilder WithProxy(IWebProxy proxy)
+    {
+        this.options.Proxy = proxy;
+        return this;
+    }
+
+    /// <summary>
     /// Sets the port to connect to.
     /// <para>
     /// Default ports are:

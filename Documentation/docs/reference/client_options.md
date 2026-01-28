@@ -130,6 +130,37 @@ The `HiveMQClientOptions` class provides options for configuring the HiveMQ MQTT
 * Type: `bool`
 * Description: Indicates whether the client should automatically reconnect if the connection is lost or dropped.
 
+### `WebSocketServer`
+-------------------------
+
+* Type: `string`
+* Description: The WebSocket server address to connect to. Must include the protocol (ws:// or wss://). Example: `wss://broker.example.com:8884/mqtt`
+
+### `WebSocketKeepAliveInterval`
+-------------------------
+
+* Type: `TimeSpan?`
+* Description: The interval at which the WebSocket client sends keep-alive pings to the server. Only applicable when using WebSocket transport.
+
+### `WebSocketRequestHeaders`
+-------------------------
+
+* Type: `Dictionary<string, string>?`
+* Description: Custom HTTP headers to be sent during the WebSocket handshake. Useful for adding Authorization or custom headers required by your server.
+
+### `WebSocketProxy`
+-------------------------
+
+* Type: `IWebProxy?`
+* Description: The proxy configuration for WebSocket connections. This is the recommended way to configure proxy support. Only applicable when using WebSocket transport.
+
+### `Proxy`
+-------------------------
+
+* Type: `IWebProxy?`
+* Description: The proxy configuration for TCP connections. Uses the HTTP CONNECT method to tunnel MQTT traffic through the proxy. Only applicable when using TCP transport (not WebSocket). For WebSocket connections, use `WebSocketProxy` instead. See the [Configure a Proxy Server](/docs/how-to/configure-proxy) guide for details.
+* Added in: v0.38.0
+
 ## Constructors
 ---------------
 

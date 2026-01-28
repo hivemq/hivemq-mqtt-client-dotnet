@@ -270,6 +270,34 @@ public class HiveMQClientOptions
     public IWebProxy? WebSocketProxy { get; set; }
 
     /// <summary>
+    /// Gets or sets the proxy configuration for TCP connections.
+    /// <para>
+    /// This allows you to configure an HTTP proxy server for TCP connections. The client will use
+    /// the HTTP CONNECT method to tunnel the MQTT connection through the proxy.
+    /// </para>
+    /// <para>
+    /// This option is only applicable when using TCP transport (not WebSocket). For WebSocket
+    /// connections, use <see cref="WebSocketProxy"/> instead.
+    /// </para>
+    /// <para>
+    /// The proxy must support the HTTP CONNECT method for TCP tunneling.
+    /// </para>
+    /// <para>
+    /// Example:
+    /// <code>
+    /// // Basic proxy without authentication
+    /// options.Proxy = new WebProxy("http://proxy.example.com:8080");
+    ///
+    /// // Proxy with authentication
+    /// var proxy = new WebProxy("http://proxy.example.com:8080");
+    /// proxy.Credentials = new NetworkCredential("username", "password");
+    /// options.Proxy = proxy;
+    /// </code>
+    /// </para>
+    /// </summary>
+    public IWebProxy? Proxy { get; set; }
+
+    /// <summary>
     /// Generate a semi-random client identifier to be used in <c>Client</c> connections.
     /// hmqc#-pid-randomstring.
     /// </summary>

@@ -2,7 +2,6 @@ namespace HiveMQtt.Test.RawClient;
 
 using System.Threading.Tasks;
 using HiveMQtt.Client;
-using HiveMQtt.Client.Events;
 using HiveMQtt.Client.Exceptions;
 using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.ReasonCodes;

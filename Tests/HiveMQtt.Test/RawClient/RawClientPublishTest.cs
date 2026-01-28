@@ -57,12 +57,12 @@ public class RawClientPublishTest
             QoS = QualityOfService.AtLeastOnceDelivery, // QoS 1 to test cancellation during handshake
         };
 
-        var cts = new CancellationTokenSource();
-        cts.Cancel();
+        // Create an already-canceled token without synchronously calling CancellationTokenSource.Cancel()
+        var cancellationToken = new CancellationToken(canceled: true);
 
         // TaskCanceledException derives from OperationCanceledException, but xUnit's Assert.ThrowsAsync
         // is strict about the exact type. We'll catch the actual exception type.
-        var exception = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => client.PublishAsync(message, cts.Token)).ConfigureAwait(false);
+        var exception = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => client.PublishAsync(message, cancellationToken)).ConfigureAwait(false);
         Assert.NotNull(exception);
 
         await client.DisconnectAsync().ConfigureAwait(false);

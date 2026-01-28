@@ -223,7 +223,9 @@ public class RawClientErrorTest
             // Should not throw, but QoS should be reduced
             var result = await client.PublishAsync(message).ConfigureAwait(false);
             Assert.NotNull(result);
+
             // QoS should be reduced to maximumQoS
+            Assert.True(result.Message.QoS.HasValue);
             Assert.True((int)result.Message.QoS.Value <= maximumQoS.Value);
         }
 
