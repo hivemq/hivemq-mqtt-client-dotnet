@@ -34,6 +34,11 @@ public class PubRecPacket : ControlPacket
 
     public PubRecReasonCode ReasonCode { get; set; }
 
+    /// <summary>
+    /// Gets a value that is a human readable string designed for diagnostics.
+    /// </summary>
+    public string? ReasonString => this.Properties?.ReasonString;
+
     public override ControlPacketType ControlPacketType => ControlPacketType.PubRec;
 
     /// <summary>
