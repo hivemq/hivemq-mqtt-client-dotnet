@@ -99,6 +99,10 @@ The information contained in the `PublishResult` object varies depending on the 
 
 * QoS Level 2 (`QualityOfService.ExactlyOnceDelivery`): This level ensures that the message is delivered exactly once. The `PublishResult` object for this QoS level contains a `QoS2ReasonCode` property and, when the broker sends one, a `QoS2ReasonString` property with a human-readable explanation.
 
+## Retrieving the Reason Code
+
+For convenience, the `PublishResult` class provides a `ReasonCode` method. This method automatically retrieves the appropriate reason code (`QoS1ReasonCode` or `QoS2ReasonCode`) based on the QoS level of the publish operation. This allows you to easily access the outcome of the publish operation without having to check the QoS level manually.
+
 ## Retrieving the Reason String
 
 When the broker sends a human-readable reason, use `QoS1ReasonString` or `QoS2ReasonString` on `PublishResult`. These properties are `null` when the broker does not include a ReasonString. You can also read `ReasonString` from the packet in `OnPubAckReceived` / `OnPubRecReceived` event args (`args.PubAckPacket.ReasonString` or `args.PubRecPacket.ReasonString`).
