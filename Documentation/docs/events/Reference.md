@@ -49,3 +49,5 @@ Packet level events are triggered by the underlying MQTT packet activity. These 
 | OnSubAckReceived     | `OnSubAckReceivedEventArgs`    |  `SubAckPacket` |
 | OnUnsubscribeSent    | `OnUnsubscribeSentEventArgs`    |  `UnsubscribePacket` |
 | OnUnsubAckReceived   | `OnUnsubAckReceivedEventArgs`    |  `UnsubAckPacket` |
+
+For `OnPubAckReceived` and `OnPubRecReceived`, the event arguments expose a packet with a `ReasonString` property. When the broker sends a human-readable reason (e.g. for schema validation or other diagnostics), `args.PubAckPacket.ReasonString` or `args.PubRecPacket.ReasonString` will be set; otherwise it is `null`.

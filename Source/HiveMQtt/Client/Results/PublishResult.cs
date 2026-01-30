@@ -56,9 +56,19 @@ public class PublishResult
     public PubAckReasonCode? QoS1ReasonCode { get; set; }
 
     /// <summary>
+    /// Gets the human-readable reason string from the PubAck packet for QoS 1 publishes, when present (e.g. from broker schema validation failures).
+    /// </summary>
+    public string? QoS1ReasonString => this.pubAckPacket?.ReasonString;
+
+    /// <summary>
     /// Gets or sets the reason code of the PubRec packet for QoS 2 publishes.
     /// </summary>
     public PubRecReasonCode? QoS2ReasonCode { get; set; }
+
+    /// <summary>
+    /// Gets the human-readable reason string from the PubRec packet for QoS 2 publishes, when present.
+    /// </summary>
+    public string? QoS2ReasonString => this.pubRecPacket?.ReasonString;
 
     /// <summary>
     /// Gets the message that was published.

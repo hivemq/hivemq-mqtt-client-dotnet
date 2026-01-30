@@ -36,6 +36,12 @@ public class PubAckPacket : ControlPacket
 
     public PubAckReasonCode ReasonCode { get; set; }
 
+    /// <summary>
+    /// Gets a value that is a human readable string designed for diagnostics.
+    /// <para>When present (e.g. from HiveMQ schema validation failures), describes why the broker returned a non-success reason code.</para>
+    /// </summary>
+    public string? ReasonString => this.Properties?.ReasonString;
+
     public override ControlPacketType ControlPacketType => ControlPacketType.PubAck;
 
     /// <summary>
