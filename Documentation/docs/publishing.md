@@ -95,13 +95,21 @@ The information contained in the `PublishResult` object varies depending on the 
 
 * QoS Level 0 (`QualityOfService.AtMostOnceDelivery`): This level is often referred to as "fire-and-forget". It does not provide any acknowledgement of delivery, and as such, the `PublishResult` object does not contain any meaningful information.
 
-* QoS Level 1 (`QualityOfService.AtLeastOnceDelivery`): This level ensures that the message is delivered at least once. The `PublishResult` object for this QoS level contains a `QoS1ReasonCode` property, which provides information about the outcome of the publish operation.
+* QoS Level 1 (`QualityOfService.AtLeastOnceDelivery`): This level ensures that the message is delivered at least once. The `PublishResult` object for this QoS level contains a `QoS1ReasonCode` property and, when the broker sends one (e.g. for schema validation failures), a `QoS1ReasonString` property with a human-readable explanation.
 
-* QoS Level 2 (`QualityOfService.ExactlyOnceDelivery`): This level ensures that the message is delivered exactly once. The `PublishResult` object for this QoS level contains a `QoS2ReasonCode` property, which provides information about the outcome of the publish operation.
+* QoS Level 2 (`QualityOfService.ExactlyOnceDelivery`): This level ensures that the message is delivered exactly once. The `PublishResult` object for this QoS level contains a `QoS2ReasonCode` property and, when the broker sends one, a `QoS2ReasonString` property with a human-readable explanation.
 
-## Retrieving the Reason Code
+## Retrieving the Reason String
 
-For convenience, the `PublishResult` class provides a `ReasonCode` method. This method automatically retrieves the appropriate reason code (`QoS1ReasonCode` or `QoS2ReasonCode`) based on the QoS level of the publish operation. This allows you to easily access the outcome of the publish operation without having to check the QoS level manually.
+When the broker sends a human-readable reason, use `QoS1ReasonString` or `QoS2ReasonString` on `PublishResult`. These properties are `null` when the broker does not include a ReasonString. You can also read `ReasonString` from the packet in `OnPubAckReceived` / `OnPubRecReceived` event args (`args.PubAckPacket.ReasonString` or `args.PubRecPacket.ReasonString`).
+
+```csharp
+using HiveMQtt.MQTT5.ReasonCodes;
+
+var result = await client.PublishAsync("topic", payload, QualityOfService.AtLeastOnceDelivery);
+if (result.QoS1ReasonCode != PubAckReasonCode.Success && result.QoS1ReasonString is { } msg)
+    Console.WriteLine($"Broker reason: {msg}");
+```
 
 ## See Also
 
