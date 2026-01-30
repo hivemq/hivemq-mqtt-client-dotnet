@@ -209,4 +209,41 @@ public class RawClientPublishTest
         await client.DisconnectAsync().ConfigureAwait(false);
         client.Dispose();
     }
+
+    /// <summary>
+    /// PublishResult exposes QoS1ReasonString and QoS2ReasonString end-to-end.
+    /// When broker does not send ReasonString (normal success), properties are null but accessible.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+    [Fact]
+    public async Task PublishQoS1AndQoS2_ResultExposesReasonStringPropertiesAsync()
+    {
+        var topic1 = "tests/RawClientPublish_ReasonString_QoS1";
+        var topic2 = "tests/RawClientPublish_ReasonString_QoS2";
+        var options = new HiveMQClientOptionsBuilder().WithClientId("RawClientPublish_ReasonString_Async").Build();
+        var client = new RawClient(options);
+
+        var connectResult = await client.ConnectAsync().ConfigureAwait(false);
+        Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
+
+        await client.SubscribeAsync(topic1, QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
+        await client.SubscribeAsync(topic2, QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
+
+        var msg1 = new MQTT5PublishMessage { Topic = topic1, Payload = Encoding.UTF8.GetBytes("qos1"), QoS = QualityOfService.AtLeastOnceDelivery };
+        var result1 = await client.PublishAsync(msg1).ConfigureAwait(false);
+        Assert.NotNull(result1.QoS1ReasonCode);
+        Assert.Equal(PubAckReasonCode.Success, result1.QoS1ReasonCode);
+        _ = result1.QoS1ReasonString;
+        Assert.Null(result1.QoS1ReasonString);
+
+        var msg2 = new MQTT5PublishMessage { Topic = topic2, Payload = Encoding.UTF8.GetBytes("qos2"), QoS = QualityOfService.ExactlyOnceDelivery };
+        var result2 = await client.PublishAsync(msg2).ConfigureAwait(false);
+        Assert.NotNull(result2.QoS2ReasonCode);
+        Assert.Equal(PubRecReasonCode.Success, result2.QoS2ReasonCode);
+        _ = result2.QoS2ReasonString;
+        Assert.Null(result2.QoS2ReasonString);
+
+        await client.DisconnectAsync().ConfigureAwait(false);
+        client.Dispose();
+    }
 }

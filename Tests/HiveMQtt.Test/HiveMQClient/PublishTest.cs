@@ -113,6 +113,84 @@ public class PublishTest
         client.Dispose();
     }
 
+    /// <summary>
+    /// PublishResult exposes QoS1ReasonString (null when broker does not send ReasonString).
+    /// Validates the client surfaces the property end-to-end after receiving PUBACK from broker.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+    [Fact]
+    public async Task PublishQoS1_ResultExposesReasonString_WhenBrokerSendsNoReasonStringAsync()
+    {
+        var options = new HiveMQClientOptionsBuilder().WithClientId("PublishQoS1_ReasonString_Async").Build();
+        var client = new HiveMQClient(options);
+        var connectResult = await client.ConnectAsync().ConfigureAwait(false);
+        Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
+
+        var result = await client.PublishAsync("tests/PublishQoS1_ReasonString", "payload", QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
+        Assert.NotNull(result.QoS1ReasonCode);
+        Assert.NotNull(result.Message);
+
+        // Broker typically does not send ReasonString for normal PUBACK; property must be accessible and null.
+        _ = result.QoS1ReasonString;
+        Assert.Null(result.QoS1ReasonString);
+
+        var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
+        Assert.True(disconnectResult);
+        client.Dispose();
+    }
+
+    /// <summary>
+    /// OnPubAckReceived event args expose PubAckPacket.ReasonString (null when broker does not send it).
+    /// Validates the client surfaces ReasonString on the packet end-to-end after receiving PUBACK.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+    [Fact]
+    public async Task PublishQoS1_OnPubAckReceived_PubAckPacketReasonStringAccessibleAsync()
+    {
+        string? reasonStringFromEvent = null;
+        var options = new HiveMQClientOptionsBuilder().WithClientId("PublishQoS1_OnPubAck_ReasonString_Async").Build();
+        var client = new HiveMQClient(options);
+        client.OnPubAckReceived += (_, args) =>
+        {
+            Assert.NotNull(args.PubAckPacket);
+            reasonStringFromEvent = args.PubAckPacket.ReasonString;
+        };
+
+        var connectResult = await client.ConnectAsync().ConfigureAwait(false);
+        Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
+
+        _ = await client.PublishAsync("tests/PublishQoS1_OnPubAck_ReasonString", "payload", QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
+        Assert.Null(reasonStringFromEvent);
+
+        var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
+        Assert.True(disconnectResult);
+        client.Dispose();
+    }
+
+    /// <summary>
+    /// PublishResult exposes QoS2ReasonString (null when broker does not send ReasonString).
+    /// Validates the client surfaces the property end-to-end after receiving PUBREC from broker.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+    [Fact]
+    public async Task PublishQoS2_ResultExposesReasonString_WhenBrokerSendsNoReasonStringAsync()
+    {
+        var options = new HiveMQClientOptionsBuilder().WithClientId("PublishQoS2_ReasonString_Async").Build();
+        var client = new HiveMQClient(options);
+        var connectResult = await client.ConnectAsync().ConfigureAwait(false);
+        Assert.True(connectResult.ReasonCode == ConnAckReasonCode.Success);
+
+        var result = await client.PublishAsync("tests/PublishQoS2_ReasonString", "payload", QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
+        Assert.NotNull(result.QoS2ReasonCode);
+        Assert.NotNull(result.Message);
+        _ = result.QoS2ReasonString;
+        Assert.Null(result.QoS2ReasonString);
+
+        var disconnectResult = await client.DisconnectAsync().ConfigureAwait(false);
+        Assert.True(disconnectResult);
+        client.Dispose();
+    }
+
     [Fact]
     public async Task MultiPublishWithQoS0Async()
     {
