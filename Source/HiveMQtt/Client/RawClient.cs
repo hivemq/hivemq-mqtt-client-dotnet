@@ -633,6 +633,18 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
         return unsubscribeResult;
     }
 
+    /// <inheritdoc />
+    public Task AckAsync(ushort packetIdentifier, CancellationToken cancellationToken = default)
+    {
+        if (this.Connection == null || this.Connection.State != ConnectState.Connected)
+        {
+            throw new HiveMQttClientException("Client is not connected.");
+        }
+
+        this.Connection.AckIncomingPublish(packetIdentifier);
+        return Task.CompletedTask;
+    }
+
     private bool disposed;
 
     /// <summary>

@@ -600,6 +600,18 @@ public class HiveMQClientOptionsBuilder
     }
 
     /// <summary>
+    /// Enables or disables manual acknowledgement of received QoS 1 and QoS 2 publishes.
+    /// When enabled, the client does not send PubAck or PubRec until the application calls AckAsync.
+    /// </summary>
+    /// <param name="enabled">True to require manual ack (default), false for automatic ack.</param>
+    /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
+    public HiveMQClientOptionsBuilder WithManualAck(bool enabled = true)
+    {
+        this.options.ManualAckEnabled = enabled;
+        return this;
+    }
+
+    /// <summary>
     /// Sets the session expiry interval.
     /// <para>
     /// The Session Expiry Interval is an optional parameter that can be included in the CONNECT packet

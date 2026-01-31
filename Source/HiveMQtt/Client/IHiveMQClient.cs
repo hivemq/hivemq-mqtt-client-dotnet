@@ -160,6 +160,16 @@ public interface IHiveMQClient : IDisposable
     public Task<UnsubscribeResult> UnsubscribeAsync(List<Subscription> subscriptions);
 
     /// <summary>
+    /// Acknowledge a received QoS 1 or QoS 2 publish by sending PubAck or PubRec to the broker.
+    /// Only valid when ManualAckEnabled is true. Use the packet identifier from OnMessageReceivedEventArgs.PacketIdentifier.
+    /// </summary>
+    /// <param name="packetIdentifier">The packet identifier of the received publish to acknowledge.</param>
+    /// <param name="cancellationToken">Optional cancellation token.</param>
+    /// <exception cref="HiveMQttClientException">Thrown when manual ack is not enabled or no pending incoming publish exists for the packet identifier.</exception>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    public Task AckAsync(ushort packetIdentifier, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Event that is fired before the client connects to the broker.
     /// </summary>
     /// <remarks>
