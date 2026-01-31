@@ -748,6 +748,18 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient, IBaseMQTTClient
         return unsubscribeResult;
     }
 
+    /// <inheritdoc />
+    public Task AckAsync(ushort packetIdentifier, CancellationToken cancellationToken = default)
+    {
+        if (this.Connection == null || this.Connection.State != ConnectState.Connected)
+        {
+            throw new HiveMQttClientException("Client is not connected.");
+        }
+
+        this.Connection.AckIncomingPublish(packetIdentifier);
+        return Task.CompletedTask;
+    }
+
     // Method to check if ping are sent based on the KeepAlive option
     public bool IsPingSent() => this.Options.KeepAlive > 0;
 }

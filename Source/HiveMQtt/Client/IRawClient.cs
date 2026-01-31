@@ -18,6 +18,7 @@ namespace HiveMQtt.Client;
 using System;
 using System.Threading.Tasks;
 using HiveMQtt.Client.Events;
+using HiveMQtt.Client.Exceptions;
 using HiveMQtt.Client.Options;
 using HiveMQtt.Client.Results;
 using HiveMQtt.MQTT5.Types;
@@ -133,6 +134,16 @@ public interface IRawClient : IDisposable
     /// <param name="options">The options for the unsubscribe request.</param>
     /// <returns>UnsubscribeResult reflecting the result of the operation.</returns>
     public Task<UnsubscribeResult> UnsubscribeAsync(UnsubscribeOptions options);
+
+    /// <summary>
+    /// Acknowledge a received QoS 1 or QoS 2 publish by sending PubAck or PubRec to the broker.
+    /// Only valid when ManualAckEnabled is true. Use the packet identifier from OnMessageReceivedEventArgs.PacketIdentifier.
+    /// </summary>
+    /// <param name="packetIdentifier">The packet identifier of the received publish to acknowledge.</param>
+    /// <param name="cancellationToken">Optional cancellation token.</param>
+    /// <exception cref="HiveMQttClientException">Thrown when manual ack is not enabled or no pending incoming publish exists for the packet identifier.</exception>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    public Task AckAsync(ushort packetIdentifier, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Event that is fired before the client connects to the broker.

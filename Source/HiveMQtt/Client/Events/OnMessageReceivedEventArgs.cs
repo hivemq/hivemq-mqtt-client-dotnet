@@ -15,16 +15,46 @@
  */
 namespace HiveMQtt.Client.Events;
 
+using System;
 using HiveMQtt.MQTT5.Types;
 
 /// <summary>
 /// Event arguments for the <see cref="HiveMQClient.OnMessageReceived"/> event.
 /// <para>This event is called when a message is received from the broker.</para>
 /// <para><see cref="PublishMessage"/> contains the received message.</para>
+/// <para><see cref="PacketIdentifier"/> is set for QoS 1 and QoS 2 messages; use it when calling AckAsync for manual acknowledgement.</para>
 /// </summary>
 public class OnMessageReceivedEventArgs : EventArgs
 {
-    public OnMessageReceivedEventArgs(MQTT5PublishMessage message) => this.PublishMessage = message;
+    /// <summary>
+    /// Initializes a new instance of the <see cref="OnMessageReceivedEventArgs"/> class.
+    /// </summary>
+    /// <param name="message">The received publish message.</param>
+    public OnMessageReceivedEventArgs(MQTT5PublishMessage message)
+        : this(message, null)
+    {
+    }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="OnMessageReceivedEventArgs"/> class.
+    /// </summary>
+    /// <param name="message">The received publish message.</param>
+    /// <param name="packetIdentifier">The packet identifier for QoS 1 and QoS 2 messages; null for QoS 0.</param>
+    public OnMessageReceivedEventArgs(MQTT5PublishMessage message, ushort? packetIdentifier)
+    {
+        this.PublishMessage = message;
+        this.PacketIdentifier = packetIdentifier;
+    }
+
+    /// <summary>
+    /// Gets or sets the received publish message.
+    /// </summary>
     public MQTT5PublishMessage PublishMessage { get; set; }
+
+    /// <summary>
+    /// Gets the packet identifier for QoS 1 and QoS 2 messages, or null for QoS 0.
+    /// When manual acknowledgement is enabled, use this value when calling AckAsync.
+    /// </summary>
+    [CLSCompliant(false)]
+    public ushort? PacketIdentifier { get; }
 }
