@@ -12,6 +12,7 @@ using Xunit;
 /// These tests verify the transport configuration and error handling
 /// without requiring a live MQTT broker or proxy server.
 /// </summary>
+[Collection("Broker")]
 public class TCPTransportTest
 {
     [Fact]

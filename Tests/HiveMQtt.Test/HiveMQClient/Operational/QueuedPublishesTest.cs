@@ -6,6 +6,7 @@ using HiveMQtt.Client;
 using HiveMQtt.MQTT5.Types;
 using Xunit;
 
+[Collection("Broker")]
 public class QueuedPublishesTest
 {
     // Synchronization for subscriptions to be ready before publishing
@@ -19,10 +20,14 @@ public class QueuedPublishesTest
     private TaskCompletionSource<bool> allMessagesReceived = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 #pragma warning restore IDE0090
 
+    // Unique id per test run to avoid broker session/topic bleed from previous runs
+    private string runId = string.Empty;
+
     [Fact]
     public async Task Queued_Messages_Chain_Async()
     {
         var batchSize = 1000;
+        this.runId = Guid.NewGuid().ToString("N")[..8];
 
         // Reset synchronization sources for this test run
         this.subscriptionsReady = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -45,13 +50,13 @@ public class QueuedPublishesTest
     private async Task<int> PublisherClientAsync()
     {
         var batchSize = 1000;
-        var firstTopic = "hmq-tests-qmc/q1";
+        var firstTopic = $"hmq-tests-qmc/{this.runId}/q1";
 
         ///////////////////////////////////////////////////////////////
         // Publish 1000 messages with an incrementing payload
         ///////////////////////////////////////////////////////////////
         var publisherOptions = new HiveMQClientOptionsBuilder()
-                                    .WithClientId("hmq-tests-qmc/q1-publisher")
+                                    .WithClientId($"hmq-tests-qmc-q1-publisher-{this.runId}")
                                     .WithCleanStart(false)
                                     .WithSessionExpiryInterval(40000)
                                     .Build();
@@ -76,14 +81,14 @@ public class QueuedPublishesTest
 
     private async Task<int> RelayClientAsync()
     {
-        var firstTopic = "hmq-tests-qmc/q1";
-        var secondTopic = "hmq-tests-qmc/q2";
+        var firstTopic = $"hmq-tests-qmc/{this.runId}/q1";
+        var secondTopic = $"hmq-tests-qmc/{this.runId}/q2";
 
         ////////////////////////////////////////////////////////////////////////////
         // Subscribe to the first topic and relay the messages to a second topic
         ////////////////////////////////////////////////////////////////////////////
         var subscriberOptions = new HiveMQClientOptionsBuilder()
-                                        .WithClientId("hmq-tests-qmc/q1-q2-relay")
+                                        .WithClientId($"hmq-tests-qmc-q1-q2-relay-{this.runId}")
                                         .WithCleanStart(false)
                                         .WithSessionExpiryInterval(40000)
                                         .Build();
@@ -126,13 +131,13 @@ public class QueuedPublishesTest
 
     private async Task<int> ReceiverClientAsync()
     {
-        var secondTopic = "hmq-tests-qmc/q2";
+        var secondTopic = $"hmq-tests-qmc/{this.runId}/q2";
 
         ////////////////////////////////////////////////////////////////////////////
         // Subscribe to the second topic and count the received messages
         ////////////////////////////////////////////////////////////////////////////
         var receiverOptions = new HiveMQClientOptionsBuilder()
-                                    .WithClientId("hmq-tests-qmc/q2-receiver")
+                                    .WithClientId($"hmq-tests-qmc-q2-receiver-{this.runId}")
                                     .WithCleanStart(false)
                                     .WithSessionExpiryInterval(40000)
                                     .Build();

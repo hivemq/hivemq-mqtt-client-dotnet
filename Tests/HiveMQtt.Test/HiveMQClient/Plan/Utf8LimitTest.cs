@@ -5,8 +5,10 @@ using HiveMQtt.Client;
 using HiveMQtt.Client.ReasonCodes;
 using HiveMQtt.MQTT5.Types;
 using NUnit.Framework;
+using Xunit;
 
 [TestFixture]
+[Collection("Broker")]
 public class Utf8LimitTest
 {
     [Test]

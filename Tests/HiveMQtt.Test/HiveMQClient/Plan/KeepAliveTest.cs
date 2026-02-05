@@ -5,8 +5,10 @@ using FluentAssertions;
 using HiveMQtt.Client;
 using HiveMQtt.Client.Events;
 using NUnit.Framework;
+using Xunit;
 
 [TestFixture]
+[Collection("Broker")]
 public class KeepAliveTest
 {
     [Test]

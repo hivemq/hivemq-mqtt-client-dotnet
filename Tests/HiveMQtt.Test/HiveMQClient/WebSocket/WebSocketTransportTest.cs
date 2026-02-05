@@ -17,6 +17,7 @@ using Xunit;
 /// These tests focus on error handling, state validation, and edge cases
 /// without requiring a live MQTT broker.
 /// </summary>
+[Collection("Broker")]
 public class WebSocketTransportTest
 {
     [Fact]

@@ -10,6 +10,7 @@ using Xunit;
 /// <summary>
 /// Comprehensive tests for event system coverage, including missing events and edge cases.
 /// </summary>
+[Collection("Broker")]
 public class EventCoverageTest
 {
     [Fact]

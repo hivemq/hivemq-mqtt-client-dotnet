@@ -9,6 +9,7 @@ using HiveMQtt.MQTT5.ReasonCodes;
 using HiveMQtt.MQTT5.Types;
 using Xunit;
 
+[Collection("Broker")]
 public class RawClientPublishTest
 {
     [Fact]
