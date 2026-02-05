@@ -770,3 +770,4 @@ docker-hivemq-config.xml
 docker-compose.yml
 docker-entrypoint-init.sh
 plans/
+.cursor

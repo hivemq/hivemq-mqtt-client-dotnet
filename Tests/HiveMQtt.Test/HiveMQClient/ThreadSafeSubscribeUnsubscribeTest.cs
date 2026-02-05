@@ -1,4 +1,4 @@
-﻿namespace HiveMQtt.Test.HiveMQClient;
+namespace HiveMQtt.Test.HiveMQClient;
 
 using System.Collections.Concurrent;
 using HiveMQtt.Client;
@@ -8,6 +8,7 @@ using HiveMQtt.MQTT5.Types;
 using Xunit;
 using Xunit.Abstractions;
 
+[Collection("Broker")]
 public class ThreadSafeSubscribeUnsubscribeTest
 {
     private readonly ITestOutputHelper testOutputHelper;

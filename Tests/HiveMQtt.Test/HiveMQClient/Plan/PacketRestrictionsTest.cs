@@ -8,8 +8,10 @@ using System;
 using System.Threading.Tasks;
 using HiveMQtt.Client.Exceptions;
 using HiveMQtt.MQTT5.ReasonCodes;
+using Xunit;
 
 [TestFixture]
+[Collection("Broker")]
 public class PacketRestrictionsTest
 {
     [Test]

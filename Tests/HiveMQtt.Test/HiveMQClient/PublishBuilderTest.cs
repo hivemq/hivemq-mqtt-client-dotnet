@@ -6,6 +6,7 @@ using HiveMQtt.MQTT5.ReasonCodes;
 using HiveMQtt.MQTT5.Types;
 using Xunit;
 
+[Collection("Broker")]
 public class PublishBuilderTest
 {
 #pragma warning disable IDE0300 // Collection initialization can be simplified - not available in .NET 6

@@ -5,6 +5,7 @@ using HiveMQtt.MQTT5.Types;
 using Xunit;
 using System.Threading.Tasks;
 
+[Collection("Broker")]
 public class PacketIDManagerTest
 {
     [Fact]

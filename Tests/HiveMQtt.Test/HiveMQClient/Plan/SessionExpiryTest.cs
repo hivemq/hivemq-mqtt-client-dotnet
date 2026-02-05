@@ -6,8 +6,10 @@ using HiveMQtt.MQTT5.ReasonCodes;
 using HiveMQtt.MQTT5.Types;
 using NUnit.Framework;
 using System.Threading.Tasks;
+using Xunit;
 
 [TestFixture]
+[Collection("Broker")]
 public class SessionExpiryTest
 {
     [Test]

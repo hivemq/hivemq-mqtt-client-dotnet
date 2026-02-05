@@ -9,6 +9,7 @@ using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.ReasonCodes;
 using Xunit;
 
+[Collection("Broker")]
 public class ConnectTest
 {
     [Fact]
