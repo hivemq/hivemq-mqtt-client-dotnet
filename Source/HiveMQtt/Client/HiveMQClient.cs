@@ -760,6 +760,19 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient, IBaseMQTTClient
         return Task.CompletedTask;
     }
 
+    /// <inheritdoc />
+    public Task AckAsync(OnMessageReceivedEventArgs eventArgs)
+    {
+        ArgumentNullException.ThrowIfNull(eventArgs);
+
+        if (!eventArgs.PacketIdentifier.HasValue)
+        {
+            return Task.CompletedTask;
+        }
+
+        return this.AckAsync(eventArgs.PacketIdentifier.Value);
+    }
+
     // Method to check if ping are sent based on the KeepAlive option
     public bool IsPingSent() => this.Options.KeepAlive > 0;
 }

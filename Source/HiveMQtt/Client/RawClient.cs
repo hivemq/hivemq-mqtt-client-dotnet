@@ -645,6 +645,19 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
         return Task.CompletedTask;
     }
 
+    /// <inheritdoc />
+    public Task AckAsync(OnMessageReceivedEventArgs eventArgs)
+    {
+        ArgumentNullException.ThrowIfNull(eventArgs);
+
+        if (!eventArgs.PacketIdentifier.HasValue)
+        {
+            return Task.CompletedTask;
+        }
+
+        return this.AckAsync(eventArgs.PacketIdentifier.Value);
+    }
+
     private bool disposed;
 
     /// <summary>

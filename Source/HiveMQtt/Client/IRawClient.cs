@@ -145,6 +145,17 @@ public interface IRawClient : IDisposable
     public Task AckAsync(ushort packetIdentifier);
 
     /// <summary>
+    /// Acknowledge a received message using the event args from OnMessageReceived.
+    /// If the message is QoS 0, this method does nothing (no packet identifier). For QoS 1 and 2, sends PubAck or PubRec to the broker.
+    /// Only valid when ManualAckEnabled is true. Safe to call for any received message when mixing QoS levels.
+    /// </summary>
+    /// <param name="eventArgs">The event arguments from the OnMessageReceived event.</param>
+    /// <exception cref="ArgumentNullException">Thrown when eventArgs is null.</exception>
+    /// <exception cref="HiveMQttClientException">Thrown when manual ack is not enabled or no pending incoming publish exists for the packet identifier (QoS 1/2 only).</exception>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    public Task AckAsync(OnMessageReceivedEventArgs eventArgs);
+
+    /// <summary>
     /// Event that is fired before the client connects to the broker.
     /// </summary>
     public event EventHandler<BeforeConnectEventArgs>? BeforeConnect;
