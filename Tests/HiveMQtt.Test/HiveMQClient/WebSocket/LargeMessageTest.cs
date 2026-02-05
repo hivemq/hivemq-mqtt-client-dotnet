@@ -14,6 +14,7 @@ using Xunit;
 /// - Multiple large messages in sequence - ArrayPool buffer reuse.
 /// - Memory pressure scenarios - no memory leaks.
 /// </summary>
+[Collection("Broker")]
 public class LargeMessageTest
 {
     private const int BufferSize = 8192; // WebSocket buffer size

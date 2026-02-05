@@ -12,6 +12,7 @@ using Xunit;
 /// These tests use broker.hivemq.com which supports WSS connections.
 /// Note: These tests are marked to be run manually only as they require an internet connection.
 /// </summary>
+[Collection("Broker")]
 public class WebSocketTLSTest
 {
     // Rate limiting: Minimum delay between connection attempts (12 seconds)

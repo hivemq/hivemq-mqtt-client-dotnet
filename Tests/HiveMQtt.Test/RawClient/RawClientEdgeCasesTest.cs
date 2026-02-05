@@ -6,6 +6,7 @@ using HiveMQtt.Client.Exceptions;
 using HiveMQtt.MQTT5.ReasonCodes;
 using Xunit;
 
+[Collection("Broker")]
 public class RawClientEdgeCasesTest
 {
     [Fact]

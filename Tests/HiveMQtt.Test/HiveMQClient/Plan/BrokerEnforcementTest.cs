@@ -25,6 +25,7 @@ using HiveMQtt.MQTT5.Types;
 using Xunit;
 using System.Text;
 
+[Collection("Broker")]
 public class BrokerEnforcementTest
 {
     [Fact]
