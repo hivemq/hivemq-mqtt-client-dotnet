@@ -421,7 +421,7 @@ public partial class ConnectionManager
 
         if (chain.Count != 1 || chain[0] is not PublishPacket publishPacket)
         {
-            throw new HiveMQttClientException($"Invalid transaction state for packet identifier {packetIdentifier}.");
+            throw new HiveMQttClientException($"Packet identifier {packetIdentifier} was already acknowledged.");
         }
 
         if (publishPacket.Message.QoS == QualityOfService.AtLeastOnceDelivery)

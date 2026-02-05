@@ -164,10 +164,9 @@ public interface IHiveMQClient : IDisposable
     /// Only valid when ManualAckEnabled is true. Use the packet identifier from OnMessageReceivedEventArgs.PacketIdentifier.
     /// </summary>
     /// <param name="packetIdentifier">The packet identifier of the received publish to acknowledge.</param>
-    /// <param name="cancellationToken">Optional cancellation token.</param>
     /// <exception cref="HiveMQttClientException">Thrown when manual ack is not enabled or no pending incoming publish exists for the packet identifier.</exception>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    public Task AckAsync(ushort packetIdentifier, CancellationToken cancellationToken = default);
+    public Task AckAsync(ushort packetIdentifier);
 
     /// <summary>
     /// Event that is fired before the client connects to the broker.

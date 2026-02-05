@@ -749,7 +749,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient, IBaseMQTTClient
     }
 
     /// <inheritdoc />
-    public Task AckAsync(ushort packetIdentifier, CancellationToken cancellationToken = default)
+    public Task AckAsync(ushort packetIdentifier)
     {
         if (this.Connection == null || this.Connection.State != ConnectState.Connected)
         {

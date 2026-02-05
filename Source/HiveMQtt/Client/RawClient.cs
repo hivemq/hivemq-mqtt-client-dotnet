@@ -634,7 +634,7 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
     }
 
     /// <inheritdoc />
-    public Task AckAsync(ushort packetIdentifier, CancellationToken cancellationToken = default)
+    public Task AckAsync(ushort packetIdentifier)
     {
         if (this.Connection == null || this.Connection.State != ConnectState.Connected)
         {
