@@ -1,10 +1,10 @@
 namespace HiveMQtt.Test.RawClient;
 
 using System;
+using System.Threading;
 using HiveMQtt.Client;
 using HiveMQtt.Client.Events;
 using HiveMQtt.Client.Exceptions;
-using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.ReasonCodes;
 using HiveMQtt.MQTT5.Types;
 using Xunit;
@@ -182,13 +182,59 @@ public class RawClientManualAckTest
             .WithManualAck(true)
             .Build();
 
+        const ushort invalidPacketId = 9999;
         using var subscriber = new RawClient(subscriberOptions);
         await subscriber.ConnectAsync().ConfigureAwait(false);
 
-        var ex = await Assert.ThrowsAsync<HiveMQttClientException>(() => subscriber.AckAsync((ushort)9999)).ConfigureAwait(false);
+        var ex = await Assert.ThrowsAsync<HiveMQttClientException>(() => subscriber.AckAsync(invalidPacketId)).ConfigureAwait(false);
         Assert.Contains("No pending incoming publish", ex.Message);
 
         await subscriber.DisconnectAsync().ConfigureAwait(false);
+    }
+
+    [Fact]
+    public async Task AckAsync_DoubleAck_ThrowsAlreadyAcknowledgedAsync()
+    {
+        var testTopic = "tests/RawClientManualAckDoubleAck";
+        var subscriberOptions = new HiveMQClientOptionsBuilder()
+            .WithClientId("RawClientManualAckDoubleAckSubscriber")
+            .WithManualAck(true)
+            .Build();
+        var publisherOptions = new HiveMQClientOptionsBuilder()
+            .WithClientId("RawClientManualAckDoubleAckPublisher")
+            .Build();
+
+        using var subscriber = new RawClient(subscriberOptions);
+        using var publisher = new RawClient(publisherOptions);
+
+        ushort? receivedPacketId = null;
+        var messageReceivedSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        subscriber.OnMessageReceived += (sender, args) =>
+        {
+            if (args.PublishMessage.Topic == testTopic && args.PacketIdentifier.HasValue)
+            {
+                receivedPacketId = args.PacketIdentifier;
+                messageReceivedSource.TrySetResult(true);
+            }
+        };
+
+        await subscriber.ConnectAsync().ConfigureAwait(false);
+        await publisher.ConnectAsync().ConfigureAwait(false);
+        await subscriber.SubscribeAsync(testTopic, QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
+        await publisher.PublishAsync(testTopic, "payload", QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
+
+        await messageReceivedSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        Assert.True(receivedPacketId.HasValue);
+        var packetId = receivedPacketId!.Value;
+
+        await subscriber.AckAsync(packetId).ConfigureAwait(false);
+
+        var ex = await Assert.ThrowsAsync<HiveMQttClientException>(() => subscriber.AckAsync(packetId)).ConfigureAwait(false);
+        Assert.Contains("acknowledged", ex.Message, StringComparison.OrdinalIgnoreCase);
+
+        await subscriber.DisconnectAsync().ConfigureAwait(false);
+        await publisher.DisconnectAsync().ConfigureAwait(false);
     }
 
     [Fact]
@@ -226,6 +272,159 @@ public class RawClientManualAckTest
         await messageReceivedSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
         Assert.True(receivedPacketId.HasValue);
         Assert.True(receivedPacketId!.Value > 0);
+
+        await subscriber.DisconnectAsync().ConfigureAwait(false);
+        await publisher.DisconnectAsync().ConfigureAwait(false);
+    }
+
+    [Fact]
+    public async Task PacketIdentifier_Populated_ForQoS2Async()
+    {
+        var testTopic = "tests/RawClientPacketIdQoS2";
+        var subscriberOptions = new HiveMQClientOptionsBuilder()
+            .WithClientId("RawClientPacketIdSubscriberQoS2")
+            .WithManualAck(false)
+            .Build();
+        var publisherOptions = new HiveMQClientOptionsBuilder()
+            .WithClientId("RawClientPacketIdPublisherQoS2")
+            .Build();
+
+        using var subscriber = new RawClient(subscriberOptions);
+        using var publisher = new RawClient(publisherOptions);
+
+        ushort? receivedPacketId = null;
+        var messageReceivedSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        subscriber.OnMessageReceived += (sender, args) =>
+        {
+            if (args.PublishMessage.Topic == testTopic)
+            {
+                receivedPacketId = args.PacketIdentifier;
+                messageReceivedSource.TrySetResult(true);
+            }
+        };
+
+        await subscriber.ConnectAsync().ConfigureAwait(false);
+        await publisher.ConnectAsync().ConfigureAwait(false);
+        await subscriber.SubscribeAsync(testTopic, QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
+        await publisher.PublishAsync(testTopic, "payload", QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
+
+        await messageReceivedSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        Assert.True(receivedPacketId.HasValue);
+        Assert.True(receivedPacketId!.Value > 0);
+
+        await subscriber.DisconnectAsync().ConfigureAwait(false);
+        await publisher.DisconnectAsync().ConfigureAwait(false);
+    }
+
+    [Fact]
+    public async Task ManualAck_QoS0_PacketIdentifierNull_NoAckRequiredAsync()
+    {
+        var testTopic = "tests/RawClientManualAckQoS0NoAck";
+        var testPayload = "RawClient QoS 0 with manual ack - no ack required";
+
+        var subscriberOptions = new HiveMQClientOptionsBuilder()
+            .WithClientId("RawClientManualAckSubscriberQoS0")
+            .WithManualAck(true)
+            .Build();
+        var publisherOptions = new HiveMQClientOptionsBuilder()
+            .WithClientId("RawClientManualAckPublisherQoS0")
+            .Build();
+
+        using var subscriber = new RawClient(subscriberOptions);
+        using var publisher = new RawClient(publisherOptions);
+
+        OnMessageReceivedEventArgs? receivedArgs = null;
+        var messageReceivedSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        subscriber.OnMessageReceived += (sender, args) =>
+        {
+            if (args.PublishMessage.Topic == testTopic)
+            {
+                receivedArgs = args;
+                messageReceivedSource.TrySetResult(true);
+            }
+        };
+
+        await subscriber.ConnectAsync().ConfigureAwait(false);
+        await publisher.ConnectAsync().ConfigureAwait(false);
+        await subscriber.SubscribeAsync(testTopic, QualityOfService.AtMostOnceDelivery).ConfigureAwait(false);
+        await publisher.PublishAsync(testTopic, testPayload, QualityOfService.AtMostOnceDelivery).ConfigureAwait(false);
+
+        await messageReceivedSource.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        Assert.NotNull(receivedArgs);
+        Assert.Null(receivedArgs!.PacketIdentifier);
+        Assert.Equal(testPayload, receivedArgs.PublishMessage.PayloadAsString);
+
+        await subscriber.AckAsync(receivedArgs).ConfigureAwait(false);
+
+        await subscriber.DisconnectAsync().ConfigureAwait(false);
+        await publisher.DisconnectAsync().ConfigureAwait(false);
+    }
+
+    [Fact]
+    public async Task ManualAck_QoS1_TwoMessages_TwoAcks_BothPubAcksSentAsync()
+    {
+        var testTopic = "tests/RawClientManualAckTwoAcks";
+        var subscriberOptions = new HiveMQClientOptionsBuilder()
+            .WithClientId("RawClientManualAckTwoAcksSubscriber")
+            .WithManualAck(true)
+            .Build();
+        var publisherOptions = new HiveMQClientOptionsBuilder()
+            .WithClientId("RawClientManualAckTwoAcksPublisher")
+            .Build();
+
+        using var subscriber = new RawClient(subscriberOptions);
+        using var publisher = new RawClient(publisherOptions);
+
+        var firstMessageSource = new TaskCompletionSource<ushort>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var secondMessageSource = new TaskCompletionSource<ushort>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var messageCount = 0;
+        var pubAckCount = 0;
+        var pubAckSentSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        subscriber.OnMessageReceived += (sender, args) =>
+        {
+            if (args.PublishMessage.Topic != testTopic || !args.PacketIdentifier.HasValue)
+            {
+                return;
+            }
+
+            var id = args.PacketIdentifier.Value;
+            var count = Interlocked.Increment(ref messageCount);
+            if (count == 1)
+            {
+                firstMessageSource.TrySetResult(id);
+            }
+            else if (count == 2)
+            {
+                secondMessageSource.TrySetResult(id);
+            }
+        };
+
+        subscriber.OnPubAckSent += (sender, args) =>
+        {
+            var count = Interlocked.Increment(ref pubAckCount);
+            if (count >= 2)
+            {
+                pubAckSentSource.TrySetResult(true);
+            }
+        };
+
+        await subscriber.ConnectAsync().ConfigureAwait(false);
+        await publisher.ConnectAsync().ConfigureAwait(false);
+        await subscriber.SubscribeAsync(testTopic, QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
+
+        await publisher.PublishAsync(testTopic, "first", QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
+        var id1 = await firstMessageSource.Task.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+        await subscriber.AckAsync(id1).ConfigureAwait(false);
+
+        await publisher.PublishAsync(testTopic, "second", QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
+        var id2 = await secondMessageSource.Task.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+        await subscriber.AckAsync(id2).ConfigureAwait(false);
+
+        await pubAckSentSource.Task.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+        Assert.Equal(2, pubAckCount);
 
         await subscriber.DisconnectAsync().ConfigureAwait(false);
         await publisher.DisconnectAsync().ConfigureAwait(false);
@@ -409,6 +608,7 @@ public class RawClientManualAckTest
             .WithManualAck(true)
             .Build();
 
+        const ushort invalidPacketId = 9999;
         using var subscriber = new RawClient(subscriberOptions);
         await subscriber.ConnectAsync().ConfigureAwait(false);
 
@@ -418,7 +618,7 @@ public class RawClientManualAckTest
             Payload = Array.Empty<byte>(),
             QoS = QualityOfService.AtLeastOnceDelivery,
         };
-        var args = new OnMessageReceivedEventArgs(message, 9999);
+        var args = new OnMessageReceivedEventArgs(message, invalidPacketId);
 
         var ex = await Assert.ThrowsAsync<HiveMQttClientException>(() => subscriber.AckAsync(args)).ConfigureAwait(false);
         Assert.Contains("No pending incoming publish", ex.Message);
