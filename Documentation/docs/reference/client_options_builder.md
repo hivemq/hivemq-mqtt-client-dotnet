@@ -148,6 +148,16 @@ Sets the receive maximum.
 
 **Example:** `WithReceiveMaximum(100)`
 
+### `WithManualAck(bool enabled = true)`
+
+Enables or disables manual acknowledgement of incoming QoS 1 and QoS 2 publishes.
+
+**Description:** When enabled, the client does not send PubAck or PubRec until the application calls `AckAsync` on the client. Unacked messages consume Receive Maximum slots. Use this when you need to process or persist messages before the broker is told they were received. See the [Manual Acknowledgement](/docs/how-to/manual-ack) how-to for details.
+
+**Example:** `WithManualAck()` or `WithManualAck(true)` to enable; `WithManualAck(false)` to disable (default).
+
+**Added in:** v0.40.0
+
 ### `WithSessionExpiryInterval(int sessionExpiryInterval)`
 
 Sets the session expiry interval.
