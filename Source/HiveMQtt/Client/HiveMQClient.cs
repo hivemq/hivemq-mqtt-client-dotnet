@@ -68,6 +68,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient, IBaseMQTTClient
 
     private SemaphoreSlim SubscriptionsSemaphore { get; } = new(1, 1);
 
+    private readonly object _ackLock = new();
+
     // Cached connection properties for fast access during publish operations
     // These are updated when ConnectionProperties change to avoid repeated property access
     private int cachedTopicAliasMaximum;
@@ -756,7 +758,11 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient, IBaseMQTTClient
             throw new HiveMQttClientException("Client is not connected.");
         }
 
-        this.Connection.AckIncomingPublish(packetIdentifier);
+        lock (this._ackLock)
+        {
+            this.Connection.AckIncomingPublish(packetIdentifier);
+        }
+
         return Task.CompletedTask;
     }
 
