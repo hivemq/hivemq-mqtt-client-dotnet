@@ -753,6 +753,11 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient, IBaseMQTTClient
     /// <inheritdoc />
     public Task AckAsync(ushort packetIdentifier)
     {
+        if (this.disposed)
+        {
+            throw new ObjectDisposedException(nameof(HiveMQClient));
+        }
+
         if (this.Connection == null || this.Connection.State != ConnectState.Connected)
         {
             throw new HiveMQttClientException("Client is not connected.");

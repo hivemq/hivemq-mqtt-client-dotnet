@@ -638,6 +638,11 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
     /// <inheritdoc />
     public Task AckAsync(ushort packetIdentifier)
     {
+        if (this.disposed)
+        {
+            throw new ObjectDisposedException(nameof(RawClient));
+        }
+
         if (this.Connection == null || this.Connection.State != ConnectState.Connected)
         {
             throw new HiveMQttClientException("Client is not connected.");
