@@ -275,7 +275,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         if (this.OnMessageReceived != null)
         {
             Logger.Trace("OnMessageReceivedEventLauncher");
-            var eventArgs = new OnMessageReceivedEventArgs(packet.Message);
+            var eventArgs = new OnMessageReceivedEventArgs(
+                packet.Message,
+                packet.Message.QoS == QualityOfService.AtMostOnceDelivery ? null : packet.PacketIdentifier);
             var handlers = this.OnMessageReceived.GetInvocationList();
             foreach (var handler in handlers)
             {
@@ -320,7 +322,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         // Create eventArgs only if we have subscription handlers (optimization: avoid allocation if not needed)
         if (matchingSubscriptions.Any())
         {
-            var eventArgs = new OnMessageReceivedEventArgs(packet.Message);
+            var eventArgs = new OnMessageReceivedEventArgs(
+                packet.Message,
+                packet.Message.QoS == QualityOfService.AtMostOnceDelivery ? null : packet.PacketIdentifier);
             foreach (var subscription in matchingSubscriptions)
             {
                 // We have a per-subscription message handler.

@@ -68,6 +68,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient, IBaseMQTTClient
 
     private SemaphoreSlim SubscriptionsSemaphore { get; } = new(1, 1);
 
+    private readonly object _ackLock = new();
+
     // Cached connection properties for fast access during publish operations
     // These are updated when ConnectionProperties change to avoid repeated property access
     private int cachedTopicAliasMaximum;
@@ -746,6 +748,40 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient, IBaseMQTTClient
         // Fire the corresponding event and return
         this.AfterUnsubscribeEventLauncher(unsubscribeResult);
         return unsubscribeResult;
+    }
+
+    /// <inheritdoc />
+    public Task AckAsync(ushort packetIdentifier)
+    {
+        if (this.disposed)
+        {
+            throw new ObjectDisposedException(nameof(HiveMQClient));
+        }
+
+        if (this.Connection == null || this.Connection.State != ConnectState.Connected)
+        {
+            throw new HiveMQttClientException("Client is not connected.");
+        }
+
+        lock (this._ackLock)
+        {
+            this.Connection.AckIncomingPublish(packetIdentifier);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public Task AckAsync(OnMessageReceivedEventArgs eventArgs)
+    {
+        ArgumentNullException.ThrowIfNull(eventArgs);
+
+        if (!eventArgs.PacketIdentifier.HasValue)
+        {
+            return Task.CompletedTask;
+        }
+
+        return this.AckAsync(eventArgs.PacketIdentifier.Value);
     }
 
     // Method to check if ping are sent based on the KeepAlive option

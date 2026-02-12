@@ -277,7 +277,9 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
         if (this.OnMessageReceived != null)
         {
             Logger.Trace("OnMessageReceivedEventLauncher");
-            var eventArgs = new OnMessageReceivedEventArgs(packet.Message);
+            var eventArgs = new OnMessageReceivedEventArgs(
+                packet.Message,
+                packet.Message.QoS == QualityOfService.AtMostOnceDelivery ? null : packet.PacketIdentifier);
             var handlers = this.OnMessageReceived.GetInvocationList();
             foreach (var handler in handlers)
             {

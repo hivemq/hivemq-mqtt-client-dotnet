@@ -18,6 +18,7 @@ namespace HiveMQtt.Client;
 using System;
 using System.Threading.Tasks;
 using HiveMQtt.Client.Events;
+using HiveMQtt.Client.Exceptions;
 using HiveMQtt.Client.Options;
 using HiveMQtt.Client.Results;
 using HiveMQtt.MQTT5.Types;
@@ -133,6 +134,26 @@ public interface IRawClient : IDisposable
     /// <param name="options">The options for the unsubscribe request.</param>
     /// <returns>UnsubscribeResult reflecting the result of the operation.</returns>
     public Task<UnsubscribeResult> UnsubscribeAsync(UnsubscribeOptions options);
+
+    /// <summary>
+    /// Acknowledge a received QoS 1 or QoS 2 publish by sending PubAck or PubRec to the broker.
+    /// Only valid when ManualAckEnabled is true. Use the packet identifier from OnMessageReceivedEventArgs.PacketIdentifier.
+    /// </summary>
+    /// <param name="packetIdentifier">The packet identifier of the received publish to acknowledge.</param>
+    /// <exception cref="HiveMQttClientException">Thrown when manual ack is not enabled or no pending incoming publish exists for the packet identifier.</exception>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    public Task AckAsync(ushort packetIdentifier);
+
+    /// <summary>
+    /// Acknowledge a received message using the event args from OnMessageReceived.
+    /// If the message is QoS 0, this method does nothing (no packet identifier). For QoS 1 and 2, sends PubAck or PubRec to the broker.
+    /// Only valid when ManualAckEnabled is true. Safe to call for any received message when mixing QoS levels.
+    /// </summary>
+    /// <param name="eventArgs">The event arguments from the OnMessageReceived event.</param>
+    /// <exception cref="ArgumentNullException">Thrown when eventArgs is null.</exception>
+    /// <exception cref="HiveMQttClientException">Thrown when manual ack is not enabled or no pending incoming publish exists for the packet identifier (QoS 1/2 only).</exception>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    public Task AckAsync(OnMessageReceivedEventArgs eventArgs);
 
     /// <summary>
     /// Event that is fired before the client connects to the broker.

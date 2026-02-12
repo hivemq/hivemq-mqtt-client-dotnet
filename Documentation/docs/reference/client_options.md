@@ -58,6 +58,14 @@ The `HiveMQClientOptions` class provides options for configuring the HiveMQ MQTT
 * Type: `int?`
 * Description: The maximum number of QoS 1 and QoS 2 publications that this MQTT client is willing to process concurrently.
 
+### `ManualAckEnabled`
+-------------------------
+
+* Type: `bool`
+* Default: `false`
+* Description: When true, the client does not send PubAck (QoS 1) or PubRec (QoS 2) until the application calls `AckAsync` on the client. Unacked messages consume slots in the Receive Maximum window until acknowledged or the connection is closed. See the [Manual Acknowledgement](/docs/how-to/manual-ack) how-to for details.
+* Added in: v0.40.0
+
 ### `ClientMaximumPacketSize`
 -------------------------
 

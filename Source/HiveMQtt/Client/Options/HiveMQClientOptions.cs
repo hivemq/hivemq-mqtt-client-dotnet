@@ -52,6 +52,7 @@ public class HiveMQClientOptions
         this.ConnectTimeoutInMs = 5000;
         this.ResponseTimeoutInMs = 5000;
         this.AutomaticReconnect = false;
+        this.ManualAckEnabled = false;
     }
 
     // Client Identifier to be used in the Client.  Will be set automatically if not specified.
@@ -132,6 +133,15 @@ public class HiveMQClientOptions
     /// </para>
     /// </summary>
     public int ClientReceiveMaximum { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether received QoS 1 and QoS 2 publishes must be
+    /// manually acknowledged by the application before the client sends PubAck or PubRec to the broker.
+    /// When true, the client does not send PubAck (QoS 1) or PubRec (QoS 2) until the application
+    /// calls AckAsync on the client. Unacked messages consume slots in the ReceiveMaximum window
+    /// until acknowledged or the connection is closed.
+    /// </summary>
+    public bool ManualAckEnabled { get; set; }
 
     /// <summary>
     /// Gets or sets a value that indicates the maximum packet size that the MQTT client is willing

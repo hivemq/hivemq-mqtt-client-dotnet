@@ -1,5 +1,6 @@
 namespace HiveMQtt.Client.Connection;
 
+using HiveMQtt.Client.Exceptions;
 using HiveMQtt.Client.Internal;
 using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5;
@@ -81,84 +82,102 @@ public partial class ConnectionManager
         {
             // We've received a QoS 1 publish.  The transaction chain was created & added
             // by ConnectionReaderAsync to enforce the client's ReceiveMaximum
-            // Send a PubAck and update the chain.  Once the PubAckPacket is sent,
-            // the transaction chain will be deleted and the appropriate events will be
-            // launched in HandleSentPubAckPacketAsync.
             Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- <-- Received QoS 1 Publish id={publishPacket.PacketIdentifier}");
-            var pubAckResponse = new PubAckPacket(publishPacket.PacketIdentifier, PubAckReasonCode.Success);
 
-            success = this.IPubTransactionQueue.TryGetValue(publishPacket.PacketIdentifier, out var publishQoS1Chain);
-            publishQoS1Chain.Add(pubAckResponse);
-
-            if (success)
+            if (this.Client.Options.ManualAckEnabled)
             {
-                // Update the chain in the queue
-                if (this.IPubTransactionQueue.TryUpdate(publishPacket.PacketIdentifier, publishQoS1Chain, publishQoS1Chain))
-                {
-                    this.SendQueue.Enqueue(pubAckResponse);
-                }
-                else
-                {
-                    Logger.Error($"QoS1: Couldn't update Publish --> PubAck QoS1 Chain for packet identifier {publishPacket.PacketIdentifier}. Discarded.");
-                    this.IPubTransactionQueue.Remove(publishPacket.PacketIdentifier, out _);
-                    await this.PacketIDManager.MarkPacketIDAsAvailableAsync(publishPacket.PacketIdentifier).ConfigureAwait(false);
-
-                    var opts = new DisconnectOptions
-                    {
-                        ReasonCode = DisconnectReasonCode.UnspecifiedError,
-                        ReasonString = "Client internal error updating publish transaction chain.",
-                    };
-                    await this.Client.DisconnectAsync(opts).ConfigureAwait(false);
-                }
+                // Manual ack: do not send PubAck yet; deliver message to application. Application will call AckAsync.
+                this.Client.OnMessageReceivedEventLauncher(publishPacket);
             }
             else
             {
-                var opts = new DisconnectOptions
+                // Send a PubAck and update the chain.  Once the PubAckPacket is sent,
+                // the transaction chain will be deleted and the appropriate events will be
+                // launched in HandleSentPubAckPacketAsync.
+                var pubAckResponse = new PubAckPacket(publishPacket.PacketIdentifier, PubAckReasonCode.Success);
+
+                success = this.IPubTransactionQueue.TryGetValue(publishPacket.PacketIdentifier, out var publishQoS1Chain);
+                publishQoS1Chain.Add(pubAckResponse);
+
+                if (success)
                 {
-                    ReasonCode = DisconnectReasonCode.UnspecifiedError,
-                    ReasonString = "Client internal error managing publish transaction chain.",
-                };
-                await this.Client.DisconnectAsync(opts).ConfigureAwait(false);
-                await this.PacketIDManager.MarkPacketIDAsAvailableAsync(publishPacket.PacketIdentifier).ConfigureAwait(false);
-                Logger.Error($"QoS1: Received Publish with an unknown packet identifier {publishPacket.PacketIdentifier}.");
+                    // Update the chain in the queue
+                    if (this.IPubTransactionQueue.TryUpdate(publishPacket.PacketIdentifier, publishQoS1Chain, publishQoS1Chain))
+                    {
+                        this.SendQueue.Enqueue(pubAckResponse);
+                    }
+                    else
+                    {
+                        Logger.Error($"QoS1: Couldn't update Publish --> PubAck QoS1 Chain for packet identifier {publishPacket.PacketIdentifier}. Discarded.");
+                        this.IPubTransactionQueue.Remove(publishPacket.PacketIdentifier, out _);
+                        await this.PacketIDManager.MarkPacketIDAsAvailableAsync(publishPacket.PacketIdentifier).ConfigureAwait(false);
+
+                        var opts = new DisconnectOptions
+                        {
+                            ReasonCode = DisconnectReasonCode.UnspecifiedError,
+                            ReasonString = "Client internal error updating publish transaction chain.",
+                        };
+                        await this.Client.DisconnectAsync(opts).ConfigureAwait(false);
+                    }
+                }
+                else
+                {
+                    var opts = new DisconnectOptions
+                    {
+                        ReasonCode = DisconnectReasonCode.UnspecifiedError,
+                        ReasonString = "Client internal error managing publish transaction chain.",
+                    };
+                    await this.Client.DisconnectAsync(opts).ConfigureAwait(false);
+                    await this.PacketIDManager.MarkPacketIDAsAvailableAsync(publishPacket.PacketIdentifier).ConfigureAwait(false);
+                    Logger.Error($"QoS1: Received Publish with an unknown packet identifier {publishPacket.PacketIdentifier}.");
+                }
             }
         }
         else if (publishPacket.Message.QoS is QualityOfService.ExactlyOnceDelivery)
         {
             // We've received a QoS 2 publish.  The transaction chain was created & added
             // by ConnectionReaderAsync to enforce the client's ReceiveMaximum.
-            // Send a PubRec and add to QoS2 transaction register.  Once PubComp is sent,
-            // Subscribers will be notified and the transaction chain will be deleted.
             Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- <-- Received QoS 2 Publish id={publishPacket.PacketIdentifier}");
-            var pubRecResponse = new PubRecPacket(publishPacket.PacketIdentifier, PubRecReasonCode.Success);
 
-            // Get the QoS2 transaction chain for this packet identifier and add the PubRec to it
-            success = this.IPubTransactionQueue.TryGetValue(publishPacket.PacketIdentifier, out var publishQoS2Chain);
-            publishQoS2Chain.Add(pubRecResponse);
-
-            if (success)
+            if (this.Client.Options.ManualAckEnabled)
             {
-                // Update the chain in the queue
-                if (!this.IPubTransactionQueue.TryUpdate(publishPacket.PacketIdentifier, publishQoS2Chain, publishQoS2Chain))
-                {
-                    Logger.Error($"QoS2: Couldn't update Publish --> PubRec QoS2 Chain for packet identifier {publishPacket.PacketIdentifier}. Discarded.");
-                    this.IPubTransactionQueue.Remove(publishPacket.PacketIdentifier, out _);
-                    await this.PacketIDManager.MarkPacketIDAsAvailableAsync(publishPacket.PacketIdentifier).ConfigureAwait(false);
-                }
+                // Manual ack: do not send PubRec yet; deliver message to application. Application will call AckAsync.
+                this.Client.OnMessageReceivedEventLauncher(publishPacket);
             }
             else
             {
-                var opts = new DisconnectOptions
-                {
-                    ReasonCode = DisconnectReasonCode.UnspecifiedError,
-                    ReasonString = "Client internal error managing publish transaction chain.",
-                };
-                await this.Client.DisconnectAsync(opts).ConfigureAwait(false);
-                await this.PacketIDManager.MarkPacketIDAsAvailableAsync(publishPacket.PacketIdentifier).ConfigureAwait(false);
-                Logger.Error($"QoS2: Received Publish with an unknown packet identifier {publishPacket.PacketIdentifier}.");
-            }
+                // Send a PubRec and add to QoS2 transaction register.  Once PubComp is sent,
+                // Subscribers will be notified and the transaction chain will be deleted.
+                var pubRecResponse = new PubRecPacket(publishPacket.PacketIdentifier, PubRecReasonCode.Success);
 
-            this.SendQueue.Enqueue(pubRecResponse);
+                // Get the QoS2 transaction chain for this packet identifier and add the PubRec to it
+                success = this.IPubTransactionQueue.TryGetValue(publishPacket.PacketIdentifier, out var publishQoS2Chain);
+                publishQoS2Chain.Add(pubRecResponse);
+
+                if (success)
+                {
+                    // Update the chain in the queue
+                    if (!this.IPubTransactionQueue.TryUpdate(publishPacket.PacketIdentifier, publishQoS2Chain, publishQoS2Chain))
+                    {
+                        Logger.Error($"QoS2: Couldn't update Publish --> PubRec QoS2 Chain for packet identifier {publishPacket.PacketIdentifier}. Discarded.");
+                        this.IPubTransactionQueue.Remove(publishPacket.PacketIdentifier, out _);
+                        await this.PacketIDManager.MarkPacketIDAsAvailableAsync(publishPacket.PacketIdentifier).ConfigureAwait(false);
+                    }
+                }
+                else
+                {
+                    var opts = new DisconnectOptions
+                    {
+                        ReasonCode = DisconnectReasonCode.UnspecifiedError,
+                        ReasonString = "Client internal error managing publish transaction chain.",
+                    };
+                    await this.Client.DisconnectAsync(opts).ConfigureAwait(false);
+                    await this.PacketIDManager.MarkPacketIDAsAvailableAsync(publishPacket.PacketIdentifier).ConfigureAwait(false);
+                    Logger.Error($"QoS2: Received Publish with an unknown packet identifier {publishPacket.PacketIdentifier}.");
+                }
+
+                this.SendQueue.Enqueue(pubRecResponse);
+            }
         }
     }
 
@@ -296,8 +315,11 @@ public partial class ConnectionManager
             // Trigger the packet specific event
             publishPacket.OnPublishQoS1CompleteEventLauncher(pubAckPacket);
 
-            // The Application Message Event
-            this.Client.OnMessageReceivedEventLauncher(publishPacket);
+            // The Application Message Event (only when not manual ack; with manual ack it was already fired on receive)
+            if (!this.Client.Options.ManualAckEnabled)
+            {
+                this.Client.OnMessageReceivedEventLauncher(publishPacket);
+            }
         }
         else
         {
@@ -333,8 +355,11 @@ public partial class ConnectionManager
                 // Trigger the packet specific event
                 originalPublishPacket.OnPublishQoS2CompleteEventLauncher(publishQoS2Chain);
 
-                // Trigger the application message event
-                this.Client.OnMessageReceivedEventLauncher(originalPublishPacket);
+                // Trigger the application message event (only when not manual ack; with manual ack it was already fired on receive)
+                if (!this.Client.Options.ManualAckEnabled)
+                {
+                    this.Client.OnMessageReceivedEventLauncher(originalPublishPacket);
+                }
             }
         }
 
@@ -374,6 +399,59 @@ public partial class ConnectionManager
 
         // QoS2 transaction is done.  Release the packet identifier
         await this.PacketIDManager.MarkPacketIDAsAvailableAsync(pubCompPacket.PacketIdentifier).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Acknowledge a received QoS 1 or QoS 2 publish by sending PubAck or PubRec to the broker.
+    /// Only valid when ManualAckEnabled is true and the packet identifier refers to a pending incoming publish.
+    /// </summary>
+    /// <param name="packetIdentifier">The packet identifier of the received publish to acknowledge.</param>
+    /// <exception cref="HiveMQttClientException">Thrown when no pending incoming publish exists for the packet identifier, or when manual ack is not enabled.</exception>
+    internal void AckIncomingPublish(ushort packetIdentifier)
+    {
+        if (!this.Client.Options.ManualAckEnabled)
+        {
+            throw new HiveMQttClientException("Manual acknowledgement is not enabled. Set ManualAckEnabled to true when connecting.");
+        }
+
+        if (!this.IPubTransactionQueue.TryGetValue(packetIdentifier, out var chain))
+        {
+            throw new HiveMQttClientException($"No pending incoming publish for packet identifier {packetIdentifier}. It may already be acknowledged or invalid.");
+        }
+
+        if (chain.Count != 1 || chain[0] is not PublishPacket publishPacket)
+        {
+            throw new HiveMQttClientException($"Packet identifier {packetIdentifier} was already acknowledged.");
+        }
+
+        if (publishPacket.Message.QoS == QualityOfService.AtLeastOnceDelivery)
+        {
+            var pubAckResponse = new PubAckPacket(packetIdentifier, PubAckReasonCode.Success);
+            chain.Add(pubAckResponse);
+            if (!this.IPubTransactionQueue.TryUpdate(packetIdentifier, chain, chain))
+            {
+                throw new HiveMQttClientException($"Could not update transaction for packet identifier {packetIdentifier}. It may have been acknowledged already.");
+            }
+
+            this.SendQueue.Enqueue(pubAckResponse);
+            Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- Manual ack: enqueued PubAck for id={packetIdentifier}");
+        }
+        else if (publishPacket.Message.QoS == QualityOfService.ExactlyOnceDelivery)
+        {
+            var pubRecResponse = new PubRecPacket(packetIdentifier, PubRecReasonCode.Success);
+            chain.Add(pubRecResponse);
+            if (!this.IPubTransactionQueue.TryUpdate(packetIdentifier, chain, chain))
+            {
+                throw new HiveMQttClientException($"Could not update transaction for packet identifier {packetIdentifier}. It may have been acknowledged already.");
+            }
+
+            this.SendQueue.Enqueue(pubRecResponse);
+            Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- Manual ack: enqueued PubRec for id={packetIdentifier}");
+        }
+        else
+        {
+            throw new HiveMQttClientException($"Packet identifier {packetIdentifier} is not a QoS 1 or QoS 2 incoming publish.");
+        }
     }
 
     /// <summary>
