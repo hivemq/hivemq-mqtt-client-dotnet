@@ -1,12 +1,12 @@
-![](https://i.imgur.com/YmafvGk.png)
-![](https://i.imgur.com/Tnl78V6.png)
+![HiveMQtt logo](https://i.imgur.com/YmafvGk.png)
+![HiveMQ C# MQTT Client banner](https://i.imgur.com/Tnl78V6.png)
 
 # The Spectacular C# MQTT Client for .NET
 
 [![NuGet Version](https://img.shields.io/nuget/v/HiveMQtt?style=for-the-badge)](https://www.nuget.org/packages/HiveMQtt)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/hivemq/hivemq-mqtt-client-dotnet?style=for-the-badge)](https://github.com/hivemq/hivemq-mqtt-client-dotnet/releases)
 [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/hivemq/hivemq-mqtt-client-dotnet/build.yml?style=for-the-badge)](https://github.com/hivemq/hivemq-mqtt-client-dotnet/actions)
-[![Nuget](https://img.shields.io/nuget/dt/HiveMQtt?style=for-the-badge)](https://www.nuget.org/packages/HiveMQtt)
+[![NuGet](https://img.shields.io/nuget/dt/HiveMQtt?style=for-the-badge)](https://www.nuget.org/packages/HiveMQtt)
 [![GitHub](https://img.shields.io/github/license/hivemq/hivemq-mqtt-client-dotnet?style=for-the-badge)](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/LICENSE)
 
 ![Static Badge](https://img.shields.io/badge/.NET-6.0-%23512BD4?style=for-the-badge)
@@ -15,13 +15,15 @@
 ![Static Badge](https://img.shields.io/badge/.NET-9.0-%23512BD4?style=for-the-badge)
 
 ### 💽 Installation & Compatibility
-* **Easy-to-Install**: Available as a [Nuget package](https://www.nuget.org/packages/HiveMQtt).
+* **Easy-to-Install**: Available as a [NuGet package](https://www.nuget.org/packages/HiveMQtt).
 * **Globally Compatible**: Built to be a fully compliant MQTT 5.0 client compatible with all modern MQTT brokers.
 * **Multi-Targeted**: Supports .NET 6.0, 7.0, 8.0 & 9.0
 
 ### 🚀 Features
 * **MQTT 5.0 Support**: Fully compliant with the latest [MQTT 5.0 specification](https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.html), ensuring compatibility with modern MQTT brokers.
 * **Multiple Transport Options**: Support for both TCP and WebSocket connections (ws:// and wss://), ideal for network environments that restrict TCP traffic or require HTTP-compatible transport.
+* **Manual Acknowledgement**: Control when the broker considers QoS 1 and QoS 2 messages delivered. Process or persist messages first, then call `AckAsync`—ideal for at-least-once and exactly-once workflows. See the [manual ack guide](https://hivemq.github.io/hivemq-mqtt-client-dotnet/docs/how-to/manual-ack).
+* **TCP & WebSocket Proxy Support**: Connect through HTTP proxies—TCP via [HTTP CONNECT tunneling](https://hivemq.github.io/hivemq-mqtt-client-dotnet/docs/how-to/configure-proxy) (`WithProxy`), WebSocket via `WithWebSocketProxy`. Perfect for corporate networks and firewalls.
 * **Back Pressure Management**: Automatically manages back pressure to prevent overwhelming the broker (or client), ensuring reliable and efficient communication.
 * **Asynchronous Design**: Designed for high-performance and low-latency communication, allowing your application to process multiple messages concurrently.
 * **Extensive Event System**: Hook into all parts of the client down to the packet level with [built in events](https://hivemq.github.io/hivemq-mqtt-client-dotnet/docs/events).
@@ -41,7 +43,7 @@
 * **X.509 Certificate Authentication**: Complete support for client certificate authentication with secure private key handling for both TCP and WebSocket connections.
 
 ### 🏝️ Ease of Use
-* **Easy to Use**: Smart defaults, excellent interfaces and intelligent automation makes implementing a breeze.
+* **Easy to Use**: Smart defaults, excellent interfaces and intelligent automation make implementation a breeze.
 * **Easy Integration**: Simple and intuitive API makes it easy to integrate with your .NET applications.
 
 ### 🛟 Maintenance and Support
@@ -49,8 +51,8 @@
 * **Supported**: Contact us anytime in [this repository](https://github.com/hivemq/hivemq-mqtt-client-dotnet/issues), in the [community forum](https://community.hivemq.com) or [through support](https://www.hivemq.com/support/).
 * **Extensively Documented**: What good is it without [excellent documentation](https://hivemq.github.io/hivemq-mqtt-client-dotnet/)?
 
-### 🐧 Opensource
-* **Opensource**: No blackbox code.  Only trusted, tested and reviewed opensource code.
+### 🐧 Open Source
+* **Open Source**: No blackbox code. Only trusted, tested and reviewed open source code.
 
 
 **📍 Get Started Today**
@@ -63,7 +65,7 @@ _Do you have a success story with this client?  [Let us know](https://www.hivemq
 
 MQTT is an [open standard protocol](https://mqtt.org) for publishing and consuming messages from IoT devices all the way up to mainframes.  It's binary, massively performant and easy to use.
 
-This client library is used to publish and consume messages over MQTT.  So you can get a the temperature from a remote sensor, send a control message to a factory robot, tunnel WhatsApp messages to a Twitter account or anything else you can imagine.
+This client library is used to publish and consume messages over MQTT.  So you can get the temperature from a remote sensor, send a control message to a factory robot, tunnel WhatsApp messages to an X account or anything else you can imagine.
 
 This is the client library that speaks with an MQTT broker that delivers messages to their final destination.
 
@@ -87,7 +89,7 @@ docker run --name hivemq-ce -d -p 1883:1883 hivemq/hivemq-ce
 
 This will run the HiveMQ Community Edition broker on localhost port 1883.
 
-If you need advanced features, checkout our [premium editions](https://www.hivemq.com/hivemq/editions/) or alternatively [HiveMQ Cloud](https://www.hivemq.com/mqtt-cloud-broker/) which is free to connect up to 100 devices (no credit card required).
+If you need advanced features, check out our [premium editions](https://www.hivemq.com/hivemq/editions/) or alternatively [HiveMQ Cloud](https://www.hivemq.com/mqtt-cloud-broker/) which is free to connect up to 100 devices (no credit card required).
 
 ## Install
 
@@ -115,10 +117,10 @@ var options = new HiveMQClientOptionsBuilder().
                     Build();
 var client = new HiveMQClient(options);
 
-// Setup an application message handlers BEFORE subscribing to a topic
+// Setup application message handlers BEFORE subscribing to a topic
 client.OnMessageReceived += (sender, args) =>
 {
-    Console.WriteLine("Message Received: {}", args.PublishMessage.PayloadAsString);
+    Console.WriteLine($"Message Received: {args.PublishMessage.PayloadAsString}");
 };
 
 // Connect to the MQTT broker
@@ -164,12 +166,63 @@ var connectResult = await client.ConnectAsync().ConfigureAwait(false);
 // Use the same API for publish/subscribe - works identically to TCP connections
 client.OnMessageReceived += (sender, args) =>
 {
-    Console.WriteLine("WebSocket Message: {}", args.PublishMessage.PayloadAsString);
+    Console.WriteLine($"WebSocket Message: {args.PublishMessage.PayloadAsString}");
 };
 
 await client.SubscribeAsync("my/topic");
 await client.PublishAsync("my/topic", "Hello from WebSocket!");
 ```
+
+### Manual Acknowledgement (QoS 1 & 2)
+
+When you need to process or persist messages before the broker is told they were received, enable manual ack. The client won't send PubAck/PubRec until you call `AckAsync`:
+
+```csharp
+using HiveMQtt.Client;
+using HiveMQtt.MQTT5.Types;
+
+var options = new HiveMQClientOptionsBuilder()
+    .WithBroker("broker.example.com")
+    .WithPort(1883)
+    .WithManualAck()
+    .Build();
+
+var client = new HiveMQClient(options);
+client.OnMessageReceived += async (sender, args) =>
+{
+    await ProcessOrPersistAsync(args.PublishMessage);
+    await client.AckAsync(args);   // Safe for any QoS (no-op for QoS 0)
+};
+
+await client.ConnectAsync();
+await client.SubscribeAsync("orders/#", QualityOfService.AtLeastOnceDelivery);
+```
+
+See the [manual acknowledgement guide](https://hivemq.github.io/hivemq-mqtt-client-dotnet/docs/how-to/manual-ack) for Receive Maximum, thread safety, and RawClient usage.
+
+### TCP and WebSocket Proxy Support
+
+Connect through HTTP proxies—essential in corporate or restricted networks:
+
+**TCP (HTTP CONNECT tunnel):**
+
+```csharp
+using System.Net;
+using HiveMQtt.Client;
+
+var options = new HiveMQClientOptionsBuilder()
+    .WithBroker("broker.example.com")
+    .WithPort(1883)
+    .WithProxy(new WebProxy("http://proxy.example.com:8080"))
+    .Build();
+
+var client = new HiveMQClient(options);
+await client.ConnectAsync();
+```
+
+**WebSocket:** Use `WithWebSocketProxy(new WebProxy("http://proxy.example.com:8080"))` with `WithWebSocketServer(...)`. Both support proxy credentials. Full details: [Configure a Proxy Server](https://hivemq.github.io/hivemq-mqtt-client-dotnet/docs/how-to/configure-proxy).
+
+---
 
 For a Quickstart, more examples and walkthroughs, see [the documentation](https://hivemq.github.io/hivemq-mqtt-client-dotnet/docs/quickstart).
 
@@ -192,7 +245,7 @@ This project is licensed under the terms of the `Apache Software License 2.0` li
 @misc{hivemq-mqtt-client-dotnet,
   author = {HiveMQ GmbH},
   title = {The HiveMQ C# MQTT client for .NET},
-  year = {2025},
+  year = {2026},
   publisher = {GitHub},
   journal = {GitHub repository},
   howpublished = {\url{https://github.com/hivemq/hivemq-mqtt-client-dotnet}}
