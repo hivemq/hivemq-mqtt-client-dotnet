@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#pragma warning disable IDE0032 // Backing fields required for validation in property setters
 namespace HiveMQtt.MQTT5.Types;
 
 using System.Text;
@@ -316,3 +317,4 @@ public class MQTT5PublishMessage
         }
     }
 }
+#pragma warning restore IDE0032

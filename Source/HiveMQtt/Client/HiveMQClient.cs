@@ -68,7 +68,11 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient, IBaseMQTTClient
 
     private SemaphoreSlim SubscriptionsSemaphore { get; } = new(1, 1);
 
-    private readonly object _ackLock = new();
+#if NET9_0_OR_GREATER
+    private readonly System.Threading.Lock ackLock = new();
+#else
+    private readonly object ackLock = new();
+#endif
 
     // Cached connection properties for fast access during publish operations
     // These are updated when ConnectionProperties change to avoid repeated property access
@@ -753,17 +757,23 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient, IBaseMQTTClient
     /// <inheritdoc />
     public Task AckAsync(ushort packetIdentifier)
     {
+#if NET8_0_OR_GREATER
+        ObjectDisposedException.ThrowIf(this.disposed, this);
+#else
+#pragma warning disable CA1513
         if (this.disposed)
         {
             throw new ObjectDisposedException(nameof(HiveMQClient));
         }
+#pragma warning restore CA1513
+#endif
 
         if (this.Connection == null || this.Connection.State != ConnectState.Connected)
         {
             throw new HiveMQttClientException("Client is not connected.");
         }
 
-        lock (this._ackLock)
+        lock (this.ackLock)
         {
             this.Connection.AckIncomingPublish(packetIdentifier);
         }

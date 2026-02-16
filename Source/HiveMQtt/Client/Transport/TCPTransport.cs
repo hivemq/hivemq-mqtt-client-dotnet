@@ -141,12 +141,16 @@ public class TCPTransport : BaseTransport, IDisposable
             await ((SslStream)this.Stream).AuthenticateAsClientAsync(tlsOptions).ConfigureAwait(false);
 
             Logger.Info($"Connected via TLS: {((SslStream)this.Stream).IsEncrypted}");
+#if NET10_0_OR_GREATER
+            Logger.Debug($"Cipher: {((SslStream)this.Stream).NegotiatedCipherSuite}");
+#else
             Logger.Debug($"Cipher Algorithm: {((SslStream)this.Stream).CipherAlgorithm}");
             Logger.Debug($"Cipher Strength: {((SslStream)this.Stream).CipherStrength}");
             Logger.Debug($"Hash Algorithm: {((SslStream)this.Stream).HashAlgorithm}");
             Logger.Debug($"Hash Strength: {((SslStream)this.Stream).HashStrength}");
             Logger.Debug($"Key Exchange Algorithm: {((SslStream)this.Stream).KeyExchangeAlgorithm}");
             Logger.Debug($"Key Exchange Strength: {((SslStream)this.Stream).KeyExchangeStrength}");
+#endif
 
             var remoteCertificate = ((SslStream)this.Stream).RemoteCertificate;
             if (remoteCertificate != null)

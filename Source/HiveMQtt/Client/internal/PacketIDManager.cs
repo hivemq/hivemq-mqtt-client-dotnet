@@ -25,7 +25,11 @@ public class PacketIDManager
     private BitArray PacketIDBitArray { get; } = new BitArray(65536);
 
     // Lightweight lock for BitArray operations (only when needed)
+#if NET9_0_OR_GREATER
+    private readonly Lock bitArrayLock = new();
+#else
     private readonly object bitArrayLock = new();
+#endif
 
     // Circular allocation starting from 1 (0 is reserved) - uses Interlocked for lock-free updates.
     private int nextPacketId = 1;

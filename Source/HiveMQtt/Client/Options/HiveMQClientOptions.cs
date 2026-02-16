@@ -316,9 +316,7 @@ public class HiveMQClientOptions
         var rand = new Random();
         var stamp = "hmqcs";
 
-        var clientID = new string(Enumerable.Range(0, 18) // Target length 23 (5 chars for stamp)
-                                            .Select(_ => this.clientIdCharset[rand.Next(this.clientIdCharset.Length)])
-                                            .ToArray());
+        var clientID = new string([.. Enumerable.Range(0, 18).Select(_ => this.clientIdCharset[rand.Next(this.clientIdCharset.Length)])]); // Target length 23 (5 chars for stamp)
 
         this.ClientId = stamp + clientID;
     }
