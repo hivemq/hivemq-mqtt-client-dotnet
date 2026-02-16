@@ -20,7 +20,7 @@ Then check out the [Quickstart Guide](/docs/quickstart) to begin.
 |---------|---------|
 | **NuGet Package** | [HiveMQtt](https://www.nuget.org/packages/HiveMQtt) |
 | **MQTT Version** | Full [MQTT 5.0](https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.html) compliance |
-| **.NET Support** | .NET 6.0, 7.0, 8.0 & 9.0 |
+| **.NET Support** | .NET 6.0, 7.0, 8.0, 9.0 & 10.0 |
 | **License** | Apache 2.0 (Open Source) |
 
 ## Key Features
