@@ -30,69 +30,69 @@ internal interface IBaseMQTTClient
     /// <summary>
     /// Gets the options for this client.
     /// </summary>
-    HiveMQClientOptions Options { get; }
+    public HiveMQClientOptions Options { get; }
 
     /// <summary>
     /// Updates the cached connection properties for fast access during publish operations.
     /// </summary>
     /// <param name="properties">The connection properties to cache.</param>
-    void UpdateConnectionPropertyCache(MQTT5Properties? properties);
+    public void UpdateConnectionPropertyCache(MQTT5Properties? properties);
 
     /// <summary>
     /// Clears all tracked subscriptions. This is a no-op for RawClient.
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    Task ClearSubscriptionsAsync();
+    public Task ClearSubscriptionsAsync();
 
     /// <summary>
     /// Disconnects from the broker.
     /// </summary>
     /// <param name="options">The disconnect options.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    Task<bool> DisconnectAsync(DisconnectOptions? options = null);
+    public Task<bool> DisconnectAsync(DisconnectOptions? options = null);
 
     // Event launcher methods
-    void OnConnAckReceivedEventLauncher(ConnAckPacket packet);
+    public void OnConnAckReceivedEventLauncher(ConnAckPacket packet);
 
-    void OnDisconnectReceivedEventLauncher(DisconnectPacket packet);
+    public void OnDisconnectReceivedEventLauncher(DisconnectPacket packet);
 
-    void OnPublishReceivedEventLauncher(PublishPacket packet);
+    public void OnPublishReceivedEventLauncher(PublishPacket packet);
 
-    void OnMessageReceivedEventLauncher(PublishPacket packet);
+    public void OnMessageReceivedEventLauncher(PublishPacket packet);
 
-    void OnPubAckReceivedEventLauncher(PubAckPacket packet);
+    public void OnPubAckReceivedEventLauncher(PubAckPacket packet);
 
-    void OnPubRecReceivedEventLauncher(PubRecPacket packet);
+    public void OnPubRecReceivedEventLauncher(PubRecPacket packet);
 
-    void OnPubRelReceivedEventLauncher(PubRelPacket packet);
+    public void OnPubRelReceivedEventLauncher(PubRelPacket packet);
 
-    void OnPubCompReceivedEventLauncher(PubCompPacket packet);
+    public void OnPubCompReceivedEventLauncher(PubCompPacket packet);
 
-    void OnSubAckReceivedEventLauncher(SubAckPacket packet);
+    public void OnSubAckReceivedEventLauncher(SubAckPacket packet);
 
-    void OnUnsubAckReceivedEventLauncher(UnsubAckPacket packet);
+    public void OnUnsubAckReceivedEventLauncher(UnsubAckPacket packet);
 
-    void OnPingRespReceivedEventLauncher(PingRespPacket packet);
+    public void OnPingRespReceivedEventLauncher(PingRespPacket packet);
 
-    void OnConnectSentEventLauncher(ConnectPacket packet);
+    public void OnConnectSentEventLauncher(ConnectPacket packet);
 
-    void OnDisconnectSentEventLauncher(DisconnectPacket packet);
+    public void OnDisconnectSentEventLauncher(DisconnectPacket packet);
 
-    void OnPublishSentEventLauncher(PublishPacket packet);
+    public void OnPublishSentEventLauncher(PublishPacket packet);
 
-    void OnPubAckSentEventLauncher(PubAckPacket packet);
+    public void OnPubAckSentEventLauncher(PubAckPacket packet);
 
-    void OnPubRecSentEventLauncher(PubRecPacket packet);
+    public void OnPubRecSentEventLauncher(PubRecPacket packet);
 
-    void OnPubRelSentEventLauncher(PubRelPacket packet);
+    public void OnPubRelSentEventLauncher(PubRelPacket packet);
 
-    void OnPubCompSentEventLauncher(PubCompPacket packet);
+    public void OnPubCompSentEventLauncher(PubCompPacket packet);
 
-    void OnSubscribeSentEventLauncher(SubscribePacket packet);
+    public void OnSubscribeSentEventLauncher(SubscribePacket packet);
 
-    void OnUnsubscribeSentEventLauncher(UnsubscribePacket packet);
+    public void OnUnsubscribeSentEventLauncher(UnsubscribePacket packet);
 
-    void OnPingReqSentEventLauncher(PingReqPacket packet);
+    public void OnPingReqSentEventLauncher(PingReqPacket packet);
 
-    void AfterDisconnectEventLauncher(bool clean = false);
+    public void AfterDisconnectEventLauncher(bool clean = false);
 }

@@ -38,7 +38,7 @@
   <!-- dependencies from older packages. The vulnerabilities are not exploitable in this context -->
   <!-- as these are internal transitive dependencies, not directly used. -->
   <PropertyGroup>
-    <NoWarn>$(NoWarn);NU1903</NoWarn>
+    <NoWarn>$(NoWarn);NU1903;IDE0301;IDE0305</NoWarn>
   </PropertyGroup>
   <ItemGroup Label="Project References">
     <ProjectReference Include="..\..\Source\HiveMQtt\HiveMQtt.csproj" />

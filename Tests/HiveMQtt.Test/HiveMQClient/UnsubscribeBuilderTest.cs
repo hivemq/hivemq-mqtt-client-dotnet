@@ -88,7 +88,7 @@ public class UnsubscribeBuilderTest
         // Generate a Random Topic name
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         var random = new Random();
-        var fakeTopicName = new string(Enumerable.Repeat(chars, 15).Select(s => s[random.Next(s.Length)]).ToArray());
+        var fakeTopicName = new string([.. Enumerable.Repeat(chars, 15).Select(s => s[random.Next(s.Length)])]);
 
         var fakeTopicFilter = new TopicFilter($"tests3/{fakeTopicName}", QualityOfService.AtLeastOnceDelivery);
         var fakeSubscription = new Subscription(fakeTopicFilter);
