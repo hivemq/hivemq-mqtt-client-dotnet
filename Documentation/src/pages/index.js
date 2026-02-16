@@ -60,7 +60,7 @@ const FeatureList = [
   {
     icon: '📦',
     title: 'Multi-Platform',
-    description: 'Supports .NET 6, 7, 8, and 9. Works on Windows, Linux, macOS, and containerized environments.',
+    description: 'Supports .NET 6, 7, 8, 9, and 10. Works on Windows, Linux, macOS, and containerized environments.',
   },
 ];
 
@@ -139,7 +139,7 @@ function InstallSection() {
           </div>
           <p className={styles.installNote}>
             Available on <a href="https://www.nuget.org/packages/HiveMQtt" target="_blank" rel="noopener noreferrer">NuGet</a> • 
-            Supports .NET 6, 7, 8, and 9
+            Supports .NET 6, 7, 8, 9, and 10
           </p>
         </div>
       </div>
