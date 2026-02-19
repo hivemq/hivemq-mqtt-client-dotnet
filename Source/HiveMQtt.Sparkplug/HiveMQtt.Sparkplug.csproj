@@ -1,0 +1,74 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup Label="Build">
+    <!-- Include net6.0 only if the SDK supports it -->
+    <TargetFrameworks Condition="'$(NETCoreSdkVersion)' >= '6.0.0'">net6.0</TargetFrameworks>
+
+    <!-- Add net7.0 conditionally if the SDK supports it -->
+    <TargetFrameworks Condition="'$(NETCoreSdkVersion)' >= '7.0.0'">
+      $(TargetFrameworks);net7.0
+    </TargetFrameworks>
+
+    <!-- Add net8.0 conditionally if the SDK supports it -->
+    <TargetFrameworks Condition="'$(NETCoreSdkVersion)' >= '8.0.0'">
+      $(TargetFrameworks);net8.0
+    </TargetFrameworks>
+
+    <!-- Add net9.0 conditionally if the SDK supports it -->
+    <TargetFrameworks Condition="'$(NETCoreSdkVersion)' >= '9.0.0'">
+      $(TargetFrameworks);net9.0
+    </TargetFrameworks>
+
+    <!-- Add net10.0 conditionally if the SDK supports it -->
+    <TargetFrameworks Condition="'$(NETCoreSdkVersion)' >= '10.0.0'">
+      $(TargetFrameworks);net10.0
+    </TargetFrameworks>
+
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+    <RootNamespace>HiveMQtt.Sparkplug</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Package">
+    <Product>HiveMQtt.Sparkplug</Product>
+    <Description>Sparkplug B 3.0 extension for the HiveMQ MQTT Client. Provides Host Application and Edge Node support for industrial IoT.</Description>
+    <PackageTags>MQTT;HIVEMQ;Sparkplug;SparkplugB;IIoT;IndustrialIoT;EdgeNode;HostApplication;SCADA;OT;IT</PackageTags>
+    <Copyright>Copyright (c) HiveMQ GmbH</Copyright>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DefineConstants>DEBUG;NET;NETCOREAPP</DefineConstants>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);NU1903</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" Version="3.28.3" />
+    <PackageReference Include="Grpc.Tools" Version="2.68.1" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HiveMQtt\HiveMQtt.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Protobuf Include="Protos\sparkplug_b.proto" GrpcServices="None" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>HiveMQtt.Sparkplug.Test</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+</Project>

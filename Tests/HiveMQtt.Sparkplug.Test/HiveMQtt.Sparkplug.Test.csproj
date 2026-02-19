@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup Label="Build">
+    <!-- Target only the latest SDK framework so tests run when only one runtime is installed (e.g. .NET 10).
+         The HiveMQtt.Sparkplug library still multi-targets net6.0–net10.0 for NuGet.
+         To test on all TFMs, install runtimes 6–10 and uncomment the multi-target block below. -->
+    <TargetFramework Condition="'$(NETCoreSdkVersion)' >= '10.0.0'">net10.0</TargetFramework>
+    <TargetFramework Condition="'$(NETCoreSdkVersion)' >= '9.0.0' And '$(NETCoreSdkVersion)' &lt; '10.0.0'">net9.0</TargetFramework>
+    <TargetFramework Condition="'$(NETCoreSdkVersion)' >= '8.0.0' And '$(NETCoreSdkVersion)' &lt; '9.0.0'">net8.0</TargetFramework>
+    <TargetFramework Condition="'$(NETCoreSdkVersion)' &lt; '8.0.0'">net8.0</TargetFramework>
+
+    <ReleaseVersion>0.1.0</ReleaseVersion>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DefineConstants>DEBUG;NET;NETCOREAPP</DefineConstants>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);NU1903;IDE0301;IDE0305</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup Label="Project References">
+    <ProjectReference Include="..\..\Source\HiveMQtt.Sparkplug\HiveMQtt.Sparkplug.csproj" />
+  </ItemGroup>
+
+  <!-- Remove xunit packages from Directory.Build.props and use NUnit instead -->
+  <ItemGroup>
+    <PackageReference Remove="xunit" />
+    <PackageReference Remove="xunit.runner.visualstudio" />
+    <PackageReference Remove="Moq" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Update versions from Directory.Build.props -->
+    <PackageReference Update="coverlet.collector" Version="6.0.2" />
+    <PackageReference Update="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Locking FluentAssertions to <8.0.0 because version 8 introduced paid licensing -->
+    <PackageReference Include="FluentAssertions" Version="[6.12.1, 8.0.0)" />
+    <PackageReference Include="NUnit" Version="4.2.2" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
+  </ItemGroup>
+
+</Project>
