@@ -27,6 +27,7 @@
 
   <ItemGroup Label="Project References">
     <ProjectReference Include="..\..\Source\HiveMQtt.Sparkplug\HiveMQtt.Sparkplug.csproj" />
+    <ProjectReference Include="..\..\Source\HiveMQtt\HiveMQtt.csproj" />
   </ItemGroup>
 
   <!-- Remove xunit packages from Directory.Build.props and use NUnit instead -->

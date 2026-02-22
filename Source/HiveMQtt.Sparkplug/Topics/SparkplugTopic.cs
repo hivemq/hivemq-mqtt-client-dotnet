@@ -122,9 +122,14 @@ public sealed class SparkplugTopic
 
         var parts = topic.Split('/');
 
+        if (parts.Length == 3 && parts[1] == "STATE")
+        {
+            return new SparkplugTopic(parts[0], parts[1], SparkplugMessageType.STATE, parts[2]);
+        }
+
         if (parts.Length < 4)
         {
-            throw new FormatException($"Invalid Sparkplug topic format. Expected at least 4 parts, got {parts.Length}. Topic: '{topic}'");
+            throw new FormatException($"Invalid Sparkplug topic format. Expected at least 4 parts (or 3 for STATE), got {parts.Length}. Topic: '{topic}'");
         }
 
         if (parts.Length > 5)
@@ -140,7 +145,7 @@ public sealed class SparkplugTopic
 
         if (!Enum.TryParse<SparkplugMessageType>(messageTypeStr, ignoreCase: false, out var messageType))
         {
-            throw new FormatException($"Invalid Sparkplug message type: '{messageTypeStr}'. Valid types are: {string.Join(", ", Enum.GetNames(typeof(SparkplugMessageType)))}");
+            throw new FormatException($"Invalid Sparkplug message type: '{messageTypeStr}'. Valid types are: {string.Join(", ", Enum.GetNames<SparkplugMessageType>())}");
         }
 
         return new SparkplugTopic(@namespace, groupId, messageType, edgeNodeId, deviceId);
@@ -163,7 +168,20 @@ public sealed class SparkplugTopic
 
         var parts = topic.Split('/');
 
-        if (parts.Length < 4 || parts.Length > 5)
+        if (parts.Length == 3 && parts[1] == "STATE")
+        {
+            try
+            {
+                result = new SparkplugTopic(parts[0], parts[1], SparkplugMessageType.STATE, parts[2]);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        if (parts.Length is < 4 or > 5)
         {
             return false;
         }
@@ -279,6 +297,11 @@ public sealed class SparkplugTopic
     /// <returns>The complete topic string.</returns>
     public string Build()
     {
+        if (this.MessageType == SparkplugMessageType.STATE)
+        {
+            return $"{this.Namespace}/STATE/{this.EdgeNodeId}";
+        }
+
         if (this.DeviceId is not null)
         {
             return $"{this.Namespace}/{this.GroupId}/{this.MessageType}/{this.EdgeNodeId}/{this.DeviceId}";

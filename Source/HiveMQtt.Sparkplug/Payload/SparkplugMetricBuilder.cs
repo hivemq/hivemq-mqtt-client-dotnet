@@ -26,6 +26,19 @@ public sealed class SparkplugMetricBuilder
     private readonly Protobuf.Payload.Types.Metric metric = new();
 
     /// <summary>
+    /// Creates a new metric builder.
+    /// </summary>
+    /// <returns>A new builder instance.</returns>
+    public static SparkplugMetricBuilder Create() => new();
+
+    /// <summary>
+    /// Creates a new metric builder with the specified name.
+    /// </summary>
+    /// <param name="name">The metric name.</param>
+    /// <returns>A new builder instance.</returns>
+    public static SparkplugMetricBuilder Create(string name) => new SparkplugMetricBuilder().WithName(name);
+
+    /// <summary>
     /// Sets the metric name.
     /// </summary>
     /// <param name="name">The metric name.</param>
@@ -110,7 +123,7 @@ public sealed class SparkplugMetricBuilder
     public SparkplugMetricBuilder WithInt8Value(sbyte value)
     {
         this.metric.Datatype = (uint)DataType.Int8;
-        this.metric.IntValue = unchecked((uint)(byte)value);
+        this.metric.IntValue = unchecked((byte)value);
         return this;
     }
 
@@ -122,7 +135,7 @@ public sealed class SparkplugMetricBuilder
     public SparkplugMetricBuilder WithInt16Value(short value)
     {
         this.metric.Datatype = (uint)DataType.Int16;
-        this.metric.IntValue = unchecked((uint)(ushort)value);
+        this.metric.IntValue = unchecked((ushort)value);
         return this;
     }
 
@@ -299,10 +312,8 @@ public sealed class SparkplugMetricBuilder
     /// </summary>
     /// <param name="uuid">The GUID value.</param>
     /// <returns>This builder instance for chaining.</returns>
-    public SparkplugMetricBuilder WithUuidValue(Guid uuid)
-    {
-        return this.WithUuidValue(uuid.ToString());
-    }
+    public SparkplugMetricBuilder WithUuidValue(Guid uuid) =>
+        this.WithUuidValue(uuid.ToString());
 
     /// <summary>
     /// Sets the metric value to bytes.
@@ -320,21 +331,6 @@ public sealed class SparkplugMetricBuilder
     /// Builds the metric.
     /// </summary>
     /// <returns>The constructed metric.</returns>
-    public Protobuf.Payload.Types.Metric Build()
-    {
-        return this.metric.Clone();
-    }
-
-    /// <summary>
-    /// Creates a new metric builder.
-    /// </summary>
-    /// <returns>A new builder instance.</returns>
-    public static SparkplugMetricBuilder Create() => new();
-
-    /// <summary>
-    /// Creates a new metric builder with the specified name.
-    /// </summary>
-    /// <param name="name">The metric name.</param>
-    /// <returns>A new builder instance.</returns>
-    public static SparkplugMetricBuilder Create(string name) => new SparkplugMetricBuilder().WithName(name);
+    public Protobuf.Payload.Types.Metric Build() =>
+        this.metric.Clone();
 }
