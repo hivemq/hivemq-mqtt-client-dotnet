@@ -49,7 +49,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <NoWarn>$(NoWarn);NU1903</NoWarn>
+    <NoWarn>$(NoWarn);NU1903;IDE0032;IDE0005</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

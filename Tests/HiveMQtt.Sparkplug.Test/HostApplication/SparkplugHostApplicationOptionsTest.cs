@@ -14,6 +14,7 @@
 
 namespace HiveMQtt.Sparkplug.Test.HostApplication;
 
+using System;
 using FluentAssertions;
 using HiveMQtt.Sparkplug.HostApplication;
 using HiveMQtt.Sparkplug.Topics;
@@ -42,7 +43,7 @@ public class SparkplugHostApplicationOptionsTest
             SparkplugTopicFilter = string.Empty,
         };
 
-        var act = () => options.Validate();
+        Action act = options.Validate;
 
         act.Should().Throw<InvalidOperationException>()
             .WithMessage("*SparkplugTopicFilter*cannot*null*empty*");
@@ -56,7 +57,7 @@ public class SparkplugHostApplicationOptionsTest
             SparkplugTopicFilter = "   ",
         };
 
-        var act = () => options.Validate();
+        Action act = options.Validate;
 
         act.Should().Throw<InvalidOperationException>();
     }
@@ -70,7 +71,7 @@ public class SparkplugHostApplicationOptionsTest
             HostApplicationId = null,
         };
 
-        var act = () => options.Validate();
+        Action act = options.Validate;
 
         act.Should().Throw<InvalidOperationException>()
             .WithMessage("*HostApplicationId*must be set*UseStateMessages*");
@@ -85,7 +86,7 @@ public class SparkplugHostApplicationOptionsTest
             HostApplicationId = string.Empty,
         };
 
-        var act = () => options.Validate();
+        Action act = options.Validate;
 
         act.Should().Throw<InvalidOperationException>();
     }
@@ -99,7 +100,7 @@ public class SparkplugHostApplicationOptionsTest
             HostApplicationId = "host1",
         };
 
-        var act = () => options.Validate();
+        Action act = options.Validate;
 
         act.Should().NotThrow();
     }
@@ -114,8 +115,40 @@ public class SparkplugHostApplicationOptionsTest
             SparkplugTopicFilter = "spBv1.0/#",
         };
 
-        var act = () => options.Validate();
+        Action act = options.Validate;
 
         act.Should().NotThrow();
+    }
+
+    [Test]
+    public void Validate_With_StrictIdentifierValidation_And_HostApplicationId_With_Hash_Throws()
+    {
+        var options = new SparkplugHostApplicationOptions
+        {
+            SparkplugTopicFilter = "spBv1.0/#",
+            UseStateMessages = true,
+            HostApplicationId = "host#1",
+            StrictIdentifierValidation = true,
+        };
+
+        Action act = options.Validate;
+
+        act.Should().Throw<ArgumentException>().WithMessage("*'#'*");
+    }
+
+    [Test]
+    public void Validate_With_StrictIdentifierValidation_And_HostApplicationId_With_Plus_Throws()
+    {
+        var options = new SparkplugHostApplicationOptions
+        {
+            SparkplugTopicFilter = "spBv1.0/#",
+            UseStateMessages = true,
+            HostApplicationId = "host+1",
+            StrictIdentifierValidation = true,
+        };
+
+        Action act = options.Validate;
+
+        act.Should().Throw<ArgumentException>().WithMessage("*'+'*");
     }
 }

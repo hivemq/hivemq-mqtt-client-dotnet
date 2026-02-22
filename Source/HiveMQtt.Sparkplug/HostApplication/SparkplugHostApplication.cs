@@ -14,7 +14,6 @@
 
 namespace HiveMQtt.Sparkplug.HostApplication;
 
-using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,20 +28,21 @@ using HiveMQtt.MQTT5.Types;
 using HiveMQtt.Sparkplug.Payload;
 using HiveMQtt.Sparkplug.Protobuf;
 using HiveMQtt.Sparkplug.Topics;
+using HiveMQtt.Sparkplug.Validation;
 
 /// <summary>
 /// Sparkplug B Host Application: subscribes to Edge Nodes and Devices, tracks state, and publishes NCMD/DCMD.
 /// </summary>
 public sealed class SparkplugHostApplication : IDisposable
 {
-    private readonly IHiveMQClient _client;
-    private readonly SparkplugHostApplicationOptions _options;
-    private readonly bool _ownsClient;
-    private readonly ConcurrentDictionary<string, SparkplugNodeState> _nodeStates = new();
-    private readonly ConcurrentDictionary<string, SparkplugDeviceState> _deviceStates = new();
-    private readonly SemaphoreSlim _startStopLock = new(1, 1);
-    private bool _started;
-    private bool _disposed;
+    private readonly IHiveMQClient client;
+    private readonly SparkplugHostApplicationOptions options;
+    private readonly bool ownsClient;
+    private readonly ConcurrentDictionary<string, SparkplugNodeState> nodeStates = new();
+    private readonly ConcurrentDictionary<string, SparkplugDeviceState> deviceStates = new();
+    private readonly SemaphoreSlim startStopLock = new(1, 1);
+    private bool started;
+    private bool disposed;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SparkplugHostApplication"/> class using an existing MQTT client.
@@ -52,10 +52,12 @@ public sealed class SparkplugHostApplication : IDisposable
     /// <exception cref="ArgumentNullException">Thrown when client or options is null.</exception>
     public SparkplugHostApplication(IHiveMQClient client, SparkplugHostApplicationOptions options)
     {
-        this._client = client ?? throw new ArgumentNullException(nameof(client));
-        this._options = options ?? throw new ArgumentNullException(nameof(options));
-        this._ownsClient = false;
-        this._options.Validate();
+        ArgumentNullException.ThrowIfNull(client);
+        ArgumentNullException.ThrowIfNull(options);
+        this.client = client;
+        this.options = options;
+        this.ownsClient = false;
+        this.options.Validate();
     }
 
     /// <summary>
@@ -67,22 +69,19 @@ public sealed class SparkplugHostApplication : IDisposable
     /// <exception cref="ArgumentNullException">Thrown when clientOptions or sparkplugOptions is null.</exception>
     public SparkplugHostApplication(HiveMQClientOptions clientOptions, SparkplugHostApplicationOptions sparkplugOptions)
     {
-        if (clientOptions is null)
-        {
-            throw new ArgumentNullException(nameof(clientOptions));
-        }
+        ArgumentNullException.ThrowIfNull(clientOptions);
+        ArgumentNullException.ThrowIfNull(sparkplugOptions);
+        sparkplugOptions.Validate();
+        this.options = sparkplugOptions;
 
-        sparkplugOptions?.Validate();
-        this._options = sparkplugOptions ?? throw new ArgumentNullException(nameof(sparkplugOptions));
-
-        if (this._options.UseStateMessages && this._options.UseStateLwt && clientOptions.LastWillAndTestament is null && !string.IsNullOrWhiteSpace(this._options.HostApplicationId))
+        if (this.options.UseStateMessages && this.options.UseStateLwt && clientOptions.LastWillAndTestament is null && !string.IsNullOrWhiteSpace(this.options.HostApplicationId))
         {
-            var (topic, payload) = BuildStateOfflineMessage(this._options);
+            var (topic, payload) = BuildStateOfflineMessage(this.options);
             clientOptions.LastWillAndTestament = new LastWillAndTestament(topic, payload, QualityOfService.AtLeastOnceDelivery, retain: false);
         }
 
-        this._client = new HiveMQClient(clientOptions);
-        this._ownsClient = true;
+        this.client = new HiveMQClient(clientOptions);
+        this.ownsClient = true;
     }
 
     /// <summary>
@@ -128,29 +127,29 @@ public sealed class SparkplugHostApplication : IDisposable
     /// <summary>
     /// Gets the underlying MQTT client.
     /// </summary>
-    public IHiveMQClient Client => this._client;
+    public IHiveMQClient Client => this.client;
 
     /// <summary>
     /// Gets the Host Application options.
     /// </summary>
-    public SparkplugHostApplicationOptions Options => this._options;
+    public SparkplugHostApplicationOptions Options => this.options;
 
     /// <summary>
     /// Gets a value indicating whether the Host Application is connected and started.
     /// </summary>
-    public bool IsConnected => this._started && this._client.IsConnected();
+    public bool IsConnected => this.started && this.client.IsConnected();
 
     /// <summary>
     /// Gets a snapshot of known Edge Node states (online/offline).
     /// </summary>
     public IReadOnlyDictionary<string, SparkplugNodeState> NodeStates =>
-        new Dictionary<string, SparkplugNodeState>(this._nodeStates);
+        new Dictionary<string, SparkplugNodeState>(this.nodeStates);
 
     /// <summary>
     /// Gets a snapshot of known Device states (online/offline). Key is "groupId/edgeNodeId/deviceId".
     /// </summary>
     public IReadOnlyDictionary<string, SparkplugDeviceState> DeviceStates =>
-        new Dictionary<string, SparkplugDeviceState>(this._deviceStates);
+        new Dictionary<string, SparkplugDeviceState>(this.deviceStates);
 
     /// <summary>
     /// Connects the client, subscribes to Sparkplug topics, and publishes STATE (birth) if configured.
@@ -160,44 +159,44 @@ public sealed class SparkplugHostApplication : IDisposable
     /// <returns>A task that completes when the Host Application is started.</returns>
     public async Task StartAsync(ConnectOptions? connectOptions = null, CancellationToken cancellationToken = default)
     {
-        await this._startStopLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        await this.startStopLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            if (this._started)
+            if (this.started)
             {
                 return;
             }
 
-            if (!this._client.IsConnected())
+            if (!this.client.IsConnected())
             {
-                var connectResult = await this._client.ConnectAsync(connectOptions).ConfigureAwait(false);
+                var connectResult = await this.client.ConnectAsync(connectOptions).ConfigureAwait(false);
                 if (connectResult.ReasonCode != ConnAckReasonCode.Success)
                 {
                     throw new InvalidOperationException($"Connect failed: {connectResult.ReasonString ?? connectResult.ReasonCode.ToString()}.");
                 }
             }
 
-            this._client.OnMessageReceived += this.OnClientMessageReceived;
-            var subscribeResult = await this._client.SubscribeAsync(this._options.SparkplugTopicFilter, QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
+            this.client.OnMessageReceived += this.OnClientMessageReceived;
+            var subscribeResult = await this.client.SubscribeAsync(this.options.SparkplugTopicFilter, QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
             var firstSub = subscribeResult.GetFirstSubscription();
             var reasonCode = firstSub?.SubscribeReasonCode;
             var granted = reasonCode is SubAckReasonCode.GrantedQoS0 or SubAckReasonCode.GrantedQoS1 or SubAckReasonCode.GrantedQoS2;
             if (!granted)
             {
-                this._client.OnMessageReceived -= this.OnClientMessageReceived;
+                this.client.OnMessageReceived -= this.OnClientMessageReceived;
                 throw new InvalidOperationException($"Subscribe failed: {reasonCode}.");
             }
 
-            if (this._options.UseStateMessages && !string.IsNullOrWhiteSpace(this._options.HostApplicationId))
+            if (this.options.UseStateMessages && !string.IsNullOrWhiteSpace(this.options.HostApplicationId))
             {
                 await this.PublishStateBirthAsync(cancellationToken).ConfigureAwait(false);
             }
 
-            this._started = true;
+            this.started = true;
         }
         finally
         {
-            this._startStopLock.Release();
+            this.startStopLock.Release();
         }
     }
 
@@ -208,31 +207,31 @@ public sealed class SparkplugHostApplication : IDisposable
     /// <returns>A task that completes when the Host Application is stopped.</returns>
     public async Task StopAsync(CancellationToken cancellationToken = default)
     {
-        await this._startStopLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        await this.startStopLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            if (!this._started)
+            if (!this.started)
             {
                 return;
             }
 
-            this._client.OnMessageReceived -= this.OnClientMessageReceived;
+            this.client.OnMessageReceived -= this.OnClientMessageReceived;
 
-            if (this._options.UseStateMessages && !string.IsNullOrWhiteSpace(this._options.HostApplicationId))
+            if (this.options.UseStateMessages && !string.IsNullOrWhiteSpace(this.options.HostApplicationId))
             {
                 await this.PublishStateDeathAsync(cancellationToken).ConfigureAwait(false);
             }
 
-            if (this._ownsClient)
+            if (this.ownsClient)
             {
-                await this._client.DisconnectAsync().ConfigureAwait(false);
+                await this.client.DisconnectAsync().ConfigureAwait(false);
             }
 
-            this._started = false;
+            this.started = false;
         }
         finally
         {
-            this._startStopLock.Release();
+            this.startStopLock.Release();
         }
     }
 
@@ -246,7 +245,11 @@ public sealed class SparkplugHostApplication : IDisposable
     /// <returns>The result of the publish.</returns>
     public Task<PublishResult> PublishNodeCommandAsync(string groupId, string edgeNodeId, Payload payload, CancellationToken cancellationToken = default)
     {
-        var topic = SparkplugTopic.NodeCommand(groupId, edgeNodeId, this._options.SparkplugNamespace);
+        var strict = this.options.StrictIdentifierValidation;
+        SparkplugIdValidator.ValidateGroupId(groupId, nameof(groupId), strict);
+        SparkplugIdValidator.ValidateEdgeNodeId(edgeNodeId, nameof(edgeNodeId), strict);
+        ArgumentNullException.ThrowIfNull(payload);
+        var topic = SparkplugTopic.NodeCommand(groupId, edgeNodeId, this.options.SparkplugNamespace);
         return this.PublishSparkplugPayloadAsync(topic.Build(), payload, cancellationToken);
     }
 
@@ -261,7 +264,12 @@ public sealed class SparkplugHostApplication : IDisposable
     /// <returns>The result of the publish.</returns>
     public Task<PublishResult> PublishDeviceCommandAsync(string groupId, string edgeNodeId, string deviceId, Payload payload, CancellationToken cancellationToken = default)
     {
-        var topic = SparkplugTopic.DeviceCommand(groupId, edgeNodeId, deviceId, this._options.SparkplugNamespace);
+        var strict = this.options.StrictIdentifierValidation;
+        SparkplugIdValidator.ValidateGroupId(groupId, nameof(groupId), strict);
+        SparkplugIdValidator.ValidateEdgeNodeId(edgeNodeId, nameof(edgeNodeId), strict);
+        SparkplugIdValidator.ValidateDeviceId(deviceId, nameof(deviceId), strict);
+        ArgumentNullException.ThrowIfNull(payload);
+        var topic = SparkplugTopic.DeviceCommand(groupId, edgeNodeId, deviceId, this.options.SparkplugNamespace);
         return this.PublishSparkplugPayloadAsync(topic.Build(), payload, cancellationToken);
     }
 
@@ -285,19 +293,31 @@ public sealed class SparkplugHostApplication : IDisposable
     /// <summary>
     /// Gets the current state of an Edge Node, or null if unknown.
     /// </summary>
+    /// <param name="groupId">The group ID. Must not be null or empty.</param>
+    /// <param name="edgeNodeId">The Edge Node ID. Must not be null or empty.</param>
+    /// <returns>The node state if known; otherwise null.</returns>
     public SparkplugNodeState? GetNodeState(string groupId, string edgeNodeId)
     {
+        SparkplugIdValidator.ValidateGroupId(groupId, nameof(groupId), strict: false);
+        SparkplugIdValidator.ValidateEdgeNodeId(edgeNodeId, nameof(edgeNodeId), strict: false);
         var key = SparkplugHostApplicationStatusCache.MakeNodeKey(groupId, edgeNodeId);
-        return this._nodeStates.TryGetValue(key, out var state) ? state : null;
+        return this.nodeStates.TryGetValue(key, out var state) ? state : null;
     }
 
     /// <summary>
     /// Gets the current state of a Device, or null if unknown.
     /// </summary>
+    /// <param name="groupId">The group ID. Must not be null or empty.</param>
+    /// <param name="edgeNodeId">The Edge Node ID. Must not be null or empty.</param>
+    /// <param name="deviceId">The Device ID. Must not be null or empty.</param>
+    /// <returns>The device state if known; otherwise null.</returns>
     public SparkplugDeviceState? GetDeviceState(string groupId, string edgeNodeId, string deviceId)
     {
+        SparkplugIdValidator.ValidateGroupId(groupId, nameof(groupId), strict: false);
+        SparkplugIdValidator.ValidateEdgeNodeId(edgeNodeId, nameof(edgeNodeId), strict: false);
+        SparkplugIdValidator.ValidateDeviceId(deviceId, nameof(deviceId), strict: false);
         var key = SparkplugHostApplicationStatusCache.MakeDeviceKey(groupId, edgeNodeId, deviceId);
-        return this._deviceStates.TryGetValue(key, out var state) ? state : null;
+        return this.deviceStates.TryGetValue(key, out var state) ? state : null;
     }
 
     /// <summary>
@@ -305,18 +325,18 @@ public sealed class SparkplugHostApplication : IDisposable
     /// </summary>
     public void Dispose()
     {
-        if (this._disposed)
+        if (this.disposed)
         {
             return;
         }
 
-        if (this._ownsClient && this._client is IDisposable disposable)
+        if (this.ownsClient && this.client is IDisposable disposable)
         {
             disposable.Dispose();
         }
 
-        this._startStopLock.Dispose();
-        this._disposed = true;
+        this.startStopLock.Dispose();
+        this.disposed = true;
         GC.SuppressFinalize(this);
     }
 
@@ -332,7 +352,7 @@ public sealed class SparkplugHostApplication : IDisposable
 
     private async Task PublishStateBirthAsync(CancellationToken cancellationToken)
     {
-        var topic = $"{this._options.SparkplugNamespace}/STATE/{this._options.HostApplicationId}";
+        var topic = $"{this.options.SparkplugNamespace}/STATE/{this.options.HostApplicationId}";
         var payload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), 0);
         var bytes = SparkplugPayloadEncoder.Encode(payload);
         var message = new MQTT5PublishMessage
@@ -342,12 +362,12 @@ public sealed class SparkplugHostApplication : IDisposable
             QoS = QualityOfService.AtLeastOnceDelivery,
             Retain = false,
         };
-        await this._client.PublishAsync(message, cancellationToken).ConfigureAwait(false);
+        await this.client.PublishAsync(message, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task PublishStateDeathAsync(CancellationToken cancellationToken)
     {
-        var (topic, payload) = BuildStateOfflineMessage(this._options);
+        var (topic, payload) = BuildStateOfflineMessage(this.options);
         var message = new MQTT5PublishMessage
         {
             Topic = topic,
@@ -355,7 +375,7 @@ public sealed class SparkplugHostApplication : IDisposable
             QoS = QualityOfService.AtLeastOnceDelivery,
             Retain = false,
         };
-        await this._client.PublishAsync(message, cancellationToken).ConfigureAwait(false);
+        await this.client.PublishAsync(message, cancellationToken).ConfigureAwait(false);
     }
 
     private Task<PublishResult> PublishSparkplugPayloadAsync(string topic, Payload payload, CancellationToken cancellationToken)
@@ -368,7 +388,7 @@ public sealed class SparkplugHostApplication : IDisposable
             QoS = QualityOfService.AtLeastOnceDelivery,
             Retain = false,
         };
-        return this._client.PublishAsync(message, cancellationToken);
+        return this.client.PublishAsync(message, cancellationToken);
     }
 
     private void OnClientMessageReceived(object? sender, OnMessageReceivedEventArgs e)
@@ -409,29 +429,32 @@ public sealed class SparkplugHostApplication : IDisposable
         switch (sparkplugTopic.MessageType)
         {
             case SparkplugMessageType.NBIRTH:
-                SparkplugHostApplicationStatusCache.UpdateNodeBirth(this._nodeStates, sparkplugTopic.GroupId, sparkplugTopic.EdgeNodeId, now);
+                SparkplugHostApplicationStatusCache.UpdateNodeBirth(this.nodeStates, sparkplugTopic.GroupId, sparkplugTopic.EdgeNodeId, now);
                 this.NodeBirthReceived?.Invoke(this, args);
                 break;
             case SparkplugMessageType.NDEATH:
-                SparkplugHostApplicationStatusCache.UpdateNodeDeath(this._nodeStates, sparkplugTopic.GroupId, sparkplugTopic.EdgeNodeId, now);
+                SparkplugHostApplicationStatusCache.UpdateNodeDeath(this.nodeStates, sparkplugTopic.GroupId, sparkplugTopic.EdgeNodeId, now);
                 this.NodeDeathReceived?.Invoke(this, args);
                 break;
             case SparkplugMessageType.NDATA:
-                SparkplugHostApplicationStatusCache.UpdateNodeData(this._nodeStates, sparkplugTopic.GroupId, sparkplugTopic.EdgeNodeId, now);
+                SparkplugHostApplicationStatusCache.UpdateNodeData(this.nodeStates, sparkplugTopic.GroupId, sparkplugTopic.EdgeNodeId, now);
                 this.NodeDataReceived?.Invoke(this, args);
                 break;
             case SparkplugMessageType.DBIRTH:
-                SparkplugHostApplicationStatusCache.UpdateDeviceBirth(this._deviceStates, sparkplugTopic.GroupId, sparkplugTopic.EdgeNodeId, sparkplugTopic.DeviceId!, now);
+                SparkplugHostApplicationStatusCache.UpdateDeviceBirth(this.deviceStates, sparkplugTopic.GroupId, sparkplugTopic.EdgeNodeId, sparkplugTopic.DeviceId!, now);
                 this.DeviceBirthReceived?.Invoke(this, args);
                 break;
             case SparkplugMessageType.DDEATH:
-                SparkplugHostApplicationStatusCache.UpdateDeviceDeath(this._deviceStates, sparkplugTopic.GroupId, sparkplugTopic.EdgeNodeId, sparkplugTopic.DeviceId!, now);
+                SparkplugHostApplicationStatusCache.UpdateDeviceDeath(this.deviceStates, sparkplugTopic.GroupId, sparkplugTopic.EdgeNodeId, sparkplugTopic.DeviceId!, now);
                 this.DeviceDeathReceived?.Invoke(this, args);
                 break;
             case SparkplugMessageType.DDATA:
-                SparkplugHostApplicationStatusCache.UpdateDeviceData(this._deviceStates, sparkplugTopic.GroupId, sparkplugTopic.EdgeNodeId, sparkplugTopic.DeviceId!, now);
+                SparkplugHostApplicationStatusCache.UpdateDeviceData(this.deviceStates, sparkplugTopic.GroupId, sparkplugTopic.EdgeNodeId, sparkplugTopic.DeviceId!, now);
                 this.DeviceDataReceived?.Invoke(this, args);
                 break;
+            case SparkplugMessageType.NCMD:
+            case SparkplugMessageType.DCMD:
+            case SparkplugMessageType.STATE:
             default:
                 this.MessageParseError?.Invoke(this, new SparkplugMessageParseErrorEventArgs(topicStr, e.PublishMessage.Payload, $"Unsupported message type for Host: {sparkplugTopic.MessageType}."));
                 break;

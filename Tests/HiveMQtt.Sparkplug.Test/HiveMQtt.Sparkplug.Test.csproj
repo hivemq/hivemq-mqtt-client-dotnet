@@ -22,7 +22,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <NoWarn>$(NoWarn);NU1903;IDE0301;IDE0305</NoWarn>
+    <NoWarn>$(NoWarn);NU1903;IDE0301;IDE0305;CS0067;SA1201;SA1516;VSTHRD200;IDE0005;IDE0055;SA1009;SA1000</NoWarn>
   </PropertyGroup>
 
   <ItemGroup Label="Project References">

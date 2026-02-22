@@ -130,6 +130,43 @@ public class SparkplugEdgeNodeTest
     }
 
     [Test]
+    public async Task PublishDeviceBirthAsync_With_Null_DeviceId_Throws()
+    {
+        var client = new FakeHiveMQClient();
+        var options = new SparkplugEdgeNodeOptions { GroupId = "g1", EdgeNodeId = "n1" };
+        var node = new SparkplugEdgeNode(client, options);
+
+        Func<Task> act = () => node.PublishDeviceBirthAsync(null!, null);
+
+        await act.Should().ThrowAsync<ArgumentException>().WithParameterName("deviceId").ConfigureAwait(false);
+    }
+
+    [Test]
+    public async Task PublishDeviceDataAsync_With_Empty_DeviceId_Throws()
+    {
+        var client = new FakeHiveMQClient();
+        var options = new SparkplugEdgeNodeOptions { GroupId = "g1", EdgeNodeId = "n1" };
+        var node = new SparkplugEdgeNode(client, options);
+        var metrics = Array.Empty<Payload.Types.Metric>();
+
+        Func<Task> act = () => node.PublishDeviceDataAsync(string.Empty, metrics);
+
+        await act.Should().ThrowAsync<ArgumentException>().WithParameterName("deviceId").ConfigureAwait(false);
+    }
+
+    [Test]
+    public async Task PublishDeviceDeathAsync_With_Whitespace_DeviceId_Throws()
+    {
+        var client = new FakeHiveMQClient();
+        var options = new SparkplugEdgeNodeOptions { GroupId = "g1", EdgeNodeId = "n1" };
+        var node = new SparkplugEdgeNode(client, options);
+
+        Func<Task> act = () => node.PublishDeviceDeathAsync("   ");
+
+        await act.Should().ThrowAsync<ArgumentException>().WithParameterName("deviceId").WithMessage("*whitespace*").ConfigureAwait(false);
+    }
+
+    [Test]
     public async Task PublishDeviceDeathAsync_Throws_When_DeviceId_Empty()
     {
         var client = new FakeHiveMQClient();

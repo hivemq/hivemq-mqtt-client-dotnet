@@ -15,6 +15,7 @@
 namespace HiveMQtt.Sparkplug.HostApplication;
 
 using System;
+using HiveMQtt.Sparkplug.Validation;
 
 /// <summary>
 /// Options for the Sparkplug B Host Application.
@@ -60,6 +61,13 @@ public class SparkplugHostApplicationOptions
     public bool UseStateLwt { get; set; } = true;
 
     /// <summary>
+    /// Gets or sets a value indicating whether to use strict identifier validation for Host Application ID and for
+    /// Group ID, Edge Node ID, and Device ID when publishing commands. When true, identifiers must not contain
+    /// MQTT wildcard characters (#, +) or the null character.
+    /// </summary>
+    public bool StrictIdentifierValidation { get; set; }
+
+    /// <summary>
     /// Validates the options and throws if invalid.
     /// </summary>
     /// <exception cref="InvalidOperationException">Thrown when required options are missing or invalid.</exception>
@@ -73,6 +81,11 @@ public class SparkplugHostApplicationOptions
         if (this.UseStateMessages && string.IsNullOrWhiteSpace(this.HostApplicationId))
         {
             throw new InvalidOperationException("HostApplicationId must be set when UseStateMessages is true.");
+        }
+
+        if (this.UseStateMessages && !string.IsNullOrWhiteSpace(this.HostApplicationId) && this.StrictIdentifierValidation)
+        {
+            SparkplugIdValidator.ValidateHostApplicationId(this.HostApplicationId, nameof(this.HostApplicationId), strict: true);
         }
     }
 }

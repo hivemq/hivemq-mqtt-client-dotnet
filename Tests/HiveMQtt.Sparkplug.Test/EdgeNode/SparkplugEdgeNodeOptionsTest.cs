@@ -14,6 +14,7 @@
 
 namespace HiveMQtt.Sparkplug.Test.EdgeNode;
 
+using System;
 using FluentAssertions;
 using HiveMQtt.Sparkplug.EdgeNode;
 using HiveMQtt.Sparkplug.Topics;
@@ -41,7 +42,7 @@ public class SparkplugEdgeNodeOptionsTest
             EdgeNodeId = "node1",
         };
 
-        var act = () => options.Validate();
+        Action act = options.Validate;
 
         act.Should().Throw<InvalidOperationException>()
             .WithMessage("*GroupId*cannot*null*empty*");
@@ -56,7 +57,7 @@ public class SparkplugEdgeNodeOptionsTest
             EdgeNodeId = "node1",
         };
 
-        var act = () => options.Validate();
+        Action act = options.Validate;
 
         act.Should().Throw<InvalidOperationException>();
     }
@@ -70,7 +71,7 @@ public class SparkplugEdgeNodeOptionsTest
             EdgeNodeId = null,
         };
 
-        var act = () => options.Validate();
+        Action act = options.Validate;
 
         act.Should().Throw<InvalidOperationException>()
             .WithMessage("*EdgeNodeId*cannot*null*empty*");
@@ -86,7 +87,7 @@ public class SparkplugEdgeNodeOptionsTest
             SparkplugNamespace = string.Empty,
         };
 
-        var act = () => options.Validate();
+        Action act = options.Validate;
 
         act.Should().Throw<InvalidOperationException>()
             .WithMessage("*SparkplugNamespace*");
@@ -101,8 +102,38 @@ public class SparkplugEdgeNodeOptionsTest
             EdgeNodeId = "n1",
         };
 
-        var act = () => options.Validate();
+        Action act = options.Validate;
 
         act.Should().NotThrow();
+    }
+
+    [Test]
+    public void Validate_With_StrictIdentifierValidation_And_GroupId_With_Hash_Throws()
+    {
+        var options = new SparkplugEdgeNodeOptions
+        {
+            GroupId = "g#1",
+            EdgeNodeId = "n1",
+            StrictIdentifierValidation = true,
+        };
+
+        Action act = options.Validate;
+
+        act.Should().Throw<ArgumentException>().WithMessage("*Group*'#'*");
+    }
+
+    [Test]
+    public void Validate_With_StrictIdentifierValidation_And_EdgeNodeId_With_Plus_Throws()
+    {
+        var options = new SparkplugEdgeNodeOptions
+        {
+            GroupId = "g1",
+            EdgeNodeId = "n+1",
+            StrictIdentifierValidation = true,
+        };
+
+        Action act = options.Validate;
+
+        act.Should().Throw<ArgumentException>().WithMessage("*Edge Node*'+'*");
     }
 }

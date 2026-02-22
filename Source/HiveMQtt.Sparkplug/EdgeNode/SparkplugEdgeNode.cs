@@ -28,19 +28,20 @@ using HiveMQtt.Sparkplug.HostApplication;
 using HiveMQtt.Sparkplug.Payload;
 using HiveMQtt.Sparkplug.Protobuf;
 using HiveMQtt.Sparkplug.Topics;
+using HiveMQtt.Sparkplug.Validation;
 
 /// <summary>
 /// Sparkplug B Edge Node: publishes NBIRTH/NDATA/NDEATH, DBIRTH/DDATA/DDEATH; receives NCMD/DCMD; manages sequence and lifecycle.
 /// </summary>
 public sealed class SparkplugEdgeNode : IDisposable
 {
-    private readonly IHiveMQClient _client;
-    private readonly SparkplugEdgeNodeOptions _options;
-    private readonly bool _ownsClient;
-    private readonly SemaphoreSlim _startStopLock = new(1, 1);
-    private int _sequenceNumber;
-    private bool _started;
-    private bool _disposed;
+    private readonly IHiveMQClient client;
+    private readonly SparkplugEdgeNodeOptions options;
+    private readonly bool ownsClient;
+    private readonly SemaphoreSlim startStopLock = new(1, 1);
+    private int sequenceNumber;
+    private bool started;
+    private bool disposed;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SparkplugEdgeNode"/> class using an existing MQTT client.
@@ -50,10 +51,10 @@ public sealed class SparkplugEdgeNode : IDisposable
     /// <exception cref="ArgumentNullException">Thrown when client or options is null.</exception>
     public SparkplugEdgeNode(IHiveMQClient client, SparkplugEdgeNodeOptions options)
     {
-        this._client = client ?? throw new ArgumentNullException(nameof(client));
-        this._options = options ?? throw new ArgumentNullException(nameof(options));
-        this._ownsClient = false;
-        this._options.Validate();
+        this.client = client ?? throw new ArgumentNullException(nameof(client));
+        this.options = options ?? throw new ArgumentNullException(nameof(options));
+        this.ownsClient = false;
+        this.options.Validate();
     }
 
     /// <summary>
@@ -66,9 +67,9 @@ public sealed class SparkplugEdgeNode : IDisposable
     {
         ArgumentNullException.ThrowIfNull(clientOptions);
         sparkplugOptions?.Validate();
-        this._options = sparkplugOptions ?? throw new ArgumentNullException(nameof(sparkplugOptions));
-        this._client = new HiveMQClient(clientOptions);
-        this._ownsClient = true;
+        this.options = sparkplugOptions ?? throw new ArgumentNullException(nameof(sparkplugOptions));
+        this.client = new HiveMQClient(clientOptions);
+        this.ownsClient = true;
     }
 
     /// <summary>
@@ -89,25 +90,27 @@ public sealed class SparkplugEdgeNode : IDisposable
     /// <summary>
     /// Gets the underlying MQTT client.
     /// </summary>
-    public IHiveMQClient Client => this._client;
+    public IHiveMQClient Client => this.client;
 
     /// <summary>
     /// Gets the Edge Node options.
     /// </summary>
-    public SparkplugEdgeNodeOptions Options => this._options;
+    public SparkplugEdgeNodeOptions Options => this.options;
 
     /// <summary>
     /// Gets a value indicating whether the Edge Node is connected and started.
     /// </summary>
-    public bool IsConnected => this._started && this._client.IsConnected();
+    public bool IsConnected => this.started && this.client.IsConnected();
 
     /// <summary>
     /// Gets the current sequence number (0-255). Incremented after each publish.
     /// </summary>
-    public int SequenceNumber => this._sequenceNumber;
+    public int SequenceNumber => this.sequenceNumber;
 
     /// <summary>
     /// Connects the client, subscribes to NCMD and DCMD topics for this node, and publishes Node Birth (NBIRTH).
+    /// After a reconnect (e.g. following connection loss and automatic or manual reconnection), call <see cref="StartAsync"/> again
+    /// to publish a new NBIRTH (re-birth) and resume command subscriptions; the underlying client must be connected before calling.
     /// </summary>
     /// <param name="connectOptions">Optional connect overrides.</param>
     /// <param name="nodeBirthMetrics">Optional metrics to include in the initial NBIRTH certificate. Can be null or empty.</param>
@@ -118,43 +121,43 @@ public sealed class SparkplugEdgeNode : IDisposable
         IEnumerable<Payload.Types.Metric>? nodeBirthMetrics = null,
         CancellationToken cancellationToken = default)
     {
-        await this._startStopLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        await this.startStopLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            if (this._started)
+            if (this.started)
             {
                 return;
             }
 
-            if (!this._client.IsConnected())
+            if (!this.client.IsConnected())
             {
-                var connectResult = await this._client.ConnectAsync(connectOptions).ConfigureAwait(false);
+                var connectResult = await this.client.ConnectAsync(connectOptions).ConfigureAwait(false);
                 if (connectResult.ReasonCode != ConnAckReasonCode.Success)
                 {
                     throw new InvalidOperationException($"Connect failed: {connectResult.ReasonString ?? connectResult.ReasonCode.ToString()}.");
                 }
             }
 
-            this._client.OnMessageReceived += this.OnClientMessageReceived;
+            this.client.OnMessageReceived += this.OnClientMessageReceived;
 
-            var ncmdTopic = SparkplugTopic.NodeCommand(this._options.GroupId!, this._options.EdgeNodeId!, this._options.SparkplugNamespace);
-            var dcmdFilter = $"{this._options.SparkplugNamespace}/{this._options.GroupId}/DCMD/{this._options.EdgeNodeId}/#";
+            var ncmdTopic = SparkplugTopic.NodeCommand(this.options.GroupId!, this.options.EdgeNodeId!, this.options.SparkplugNamespace);
+            var dcmdFilter = $"{this.options.SparkplugNamespace}/{this.options.GroupId}/DCMD/{this.options.EdgeNodeId}/#";
 
             var subOptions = new SubscribeOptions();
             subOptions.TopicFilters.Add(new TopicFilter(ncmdTopic.Build(), QualityOfService.AtLeastOnceDelivery));
             subOptions.TopicFilters.Add(new TopicFilter(dcmdFilter, QualityOfService.AtLeastOnceDelivery));
-            var subscribeResult = await this._client.SubscribeAsync(subOptions).ConfigureAwait(false);
+            var subscribeResult = await this.client.SubscribeAsync(subOptions).ConfigureAwait(false);
 
             var firstSub = subscribeResult.GetFirstSubscription();
             var reasonCode = firstSub?.SubscribeReasonCode;
             var granted = reasonCode is SubAckReasonCode.GrantedQoS0 or SubAckReasonCode.GrantedQoS1 or SubAckReasonCode.GrantedQoS2;
             if (!granted)
             {
-                this._client.OnMessageReceived -= this.OnClientMessageReceived;
+                this.client.OnMessageReceived -= this.OnClientMessageReceived;
                 throw new InvalidOperationException($"Subscribe failed: {reasonCode}.");
             }
 
-            this._sequenceNumber = 0;
+            this.sequenceNumber = 0;
             var birthPayload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), 0);
             if (nodeBirthMetrics != null)
             {
@@ -164,14 +167,14 @@ public sealed class SparkplugEdgeNode : IDisposable
                 }
             }
 
-            await this.PublishPayloadAsync(SparkplugTopic.NodeBirth(this._options.GroupId!, this._options.EdgeNodeId!, this._options.SparkplugNamespace), birthPayload, cancellationToken).ConfigureAwait(false);
-            this._sequenceNumber = SparkplugPayloadEncoder.NextSequenceNumber(this._sequenceNumber);
+            await this.PublishPayloadAsync(SparkplugTopic.NodeBirth(this.options.GroupId!, this.options.EdgeNodeId!, this.options.SparkplugNamespace), birthPayload, cancellationToken).ConfigureAwait(false);
+            this.sequenceNumber = SparkplugPayloadEncoder.NextSequenceNumber(this.sequenceNumber);
 
-            this._started = true;
+            this.started = true;
         }
         finally
         {
-            this._startStopLock.Release();
+            this.startStopLock.Release();
         }
     }
 
@@ -182,30 +185,30 @@ public sealed class SparkplugEdgeNode : IDisposable
     /// <returns>A task that completes when the Edge Node is stopped.</returns>
     public async Task StopAsync(CancellationToken cancellationToken = default)
     {
-        await this._startStopLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        await this.startStopLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            if (!this._started)
+            if (!this.started)
             {
                 return;
             }
 
-            this._client.OnMessageReceived -= this.OnClientMessageReceived;
+            this.client.OnMessageReceived -= this.OnClientMessageReceived;
 
-            var deathPayload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), this._sequenceNumber);
-            await this.PublishPayloadAsync(SparkplugTopic.NodeDeath(this._options.GroupId!, this._options.EdgeNodeId!, this._options.SparkplugNamespace), deathPayload, cancellationToken).ConfigureAwait(false);
-            this._sequenceNumber = SparkplugPayloadEncoder.NextSequenceNumber(this._sequenceNumber);
+            var deathPayload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), this.sequenceNumber);
+            await this.PublishPayloadAsync(SparkplugTopic.NodeDeath(this.options.GroupId!, this.options.EdgeNodeId!, this.options.SparkplugNamespace), deathPayload, cancellationToken).ConfigureAwait(false);
+            this.sequenceNumber = SparkplugPayloadEncoder.NextSequenceNumber(this.sequenceNumber);
 
-            if (this._ownsClient)
+            if (this.ownsClient)
             {
-                await this._client.DisconnectAsync().ConfigureAwait(false);
+                await this.client.DisconnectAsync().ConfigureAwait(false);
             }
 
-            this._started = false;
+            this.started = false;
         }
         finally
         {
-            this._startStopLock.Release();
+            this.startStopLock.Release();
         }
     }
 
@@ -217,7 +220,7 @@ public sealed class SparkplugEdgeNode : IDisposable
     /// <returns>The result of the publish.</returns>
     public Task<PublishResult> PublishNodeBirthAsync(IEnumerable<Payload.Types.Metric>? metrics, CancellationToken cancellationToken = default)
     {
-        var payload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), this._sequenceNumber);
+        var payload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), this.sequenceNumber);
         if (metrics != null)
         {
             foreach (var m in metrics)
@@ -226,7 +229,7 @@ public sealed class SparkplugEdgeNode : IDisposable
             }
         }
 
-        var topic = SparkplugTopic.NodeBirth(this._options.GroupId!, this._options.EdgeNodeId!, this._options.SparkplugNamespace);
+        var topic = SparkplugTopic.NodeBirth(this.options.GroupId!, this.options.EdgeNodeId!, this.options.SparkplugNamespace);
         return this.PublishPayloadAndAdvanceSequenceAsync(topic, payload, cancellationToken);
     }
 
@@ -239,13 +242,13 @@ public sealed class SparkplugEdgeNode : IDisposable
     public Task<PublishResult> PublishNodeDataAsync(IEnumerable<Payload.Types.Metric> metrics, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(metrics);
-        var payload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), this._sequenceNumber);
+        var payload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), this.sequenceNumber);
         foreach (var m in metrics)
         {
             payload.Metrics.Add(m);
         }
 
-        var topic = SparkplugTopic.NodeData(this._options.GroupId!, this._options.EdgeNodeId!, this._options.SparkplugNamespace);
+        var topic = SparkplugTopic.NodeData(this.options.GroupId!, this.options.EdgeNodeId!, this.options.SparkplugNamespace);
         return this.PublishPayloadAndAdvanceSequenceAsync(topic, payload, cancellationToken);
     }
 
@@ -256,8 +259,8 @@ public sealed class SparkplugEdgeNode : IDisposable
     /// <returns>The result of the publish.</returns>
     public Task<PublishResult> PublishNodeDeathAsync(CancellationToken cancellationToken = default)
     {
-        var payload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), this._sequenceNumber);
-        var topic = SparkplugTopic.NodeDeath(this._options.GroupId!, this._options.EdgeNodeId!, this._options.SparkplugNamespace);
+        var payload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), this.sequenceNumber);
+        var topic = SparkplugTopic.NodeDeath(this.options.GroupId!, this.options.EdgeNodeId!, this.options.SparkplugNamespace);
         return this.PublishPayloadAndAdvanceSequenceAsync(topic, payload, cancellationToken);
     }
 
@@ -270,12 +273,9 @@ public sealed class SparkplugEdgeNode : IDisposable
     /// <returns>The result of the publish.</returns>
     public Task<PublishResult> PublishDeviceBirthAsync(string deviceId, IEnumerable<Payload.Types.Metric>? metrics, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(deviceId))
-        {
-            throw new ArgumentException("Device ID cannot be null or empty.", nameof(deviceId));
-        }
+        SparkplugIdValidator.ValidateDeviceId(deviceId, nameof(deviceId), this.options.StrictIdentifierValidation);
 
-        var payload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), this._sequenceNumber);
+        var payload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), this.sequenceNumber);
         if (metrics != null)
         {
             foreach (var m in metrics)
@@ -284,7 +284,7 @@ public sealed class SparkplugEdgeNode : IDisposable
             }
         }
 
-        var topic = SparkplugTopic.DeviceBirth(this._options.GroupId!, this._options.EdgeNodeId!, deviceId, this._options.SparkplugNamespace);
+        var topic = SparkplugTopic.DeviceBirth(this.options.GroupId!, this.options.EdgeNodeId!, deviceId, this.options.SparkplugNamespace);
         return this.PublishPayloadAndAdvanceSequenceAsync(topic, payload, cancellationToken);
     }
 
@@ -297,19 +297,15 @@ public sealed class SparkplugEdgeNode : IDisposable
     /// <returns>The result of the publish.</returns>
     public Task<PublishResult> PublishDeviceDataAsync(string deviceId, IEnumerable<Payload.Types.Metric> metrics, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(deviceId))
-        {
-            throw new ArgumentException("Device ID cannot be null or empty.", nameof(deviceId));
-        }
-
+        SparkplugIdValidator.ValidateDeviceId(deviceId, nameof(deviceId), this.options.StrictIdentifierValidation);
         ArgumentNullException.ThrowIfNull(metrics);
-        var payload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), this._sequenceNumber);
+        var payload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), this.sequenceNumber);
         foreach (var m in metrics)
         {
             payload.Metrics.Add(m);
         }
 
-        var topic = SparkplugTopic.DeviceData(this._options.GroupId!, this._options.EdgeNodeId!, deviceId, this._options.SparkplugNamespace);
+        var topic = SparkplugTopic.DeviceData(this.options.GroupId!, this.options.EdgeNodeId!, deviceId, this.options.SparkplugNamespace);
         return this.PublishPayloadAndAdvanceSequenceAsync(topic, payload, cancellationToken);
     }
 
@@ -321,13 +317,10 @@ public sealed class SparkplugEdgeNode : IDisposable
     /// <returns>The result of the publish.</returns>
     public Task<PublishResult> PublishDeviceDeathAsync(string deviceId, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(deviceId))
-        {
-            throw new ArgumentException("Device ID cannot be null or empty.", nameof(deviceId));
-        }
+        SparkplugIdValidator.ValidateDeviceId(deviceId, nameof(deviceId), this.options.StrictIdentifierValidation);
 
-        var payload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), this._sequenceNumber);
-        var topic = SparkplugTopic.DeviceDeath(this._options.GroupId!, this._options.EdgeNodeId!, deviceId, this._options.SparkplugNamespace);
+        var payload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), this.sequenceNumber);
+        var topic = SparkplugTopic.DeviceDeath(this.options.GroupId!, this.options.EdgeNodeId!, deviceId, this.options.SparkplugNamespace);
         return this.PublishPayloadAndAdvanceSequenceAsync(topic, payload, cancellationToken);
     }
 
@@ -336,18 +329,18 @@ public sealed class SparkplugEdgeNode : IDisposable
     /// </summary>
     public void Dispose()
     {
-        if (this._disposed)
+        if (this.disposed)
         {
             return;
         }
 
-        if (this._ownsClient && this._client is IDisposable disposable)
+        if (this.ownsClient && this.client is IDisposable disposable)
         {
             disposable.Dispose();
         }
 
-        this._startStopLock.Dispose();
-        this._disposed = true;
+        this.startStopLock.Dispose();
+        this.disposed = true;
         GC.SuppressFinalize(this);
     }
 
@@ -365,7 +358,7 @@ public sealed class SparkplugEdgeNode : IDisposable
             return;
         }
 
-        if (sparkplugTopic.GroupId != this._options.GroupId || sparkplugTopic.EdgeNodeId != this._options.EdgeNodeId)
+        if (sparkplugTopic.GroupId != this.options.GroupId || sparkplugTopic.EdgeNodeId != this.options.EdgeNodeId)
         {
             return;
         }
@@ -417,13 +410,13 @@ public sealed class SparkplugEdgeNode : IDisposable
             QoS = QualityOfService.AtLeastOnceDelivery,
             Retain = false,
         };
-        return this._client.PublishAsync(message, cancellationToken);
+        return this.client.PublishAsync(message, cancellationToken);
     }
 
     private async Task<PublishResult> PublishPayloadAndAdvanceSequenceAsync(SparkplugTopic topic, Payload payload, CancellationToken cancellationToken)
     {
         var result = await this.PublishPayloadAsync(topic, payload, cancellationToken).ConfigureAwait(false);
-        this._sequenceNumber = SparkplugPayloadEncoder.NextSequenceNumber(this._sequenceNumber);
+        this.sequenceNumber = SparkplugPayloadEncoder.NextSequenceNumber(this.sequenceNumber);
         return result;
     }
 }

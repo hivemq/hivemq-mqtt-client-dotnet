@@ -15,6 +15,7 @@
 namespace HiveMQtt.Sparkplug.EdgeNode;
 
 using System;
+using HiveMQtt.Sparkplug.Validation;
 
 /// <summary>
 /// Options for the Sparkplug B Edge Node.
@@ -24,10 +25,7 @@ public class SparkplugEdgeNodeOptions
     /// <summary>
     /// Initializes a new instance of the <see cref="SparkplugEdgeNodeOptions"/> class.
     /// </summary>
-    public SparkplugEdgeNodeOptions()
-    {
-        this.SparkplugNamespace = Topics.SparkplugTopic.DefaultNamespace;
-    }
+    public SparkplugEdgeNodeOptions() => this.SparkplugNamespace = Topics.SparkplugTopic.DefaultNamespace;
 
     /// <summary>
     /// Gets or sets the Group ID. Identifies the group this Edge Node belongs to.
@@ -43,6 +41,12 @@ public class SparkplugEdgeNodeOptions
     /// Gets or sets the Sparkplug namespace (e.g. "spBv1.0"). Used for topic building and subscriptions.
     /// </summary>
     public string SparkplugNamespace { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to use strict identifier validation for Group ID and Edge Node ID.
+    /// When true, identifiers must not contain MQTT wildcard characters (#, +) or the null character.
+    /// </summary>
+    public bool StrictIdentifierValidation { get; set; }
 
     /// <summary>
     /// Validates the options and throws if invalid.
@@ -63,6 +67,12 @@ public class SparkplugEdgeNodeOptions
         if (string.IsNullOrWhiteSpace(this.SparkplugNamespace))
         {
             throw new InvalidOperationException("SparkplugNamespace cannot be null or empty.");
+        }
+
+        if (this.StrictIdentifierValidation)
+        {
+            SparkplugIdValidator.ValidateGroupId(this.GroupId, nameof(this.GroupId), strict: true);
+            SparkplugIdValidator.ValidateEdgeNodeId(this.EdgeNodeId, nameof(this.EdgeNodeId), strict: true);
         }
     }
 }

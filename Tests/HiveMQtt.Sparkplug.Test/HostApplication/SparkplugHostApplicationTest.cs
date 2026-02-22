@@ -94,6 +94,42 @@ public class SparkplugHostApplicationTest
     }
 
     [Test]
+    public void GetNodeState_With_Null_GroupId_Throws()
+    {
+        var client = new FakeHiveMQClient();
+        var options = new SparkplugHostApplicationOptions { SparkplugTopicFilter = "spBv1.0/#", UseStateMessages = false };
+        var host = new SparkplugHostApplication(client, options);
+
+        var act = () => host.GetNodeState(null!, "n1");
+
+        act.Should().Throw<ArgumentException>().WithParameterName("groupId");
+    }
+
+    [Test]
+    public void GetNodeState_With_Empty_EdgeNodeId_Throws()
+    {
+        var client = new FakeHiveMQClient();
+        var options = new SparkplugHostApplicationOptions { SparkplugTopicFilter = "spBv1.0/#", UseStateMessages = false };
+        var host = new SparkplugHostApplication(client, options);
+
+        var act = () => host.GetNodeState("g1", string.Empty);
+
+        act.Should().Throw<ArgumentException>().WithParameterName("edgeNodeId");
+    }
+
+    [Test]
+    public void GetDeviceState_With_Null_DeviceId_Throws()
+    {
+        var client = new FakeHiveMQClient();
+        var options = new SparkplugHostApplicationOptions { SparkplugTopicFilter = "spBv1.0/#", UseStateMessages = false };
+        var host = new SparkplugHostApplication(client, options);
+
+        var act = () => host.GetDeviceState("g1", "n1", null!);
+
+        act.Should().Throw<ArgumentException>().WithParameterName("deviceId");
+    }
+
+    [Test]
     public void NodeStates_And_DeviceStates_Initially_Empty()
     {
         var client = new FakeHiveMQClient();
@@ -160,6 +196,53 @@ public class SparkplugHostApplicationTest
     }
 
     [Test]
+    public async Task PublishNodeCommandAsync_With_Null_GroupId_Throws()
+    {
+        var client = new FakeHiveMQClient();
+        var options = new SparkplugHostApplicationOptions { SparkplugTopicFilter = "spBv1.0/#", UseStateMessages = false };
+        var host = new SparkplugHostApplication(client, options);
+        await host.StartAsync().ConfigureAwait(false);
+        var payload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), 0);
+
+        var act = async () => await host.PublishNodeCommandAsync(null!, "n1", payload).ConfigureAwait(false);
+
+        await act.Should().ThrowAsync<ArgumentException>().WithParameterName("groupId").ConfigureAwait(false);
+    }
+
+    [Test]
+    public async Task PublishNodeCommandAsync_With_GroupId_Containing_Hash_When_Strict_Throws()
+    {
+        var client = new FakeHiveMQClient();
+        var options = new SparkplugHostApplicationOptions
+        {
+            SparkplugTopicFilter = "spBv1.0/#",
+            UseStateMessages = false,
+            StrictIdentifierValidation = true,
+        };
+        var host = new SparkplugHostApplication(client, options);
+        await host.StartAsync().ConfigureAwait(false);
+        var payload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), 0);
+
+        var act = async () => await host.PublishNodeCommandAsync("g#1", "n1", payload).ConfigureAwait(false);
+
+        await act.Should().ThrowAsync<ArgumentException>().WithParameterName("groupId").WithMessage("*'#'*").ConfigureAwait(false);
+    }
+
+    [Test]
+    public async Task PublishDeviceCommandAsync_With_Null_DeviceId_Throws()
+    {
+        var client = new FakeHiveMQClient();
+        var options = new SparkplugHostApplicationOptions { SparkplugTopicFilter = "spBv1.0/#", UseStateMessages = false };
+        var host = new SparkplugHostApplication(client, options);
+        await host.StartAsync().ConfigureAwait(false);
+        var payload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), 0);
+
+        var act = async () => await host.PublishDeviceCommandAsync("g1", "n1", null!, payload).ConfigureAwait(false);
+
+        await act.Should().ThrowAsync<ArgumentException>().WithParameterName("deviceId").ConfigureAwait(false);
+    }
+
+    [Test]
     public async Task PublishDeviceCommandAsync_Publishes_To_DCMD_Topic()
     {
         var client = new FakeHiveMQClient();
@@ -191,7 +274,7 @@ public class SparkplugHostApplicationTest
         client.PublishedMessages[0].Topic.Should().Be("spBv1.0/g1/NCMD/n1");
         client.PublishedMessages[0].Payload.Should().NotBeNull();
         var decoded = SparkplugPayloadEncoder.Decode(client.PublishedMessages[0].Payload!);
-        decoded.Metrics.Should().ContainSingle(m => m.Name == "Rebirth" && m.Datatype == (uint)DataType.Boolean && m.BooleanValue == true);
+        decoded.Metrics.Should().ContainSingle(m => m.Name == "Rebirth" && m.Datatype == (uint)DataType.Boolean && m.BooleanValue);
     }
 
     [Test]
