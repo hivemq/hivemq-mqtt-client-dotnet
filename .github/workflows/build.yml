@@ -74,7 +74,7 @@ jobs:
         shell: pwsh
 
       - name: Upload NuGet packages
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: nuget-packages-${{ matrix.dotnet-version }}
           path: ./Artifacts/*.nupkg
