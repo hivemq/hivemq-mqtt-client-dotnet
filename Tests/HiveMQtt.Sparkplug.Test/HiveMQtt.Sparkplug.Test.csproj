@@ -1,13 +1,28 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup Label="Build">
-    <!-- Target only the latest SDK framework so tests run when only one runtime is installed (e.g. .NET 10).
-         The HiveMQtt.Sparkplug library still multi-targets net6.0–net10.0 for NuGet.
-         To test on all TFMs, install runtimes 6–10 and uncomment the multi-target block below. -->
-    <TargetFramework Condition="'$(NETCoreSdkVersion)' >= '10.0.0'">net10.0</TargetFramework>
-    <TargetFramework Condition="'$(NETCoreSdkVersion)' >= '9.0.0' And '$(NETCoreSdkVersion)' &lt; '10.0.0'">net9.0</TargetFramework>
-    <TargetFramework Condition="'$(NETCoreSdkVersion)' >= '8.0.0' And '$(NETCoreSdkVersion)' &lt; '9.0.0'">net8.0</TargetFramework>
-    <TargetFramework Condition="'$(NETCoreSdkVersion)' &lt; '8.0.0'">net8.0</TargetFramework>
+    <!-- Include net6.0 only if the SDK supports it -->
+    <TargetFrameworks Condition="'$(NETCoreSdkVersion)' >= '6.0.0'">net6.0</TargetFrameworks>
+
+    <!-- Add net7.0 conditionally if the SDK supports it -->
+    <TargetFrameworks Condition="'$(NETCoreSdkVersion)' >= '7.0.0'">
+      $(TargetFrameworks);net7.0
+    </TargetFrameworks>
+
+    <!-- Add net8.0 conditionally if the SDK supports it -->
+    <TargetFrameworks Condition="'$(NETCoreSdkVersion)' >= '8.0.0'">
+      $(TargetFrameworks);net8.0
+    </TargetFrameworks>
+
+    <!-- Add net9.0 conditionally if the SDK supports it -->
+    <TargetFrameworks Condition="'$(NETCoreSdkVersion)' >= '9.0.0'">
+      $(TargetFrameworks);net9.0
+    </TargetFrameworks>
+
+    <!-- Add net10.0 conditionally if the SDK supports it -->
+    <TargetFrameworks Condition="'$(NETCoreSdkVersion)' >= '10.0.0'">
+      $(TargetFrameworks);net10.0
+    </TargetFrameworks>
 
     <ReleaseVersion>0.1.0</ReleaseVersion>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
