@@ -38,7 +38,17 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        dotnet-version: ['6.0.x', '7.0.x', '8.0.x', '9.0.x', '10.0.x']
+        include:
+          - dotnet-version: '6.0.x'
+            framework: net6.0
+          - dotnet-version: '7.0.x'
+            framework: net7.0
+          - dotnet-version: '8.0.x'
+            framework: net8.0
+          - dotnet-version: '9.0.x'
+            framework: net9.0
+          - dotnet-version: '10.0.x'
+            framework: net10.0
     steps:
       - name: Checkout
         uses: actions/checkout@v6.0.2
@@ -66,7 +76,7 @@ jobs:
         shell: pwsh
 
       - name: Dotnet Cake Test
-        run: dotnet cake --target=Test --framework net${{ matrix.dotnet-version }}
+        run: dotnet cake --target=Test --framework ${{ matrix.framework }}
         shell: pwsh
 
       - name: Dotnet Cake Pack
