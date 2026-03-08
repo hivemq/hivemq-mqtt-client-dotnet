@@ -222,4 +222,18 @@ public class SparkplugPayloadEncoderTest
     [Test]
     public void MaxSequenceNumber_Is255() =>
         SparkplugPayloadEncoder.MaxSequenceNumber.Should().Be(255);
+
+    [Test]
+    public void BdSeqMetricName_IsBdSeq() =>
+        SparkplugPayloadEncoder.BdSeqMetricName.Should().Be("bdSeq");
+
+    [Test]
+    public void CreateBdSeqMetric_ReturnsMetricWithNameAndUInt64Value()
+    {
+        var metric = SparkplugPayloadEncoder.CreateBdSeqMetric(42UL);
+
+        metric.Name.Should().Be("bdSeq");
+        metric.LongValue.Should().Be(42UL);
+        metric.Datatype.Should().BeGreaterThan(0);
+    }
 }

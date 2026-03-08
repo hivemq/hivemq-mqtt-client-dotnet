@@ -14,6 +14,7 @@
 
 namespace HiveMQtt.Sparkplug.Test.EdgeNode;
 
+using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
 using HiveMQtt.Client;
@@ -247,16 +248,14 @@ public class SparkplugEdgeNodeTest
     }
 
     [Test]
-    public void Constructor_With_ClientOptions_And_UseDeathLwt_True_Sets_LastWillAndTestament()
+    public void Constructor_With_ClientOptions_And_UseDeathLwt_True_Does_Not_Set_LWT_In_Constructor()
     {
         var clientOptions = new HiveMQClientOptionsBuilder().WithClientId("edge-lwt").Build();
         var options = new SparkplugEdgeNodeOptions { GroupId = "myGroup", EdgeNodeId = "myNode", UseDeathLwt = true };
 
         _ = new SparkplugEdgeNode(clientOptions, options);
 
-        clientOptions.LastWillAndTestament.Should().NotBeNull();
-        clientOptions.LastWillAndTestament!.Topic.Should().Be("spBv1.0/myGroup/NDEATH/myNode");
-        clientOptions.LastWillAndTestament.Payload.Should().NotBeNull().And.NotBeEmpty();
+        clientOptions.LastWillAndTestament.Should().BeNull("LWT is set in StartAsync with session bdSeq, not in constructor.");
     }
 
     [Test]
@@ -282,5 +281,63 @@ public class SparkplugEdgeNodeTest
         _ = new SparkplugEdgeNode(clientOptions, options);
 
         clientOptions.LastWillAndTestament!.Topic.Should().Be("existing/lwt");
+    }
+
+    [Test]
+    public async Task StartAsync_Sets_CurrentSessionBdSeq_And_NBIRTH_Contains_BdSeq_Metric()
+    {
+        var client = new FakeHiveMQClient();
+        var options = new SparkplugEdgeNodeOptions { GroupId = "g1", EdgeNodeId = "n1" };
+        var node = new SparkplugEdgeNode(client, options);
+
+        await node.StartAsync().ConfigureAwait(false);
+
+        node.CurrentSessionBdSeq.Should().Be(0UL);
+        var nbirth = client.PublishedMessages.Find(m => m.Topic == "spBv1.0/g1/NBIRTH/n1");
+        nbirth.Should().NotBeNull();
+        var payload = SparkplugPayloadEncoder.Decode(nbirth!.Payload!);
+        var bdSeqMetric = payload.Metrics.FirstOrDefault(m => m.Name == SparkplugPayloadEncoder.BdSeqMetricName);
+        bdSeqMetric.Should().NotBeNull();
+        bdSeqMetric!.LongValue.Should().Be(0UL);
+    }
+
+    [Test]
+    public async Task StopAsync_NDEATH_Payload_Contains_BdSeq_Metric()
+    {
+        var client = new FakeHiveMQClient();
+        var options = new SparkplugEdgeNodeOptions { GroupId = "g1", EdgeNodeId = "n1" };
+        var node = new SparkplugEdgeNode(client, options);
+        await node.StartAsync().ConfigureAwait(false);
+
+        await node.StopAsync().ConfigureAwait(false);
+
+        var ndeath = client.PublishedMessages.Find(m => m.Topic == "spBv1.0/g1/NDEATH/n1");
+        ndeath.Should().NotBeNull();
+        var payload = SparkplugPayloadEncoder.Decode(ndeath!.Payload!);
+        var bdSeqMetric = payload.Metrics.FirstOrDefault(m => m.Name == SparkplugPayloadEncoder.BdSeqMetricName);
+        bdSeqMetric.Should().NotBeNull();
+        bdSeqMetric!.LongValue.Should().Be(0UL);
+    }
+
+    [Test]
+    public async Task Second_StartAsync_After_Stop_Uses_Incremented_BdSeq()
+    {
+        var client = new FakeHiveMQClient();
+        var options = new SparkplugEdgeNodeOptions { GroupId = "g1", EdgeNodeId = "n1" };
+        var node = new SparkplugEdgeNode(client, options);
+        await node.StartAsync().ConfigureAwait(false);
+        node.CurrentSessionBdSeq.Should().Be(0UL);
+        await node.StopAsync().ConfigureAwait(false);
+        client.PublishedMessages.Clear();
+
+        await node.StartAsync().ConfigureAwait(false);
+
+        node.CurrentSessionBdSeq.Should().Be(1UL);
+        var nbirth = client.PublishedMessages.Find(m => m.Topic == "spBv1.0/g1/NBIRTH/n1");
+        nbirth.Should().NotBeNull();
+        var payload = SparkplugPayloadEncoder.Decode(nbirth!.Payload!);
+        var bdSeqMetric = payload.Metrics.FirstOrDefault(m => m.Name == SparkplugPayloadEncoder.BdSeqMetricName);
+        bdSeqMetric.Should().NotBeNull();
+        bdSeqMetric!.LongValue.Should().Be(1UL);
     }
 }

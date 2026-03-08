@@ -133,4 +133,17 @@ public static class SparkplugPayloadEncoder
     /// <returns>The current timestamp.</returns>
     public static ulong GetCurrentTimestamp() =>
         (ulong)DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+    /// <summary>
+    /// Metric name for the Sparkplug birth/death sequence (bdSeq). Used in NBIRTH, NDEATH, DBIRTH, and DDEATH.
+    /// </summary>
+    public const string BdSeqMetricName = "bdSeq";
+
+    /// <summary>
+    /// Creates a bdSeq metric for inclusion in birth and death payloads. Callers should add it to payload.Metrics.
+    /// </summary>
+    /// <param name="bdSeq">The birth/death sequence value (UInt64 per Sparkplug spec).</param>
+    /// <returns>A metric with name "bdSeq" and the given value.</returns>
+    public static Protobuf.Payload.Types.Metric CreateBdSeqMetric(ulong bdSeq) =>
+        SparkplugMetricBuilder.Create(BdSeqMetricName).WithUInt64Value(bdSeq).Build();
 }
