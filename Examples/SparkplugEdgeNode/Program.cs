@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Linq;
 using HiveMQtt.Client;
 using HiveMQtt.Client.Options;
 using HiveMQtt.Sparkplug.EdgeNode;
@@ -33,8 +34,17 @@ var sparkplugOptions = new SparkplugEdgeNodeOptions
 
 var edgeNode = new SparkplugEdgeNode(clientOptions, sparkplugOptions);
 
-edgeNode.NodeCommandReceived += (_, e) =>
+edgeNode.NodeCommandReceived += async (_, e) =>
 {
+    // Rebirth: Host requests a fresh NBIRTH so it receives current state. Re-publish node (and optionally device) births.
+    var isRebirth = e.Payload.Metrics.Any(m => m.Name == "Rebirth" && m.BooleanValue);
+    if (isRebirth)
+    {
+        Console.WriteLine("[NCMD] Rebirth — publishing NBIRTH");
+        await edgeNode.PublishNodeBirthAsync(null).ConfigureAwait(false);
+        return;
+    }
+
     Console.WriteLine($"[NCMD] {e.Payload.Metrics.Count} metrics");
     foreach (var m in e.Payload.Metrics)
     {

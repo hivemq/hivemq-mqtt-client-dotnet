@@ -1,6 +1,6 @@
 # Sparkplug Edge Node Example
 
-This example runs a **Sparkplug B Edge Node** using HiveMQtt.Sparkplug: it connects to an MQTT broker, publishes Node Birth (NBIRTH), subscribes to NCMD and DCMD, and publishes Node Data (NDATA) every 5 seconds with a counter and temperature metric. Press Q to stop (publishes NDEATH and disconnects).
+This example runs a **Sparkplug B Edge Node** using HiveMQtt.Sparkplug: it connects to an MQTT broker, publishes Node Birth (NBIRTH), subscribes to NCMD and DCMD, and publishes Node Data (NDATA) every 5 seconds with a counter and temperature metric. It handles the **Rebirth** command (NCMD with `Rebirth` metric): when received, it publishes a fresh NBIRTH. Press Q to stop (publishes NDEATH and disconnects).
 
 ## Prerequisites
 

@@ -68,6 +68,22 @@ await edgeNode.PublishNodeDataAsync(metrics);
 
 See the [Examples](../../Examples) folder for runnable Host and Edge Node samples.
 
+### Rebirth handling
+
+When a Host sends a **Rebirth** command (NCMD with a `Rebirth` boolean metric set to true), the Edge Node should publish a fresh Node Birth so the Host receives an up-to-date NBIRTH. In your `NodeCommandReceived` handler, check for the Rebirth metric and call **`PublishNodeBirthAsync`**; if the node has devices, re-publish their DBIRTHs as well.
+
+```csharp
+edgeNode.NodeCommandReceived += async (_, e) =>
+{
+    var isRebirth = e.Payload.Metrics.Any(m => m.Name == "Rebirth" && m.BooleanValue);
+    if (isRebirth)
+    {
+        await edgeNode.PublishNodeBirthAsync(null); // add node metrics if needed
+        // If you have devices, re-publish each with PublishDeviceBirthAsync(...)
+    }
+};
+```
+
 ### Scoped topic filter and STATE messages
 
 STATE topics use the form `spBv1.0/STATE/{primary_host_id}` (no group segment). A scoped filter such as `spBv1.0/myGroup/#` therefore does **not** match STATE messages, so the Host will not receive STATE from other Host Applications when using a scoped filter. To receive STATE from other Hosts, use **`spBv1.0/#`** (the default) or add a separate subscription to **`spBv1.0/STATE/#`** on the same client and handle those messages in your application.
