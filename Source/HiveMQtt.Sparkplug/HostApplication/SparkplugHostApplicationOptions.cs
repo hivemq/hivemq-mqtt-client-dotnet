@@ -46,6 +46,11 @@ public class SparkplugHostApplicationOptions
     /// <summary>
     /// Gets or sets the topic filter to subscribe to for Sparkplug messages. Default is "spBv1.0/#".
     /// Can be scoped e.g. "spBv1.0/myGroup/#" to receive only a specific group.
+    /// <para>
+    /// When using a scoped filter, STATE messages are not received: STATE topics are
+    /// <c>spBv1.0/STATE/{primary_host_id}</c> (no group segment), so they do not match e.g. "spBv1.0/myGroup/#".
+    /// To receive STATE from other Host Applications, use "spBv1.0/#" or add a separate subscription to "spBv1.0/STATE/#".
+    /// </para>
     /// </summary>
     public string SparkplugTopicFilter { get; set; }
 

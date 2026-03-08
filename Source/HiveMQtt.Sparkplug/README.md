@@ -68,6 +68,10 @@ await edgeNode.PublishNodeDataAsync(metrics);
 
 See the [Examples](../../Examples) folder for runnable Host and Edge Node samples.
 
+### Scoped topic filter and STATE messages
+
+STATE topics use the form `spBv1.0/STATE/{primary_host_id}` (no group segment). A scoped filter such as `spBv1.0/myGroup/#` therefore does **not** match STATE messages, so the Host will not receive STATE from other Host Applications when using a scoped filter. To receive STATE from other Hosts, use **`spBv1.0/#`** (the default) or add a separate subscription to **`spBv1.0/STATE/#`** on the same client and handle those messages in your application.
+
 ## TCK compatibility
 
 The [Eclipse Sparkplug TCK](https://sparkplug.eclipse.org/specification/tck-process) validates implementations for Sparkplug compatibility. The TCK is typically run against **brokers** (Sparkplug Compliant / Sparkplug Aware). HiveMQtt.Sparkplug is a **client** library (Host Application and Edge Node).
