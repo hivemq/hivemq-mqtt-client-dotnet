@@ -17,6 +17,7 @@
 
 ### 💽 Installation & Compatibility
 * **Easy-to-Install**: Available as a [NuGet package](https://www.nuget.org/packages/HiveMQtt).
+* **Sparkplug B extension**: The [HiveMQtt.Sparkplug](https://www.nuget.org/packages/HiveMQtt.Sparkplug) package adds Host Application and Edge Node support for industrial IoT (IIoT) using the [Eclipse Sparkplug B 3.0](https://sparkplug.eclipse.org/specification/version/3.0) specification—install with `dotnet add package HiveMQtt.Sparkplug`.
 * **Globally Compatible**: Built to be a fully compliant MQTT 5.0 client compatible with all modern MQTT brokers.
 * **Multi-Targeted**: Supports .NET 6.0, 7.0, 8.0, 9.0 & 10.0
 
@@ -94,6 +95,8 @@ If you need advanced features, check out our [premium editions](https://www.hive
 
 ## Install
 
+### HiveMQtt (core client)
+
 This package is [available on NuGet.org](https://www.nuget.org/packages/HiveMQtt/) and can be installed with:
 
 ```sh
@@ -101,6 +104,16 @@ dotnet add package HiveMQtt
 ```
 
 See the [HiveMQtt NuGet page](https://www.nuget.org/packages/HiveMQtt/) for more installation options.
+
+### HiveMQtt.Sparkplug (Sparkplug B extension)
+
+The **HiveMQtt.Sparkplug** package is now available on NuGet. It extends the HiveMQtt client with [Sparkplug B 3.0](https://sparkplug.eclipse.org/specification/version/3.0) support for industrial IoT: Host Applications (subscribe to Edge Nodes and Devices, publish NCMD/DCMD) and Edge Nodes (publish NBIRTH/NDATA/NDEATH, DBIRTH/DDATA/DDEATH; receive NCMD/DCMD). Install with:
+
+```sh
+dotnet add package HiveMQtt.Sparkplug
+```
+
+See the [HiveMQtt.Sparkplug NuGet page](https://www.nuget.org/packages/HiveMQtt.Sparkplug/) and the [extension README](Source/HiveMQtt.Sparkplug/README.md) for details and quick start.
 
 ## Example
 
