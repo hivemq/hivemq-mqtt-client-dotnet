@@ -59,6 +59,7 @@ public sealed class SparkplugEdgeNode : IDisposable
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SparkplugEdgeNode"/> class, creating and owning the MQTT client.
+    /// NDEATH LWT is configured on the client options if <see cref="SparkplugEdgeNodeOptions.UseDeathLwt"/> is true and no LWT is already set.
     /// </summary>
     /// <param name="clientOptions">The MQTT client options. Will be used to create an internal HiveMQClient.</param>
     /// <param name="sparkplugOptions">Edge Node options. Must not be null.</param>
@@ -68,8 +69,22 @@ public sealed class SparkplugEdgeNode : IDisposable
         ArgumentNullException.ThrowIfNull(clientOptions);
         sparkplugOptions?.Validate();
         this.options = sparkplugOptions ?? throw new ArgumentNullException(nameof(sparkplugOptions));
+
+        if (this.options.UseDeathLwt && clientOptions.LastWillAndTestament is null && !string.IsNullOrWhiteSpace(this.options.GroupId) && !string.IsNullOrWhiteSpace(this.options.EdgeNodeId))
+        {
+            var (topic, payload) = BuildDeathLwtMessage(this.options);
+            clientOptions.LastWillAndTestament = new LastWillAndTestament(topic, payload, QualityOfService.AtLeastOnceDelivery, retain: false);
+        }
+
         this.client = new HiveMQClient(clientOptions);
         this.ownsClient = true;
+    }
+
+    private static (string Topic, byte[] Payload) BuildDeathLwtMessage(SparkplugEdgeNodeOptions options)
+    {
+        var topic = SparkplugTopic.NodeDeath(options.GroupId!, options.EdgeNodeId!, options.SparkplugNamespace).Build();
+        var payload = SparkplugPayloadEncoder.CreatePayload(timestamp: 0, sequenceNumber: 0);
+        return (topic, SparkplugPayloadEncoder.Encode(payload));
     }
 
     /// <summary>

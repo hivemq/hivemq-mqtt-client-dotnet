@@ -17,6 +17,8 @@ namespace HiveMQtt.Sparkplug.Test.EdgeNode;
 using System.Threading.Tasks;
 using FluentAssertions;
 using HiveMQtt.Client;
+using HiveMQtt.Client.Options;
+using HiveMQtt.MQTT5.Types;
 using HiveMQtt.Sparkplug.EdgeNode;
 using HiveMQtt.Sparkplug.HostApplication;
 using HiveMQtt.Sparkplug.Payload;
@@ -242,5 +244,43 @@ public class SparkplugEdgeNodeTest
         var node = new SparkplugEdgeNode(clientOptions, options);
 
         node.Invoking(n => n.Dispose()).Should().NotThrow();
+    }
+
+    [Test]
+    public void Constructor_With_ClientOptions_And_UseDeathLwt_True_Sets_LastWillAndTestament()
+    {
+        var clientOptions = new HiveMQClientOptionsBuilder().WithClientId("edge-lwt").Build();
+        var options = new SparkplugEdgeNodeOptions { GroupId = "myGroup", EdgeNodeId = "myNode", UseDeathLwt = true };
+
+        _ = new SparkplugEdgeNode(clientOptions, options);
+
+        clientOptions.LastWillAndTestament.Should().NotBeNull();
+        clientOptions.LastWillAndTestament!.Topic.Should().Be("spBv1.0/myGroup/NDEATH/myNode");
+        clientOptions.LastWillAndTestament.Payload.Should().NotBeNull().And.NotBeEmpty();
+    }
+
+    [Test]
+    public void Constructor_With_ClientOptions_And_UseDeathLwt_False_Does_Not_Set_LastWillAndTestament()
+    {
+        var clientOptions = new HiveMQClientOptionsBuilder().WithClientId("edge-no-lwt").Build();
+        var options = new SparkplugEdgeNodeOptions { GroupId = "g1", EdgeNodeId = "n1", UseDeathLwt = false };
+
+        _ = new SparkplugEdgeNode(clientOptions, options);
+
+        clientOptions.LastWillAndTestament.Should().BeNull();
+    }
+
+    [Test]
+    public void Constructor_With_ClientOptions_And_Existing_LWT_Does_Not_Override()
+    {
+        var clientOptions = new HiveMQClientOptionsBuilder()
+            .WithClientId("edge-existing-lwt")
+            .WithLastWillAndTestament(new LastWillAndTestament("existing/lwt", "payload", QualityOfService.AtLeastOnceDelivery, false))
+            .Build();
+        var options = new SparkplugEdgeNodeOptions { GroupId = "g1", EdgeNodeId = "n1", UseDeathLwt = true };
+
+        _ = new SparkplugEdgeNode(clientOptions, options);
+
+        clientOptions.LastWillAndTestament!.Topic.Should().Be("existing/lwt");
     }
 }

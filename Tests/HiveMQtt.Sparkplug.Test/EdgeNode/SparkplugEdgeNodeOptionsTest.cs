@@ -31,6 +31,7 @@ public class SparkplugEdgeNodeOptionsTest
         options.SparkplugNamespace.Should().Be(SparkplugTopic.DefaultNamespace);
         options.GroupId.Should().BeNull();
         options.EdgeNodeId.Should().BeNull();
+        options.UseDeathLwt.Should().BeTrue();
     }
 
     [Test]

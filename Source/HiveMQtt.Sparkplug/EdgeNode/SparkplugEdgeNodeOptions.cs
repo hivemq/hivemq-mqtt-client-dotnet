@@ -49,6 +49,15 @@ public class SparkplugEdgeNodeOptions
     public bool StrictIdentifierValidation { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether to set a Last Will and Testament that publishes NDEATH if the Edge Node
+    /// disconnects ungracefully (e.g. crash or network loss). When true and the client is created by this library,
+    /// LWT is configured on the client options so the broker will publish NDEATH when the connection is lost.
+    /// Ignored when using an existing client (constructor that takes an existing MQTT client).
+    /// Default is true for Sparkplug spec-compliant session awareness.
+    /// </summary>
+    public bool UseDeathLwt { get; set; } = true;
+
+    /// <summary>
     /// Validates the options and throws if invalid.
     /// </summary>
     /// <exception cref="InvalidOperationException">Thrown when required options are missing or invalid.</exception>
