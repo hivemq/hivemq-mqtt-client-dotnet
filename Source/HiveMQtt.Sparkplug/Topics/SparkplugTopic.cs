@@ -76,7 +76,7 @@ public sealed class SparkplugTopic
     public string Namespace { get; }
 
     /// <summary>
-    /// Gets the group ID portion of the topic.
+    /// Gets the group ID portion of the topic. For STATE topics this is the literal "STATE".
     /// </summary>
     public string GroupId { get; }
 
@@ -86,7 +86,7 @@ public sealed class SparkplugTopic
     public SparkplugMessageType MessageType { get; }
 
     /// <summary>
-    /// Gets the Edge Node ID portion of the topic.
+    /// Gets the Edge Node ID portion of the topic. For STATE topics this holds the Primary Host Application ID; use <see cref="PrimaryHostId"/> instead for clarity.
     /// </summary>
     public string EdgeNodeId { get; }
 
@@ -94,6 +94,19 @@ public sealed class SparkplugTopic
     /// Gets the Device ID portion of the topic. Null for node-level messages.
     /// </summary>
     public string? DeviceId { get; }
+
+    /// <summary>
+    /// Gets the Primary Host Application ID when this topic is a STATE message (spBv1.0/STATE/{primary_host_id}). Null for non-STATE topics.
+    /// Use this when handling <see cref="SparkplugMessageType.STATE"/> instead of <see cref="EdgeNodeId"/> for clearer semantics.
+    /// </summary>
+    public string? PrimaryHostId => this.MessageType == SparkplugMessageType.STATE ? this.EdgeNodeId : null;
+
+    /// <summary>
+    /// Gets a value indicating whether this topic is a STATE message (Host Application online/offline).
+    /// When true, <see cref="PrimaryHostId"/> is non-null.
+    /// </summary>
+    [MemberNotNullWhen(true, nameof(PrimaryHostId))]
+    public bool IsStateMessage => this.MessageType == SparkplugMessageType.STATE;
 
     /// <summary>
     /// Gets a value indicating whether this topic includes a Device ID (is a device-level message).

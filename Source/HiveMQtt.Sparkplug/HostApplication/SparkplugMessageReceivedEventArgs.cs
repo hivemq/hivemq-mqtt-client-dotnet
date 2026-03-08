@@ -63,7 +63,7 @@ public class SparkplugMessageReceivedEventArgs : EventArgs
 
     /// <summary>
     /// Gets the decoded STATE message payload (Sparkplug 3.0 JSON). Non-null only when <see cref="MessageType"/> is <see cref="Topics.SparkplugMessageType.STATE"/>.
-    /// For STATE topics, <see cref="Topic"/>.<see cref="Topics.SparkplugTopic.EdgeNodeId"/> is the Primary Host Application ID.
+    /// For STATE messages, use <see cref="PrimaryHostId"/> for the Host Application ID.
     /// </summary>
     public SparkplugStatePayload? StatePayload { get; }
 
@@ -83,9 +83,14 @@ public class SparkplugMessageReceivedEventArgs : EventArgs
     public string GroupId => this.Topic.GroupId;
 
     /// <summary>
-    /// Gets the Edge Node ID (convenience for Topic.EdgeNodeId).
+    /// Gets the Edge Node ID (convenience for Topic.EdgeNodeId). For STATE messages, use <see cref="PrimaryHostId"/> instead.
     /// </summary>
     public string EdgeNodeId => this.Topic.EdgeNodeId;
+
+    /// <summary>
+    /// Gets the Primary Host Application ID when this is a STATE message; otherwise null. Prefer this over <see cref="EdgeNodeId"/> when <see cref="MessageType"/> is STATE.
+    /// </summary>
+    public string? PrimaryHostId => this.Topic.PrimaryHostId;
 
     /// <summary>
     /// Gets the Device ID if this is a device-level message; otherwise null.

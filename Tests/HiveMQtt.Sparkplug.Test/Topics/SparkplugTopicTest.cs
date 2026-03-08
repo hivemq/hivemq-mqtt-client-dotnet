@@ -314,4 +314,33 @@ public class SparkplugTopicTest
         parsed.EdgeNodeId.Should().Be(original.EdgeNodeId);
         parsed.DeviceId.Should().Be(original.DeviceId);
     }
+
+    [Test]
+    public void Parse_WithStateTopic_SetsPrimaryHostIdAndIsStateMessage()
+    {
+        var topic = SparkplugTopic.Parse("spBv1.0/STATE/myHostId");
+
+        topic.Namespace.Should().Be("spBv1.0");
+        topic.GroupId.Should().Be("STATE");
+        topic.MessageType.Should().Be(SparkplugMessageType.STATE);
+        topic.EdgeNodeId.Should().Be("myHostId");
+        topic.DeviceId.Should().BeNull();
+        topic.IsStateMessage.Should().BeTrue();
+        topic.PrimaryHostId.Should().Be("myHostId");
+    }
+
+    [Test]
+    public void Build_ForStateTopic_ReturnsCorrectString()
+    {
+        var topic = new SparkplugTopic("spBv1.0", "STATE", SparkplugMessageType.STATE, "myHostId");
+        topic.Build().Should().Be("spBv1.0/STATE/myHostId");
+    }
+
+    [Test]
+    public void PrimaryHostId_ForNonStateTopic_IsNull()
+    {
+        var topic = SparkplugTopic.Parse("spBv1.0/group1/NBIRTH/node1");
+        topic.IsStateMessage.Should().BeFalse();
+        topic.PrimaryHostId.Should().BeNull();
+    }
 }
