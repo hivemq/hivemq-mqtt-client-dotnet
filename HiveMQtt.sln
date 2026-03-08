@@ -71,20 +71,68 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Images", "Images", "{26F71F
 		Images\Icon.png = Images\Icon.png
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HiveMQtt.Sparkplug", "Source\HiveMQtt.Sparkplug\HiveMQtt.Sparkplug.csproj", "{0560BF17-A836-4834-AD77-2215788CBC06}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HiveMQtt.Sparkplug.Test", "Tests\HiveMQtt.Sparkplug.Test\HiveMQtt.Sparkplug.Test.csproj", "{25B1E107-45C9-461B-8A39-6A8244A330F5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
 		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{651E017C-85D6-44E5-A116-1F9081AA1092}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{651E017C-85D6-44E5-A116-1F9081AA1092}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{651E017C-85D6-44E5-A116-1F9081AA1092}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{651E017C-85D6-44E5-A116-1F9081AA1092}.Debug|x64.Build.0 = Debug|Any CPU
+		{651E017C-85D6-44E5-A116-1F9081AA1092}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{651E017C-85D6-44E5-A116-1F9081AA1092}.Debug|x86.Build.0 = Debug|Any CPU
 		{651E017C-85D6-44E5-A116-1F9081AA1092}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{651E017C-85D6-44E5-A116-1F9081AA1092}.Release|Any CPU.Build.0 = Release|Any CPU
+		{651E017C-85D6-44E5-A116-1F9081AA1092}.Release|x64.ActiveCfg = Release|Any CPU
+		{651E017C-85D6-44E5-A116-1F9081AA1092}.Release|x64.Build.0 = Release|Any CPU
+		{651E017C-85D6-44E5-A116-1F9081AA1092}.Release|x86.ActiveCfg = Release|Any CPU
+		{651E017C-85D6-44E5-A116-1F9081AA1092}.Release|x86.Build.0 = Release|Any CPU
 		{69FC84C1-751E-45C7-A70F-166812466ED8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{69FC84C1-751E-45C7-A70F-166812466ED8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{69FC84C1-751E-45C7-A70F-166812466ED8}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{69FC84C1-751E-45C7-A70F-166812466ED8}.Debug|x64.Build.0 = Debug|Any CPU
+		{69FC84C1-751E-45C7-A70F-166812466ED8}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{69FC84C1-751E-45C7-A70F-166812466ED8}.Debug|x86.Build.0 = Debug|Any CPU
 		{69FC84C1-751E-45C7-A70F-166812466ED8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{69FC84C1-751E-45C7-A70F-166812466ED8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{69FC84C1-751E-45C7-A70F-166812466ED8}.Release|x64.ActiveCfg = Release|Any CPU
+		{69FC84C1-751E-45C7-A70F-166812466ED8}.Release|x64.Build.0 = Release|Any CPU
+		{69FC84C1-751E-45C7-A70F-166812466ED8}.Release|x86.ActiveCfg = Release|Any CPU
+		{69FC84C1-751E-45C7-A70F-166812466ED8}.Release|x86.Build.0 = Release|Any CPU
+		{0560BF17-A836-4834-AD77-2215788CBC06}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0560BF17-A836-4834-AD77-2215788CBC06}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0560BF17-A836-4834-AD77-2215788CBC06}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0560BF17-A836-4834-AD77-2215788CBC06}.Debug|x64.Build.0 = Debug|Any CPU
+		{0560BF17-A836-4834-AD77-2215788CBC06}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0560BF17-A836-4834-AD77-2215788CBC06}.Debug|x86.Build.0 = Debug|Any CPU
+		{0560BF17-A836-4834-AD77-2215788CBC06}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0560BF17-A836-4834-AD77-2215788CBC06}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0560BF17-A836-4834-AD77-2215788CBC06}.Release|x64.ActiveCfg = Release|Any CPU
+		{0560BF17-A836-4834-AD77-2215788CBC06}.Release|x64.Build.0 = Release|Any CPU
+		{0560BF17-A836-4834-AD77-2215788CBC06}.Release|x86.ActiveCfg = Release|Any CPU
+		{0560BF17-A836-4834-AD77-2215788CBC06}.Release|x86.Build.0 = Release|Any CPU
+		{25B1E107-45C9-461B-8A39-6A8244A330F5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{25B1E107-45C9-461B-8A39-6A8244A330F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{25B1E107-45C9-461B-8A39-6A8244A330F5}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{25B1E107-45C9-461B-8A39-6A8244A330F5}.Debug|x64.Build.0 = Debug|Any CPU
+		{25B1E107-45C9-461B-8A39-6A8244A330F5}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{25B1E107-45C9-461B-8A39-6A8244A330F5}.Debug|x86.Build.0 = Debug|Any CPU
+		{25B1E107-45C9-461B-8A39-6A8244A330F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{25B1E107-45C9-461B-8A39-6A8244A330F5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{25B1E107-45C9-461B-8A39-6A8244A330F5}.Release|x64.ActiveCfg = Release|Any CPU
+		{25B1E107-45C9-461B-8A39-6A8244A330F5}.Release|x64.Build.0 = Release|Any CPU
+		{25B1E107-45C9-461B-8A39-6A8244A330F5}.Release|x86.ActiveCfg = Release|Any CPU
+		{25B1E107-45C9-461B-8A39-6A8244A330F5}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -96,6 +144,8 @@ Global
 		{0555C737-CE4B-4C78-87AB-6296E1E32D01} = {7EDFA103-DB69-4C88-9DE4-97ADBF8253A1}
 		{566DF0E2-1288-4083-9B55-4C8B69BB1432} = {0555C737-CE4B-4C78-87AB-6296E1E32D01}
 		{69FC84C1-751E-45C7-A70F-166812466ED8} = {E1B24F25-B8A4-46EE-B7EB-7803DCFC543F}
+		{0560BF17-A836-4834-AD77-2215788CBC06} = {719809C2-A551-4C4A-9EFD-B10FB5E35BC0}
+		{25B1E107-45C9-461B-8A39-6A8244A330F5} = {E1B24F25-B8A4-46EE-B7EB-7803DCFC543F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {73F36209-F8D6-4066-8951-D97729F773CF}
@@ -105,25 +155,21 @@ Global
 		$0.StandardHeader = $1
 		$0.DotNetNamingPolicy = $2
 		$2.DirectoryNamespaceAssociation = PrefixedHierarchical
-		$0.TextStylePolicy = $3
+		$0.TextStylePolicy = $8
 		$3.FileWidth = 80
 		$3.TabsToSpaces = True
 		$3.scope = text/plain
-		$0.TextStylePolicy = $4
 		$4.inheritsSet = null
 		$4.scope = text/x-csharp
 		$0.CSharpFormattingPolicy = $5
 		$5.scope = text/x-csharp
-		$0.TextStylePolicy = $6
 		$6.inheritsSet = null
 		$6.scope = application/config+xml
-		$0.XmlFormattingPolicy = $7
+		$0.XmlFormattingPolicy = $9
 		$7.inheritsSet = null
 		$7.scope = application/config+xml
-		$0.TextStylePolicy = $8
 		$8.inheritsSet = null
 		$8.scope = application/xml
-		$0.XmlFormattingPolicy = $9
 		$9.scope = application/xml
 		version = 0.1.1
 	EndGlobalSection
