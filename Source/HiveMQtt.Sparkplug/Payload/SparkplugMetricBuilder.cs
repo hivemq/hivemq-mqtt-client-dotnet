@@ -21,6 +21,13 @@ using HiveMQtt.Sparkplug.Protobuf;
 /// <summary>
 /// Builder for creating Sparkplug B metrics with a fluent API.
 /// </summary>
+/// <remarks>
+/// <para><see cref="DataType"/> is generated from <c>sparkplug_b.proto</c>. The proto defines
+/// <c>UInt8</c>, <c>UInt16</c>, etc. (capital I); the C# codegen emits <c>Uint8</c>, <c>Uint16</c>, etc.
+/// (lowercase i) to match C# naming. Code in this assembly references the generated names (e.g.
+/// <see cref="DataType.Uint8"/>). If the proto or codegen is changed, ensure enum member names
+/// remain consistent or update all references (e.g. <c>WithUInt8Value</c>, <c>AsNull(DataType.Uint8)</c>).</para>
+/// </remarks>
 public sealed class SparkplugMetricBuilder
 {
     private readonly Protobuf.Payload.Types.Metric metric = new();

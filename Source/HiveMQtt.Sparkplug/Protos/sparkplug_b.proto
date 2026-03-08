@@ -15,6 +15,9 @@ package org.eclipse.tahu.protobuf;
 
 option csharp_namespace = "HiveMQtt.Sparkplug.Protobuf";
 
+// DataType enum: proto uses UInt8/UInt16/etc. (capital I). The C# code generator emits
+// Uint8/Uint16/etc. (lowercase i). SparkplugMetricBuilder and other C# code reference the
+// generated names; if you change codegen or proto, update those references to avoid build breaks.
 enum DataType {
   // Indexes of Data Types
 

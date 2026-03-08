@@ -343,4 +343,45 @@ public class SparkplugTopicTest
         topic.IsStateMessage.Should().BeFalse();
         topic.PrimaryHostId.Should().BeNull();
     }
+
+    [Test]
+    public void TryParse_WithValidStateTopic_ReturnsTrueAndParsedTopic()
+    {
+        var success = SparkplugTopic.TryParse("spBv1.0/STATE/myHost", out var topic);
+
+        success.Should().BeTrue();
+        topic.Should().NotBeNull();
+        topic!.MessageType.Should().Be(SparkplugMessageType.STATE);
+        topic.IsStateMessage.Should().BeTrue();
+        topic.PrimaryHostId.Should().Be("myHost");
+        topic.Build().Should().Be("spBv1.0/STATE/myHost");
+    }
+
+    [Test]
+    public void Parse_Build_RoundTrip_ForStateTopic_PreservesTopicString()
+    {
+        var topicString = "spBv1.0/STATE/myHostId";
+        var parsed = SparkplugTopic.Parse(topicString);
+
+        parsed.Build().Should().Be(topicString);
+        parsed.IsStateMessage.Should().BeTrue();
+        parsed.PrimaryHostId.Should().Be("myHostId");
+    }
+
+    [Test]
+    public void Parse_WithStateTopic_TooFewParts_ThrowsFormatException()
+    {
+        var action = () => SparkplugTopic.Parse("spBv1.0/STATE");
+
+        action.Should().Throw<FormatException>().WithMessage("*at least 4 parts*");
+    }
+
+    [Test]
+    public void TryParse_WithStateTopicTooFewParts_ReturnsFalse()
+    {
+        var success = SparkplugTopic.TryParse("spBv1.0/STATE", out var topic);
+
+        success.Should().BeFalse();
+        topic.Should().BeNull();
+    }
 }
