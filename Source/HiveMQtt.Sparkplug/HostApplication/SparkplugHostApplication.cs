@@ -343,22 +343,18 @@ public sealed class SparkplugHostApplication : IDisposable
     private static (string Topic, byte[] Payload) BuildStateOfflineMessage(SparkplugHostApplicationOptions options)
     {
         var topic = $"{options.SparkplugNamespace}/STATE/{options.HostApplicationId}";
-        var payload = new Payload
-        {
-            Timestamp = 0,
-        };
-        return (topic, SparkplugPayloadEncoder.Encode(payload));
+        var statePayload = SparkplugStatePayload.CreateOffline(timestampMs: 0);
+        return (topic, statePayload.ToUtf8Bytes());
     }
 
     private async Task PublishStateBirthAsync(CancellationToken cancellationToken)
     {
         var topic = $"{this.options.SparkplugNamespace}/STATE/{this.options.HostApplicationId}";
-        var payload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), 0);
-        var bytes = SparkplugPayloadEncoder.Encode(payload);
+        var statePayload = SparkplugStatePayload.CreateOnline();
         var message = new MQTT5PublishMessage
         {
             Topic = topic,
-            Payload = bytes,
+            Payload = statePayload.ToUtf8Bytes(),
             QoS = QualityOfService.AtLeastOnceDelivery,
             Retain = false,
         };
@@ -463,11 +459,15 @@ public sealed class SparkplugHostApplication : IDisposable
 
     private void RaiseStateReceived(SparkplugTopic topic, string rawTopic, byte[]? payload)
     {
-        var p = payload is { Length: > 0 } && SparkplugPayloadEncoder.TryDecode(payload, out var decoded)
-            ? decoded!
-            : new Payload();
-        var args = new SparkplugMessageReceivedEventArgs(topic, p, rawTopic);
-        this.StateMessageReceived?.Invoke(this, args);
+        if (SparkplugStatePayload.TryDecode(payload, out var statePayload) && statePayload is not null)
+        {
+            var args = new SparkplugMessageReceivedEventArgs(topic, rawTopic, statePayload);
+            this.StateMessageReceived?.Invoke(this, args);
+        }
+        else
+        {
+            this.MessageParseError?.Invoke(this, new SparkplugMessageParseErrorEventArgs(rawTopic, payload, "STATE payload is not valid Sparkplug 3.0 JSON (expected { \"online\": true|false, \"timestamp\": <ms> })."));
+        }
     }
 
     /// <summary>
