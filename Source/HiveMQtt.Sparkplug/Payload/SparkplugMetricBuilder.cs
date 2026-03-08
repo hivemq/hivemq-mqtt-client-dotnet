@@ -27,6 +27,12 @@ using HiveMQtt.Sparkplug.Protobuf;
 /// (lowercase i) to match C# naming. Code in this assembly references the generated names (e.g.
 /// <see cref="DataType.Uint8"/>). If the proto or codegen is changed, ensure enum member names
 /// remain consistent or update all references (e.g. <c>WithUInt8Value</c>, <c>AsNull(DataType.Uint8)</c>).</para>
+/// <para>This builder supports scalar and simple metric types only. Sparkplug B also defines
+/// <see cref="DataType.DataSet"/>, <see cref="DataType.Template"/>, and <see cref="DataType.File"/>.
+/// For those, build the metric using the generated protobuf API: use <see cref="Build"/> to obtain
+/// a <see cref="Protobuf.Payload.Types.Metric"/>, then set <c>Datatype</c> and the corresponding
+/// value (<c>DatasetValue</c>, <c>TemplateValue</c>, or the appropriate field for File) on the
+/// returned instance. See the README for a minimal example.</para>
 /// </remarks>
 public sealed class SparkplugMetricBuilder
 {

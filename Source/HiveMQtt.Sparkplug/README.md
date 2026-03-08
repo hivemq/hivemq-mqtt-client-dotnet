@@ -88,6 +88,15 @@ edgeNode.NodeCommandReceived += async (_, e) =>
 
 STATE topics use the form `spBv1.0/STATE/{primary_host_id}` (no group segment). A scoped filter such as `spBv1.0/myGroup/#` therefore does **not** match STATE messages, so the Host will not receive STATE from other Host Applications when using a scoped filter. To receive STATE from other Hosts, use **`spBv1.0/#`** (the default) or add a separate subscription to **`spBv1.0/STATE/#`** on the same client and handle those messages in your application.
 
+### DataSet, Template, and File metrics
+
+`SparkplugMetricBuilder` supports scalar and simple types (integers, float, string, bytes, UUID, etc.). Sparkplug B also defines **DataSet**, **Template**, and **File** metric types. For those, build the metric via the protobuf API:
+
+1. Use the builder for name/alias/timestamp if needed, call `Build()`, then set `Datatype` and the complex value on the returned `Payload.Types.Metric`.
+2. Or construct a new `Payload.Types.Metric` and set `Name`, `Datatype = (uint)DataType.DataSet` (or `DataType.Template` / `DataType.File`), and the corresponding `DatasetValue`, `TemplateValue`, or other field from the generated `HiveMQtt.Sparkplug.Protobuf` types.
+
+Example (DataSet): set `metric.Datatype = (uint)DataType.DataSet` and `metric.DatasetValue = new Payload.Types.DataSet { NumOfColumns = 2, Columns = { "col1", "col2" }, Types = { (uint)DataType.String, (uint)DataType.Int32 }, Rows = { ... } }`. See `sparkplug_b.proto` and the generated `Payload.Types` for the full structure.
+
 ## TCK compatibility
 
 The [Eclipse Sparkplug TCK](https://sparkplug.eclipse.org/specification/tck-process) validates implementations for Sparkplug compatibility. The TCK is typically run against **brokers** (Sparkplug Compliant / Sparkplug Aware). HiveMQtt.Sparkplug is a **client** library (Host Application and Edge Node).
