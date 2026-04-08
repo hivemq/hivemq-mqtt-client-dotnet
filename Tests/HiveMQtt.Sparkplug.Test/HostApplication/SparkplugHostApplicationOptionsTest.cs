@@ -36,6 +36,22 @@ public class SparkplugHostApplicationOptionsTest
     }
 
     [Test]
+    public void Validate_With_Empty_SparkplugNamespace_Throws()
+    {
+        var options = new SparkplugHostApplicationOptions
+        {
+            SparkplugNamespace = string.Empty,
+            SparkplugTopicFilter = "spBv1.0/#",
+            HostApplicationId = "host1",
+        };
+
+        Action act = options.Validate;
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*SparkplugNamespace*cannot*null*empty*");
+    }
+
+    [Test]
     public void Validate_With_Empty_TopicFilter_Throws()
     {
         var options = new SparkplugHostApplicationOptions

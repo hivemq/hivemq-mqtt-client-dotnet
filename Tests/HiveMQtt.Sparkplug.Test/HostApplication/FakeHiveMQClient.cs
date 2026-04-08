@@ -96,7 +96,7 @@ internal sealed class FakeHiveMQClient : IHiveMQClient
     {
         // SUBACK: fixed 0x90, remaining length = 3 + N (N = reason codes), packet id 0x00 0x01, prop len 0x00, N reason codes (0x01)
         var n = options.TopicFilters.Count;
-        var subAckBytes = new byte[6 + n];
+        var subAckBytes = new byte[5 + n];
         subAckBytes[0] = 0x90;
         subAckBytes[1] = (byte)(3 + n);
         subAckBytes[2] = 0x00;

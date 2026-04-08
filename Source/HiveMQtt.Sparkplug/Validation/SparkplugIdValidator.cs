@@ -18,7 +18,8 @@ using System;
 
 /// <summary>
 /// Validates Sparkplug B identifiers (Group ID, Edge Node ID, Device ID, Host Application ID) per spec.
-/// IDs appear in MQTT topic segments and must not contain MQTT wildcards or null characters when using strict mode.
+/// IDs appear in MQTT topic segments. Null, empty, whitespace-only, overlong, and U+0000 values are always rejected.
+/// When <c>strict</c> is true, MQTT wildcard characters (<c>#</c>, <c>+</c>) are also rejected.
 /// </summary>
 public static class SparkplugIdValidator
 {
@@ -28,41 +29,45 @@ public static class SparkplugIdValidator
     public const int MaxIdLength = 65535;
 
     /// <summary>
-    /// Validates a Group ID. When strict is true, rejects null, empty, whitespace, and characters #, +, and null (U+0000).
+    /// Validates a Group ID. Always rejects null, empty, whitespace-only, overlong, and U+0000 values.
+    /// When <paramref name="strict"/> is true, also rejects MQTT wildcard characters (<c>#</c>, <c>+</c>).
     /// </summary>
     /// <param name="groupId">The Group ID to validate.</param>
     /// <param name="parameterName">The parameter name for exception messages (e.g. nameof(groupId)).</param>
-    /// <param name="strict">When true, rejects identifiers containing MQTT wildcards (#, +) or null character.</param>
+    /// <param name="strict">When true, also rejects MQTT wildcard characters (<c>#</c>, <c>+</c>).</param>
     /// <exception cref="ArgumentException">Thrown when the Group ID is invalid.</exception>
     public static void ValidateGroupId(string? groupId, string parameterName = "groupId", bool strict = false) =>
         ValidateIdentifier(groupId, parameterName, "Group ID", strict);
 
     /// <summary>
-    /// Validates an Edge Node ID. When strict is true, rejects null, empty, whitespace, and characters #, +, and null (U+0000).
+    /// Validates an Edge Node ID. Always rejects null, empty, whitespace-only, overlong, and U+0000 values.
+    /// When <paramref name="strict"/> is true, also rejects MQTT wildcard characters (<c>#</c>, <c>+</c>).
     /// </summary>
     /// <param name="edgeNodeId">The Edge Node ID to validate.</param>
     /// <param name="parameterName">The parameter name for exception messages.</param>
-    /// <param name="strict">When true, rejects identifiers containing MQTT wildcards (#, +) or null character.</param>
+    /// <param name="strict">When true, also rejects MQTT wildcard characters (<c>#</c>, <c>+</c>).</param>
     /// <exception cref="ArgumentException">Thrown when the Edge Node ID is invalid.</exception>
     public static void ValidateEdgeNodeId(string? edgeNodeId, string parameterName = "edgeNodeId", bool strict = false) =>
         ValidateIdentifier(edgeNodeId, parameterName, "Edge Node ID", strict);
 
     /// <summary>
-    /// Validates a Device ID. When strict is true, rejects null, empty, whitespace, and characters #, +, and null (U+0000).
+    /// Validates a Device ID. Always rejects null, empty, whitespace-only, overlong, and U+0000 values.
+    /// When <paramref name="strict"/> is true, also rejects MQTT wildcard characters (<c>#</c>, <c>+</c>).
     /// </summary>
     /// <param name="deviceId">The Device ID to validate.</param>
     /// <param name="parameterName">The parameter name for exception messages.</param>
-    /// <param name="strict">When true, rejects identifiers containing MQTT wildcards (#, +) or null character.</param>
+    /// <param name="strict">When true, also rejects MQTT wildcard characters (<c>#</c>, <c>+</c>).</param>
     /// <exception cref="ArgumentException">Thrown when the Device ID is invalid.</exception>
     public static void ValidateDeviceId(string? deviceId, string parameterName = "deviceId", bool strict = false) =>
         ValidateIdentifier(deviceId, parameterName, "Device ID", strict);
 
     /// <summary>
-    /// Validates a Host Application ID (used in STATE topic). When strict is true, rejects null, empty, whitespace, and characters #, +, and null (U+0000).
+    /// Validates a Host Application ID (used in STATE topic). Always rejects null, empty, whitespace-only, overlong, and U+0000 values.
+    /// When <paramref name="strict"/> is true, also rejects MQTT wildcard characters (<c>#</c>, <c>+</c>).
     /// </summary>
     /// <param name="hostApplicationId">The Host Application ID to validate.</param>
     /// <param name="parameterName">The parameter name for exception messages.</param>
-    /// <param name="strict">When true, rejects identifiers containing MQTT wildcards (#, +) or null character.</param>
+    /// <param name="strict">When true, also rejects MQTT wildcard characters (<c>#</c>, <c>+</c>).</param>
     /// <exception cref="ArgumentException">Thrown when the Host Application ID is invalid.</exception>
     public static void ValidateHostApplicationId(string? hostApplicationId, string parameterName = "hostApplicationId", bool strict = false) =>
         ValidateIdentifier(hostApplicationId, parameterName, "Host Application ID", strict);
@@ -73,7 +78,7 @@ public static class SparkplugIdValidator
     /// <param name="value">The value to validate.</param>
     /// <param name="parameterName">The parameter name for exception messages.</param>
     /// <param name="displayName">Display name for error messages (e.g. "Group ID").</param>
-    /// <param name="strict">When true, rejects identifiers containing #, +, or null character.</param>
+    /// <param name="strict">When true, also rejects MQTT wildcard characters (<c>#</c>, <c>+</c>).</param>
     /// <exception cref="ArgumentException">Thrown when the identifier is invalid.</exception>
     public static void ValidateIdentifier(string? value, string parameterName, string displayName, bool strict = false)
     {

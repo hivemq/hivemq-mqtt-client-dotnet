@@ -71,9 +71,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Images", "Images", "{26F71F
 		Images\Icon.png = Images\Icon.png
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HiveMQtt.Sparkplug", "Source\HiveMQtt.Sparkplug\HiveMQtt.Sparkplug.csproj", "{0560BF17-A836-4834-AD77-2215788CBC06}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HiveMQtt.Sparkplug", "Source\HiveMQtt.Sparkplug\HiveMQtt.Sparkplug.csproj", "{0560BF17-A836-4834-AD77-2215788CBC06}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HiveMQtt.Sparkplug.Test", "Tests\HiveMQtt.Sparkplug.Test\HiveMQtt.Sparkplug.Test.csproj", "{25B1E107-45C9-461B-8A39-6A8244A330F5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HiveMQtt.Sparkplug.Test", "Tests\HiveMQtt.Sparkplug.Test\HiveMQtt.Sparkplug.Test.csproj", "{25B1E107-45C9-461B-8A39-6A8244A330F5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -155,7 +155,7 @@ Global
 		$0.StandardHeader = $1
 		$0.DotNetNamingPolicy = $2
 		$2.DirectoryNamespaceAssociation = PrefixedHierarchical
-		$0.TextStylePolicy = $8
+		$0.TextStylePolicy = $3
 		$3.FileWidth = 80
 		$3.TabsToSpaces = True
 		$3.scope = text/plain

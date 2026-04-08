@@ -125,6 +125,7 @@ public sealed class SparkplugTopic
     /// <param name="topic">The topic string to parse.</param>
     /// <returns>A <see cref="SparkplugTopic"/> instance.</returns>
     /// <exception cref="ArgumentException">Thrown when the topic is null or empty.</exception>
+    /// <exception cref="ArgumentException">Also thrown when parsed segments fail constructor validation (e.g. empty namespace or group ID).</exception>
     /// <exception cref="FormatException">Thrown when the topic format is invalid.</exception>
     public static SparkplugTopic Parse(string topic)
     {

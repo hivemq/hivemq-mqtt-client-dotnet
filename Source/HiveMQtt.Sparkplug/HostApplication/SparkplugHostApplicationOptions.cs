@@ -83,6 +83,11 @@ public class SparkplugHostApplicationOptions
             throw new InvalidOperationException("SparkplugTopicFilter cannot be null or empty.");
         }
 
+        if (string.IsNullOrWhiteSpace(this.SparkplugNamespace))
+        {
+            throw new InvalidOperationException("SparkplugNamespace cannot be null or empty.");
+        }
+
         if (this.UseStateMessages && string.IsNullOrWhiteSpace(this.HostApplicationId))
         {
             throw new InvalidOperationException("HostApplicationId must be set when UseStateMessages is true.");
