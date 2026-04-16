@@ -1,7 +1,7 @@
 ![HiveMQtt logo](https://i.imgur.com/YmafvGk.png)
 ![HiveMQ C# MQTT Client banner](https://i.imgur.com/Tnl78V6.png)
 
-# The Spectacular C# MQTT Client for .NET
+# The Spectacular C# MQTT and Sparkplug Clients for .NET
 
 [![NuGet Version](https://img.shields.io/nuget/v/HiveMQtt?style=for-the-badge)](https://www.nuget.org/packages/HiveMQtt)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/hivemq/hivemq-mqtt-client-dotnet?style=for-the-badge)](https://github.com/hivemq/hivemq-mqtt-client-dotnet/releases)
@@ -15,11 +15,13 @@
 ![Static Badge](https://img.shields.io/badge/.NET-9.0-%23512BD4?style=for-the-badge)
 ![Static Badge](https://img.shields.io/badge/.NET-10.0-%23512BD4?style=for-the-badge)
 
+> Looking for the **Sparkplug Client**? Use [HiveMQtt.Sparkplug](https://www.nuget.org/packages/HiveMQtt.Sparkplug/) and start with the [Sparkplug README](./Source/HiveMQtt.Sparkplug/README.md) for quick start guides and examples.
+
 ### 💽 Installation & Compatibility
 * **Easy-to-Install**: Available as a [NuGet package](https://www.nuget.org/packages/HiveMQtt).
-* **Sparkplug B extension**: The [HiveMQtt.Sparkplug](https://www.nuget.org/packages/HiveMQtt.Sparkplug) package adds Host Application and Edge Node support for industrial IoT (IIoT) using the [Eclipse Sparkplug B 3.0](https://sparkplug.eclipse.org/specification/version/3.0) specification—install with `dotnet add package HiveMQtt.Sparkplug`.
 * **Globally Compatible**: Built to be a fully compliant MQTT 5.0 client compatible with all modern MQTT brokers.
 * **Multi-Targeted**: Supports .NET 6.0, 7.0, 8.0, 9.0 & 10.0
+* **Sparkplug Client extension**: The [HiveMQtt.Sparkplug](https://www.nuget.org/packages/HiveMQtt.Sparkplug) package adds Host Application and Edge Node support for industrial IoT (IIoT) using the [Eclipse Sparkplug B 3.0](https://sparkplug.eclipse.org/specification/version/3.0) specification—install with `dotnet add package HiveMQtt.Sparkplug` and see the [Sparkplug README](./Source/HiveMQtt.Sparkplug/README.md) for full details.
 
 ### 🚀 Features
 * **MQTT 5.0 Support**: Fully compliant with the latest [MQTT 5.0 specification](https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.html), ensuring compatibility with modern MQTT brokers.
