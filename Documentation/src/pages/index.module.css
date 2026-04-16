@@ -185,6 +185,85 @@
 }
 
 /* ==========================================================================
+   Client Options Section
+   ========================================================================== */
+
+.clientOptionsSection {
+  padding: 5rem 0;
+}
+
+.clientOptionsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+@media screen and (max-width: 996px) {
+  .clientOptionsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.clientOptionCard {
+  position: relative;
+  padding: 2rem;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+  background: #fff;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme='dark'] .clientOptionCard {
+  border-color: #3a3a3a;
+  background: #2a2a2a;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.clientOptionBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  background: #ffc107;
+  color: #1a1a2e;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.clientOptionCard h3 {
+  margin-bottom: 0.5rem;
+}
+
+.clientAudience {
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.clientOptionCard p {
+  color: #666;
+  line-height: 1.6;
+}
+
+[data-theme='dark'] .clientOptionCard p {
+  color: #aaa;
+}
+
+.clientOptionCard .button--primary {
+  margin-top: 0.75rem;
+  background: #ffc107;
+  border-color: #ffc107;
+  color: #1a1a2e;
+  font-weight: 600;
+}
+
+.clientOptionCard .button--primary:hover {
+  background: #e5ac00;
+  border-color: #e5ac00;
+}
+
+/* ==========================================================================
    Features Section
    ========================================================================== */
 

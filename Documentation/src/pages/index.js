@@ -2,9 +2,7 @@ import Heading from '@theme/Heading';
 import Layout from '@theme/Layout';
 import Link from '@docusaurus/Link';
 import CodeBlock from '@theme/CodeBlock';
-import clsx from 'clsx';
 import styles from './index.module.css';
-import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 
 const installCode = `dotnet add package HiveMQtt`;
 
@@ -87,6 +85,36 @@ const UseCaseList = [
   },
 ];
 
+const ClientOptionsList = [
+  {
+    icon: '1',
+    title: 'HiveMQtt MQTT Client',
+    audience: 'Best for most applications',
+    description:
+      'Use the full-featured MQTT 5 client with subscription tracking, convenient callbacks, and production-ready defaults.',
+    href: '/docs/hivemqtt/intro',
+    cta: 'Explore HiveMQtt',
+  },
+  {
+    icon: '2',
+    title: 'RawClient MQTT Client',
+    audience: 'Best for performance-critical scenarios',
+    description:
+      'Use the low-level RawClient API for minimal overhead, direct packet handling, and custom message routing.',
+    href: '/docs/rawclient/intro',
+    cta: 'Explore RawClient',
+  },
+  {
+    icon: '3',
+    title: 'Sparkplug Client',
+    audience: 'Best for industrial Sparkplug B 3.0',
+    description:
+      'Build Host Applications and Edge Nodes with Sparkplug topic/payload support powered by HiveMQtt.Sparkplug.',
+    href: '/docs/sparkplug/intro',
+    cta: 'Explore Sparkplug',
+  },
+];
+
 function HeroSection() {
   return (
     <header className={styles.hero}>
@@ -100,11 +128,11 @@ function HeroSection() {
             HiveMQtt
           </Heading>
           <p className={styles.heroSubtitle}>
-            The C# MQTT Client for .NET
+            HiveMQ MQTT & Sparkplug Clients for C#/.NET
           </p>
           <p className={styles.heroDescription}>
-            Build reliable, high-performance IoT applications with the official HiveMQ MQTT client for .NET. 
-            Fully MQTT 5.0 compliant and designed for enterprise-grade deployments.
+            Build reliable, high-performance IoT applications with HiveMQ's official C#/.NET client lineup:
+            HiveMQtt, RawClient, and HiveMQtt.Sparkplug.
           </p>
           <div className={styles.heroBadges}>
             <img src="https://img.shields.io/nuget/v/HiveMQtt?style=for-the-badge&color=ffc107" alt="NuGet Version" />
@@ -112,7 +140,7 @@ function HeroSection() {
             <img src="https://img.shields.io/github/license/hivemq/hivemq-mqtt-client-dotnet?style=for-the-badge&color=0d6efd" alt="License" />
           </div>
           <div className={styles.heroButtons}>
-            <Link className="button button--primary button--lg" to="/docs/quickstart">
+            <Link className="button button--primary button--lg" to="/docs/hivemqtt/quickstart">
               Get Started
             </Link>
             <Link className="button button--secondary button--lg" to="https://github.com/hivemq/hivemq-mqtt-client-dotnet">
@@ -169,6 +197,32 @@ function FeaturesSection() {
   );
 }
 
+function ClientOptionsSection() {
+  return (
+    <section className={styles.clientOptionsSection}>
+      <div className="container">
+        <div className={styles.sectionHeader}>
+          <Heading as="h2">Choose Your Client Path</Heading>
+          <p>Start with the client that matches your use case, then dive into targeted docs.</p>
+        </div>
+        <div className={styles.clientOptionsGrid}>
+          {ClientOptionsList.map((client) => (
+            <div key={client.title} className={styles.clientOptionCard}>
+              <span className={styles.clientOptionBadge}>{client.icon}</span>
+              <Heading as="h3">{client.title}</Heading>
+              <p className={styles.clientAudience}>{client.audience}</p>
+              <p>{client.description}</p>
+              <Link className="button button--primary" to={client.href}>
+                {client.cta}
+              </Link>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function CodeExampleSection() {
   return (
     <section className={styles.codeSection}>
@@ -188,7 +242,7 @@ function CodeExampleSection() {
                 <li>✓ Automatic reconnection support</li>
                 <li>✓ Per-subscription handlers</li>
               </ul>
-              <Link className="button button--primary" to="/docs/quickstart">
+              <Link className="button button--primary" to="/docs/hivemqtt/quickstart">
                 View Full Documentation
               </Link>
             </div>
@@ -315,7 +369,7 @@ function CTASection() {
             <br />Free tier includes up to 100 device connections — no credit card required.
           </p>
           <div className={styles.ctaButtons}>
-            <Link className="button button--primary button--lg" to="/docs/quickstart">
+            <Link className="button button--primary button--lg" to="/docs/hivemqtt/quickstart">
               Read the Docs
             </Link>
             <Link className="button button--secondary button--lg" to="https://console.hivemq.cloud/">
@@ -329,14 +383,14 @@ function CTASection() {
 }
 
 export default function Home() {
-  const {siteConfig} = useDocusaurusContext();
   return (
     <Layout
-      title="HiveMQtt - C# MQTT Client for .NET"
-      description="The official HiveMQ MQTT 5.0 client for .NET. Build reliable, high-performance IoT applications with enterprise-grade security.">
+      title="HiveMQ MQTT & Sparkplug Clients for C#/.NET"
+      description="Official HiveMQ C#/.NET clients for MQTT 5.0 and Sparkplug: HiveMQtt, RawClient, and HiveMQtt.Sparkplug.">
       <HeroSection />
       <main>
         <InstallSection />
+        <ClientOptionsSection />
         <FeaturesSection />
         <CodeExampleSection />
         <UseCasesSection />
