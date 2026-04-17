@@ -51,6 +51,8 @@ internal sealed class FakeHiveMQClient : IHiveMQClient
 
     public List<MQTT5PublishMessage> PublishedMessages { get; } = new();
 
+    public Func<MQTT5PublishMessage, Exception?>? PublishFailureFactory { get; set; }
+
     public bool IsConnected() => this.connected && !this.disposed;
 
     public Task<ConnectResult> ConnectAsync(ConnectOptions? connectOptions = null)
@@ -69,6 +71,12 @@ internal sealed class FakeHiveMQClient : IHiveMQClient
 
     public Task<PublishResult> PublishAsync(MQTT5PublishMessage message, CancellationToken cancellationToken = default)
     {
+        var publishFailure = this.PublishFailureFactory?.Invoke(message);
+        if (publishFailure != null)
+        {
+            throw publishFailure;
+        }
+
         this.PublishedMessages.Add(message);
         return Task.FromResult(new PublishResult(message));
     }

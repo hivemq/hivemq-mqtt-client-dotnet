@@ -64,10 +64,10 @@ public static class SparkplugPayloadEncoder
     /// <summary>
     /// Attempts to decode a byte array to a Sparkplug B payload.
     /// </summary>
-    /// <param name="data">The byte array to decode.</param>
+    /// <param name="data">The byte array to decode. Can be null or empty.</param>
     /// <param name="payload">When successful, contains the decoded payload; otherwise, null.</param>
     /// <returns>True if decoding succeeded; otherwise, false.</returns>
-    public static bool TryDecode(byte[] data, out Protobuf.Payload? payload)
+    public static bool TryDecode(byte[]? data, out Protobuf.Payload? payload)
     {
         payload = null;
 

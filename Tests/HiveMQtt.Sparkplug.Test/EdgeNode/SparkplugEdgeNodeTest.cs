@@ -158,6 +158,30 @@ public class SparkplugEdgeNodeTest
     }
 
     [Test]
+    public async Task PublishNodeDataAsync_With_Empty_Metrics_Throws()
+    {
+        var client = new FakeHiveMQClient();
+        var options = new SparkplugEdgeNodeOptions { GroupId = "g1", EdgeNodeId = "n1" };
+        var node = new SparkplugEdgeNode(client, options);
+
+        Func<Task> act = () => node.PublishNodeDataAsync(Array.Empty<Payload.Types.Metric>());
+
+        await act.Should().ThrowAsync<ArgumentException>().WithParameterName("metrics").ConfigureAwait(false);
+    }
+
+    [Test]
+    public async Task PublishDeviceDataAsync_With_Empty_Metrics_Throws()
+    {
+        var client = new FakeHiveMQClient();
+        var options = new SparkplugEdgeNodeOptions { GroupId = "g1", EdgeNodeId = "n1" };
+        var node = new SparkplugEdgeNode(client, options);
+
+        Func<Task> act = () => node.PublishDeviceDataAsync("d1", Array.Empty<Payload.Types.Metric>());
+
+        await act.Should().ThrowAsync<ArgumentException>().WithParameterName("metrics").ConfigureAwait(false);
+    }
+
+    [Test]
     public async Task PublishDeviceDeathAsync_With_Whitespace_DeviceId_Throws()
     {
         var client = new FakeHiveMQClient();
@@ -339,5 +363,42 @@ public class SparkplugEdgeNodeTest
         var bdSeqMetric = payload.Metrics.FirstOrDefault(m => m.Name == SparkplugPayloadEncoder.BdSeqMetricName);
         bdSeqMetric.Should().NotBeNull();
         bdSeqMetric!.LongValue.Should().Be(1UL);
+    }
+
+    [Test]
+    public async Task StartAsync_WhenNBirthPublishFails_DoesNotDuplicateMessageHandlerOnRetry()
+    {
+        var client = new FakeHiveMQClient();
+        var options = new SparkplugEdgeNodeOptions { GroupId = "g1", EdgeNodeId = "n1" };
+        var node = new SparkplugEdgeNode(client, options);
+
+        var failFirstBirth = true;
+        client.PublishFailureFactory = message =>
+        {
+            if (failFirstBirth && message.Topic == "spBv1.0/g1/NBIRTH/n1")
+            {
+                failFirstBirth = false;
+                return new InvalidOperationException("NBIRTH publish failed.");
+            }
+
+            return null;
+        };
+
+        Func<Task> firstStart = () => node.StartAsync();
+        await firstStart.Should().ThrowAsync<InvalidOperationException>().ConfigureAwait(false);
+        node.IsConnected.Should().BeFalse();
+
+        var commandEvents = 0;
+        node.NodeCommandReceived += (_, _) => commandEvents++;
+
+        await node.StartAsync().ConfigureAwait(false);
+
+        var topic = "spBv1.0/g1/NCMD/n1";
+        var payload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), 0);
+        payload.Metrics.Add(SparkplugMetricBuilder.Create("Rebirth").WithBooleanValue(true).Build());
+        client.SimulateMessageReceived(topic, SparkplugPayloadEncoder.Encode(payload));
+
+        await Task.Delay(100).ConfigureAwait(false);
+        commandEvents.Should().Be(1, "message handler should be wired exactly once after retrying StartAsync.");
     }
 }

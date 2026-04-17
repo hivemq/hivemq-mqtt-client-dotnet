@@ -105,7 +105,8 @@ public class SparkplugPayloadEncoderTest
     [Test]
     public void TryDecode_WithNullBytes_ReturnsFalse()
     {
-        var success = SparkplugPayloadEncoder.TryDecode(null!, out var payload);
+        var bytes = default(byte[]);
+        var success = SparkplugPayloadEncoder.TryDecode(bytes, out var payload);
 
         success.Should().BeFalse();
         payload.Should().BeNull();

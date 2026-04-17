@@ -24,7 +24,7 @@ Sparkplug B 3.0 extension for the [HiveMQ MQTT Client for .NET](https://github.c
 - **Built for IIoT**: Adds Sparkplug Host Application and Edge Node workflows on top of `HiveMQtt`.
 - **Multi-Targeted**: Supports .NET 6.0, 7.0, 8.0, 9.0 and 10.0.
 - **Standards-Based**: Aligned with [Eclipse Sparkplug B 3.0](https://sparkplug.eclipse.org/specification/version/3.0) and `sparkplug_b.proto`.
-- **Status**: This extension is in **alpha**. APIs may change before stable release.
+- **Status**: This extension is in **beta**. APIs may change before stable release.
 
 ### 🚀 Features
 - **Host Application**: Subscribe to Sparkplug topics (`spBv1.0/#` or scoped), track Edge Node and Device online/offline state, publish NCMD/DCMD, and optionally use STATE messages and LWT.

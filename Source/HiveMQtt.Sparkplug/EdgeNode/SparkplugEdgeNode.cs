@@ -16,6 +16,7 @@ namespace HiveMQtt.Sparkplug.EdgeNode;
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using HiveMQtt.Client;
@@ -138,6 +139,7 @@ public sealed class SparkplugEdgeNode : IDisposable
         IEnumerable<Payload.Types.Metric>? nodeBirthMetrics = null,
         CancellationToken cancellationToken = default)
     {
+        var connectedByThisStart = false;
         await this.startStopLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
@@ -162,6 +164,8 @@ public sealed class SparkplugEdgeNode : IDisposable
                 {
                     throw new InvalidOperationException($"Connect failed: {connectResult.ReasonString ?? connectResult.ReasonCode.ToString()}.");
                 }
+
+                connectedByThisStart = true;
             }
 
             this.client.OnMessageReceived += this.OnClientMessageReceived;
@@ -176,7 +180,6 @@ public sealed class SparkplugEdgeNode : IDisposable
 
             if (subscribeResult.Subscriptions.Count != subOptions.TopicFilters.Count)
             {
-                this.client.OnMessageReceived -= this.OnClientMessageReceived;
                 throw new InvalidOperationException($"Subscribe failed: expected {subOptions.TopicFilters.Count} subscription results, got {subscribeResult.Subscriptions.Count}.");
             }
 
@@ -186,7 +189,6 @@ public sealed class SparkplugEdgeNode : IDisposable
                 var granted = reasonCode is SubAckReasonCode.GrantedQoS0 or SubAckReasonCode.GrantedQoS1 or SubAckReasonCode.GrantedQoS2;
                 if (!granted)
                 {
-                    this.client.OnMessageReceived -= this.OnClientMessageReceived;
                     throw new InvalidOperationException($"Subscribe failed for topic filter index {i}: {reasonCode}.");
                 }
             }
@@ -215,6 +217,26 @@ public sealed class SparkplugEdgeNode : IDisposable
             {
                 this.publishSequenceLock.Release();
             }
+        }
+        catch
+        {
+            // If startup fails after wiring, always unwind the handler to avoid duplicate command processing on retry.
+            this.client.OnMessageReceived -= this.OnClientMessageReceived;
+
+            // If this instance created the connection for this startup attempt, best-effort disconnect on failure.
+            if (connectedByThisStart && this.ownsClient && this.client.IsConnected())
+            {
+                try
+                {
+                    await this.client.DisconnectAsync().ConfigureAwait(false);
+                }
+                catch
+                {
+                    // Preserve the original startup exception.
+                }
+            }
+
+            throw;
         }
         finally
         {
@@ -311,13 +333,19 @@ public sealed class SparkplugEdgeNode : IDisposable
     public Task<PublishResult> PublishNodeDataAsync(IEnumerable<Payload.Types.Metric> metrics, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(metrics);
+        var metricList = metrics as IList<Payload.Types.Metric> ?? metrics.ToList();
+        if (metricList.Count == 0)
+        {
+            throw new ArgumentException("At least one metric is required.", nameof(metrics));
+        }
+
         var topic = SparkplugTopic.NodeData(this.options.GroupId!, this.options.EdgeNodeId!, this.options.SparkplugNamespace);
         return this.PublishPayloadAndAdvanceSequenceAsync(
             topic,
             seq =>
             {
                 var payload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), seq);
-                foreach (var m in metrics)
+                foreach (var m in metricList)
                 {
                     payload.Metrics.Add(m);
                 }
@@ -396,13 +424,19 @@ public sealed class SparkplugEdgeNode : IDisposable
     {
         SparkplugIdValidator.ValidateDeviceId(deviceId, nameof(deviceId), this.options.StrictIdentifierValidation);
         ArgumentNullException.ThrowIfNull(metrics);
+        var metricList = metrics as IList<Payload.Types.Metric> ?? metrics.ToList();
+        if (metricList.Count == 0)
+        {
+            throw new ArgumentException("At least one metric is required.", nameof(metrics));
+        }
+
         var topic = SparkplugTopic.DeviceData(this.options.GroupId!, this.options.EdgeNodeId!, deviceId, this.options.SparkplugNamespace);
         return this.PublishPayloadAndAdvanceSequenceAsync(
             topic,
             seq =>
             {
                 var payload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), seq);
-                foreach (var m in metrics)
+                foreach (var m in metricList)
                 {
                     payload.Metrics.Add(m);
                 }
