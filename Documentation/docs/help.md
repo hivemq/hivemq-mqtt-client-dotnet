@@ -4,7 +4,7 @@ sidebar_position: 100
 
 # Getting Help
 
-Need assistance with the HiveMQ MQTT Client for .NET? Here are your options, from self-service to professional support.
+Need assistance with the HiveMQ C#/.NET MQTT and Sparkplug client suite? Here are your options, from self-service to professional support.
 
 ## Quick Links
 
@@ -20,9 +20,10 @@ Before reaching out, try these common debugging steps:
 
 ### Enable Detailed Logging
 
+Start with the [Configure Logging](/docs/hivemqtt/how-to/configure-logging) guide, then enable TRACE output while troubleshooting:
+
 ```csharp
 // Add NLog.config to your project with TRACE level
-// See: /docs/how-to/configure-logging
 ```
 
 ### Check Connection Issues

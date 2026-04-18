@@ -1,0 +1,8 @@
+{
+  "label": "The Sparkplug client",
+  "position": 3,
+  "link": {
+    "type": "generated-index",
+    "description": "Build Sparkplug B 3.0 Host Applications and Edge Nodes with HiveMQtt.Sparkplug."
+  }
+}

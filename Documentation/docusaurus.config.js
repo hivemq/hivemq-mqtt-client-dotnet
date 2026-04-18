@@ -8,8 +8,8 @@ import {themes as prismThemes} from 'prism-react-renderer';
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'HiveMQtt Documentation',
-  tagline: 'The C# MQTT Client for .NET by HiveMQ',
+  title: 'HiveMQ MQTT & Sparkplug Clients for C#/.NET',
+  tagline: 'Official C#/.NET MQTT and Sparkplug clients by HiveMQ',
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
@@ -67,20 +67,15 @@ const config = {
       // Replace with your project's social card
       image: 'img/docusaurus-social-card.jpg',
       navbar: {
-  	    title: 'HiveMQtt: A C# MQTT Client by HiveMQ',
+  	    title: 'HiveMQ MQTT & Sparkplug Clients for C#/.NET',
         logo: {
           alt: 'HiveMQ Logo',
           src: 'img/logo.png',
         },
         items: [
-          {
-            type: 'docSidebar',
-            sidebarId: 'docsSidebar',
-            position: 'left',
-            label: 'Docs',
-          },
-          {to: '/docs/events', label: 'Events', position: 'left'},
-          {to: '/docs/category/how-to-guides', label: 'How-To\'s', position: 'left'},
+          {to: '/docs/hivemqtt/intro', label: 'HiveMQtt', position: 'left'},
+          {to: '/docs/rawclient/intro', label: 'RawClient', position: 'left'},
+          {to: '/docs/sparkplug/intro', label: 'Sparkplug', position: 'left'},
           {
             href: 'https://github.com/hivemq/hivemq-mqtt-client-dotnet',
             label: 'GitHub',
@@ -95,16 +90,20 @@ const config = {
             title: 'Sections',
             items: [
               {
-                label: 'Docs',
-                to: '/docs/intro',
+                label: 'HiveMQtt',
+                to: '/docs/hivemqtt/intro',
               },
               {
-                label: 'Events',
-                to: '/docs/events',
+                label: 'RawClient',
+                to: '/docs/rawclient/intro',
               },
               {
-                label: 'How-To\'s',
-                to: '/docs/category/how-to-guides',
+                label: 'Sparkplug',
+                to: '/docs/sparkplug/intro',
+              },
+              {
+                label: 'Getting Help',
+                to: '/docs/help',
               },
             ],
           },

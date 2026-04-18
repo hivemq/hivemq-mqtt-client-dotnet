@@ -31,60 +31,44 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
     <MinVerTagPrefix>v</MinVerTagPrefix>
+    <RootNamespace>HiveMQtt.Sparkplug</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <PropertyGroup Label="Package">
-    <Product>HiveMQtt</Product>
-    <Description>The HiveMQ MQTT Client is a MQTT 5.0 compatible C# library.</Description>
-    <PackageTags>MQTT;HIVEMQ;IOT;MQTTClient;MQTT5;QoS;MQTTTopics;IndustrialIoT;ConnectedDevices;EdgeComputing;IoTDevices;Queue;Message;EmbeddedSystems;M2M;SensorNetwork</PackageTags>
+    <Product>HiveMQtt.Sparkplug</Product>
+    <Description>Sparkplug B 3.0 extension for the HiveMQ MQTT Client. Provides Host Application and Edge Node support for industrial IoT.</Description>
+    <PackageTags>MQTT;HIVEMQ;Sparkplug;SparkplugB;IIoT;IndustrialIoT;EdgeNode;HostApplication;SCADA;OT;IT</PackageTags>
     <Copyright>Copyright (c) HiveMQ GmbH</Copyright>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DefineConstants>DEBUG;NET;NET8_0;NETCOREAPP</DefineConstants>
+    <DefineConstants>DEBUG;NET;NETCOREAPP</DefineConstants>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
 
-  <!-- Suppress NU1903 warnings for transitive dependencies with known vulnerabilities -->
-  <!-- These packages (System.Text.RegularExpressions 4.3.0, System.Net.Http 4.3.0) are transitive -->
-  <!-- dependencies from older packages. The vulnerabilities are not exploitable in this context -->
-  <!-- as these are internal transitive dependencies, not directly used. -->
   <PropertyGroup>
-    <NoWarn>$(NoWarn);NU1903</NoWarn>
+    <NoWarn>$(NoWarn);NU1903;IDE0032;IDE0005</NoWarn>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' " />
+
   <ItemGroup>
-    <None Remove="MQTT\Connect\" />
-    <None Remove="Connect\" />
-    <None Remove="MQTT5\" />
-    <None Remove="System.IO.Pipelines" />
-    <None Remove="Microsoft.Extensions.Logging.Abstractions" />
-    <None Remove="NLog" />
-    <None Remove="NLog.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Connect\" />
-    <Folder Include="MQTT5\" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="System.IO.Pipelines" Version="7.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.1" />
-    <PackageReference Include="NLog" Version="5.2.3" />
-    <PackageReference Include="Websocket.Client" Version="5.1.2" />
+    <PackageReference Include="Google.Protobuf" Version="3.28.3" />
+    <PackageReference Include="Grpc.Tools" Version="2.68.1" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
-    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
-      <_Parameter1>HiveMQtt.Test</_Parameter1>
-    </AssemblyAttribute>
+    <ProjectReference Include="..\HiveMQtt\HiveMQtt.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Protobuf Include="Protos\sparkplug_b.proto" GrpcServices="None" />
+  </ItemGroup>
+
+  <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
       <_Parameter1>HiveMQtt.Sparkplug.Test</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
 
-  <ItemGroup>
-    <Content Include="NLog.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
 </Project>

@@ -1,0 +1,8 @@
+{
+  "label": "The HiveMQtt MQTT client",
+  "position": 1,
+  "link": {
+    "type": "generated-index",
+    "description": "Start here for the core HiveMQtt MQTT 5.0 client, from quickstart to advanced guides and API reference."
+  }
+}
