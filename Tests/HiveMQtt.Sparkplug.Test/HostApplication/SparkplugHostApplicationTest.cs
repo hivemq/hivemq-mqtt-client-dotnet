@@ -274,7 +274,7 @@ public class SparkplugHostApplicationTest
         client.PublishedMessages[0].Topic.Should().Be("spBv1.0/g1/NCMD/n1");
         client.PublishedMessages[0].Payload.Should().NotBeNull();
         var decoded = SparkplugPayloadEncoder.Decode(client.PublishedMessages[0].Payload!);
-        decoded.Metrics.Should().ContainSingle(m => m.Name == "Rebirth" && m.Datatype == (uint)DataType.Boolean && m.BooleanValue);
+        decoded.Metrics.Should().ContainSingle(m => m.Name == SparkplugPayloadEncoder.NodeControlRebirthMetricName && m.Datatype == (uint)DataType.Boolean && m.BooleanValue);
     }
 
     [Test]

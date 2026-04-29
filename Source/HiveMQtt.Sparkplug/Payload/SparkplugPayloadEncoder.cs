@@ -146,4 +146,10 @@ public static class SparkplugPayloadEncoder
     /// <returns>A metric with name "bdSeq" and the given value.</returns>
     public static Protobuf.Payload.Types.Metric CreateBdSeqMetric(ulong bdSeq) =>
         SparkplugMetricBuilder.Create(BdSeqMetricName).WithUInt64Value(bdSeq).Build();
+
+    /// <summary>
+    /// Metric name for the Sparkplug Node Control Rebirth command. Used in NCMD and NBIRTH.
+    /// Per Sparkplug B 3.0 specification section 12.13, the metric name MUST be "Node Control/Rebirth".
+    /// </summary>
+    public const string NodeControlRebirthMetricName = "Node Control/Rebirth";
 }

@@ -199,6 +199,13 @@ public sealed class SparkplugEdgeNode : IDisposable
                 this.sequenceNumber = 0;
                 var birthPayload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), 0);
                 birthPayload.Metrics.Insert(0, SparkplugPayloadEncoder.CreateBdSeqMetric(sessionBdSeq));
+
+                // Add the required Node Control/Rebirth metric per Sparkplug B 3.0 spec (tck-id-topics-nbirth-rebirth-metric)
+                birthPayload.Metrics.Add(
+                    SparkplugMetricBuilder.Create(SparkplugPayloadEncoder.NodeControlRebirthMetricName)
+                        .WithBooleanValue(false)
+                        .Build());
+
                 if (nodeBirthMetrics != null)
                 {
                     foreach (var m in nodeBirthMetrics)
@@ -310,6 +317,12 @@ public sealed class SparkplugEdgeNode : IDisposable
                 {
                     payload.Metrics.Insert(0, SparkplugPayloadEncoder.CreateBdSeqMetric(this.currentSessionBdSeq.Value));
                 }
+
+                // Add the required Node Control/Rebirth metric per Sparkplug B 3.0 spec (tck-id-topics-nbirth-rebirth-metric)
+                payload.Metrics.Add(
+                    SparkplugMetricBuilder.Create(SparkplugPayloadEncoder.NodeControlRebirthMetricName)
+                        .WithBooleanValue(false)
+                        .Build());
 
                 if (metrics != null)
                 {

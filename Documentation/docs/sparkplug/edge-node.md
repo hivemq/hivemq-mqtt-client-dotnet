@@ -45,12 +45,12 @@ await edgeNode.PublishNodeDataAsync(metrics);
 
 ## Rebirth Handling
 
-When a Host sends an NCMD with `Rebirth=true`, republish a fresh NBIRTH and related DBIRTH messages.
+When a Host sends an NCMD with `Node Control/Rebirth=true`, republish a fresh NBIRTH and related DBIRTH messages.
 
 ```csharp
 edgeNode.NodeCommandReceived += async (_, e) =>
 {
-    var isRebirth = e.Payload.Metrics.Any(m => m.Name == "Rebirth" && m.BooleanValue);
+    var isRebirth = e.Payload.Metrics.Any(m => m.Name == SparkplugPayloadEncoder.NodeControlRebirthMetricName && m.BooleanValue);
     if (isRebirth)
     {
         await edgeNode.PublishNodeBirthAsync(null);
