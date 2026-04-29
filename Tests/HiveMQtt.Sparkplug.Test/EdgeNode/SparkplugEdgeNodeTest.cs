@@ -218,14 +218,14 @@ public class SparkplugEdgeNodeTest
 
         var topic = "spBv1.0/g1/NCMD/n1";
         var payload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), 0);
-        payload.Metrics.Add(SparkplugMetricBuilder.Create("Rebirth").WithBooleanValue(true).Build());
+        payload.Metrics.Add(SparkplugMetricBuilder.Create(SparkplugPayloadEncoder.NodeControlRebirthMetricName).WithBooleanValue(true).Build());
         client.SimulateMessageReceived(topic, SparkplugPayloadEncoder.Encode(payload));
 
         await Task.Delay(100).ConfigureAwait(false);
 
         received.Should().NotBeNull();
         received!.Topic.MessageType.Should().Be(SparkplugMessageType.NCMD);
-        received.Payload.Metrics.Should().ContainSingle(m => m.Name == "Rebirth");
+        received.Payload.Metrics.Should().ContainSingle(m => m.Name == SparkplugPayloadEncoder.NodeControlRebirthMetricName);
     }
 
     [Test]
@@ -395,7 +395,7 @@ public class SparkplugEdgeNodeTest
 
         var topic = "spBv1.0/g1/NCMD/n1";
         var payload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), 0);
-        payload.Metrics.Add(SparkplugMetricBuilder.Create("Rebirth").WithBooleanValue(true).Build());
+        payload.Metrics.Add(SparkplugMetricBuilder.Create(SparkplugPayloadEncoder.NodeControlRebirthMetricName).WithBooleanValue(true).Build());
         client.SimulateMessageReceived(topic, SparkplugPayloadEncoder.Encode(payload));
 
         await Task.Delay(100).ConfigureAwait(false);

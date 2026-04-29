@@ -283,7 +283,7 @@ public sealed class SparkplugHostApplication : IDisposable
     public async Task<PublishResult> PublishRebirthCommandAsync(string groupId, string edgeNodeId, CancellationToken cancellationToken = default)
     {
         var payload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), 0);
-        var rebirthMetric = SparkplugMetricBuilder.Create("Rebirth")
+        var rebirthMetric = SparkplugMetricBuilder.Create(SparkplugPayloadEncoder.NodeControlRebirthMetricName)
             .WithBooleanValue(true)
             .Build();
         payload.Metrics.Add(rebirthMetric);

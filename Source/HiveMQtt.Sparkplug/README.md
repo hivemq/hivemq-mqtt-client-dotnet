@@ -108,12 +108,12 @@ See the [Examples](../../Examples) folder for runnable Host and Edge Node sample
 
 ### Rebirth handling
 
-When a Host sends a **Rebirth** command (NCMD with a `Rebirth` boolean metric set to true), the Edge Node should publish a fresh Node Birth so the Host receives an up-to-date NBIRTH. In your `NodeCommandReceived` handler, check for the Rebirth metric and call **`PublishNodeBirthAsync`**; if the node has devices, re-publish their DBIRTHs as well.
+When a Host sends a **Rebirth** command (NCMD with a `Node Control/Rebirth` boolean metric set to true), the Edge Node should publish a fresh Node Birth so the Host receives an up-to-date NBIRTH. In your `NodeCommandReceived` handler, check for the Rebirth metric and call **`PublishNodeBirthAsync`**; if the node has devices, re-publish their DBIRTHs as well.
 
 ```csharp
 edgeNode.NodeCommandReceived += async (_, e) =>
 {
-    var isRebirth = e.Payload.Metrics.Any(m => m.Name == "Rebirth" && m.BooleanValue);
+    var isRebirth = e.Payload.Metrics.Any(m => m.Name == SparkplugPayloadEncoder.NodeControlRebirthMetricName && m.BooleanValue);
     if (isRebirth)
     {
         await edgeNode.PublishNodeBirthAsync(null); // add node metrics if needed

@@ -37,7 +37,7 @@ var edgeNode = new SparkplugEdgeNode(clientOptions, sparkplugOptions);
 edgeNode.NodeCommandReceived += async (_, e) =>
 {
     // Rebirth: Host requests a fresh NBIRTH so it receives current state. Re-publish node (and optionally device) births.
-    var isRebirth = e.Payload.Metrics.Any(m => m.Name == "Rebirth" && m.BooleanValue);
+    var isRebirth = e.Payload.Metrics.Any(m => m.Name == SparkplugPayloadEncoder.NodeControlRebirthMetricName && m.BooleanValue);
     if (isRebirth)
     {
         Console.WriteLine("[NCMD] Rebirth — publishing NBIRTH");
