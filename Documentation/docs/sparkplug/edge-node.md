@@ -50,7 +50,7 @@ When a Host sends an NCMD with `Node Control/Rebirth=true`, republish a fresh NB
 ```csharp
 edgeNode.NodeCommandReceived += async (_, e) =>
 {
-    var isRebirth = e.Payload.Metrics.Any(m => m.Name == "Node Control/Rebirth" && m.BooleanValue);
+    var isRebirth = e.Payload.Metrics.Any(m => m.Name == SparkplugPayloadEncoder.NodeControlRebirthMetricName && m.BooleanValue);
     if (isRebirth)
     {
         await edgeNode.PublishNodeBirthAsync(null);
