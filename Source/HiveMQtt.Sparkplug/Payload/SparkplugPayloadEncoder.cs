@@ -152,4 +152,18 @@ public static class SparkplugPayloadEncoder
     /// Per Sparkplug B 3.0 specification section 12.13, the metric name MUST be "Node Control/Rebirth".
     /// </summary>
     public const string NodeControlRebirthMetricName = "Node Control/Rebirth";
+
+    /// <summary>
+    /// Metric name for the Sparkplug Node Control Reboot command. Used in NCMD.
+    /// Per Sparkplug B 3.0 specification, an Edge Node that supports reboot should include
+    /// this metric in NBIRTH with a boolean value of false.
+    /// </summary>
+    public const string NodeControlRebootMetricName = "Node Control/Reboot";
+
+    /// <summary>
+    /// Metric name for the Sparkplug Node Control Next Server command. Used in NCMD.
+    /// Per Sparkplug B 3.0 specification, an Edge Node that supports server switching should
+    /// include this metric in NBIRTH with a boolean value of false.
+    /// </summary>
+    public const string NodeControlNextServerMetricName = "Node Control/Next Server";
 }
