@@ -158,6 +158,30 @@ Enables or disables manual acknowledgement of incoming QoS 1 and QoS 2 publishes
 
 **Added in:** v0.40.0
 
+### `WithOverlappingSubscriptionBehavior(OverlappingSubscriptionBehavior behavior)`
+
+Sets the behavior for handling messages that match multiple overlapping subscriptions.
+
+**Added in:** v0.42.0
+
+**Description:** When a client subscribes to overlapping topic patterns (e.g., `sensors/#` and `sensors/+/temperature`), a message published to a matching topic will match both subscriptions. This setting controls whether the message handler fires once or for each matching subscription.
+
+| Value | Description |
+|-------|-------------|
+| `FireAllMatchingHandlers` (default) | Fire a handler for each matching subscription |
+| `FireFirstMatchingHandler` | Fire only the first matching subscription handler |
+
+**Example:**
+```csharp
+// Recommended for new applications - each message fires once
+WithOverlappingSubscriptionBehavior(OverlappingSubscriptionBehavior.FireFirstMatchingHandler)
+
+// Default for backward compatibility - each matching subscription fires
+WithOverlappingSubscriptionBehavior(OverlappingSubscriptionBehavior.FireAllMatchingHandlers)
+```
+
+**See Also:** [Overlapping Subscriptions](/docs/hivemqtt/subscribing#overlapping-subscriptions) for detailed behavior documentation.
+
 ### `WithSessionExpiryInterval(int sessionExpiryInterval)`
 
 Sets the session expiry interval.

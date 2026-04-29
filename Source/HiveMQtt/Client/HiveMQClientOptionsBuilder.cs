@@ -21,6 +21,7 @@ using System.Net;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using HiveMQtt.Client.Options;
+using HiveMQtt.MQTT5.Types;
 
 /// <summary>
 /// A builder for HiveMQClientOptions.
@@ -856,6 +857,30 @@ public class HiveMQClientOptionsBuilder
     public HiveMQClientOptionsBuilder WithAutomaticReconnect(bool automaticReconnect)
     {
         this.options.AutomaticReconnect = automaticReconnect;
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the behavior for handling messages that match multiple overlapping subscriptions.
+    /// <para>
+    /// When a client subscribes to overlapping topic patterns (e.g., "/room/a/b/c/#" and "/room/a/b/#"),
+    /// a message published to "/room/a/b/c/whatever" will match both subscriptions. This setting controls
+    /// whether the OnMessageReceived event fires once or for each matching subscription.
+    /// </para>
+    /// <para>
+    /// Use <see cref="OverlappingSubscriptionBehavior.FireFirstMatchingHandler"/> to ensure each message
+    /// is delivered only once to your application, regardless of how many subscriptions match.
+    /// </para>
+    /// <para>
+    /// Use <see cref="OverlappingSubscriptionBehavior.FireAllMatchingHandlers"/> (default) to maintain
+    /// backward compatibility where each matching subscription's handler fires separately.
+    /// </para>
+    /// </summary>
+    /// <param name="behavior">The desired behavior for overlapping subscriptions.</param>
+    /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
+    public HiveMQClientOptionsBuilder WithOverlappingSubscriptionBehavior(OverlappingSubscriptionBehavior behavior)
+    {
+        this.options.OverlappingSubscriptionBehavior = behavior;
         return this;
     }
 

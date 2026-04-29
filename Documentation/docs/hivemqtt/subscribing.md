@@ -233,6 +233,180 @@ var options = builder.WithSubscription(
     .Build();
 ```
 
+## Overlapping Subscriptions
+
+### The Problem
+
+When you subscribe to overlapping topic patterns, a single published message may match multiple subscriptions. For example:
+
+```csharp
+await client.SubscribeAsync("sensors/#");           // Matches: sensors/temperature/livingroom
+await client.SubscribeAsync("sensors/+/temperature"); // Matches: sensors/livingroom/temperature
+```
+
+A message published to `sensors/livingroom/temperature` matches **both** subscriptions.
+
+Depending on your MQTT broker, this can result in:
+- **Single delivery**: One PUBLISH packet sent by the broker
+- **Multiple deliveries**: Multiple PUBLISH packets (one per matching subscription)
+
+The `OverlappingSubscriptionBehavior` setting controls how the client handles this.
+
+### Behavior Options
+
+The `HiveMQClientOptions.OverlappingSubscriptionBehavior` property controls this behavior:
+
+| Option | Description | When to Use |
+|--------|-------------|-------------|
+| `FireAllMatchingHandlers` (default) | Fires a handler for **each** matching subscription | Backward compatibility, different logic per subscription |
+| `FireFirstMatchingHandler` | Fires only the **first** matching subscription handler | Single message processing, simpler handling |
+
+### Option 1: `FireAllMatchingHandlers` (Default)
+
+**Behavior**: The `OnMessageReceived` event fires **once for each matching subscription** that has a handler registered.
+
+**Example**:
+
+```csharp
+var options = new HiveMQClientOptionsBuilder()
+    .WithOverlappingSubscriptionBehavior(OverlappingSubscriptionBehavior.FireAllMatchingHandlers) // Default
+    .Build();
+
+var client = new HiveMQClient(options);
+
+var opts1 = new SubscribeOptions();
+opts1.TopicFilters.Add(new TopicFilter("sensors/#", QualityOfService.AtLeastOnceDelivery));
+opts1.Handlers["sensors/#"] = (s, e) => Console.WriteLine("Handler 1: Wildcard match");
+await client.SubscribeAsync(opts1);
+
+var opts2 = new SubscribeOptions();
+opts2.TopicFilters.Add(new TopicFilter("sensors/+/temperature", QualityOfService.AtLeastOnceDelivery));
+opts2.Handlers["sensors/+/temperature"] = (s, e) => Console.WriteLine("Handler 2: Specific match");
+await client.SubscribeAsync(opts2);
+
+// Publish to sensors/livingroom/temperature
+// Output:
+// Handler 1: Wildcard match
+// Handler 2: Specific match
+```
+
+:::note
+
+Only subscriptions **with handlers** fire events. The global `OnMessageReceived` event always fires separately.
+
+:::
+
+### Option 2: `FireFirstMatchingHandler` (Recommended)
+
+**Behavior**: The `OnMessageReceived` event fires **only once** for the first matching subscription.
+
+**Example**:
+
+```csharp
+var options = new HiveMQClientOptionsBuilder()
+    .WithOverlappingSubscriptionBehavior(OverlappingSubscriptionBehavior.FireFirstMatchingHandler)
+    .Build();
+
+var client = new HiveMQClient(options);
+
+var opts1 = new SubscribeOptions();
+opts1.TopicFilters.Add(new TopicFilter("sensors/#", QualityOfService.AtLeastOnceDelivery));
+opts1.Handlers["sensors/#"] = (s, e) => Console.WriteLine("Handler 1: Wildcard match");
+await client.SubscribeAsync(opts1);  // First subscription
+
+var opts2 = new SubscribeOptions();
+opts2.TopicFilters.Add(new TopicFilter("sensors/+/temperature", QualityOfService.AtLeastOnceDelivery));
+opts2.Handlers["sensors/+/temperature"] = (s, e) => Console.WriteLine("Handler 2: Specific match");
+await client.SubscribeAsync(opts2);  // Second subscription
+
+// Publish to sensors/livingroom/temperature
+// Output:
+// Handler 1: Wildcard match
+// (Handler 2 does NOT fire because it's not the first match)
+```
+
+:::tip
+
+"First" means **first in subscription order** (the order you called `SubscribeAsync`). The global `OnMessageReceived` event always fires regardless of this setting.
+
+:::
+
+### Edge Cases
+
+#### First Subscription Has No Handler
+
+If the first matching subscription has no handler, but a later one does:
+
+```csharp
+await client.SubscribeAsync("sensors/#");  // No per-subscription handler
+
+var opts = new SubscribeOptions();
+opts.TopicFilters.Add(new TopicFilter("sensors/+/temperature", QualityOfService.AtLeastOnceDelivery));
+opts.Handlers["sensors/+/temperature"] = MyHandler;
+await client.SubscribeAsync(opts);
+
+// Publish to sensors/livingroom/temperature
+// With FireFirstMatchingHandler:
+//   - NO per-subscription handler fires (sensors/# was first but has no handler)
+//   - Global OnMessageReceived still fires
+```
+
+**Recommendation**: Either register handlers on all overlapping subscriptions, use the global `OnMessageReceived` event, or ensure your most specific subscription is added first.
+
+#### Mixed Global and Per-Subscription Handlers
+
+The global `OnMessageReceived` event is **not affected** by the behavior setting:
+
+```csharp
+var options = new HiveMQClientOptionsBuilder()
+    .WithOverlappingSubscriptionBehavior(OverlappingSubscriptionBehavior.FireFirstMatchingHandler)
+    .Build();
+
+var client = new HiveMQClient(options);
+
+// Global handler
+client.OnMessageReceived += (s, e) => Console.WriteLine("Global handler");
+
+// Per-subscription handler
+var opts = new SubscribeOptions();
+opts.TopicFilters.Add(new TopicFilter("sensors/#", QualityOfService.AtLeastOnceDelivery));
+opts.Handlers["sensors/#"] = (s, e) => Console.WriteLine("Per-subscription handler");
+await client.SubscribeAsync(opts);
+
+// Publish to sensors/temperature
+// Output:
+// Global handler
+// Per-subscription handler
+// (Both fire - global is always independent)
+```
+
+### Quick Reference Table
+
+| Scenario | `FireAllMatchingHandlers` | `FireFirstMatchingHandler` |
+|----------|---------------------------|---------------------------|
+| 3 overlapping subs, all with handlers | 3 handler calls | 1 handler call (first only) |
+| 3 overlapping subs, only 2nd has handler | 1 handler call (2nd only) | 0 handler calls (1st has none) |
+| Global + 2 per-sub handlers | Global + 2 handlers | Global + 1 handler (first only) |
+| Global only (no per-sub handlers) | Global fires once | Global fires once |
+
+### Migration Guide
+
+#### For New Users
+
+We recommend using `FireFirstMatchingHandler` for new applications:
+
+```csharp
+var options = new HiveMQClientOptionsBuilder()
+    .WithOverlappingSubscriptionBehavior(OverlappingSubscriptionBehavior.FireFirstMatchingHandler)
+    .Build();
+
+var client = new HiveMQClient(options);
+```
+
+#### For Existing Users
+
+**No changes required** - the default remains `FireAllMatchingHandlers` for backward compatibility.
+
 ## See Also
 
 * [MQTT Topics, Wildcards, & Best Practices](https://www.hivemq.com/blog/mqtt-essentials-part-5-mqtt-topics-best-practices/)
