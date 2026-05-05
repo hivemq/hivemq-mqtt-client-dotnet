@@ -348,6 +348,65 @@ client.OnMessageReceived += MessageHandler;
 await client.ConnectAsync();
 ```
 
+## Overlapping Subscriptions
+
+When you subscribe to overlapping topic patterns (e.g., `sensors/#` and `sensors/+/temperature`), a single published message may match multiple subscriptions. The `OverlappingSubscriptionBehavior` option controls how the client handles this.
+
+### Configuration
+
+```csharp
+var options = new HiveMQClientOptionsBuilder()
+    .WithOverlappingSubscriptionBehavior(OverlappingSubscriptionBehavior.FireFirstMatchingHandler)
+    .Build();
+
+var client = new HiveMQClient(options);
+```
+
+### Behavior Options
+
+| Option | Description |
+|--------|-------------|
+| `FireAllMatchingHandlers` (default) | Fire a handler for **each** matching subscription. Use this for backward compatibility. |
+| `FireFirstMatchingHandler` | Fire only the **first** matching subscription handler. Recommended for new applications. |
+
+:::tip Recommendation
+
+For new applications, use `FireFirstMatchingHandler` to ensure each message is processed exactly once, regardless of how many subscriptions match.
+
+:::
+
+### Example: FireFirstMatchingHandler
+
+```csharp
+var options = new HiveMQClientOptionsBuilder()
+    .WithOverlappingSubscriptionBehavior(OverlappingSubscriptionBehavior.FireFirstMatchingHandler)
+    .Build();
+
+var client = new HiveMQClient(options);
+
+// Subscribe to overlapping patterns
+var opts1 = new SubscribeOptions();
+opts1.TopicFilters.Add(new TopicFilter("sensors/#", QualityOfService.AtLeastOnceDelivery));
+opts1.Handlers["sensors/#"] = (s, e) => Console.WriteLine("Wildcard handler");
+await client.SubscribeAsync(opts1);  // First subscription
+
+var opts2 = new SubscribeOptions();
+opts2.TopicFilters.Add(new TopicFilter("sensors/+/temperature", QualityOfService.AtLeastOnceDelivery));
+opts2.Handlers["sensors/+/temperature"] = (s, e) => Console.WriteLine("Specific handler");
+await client.SubscribeAsync(opts2);  // Second subscription
+
+// Global handler always fires regardless of setting
+client.OnMessageReceived += (s, e) => Console.WriteLine("Global handler");
+
+// Publish to sensors/livingroom/temperature
+// Output:
+// Global handler
+// Wildcard handler
+// (Specific handler does NOT fire - only first match fires)
+```
+
+For more details, see [Overlapping Subscriptions](/docs/hivemqtt/subscribing#overlapping-subscriptions).
+
 ## Unsubscribing
 
 The `HiveMQClient` provides multiple ways to unsubscribe:

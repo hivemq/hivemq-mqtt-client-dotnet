@@ -319,20 +319,24 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             sub.MessageReceivedHandler is not null &&
             MatchTopic(sub.TopicFilter.Topic, packet.Message.Topic));
 
-        // Create eventArgs only if we have subscription handlers (optimization: avoid allocation if not needed)
-        if (matchingSubscriptions.Any())
+        // Check behavior setting for overlapping subscriptions
+        var behavior = this.Options.OverlappingSubscriptionBehavior;
+
+        if (behavior == OverlappingSubscriptionBehavior.FireFirstMatchingHandler)
         {
-            var eventArgs = new OnMessageReceivedEventArgs(
-                packet.Message,
-                packet.Message.QoS == QualityOfService.AtMostOnceDelivery ? null : packet.PacketIdentifier);
-            foreach (var subscription in matchingSubscriptions)
+            // Fire only the first matching subscription handler
+            var firstMatch = matchingSubscriptions.FirstOrDefault();
+            if (firstMatch != null)
             {
-                // We have a per-subscription message handler.
+                var eventArgs = new OnMessageReceivedEventArgs(
+                    packet.Message,
+                    packet.Message.QoS == QualityOfService.AtMostOnceDelivery ? null : packet.PacketIdentifier);
+
                 _ = Task.Run(() =>
                 {
                     try
                     {
-                        subscription.MessageReceivedHandler?.Invoke(this, eventArgs);
+                        firstMatch.MessageReceivedHandler?.Invoke(this, eventArgs);
                     }
                     catch (Exception e)
                     {
@@ -342,6 +346,35 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
                 });
 
                 messageHandled = true;
+            }
+        }
+        else
+        {
+            // Default: FireAllMatchingHandlers - fire all matching subscription handlers
+            // Create eventArgs only if we have subscription handlers (optimization: avoid allocation if not needed)
+            if (matchingSubscriptions.Any())
+            {
+                var eventArgs = new OnMessageReceivedEventArgs(
+                    packet.Message,
+                    packet.Message.QoS == QualityOfService.AtMostOnceDelivery ? null : packet.PacketIdentifier);
+                foreach (var subscription in matchingSubscriptions)
+                {
+                    // We have a per-subscription message handler.
+                    _ = Task.Run(() =>
+                    {
+                        try
+                        {
+                            subscription.MessageReceivedHandler?.Invoke(this, eventArgs);
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.Error(
+                                $"per-subscription MessageReceivedEventLauncher faulted ({packet.Message.Topic}): {e.Message}");
+                        }
+                    });
+
+                    messageHandled = true;
+                }
             }
         }
 

@@ -23,6 +23,7 @@ using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using HiveMQtt.Client;
 using HiveMQtt.Client.Exceptions;
+using HiveMQtt.MQTT5.Types;
 
 /// <summary>
 /// A class to manage the MQTT options available in the Client.
@@ -225,6 +226,19 @@ public class HiveMQClientOptions
     /// Reconnection attempts will be made with a retry back off strategy.
     /// </summary>
     public bool AutomaticReconnect { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating how to handle messages that match multiple overlapping subscriptions.
+    /// <para>
+    /// When a client has multiple subscriptions that match the same topic (e.g., "/room/a/b/c/#" and "/room/a/b/#"),
+    /// this setting controls whether the OnMessageReceived event fires once or multiple times.
+    /// </para>
+    /// <para>
+    /// Default is <see cref="OverlappingSubscriptionBehavior.FireAllMatchingHandlers"/> for backward compatibility.
+    /// Set to <see cref="OverlappingSubscriptionBehavior.FireFirstMatchingHandler"/> to receive each message only once.
+    /// </para>
+    /// </summary>
+    public OverlappingSubscriptionBehavior OverlappingSubscriptionBehavior { get; set; } = OverlappingSubscriptionBehavior.FireAllMatchingHandlers;
 
     /// <summary>
     /// Gets or sets the WebSocket keep-alive interval.
