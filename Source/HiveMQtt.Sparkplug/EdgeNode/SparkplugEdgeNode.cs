@@ -346,7 +346,9 @@ public sealed class SparkplugEdgeNode : IDisposable
     public Task<PublishResult> PublishNodeDataAsync(IEnumerable<Payload.Types.Metric> metrics, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(metrics);
+#pragma warning disable IDE0305 // Collection initialization - ToList() is appropriate for .NET 6
         var metricList = metrics as IList<Payload.Types.Metric> ?? metrics.ToList();
+#pragma warning restore IDE0305
         if (metricList.Count == 0)
         {
             throw new ArgumentException("At least one metric is required.", nameof(metrics));
@@ -437,7 +439,9 @@ public sealed class SparkplugEdgeNode : IDisposable
     {
         SparkplugIdValidator.ValidateDeviceId(deviceId, nameof(deviceId), this.options.StrictIdentifierValidation);
         ArgumentNullException.ThrowIfNull(metrics);
+#pragma warning disable IDE0305 // Collection initialization - ToList() is appropriate for .NET 6
         var metricList = metrics as IList<Payload.Types.Metric> ?? metrics.ToList();
+#pragma warning restore IDE0305
         if (metricList.Count == 0)
         {
             throw new ArgumentException("At least one metric is required.", nameof(metrics));

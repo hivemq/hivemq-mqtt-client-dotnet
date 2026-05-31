@@ -421,14 +421,18 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
     private void OnMessageReceivedEventLauncherOrdered(PublishPacket packet)
     {
+#pragma warning disable IDE0301 // Collection initialization - Array.Empty is required for StyleCop SA1010
         var globalHandlers = Array.Empty<EventHandler<OnMessageReceivedEventArgs>>();
+#pragma warning restore IDE0301
 
         if (this.OnMessageReceived != null)
         {
             Logger.Trace("OnMessageReceivedEventLauncher");
+#pragma warning disable IDE0305 // Collection initialization - ToArray() is appropriate for .NET 6
             globalHandlers = this.OnMessageReceived.GetInvocationList()
                 .Cast<EventHandler<OnMessageReceivedEventArgs>>()
                 .ToArray();
+#pragma warning restore IDE0305
         }
 
         if (globalHandlers.Length == 0 && packet.Message.Topic is null)
@@ -458,8 +462,11 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     {
         if (packet.Message.Topic is null)
         {
+#pragma warning disable IDE0301 // Collection initialization - Array.Empty is required for StyleCop SA1010
             return Array.Empty<EventHandler<OnMessageReceivedEventArgs>>();
+#pragma warning restore IDE0301
         }
+
         List<Subscription> tempList;
         try
         {

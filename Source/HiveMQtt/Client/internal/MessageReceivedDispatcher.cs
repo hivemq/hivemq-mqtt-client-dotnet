@@ -1,7 +1,6 @@
 namespace HiveMQtt.Client.Internal;
 
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using HiveMQtt.Client.Events;
@@ -121,8 +120,10 @@ internal sealed class MessageReceivedDispatcher : IDisposable
 
     private static void DispatchItem(MessageReceivedDispatchItem item)
     {
+#pragma warning disable IDE0301 // Collection initialization - Array.Empty is required for StyleCop SA1010
         var subscriptionHandlers =
             item.ResolveSubscriptionHandlers?.Invoke() ?? Array.Empty<EventHandler<OnMessageReceivedEventArgs>>();
+#pragma warning restore IDE0301
 
         if (item.GlobalHandlers.Count == 0 && subscriptionHandlers.Count == 0)
         {

@@ -31,11 +31,9 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     internal bool HasPerSubscriptionMessageHandlers =>
         Volatile.Read(ref this.perSubscriptionMessageHandlersPresent) != 0;
 
-    private void RefreshPerSubscriptionMessageHandlersPresent()
-    {
+    private void RefreshPerSubscriptionMessageHandlersPresent() =>
         this.perSubscriptionMessageHandlersPresent =
             this.Subscriptions.Any(s => s.MessageReceivedHandler is not null) ? 1 : 0;
-    }
 
     /// <summary>
     /// Validates whether a subscription already exists.

@@ -13,8 +13,10 @@ internal sealed class MessageReceivedDispatchItem
 
     public OnMessageReceivedEventArgs EventArgs { get; init; } = null!;
 
+#pragma warning disable IDE0301 // Collection initialization - Array.Empty is required for StyleCop SA1010
     public IReadOnlyList<EventHandler<OnMessageReceivedEventArgs>> GlobalHandlers { get; init; } =
         Array.Empty<EventHandler<OnMessageReceivedEventArgs>>();
+#pragma warning restore IDE0301
 
     /// <summary>
     /// Gets an optional resolver for per-subscription handlers, invoked on the dispatch consumer thread.

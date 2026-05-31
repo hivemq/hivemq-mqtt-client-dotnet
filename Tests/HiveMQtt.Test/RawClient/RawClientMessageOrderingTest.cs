@@ -3,7 +3,6 @@ namespace HiveMQtt.Test.RawClient;
 using System;
 using System.Threading.Tasks;
 using HiveMQtt.Client;
-using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.Types;
 using HiveMQtt.Test.HiveMQClient;
 using Xunit;
