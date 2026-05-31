@@ -45,5 +45,5 @@ public enum OverlappingSubscriptionBehavior
     /// handler (in the order they were added) will fire for a message that matches all 3 subscriptions.
     /// The global OnMessageReceived event is not affected by this setting and always fires.
     /// </remarks>
-    FireFirstMatchingHandler
+    FireFirstMatchingHandler,
 }

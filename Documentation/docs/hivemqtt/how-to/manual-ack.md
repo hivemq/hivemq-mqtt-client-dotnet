@@ -91,6 +91,18 @@ var options = new HiveMQClientOptionsBuilder()
     .Build();
 ```
 
+## Manual ack, ordering, and Receive Maximum
+
+QoS 1 and QoS 2 `OnMessageReceived` handlers are started in FIFO order on a per-client dispatch queue. See [Message Ordering](/docs/hivemqtt/how-to/message-ordering) for the full guarantee (including async handler limits).
+
+With manual ack enabled:
+
+- Each unacknowledged message holds a Receive Maximum slot until you call `AckAsync`.
+- Ordered dispatch means a slow handler delays the **start** of later handlers; slots remain held until each handler acknowledges.
+- If handlers are slow and the dispatch queue backs up, the broker may stop sending new QoS 1/2 messages sooner — that is expected back-pressure, not a protocol error.
+
+Keep handlers thin (parse and enqueue), perform heavy work on application-owned consumers, and call `AckAsync` when your processing is complete (or when you are ready for the broker to advance the window).
+
 ## Exceptions
 
 - **Manual ack not enabled:** Calling `AckAsync` when `ManualAckEnabled` is `false` throws `HiveMQttClientException`.
@@ -101,7 +113,9 @@ var options = new HiveMQClientOptionsBuilder()
 
 ## Thread safety
 
-`AckAsync` may be called from any thread, including directly from your `OnMessageReceived` handler (which may run on a thread-pool thread). You do not need to marshal the call back to a specific thread.
+QoS 1 and QoS 2 `OnMessageReceived` handlers run on a **dedicated message dispatch thread**. QoS 0 handlers may run on thread-pool threads.
+
+`AckAsync` may be called directly from your `OnMessageReceived` handler, including from the dispatch thread. You do not need to marshal the call back to a specific thread.
 
 ## Full example (HiveMQClient)
 

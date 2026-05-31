@@ -56,7 +56,10 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
 
         // Initialize the connection manager
         this.Connection = new ConnectionManager(this);
+        this.MessageReceivedDispatcher = new MessageReceivedDispatcher();
     }
+
+    internal MessageReceivedDispatcher MessageReceivedDispatcher { get; }
 
     /// <inheritdoc />
     public Dictionary<string, string> LocalStore { get; } = new();
@@ -176,6 +179,7 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
         if (connAck.ReasonCode == ConnAckReasonCode.Success)
         {
             this.Connection.State = ConnectState.Connected;
+            this.MessageReceivedDispatcher.ResetForConnect();
 
             // Ensure connection-ready signal is set for any writers awaiting readiness
             this.Connection.SignalNotDisconnected();
@@ -700,7 +704,31 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
         {
             if (disposing)
             {
+                if (this.Connection?.State == Internal.ConnectState.Connected)
+                {
+                    Logger.Trace("RawClient Dispose: Disconnecting connected client.");
+                    try
+                    {
+                        var disconnectTask = Task.Run(async () => await this.DisconnectAsync().ConfigureAwait(false));
+                        try
+                        {
+#pragma warning disable VSTHRD002
+                            disconnectTask.WaitAsync(TimeSpan.FromMilliseconds(5000)).GetAwaiter().GetResult();
+#pragma warning restore VSTHRD002
+                        }
+                        catch (TimeoutException)
+                        {
+                            Logger.Warn("Disconnect operation timed out during RawClient dispose");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Warn($"Error disconnecting RawClient during dispose: {ex.Message}");
+                    }
+                }
+
                 this.Connection?.Dispose();
+                this.MessageReceivedDispatcher?.Dispose();
             }
 
             this.disposed = true;

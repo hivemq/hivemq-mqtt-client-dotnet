@@ -16,6 +16,9 @@
 namespace HiveMQtt.Client;
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using HiveMQtt.Client.Events;
 using HiveMQtt.Client.Internal;
 using HiveMQtt.Client.Options;
@@ -269,15 +272,24 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
     internal virtual void OnMessageReceivedEventLauncher(PublishPacket packet)
     {
+        if (packet.Message.QoS is QualityOfService.AtMostOnceDelivery)
+        {
+            this.OnMessageReceivedEventLauncherQoS0(packet);
+            return;
+        }
+
+        this.OnMessageReceivedEventLauncherOrdered(packet);
+    }
+
+    private void OnMessageReceivedEventLauncherQoS0(PublishPacket packet)
+    {
         var messageHandled = false;
 
         // Get all handlers - fast path if no handlers
         if (this.OnMessageReceived != null)
         {
             Logger.Trace("OnMessageReceivedEventLauncher");
-            var eventArgs = new OnMessageReceivedEventArgs(
-                packet.Message,
-                packet.Message.QoS == QualityOfService.AtMostOnceDelivery ? null : packet.PacketIdentifier);
+            var eventArgs = new OnMessageReceivedEventArgs(packet.Message, null);
             var handlers = this.OnMessageReceived.GetInvocationList();
             foreach (var handler in handlers)
             {
@@ -294,12 +306,35 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             messageHandled = true;
         }
 
+        if (!this.HasPerSubscriptionMessageHandlers)
+        {
+            if (!messageHandled)
+            {
+                Logger.Warn($"Lost Application Message ({packet.Message.Topic}): No global or subscription message handler found.  Register an event handler (before Subscribing) to receive all messages incoming.");
+            }
+
+            return;
+        }
+
         if (packet.Message.Topic is null)
         {
             return;
         }
 
-        // Per Subscription Event Handler
+        // Per Subscription Event Handler — resolve off the connection thread so subscribe/unsubscribe
+        // can update Subscriptions without blocking SUBACK processing.
+        _ = Task.Run(() => this.InvokeQoS0PerSubscriptionHandlers(packet));
+    }
+
+    private void InvokeQoS0PerSubscriptionHandlers(PublishPacket packet)
+    {
+        if (packet.Message.Topic is null)
+        {
+            return;
+        }
+
+        var messageHandled = false;
+
         // use ToList, so the iteration goes through a copy and changes at the list make not problems
         // otherwise it would be necessary to lock the Subscriptions with the semaphore of HiveMQClient
         List<Subscription> tempList;
@@ -315,8 +350,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             _ = this.SubscriptionsSemaphore.Release();
         }
 
-        var matchingSubscriptions = tempList.Where(sub =>
-            sub.MessageReceivedHandler is not null &&
+        var allMatchingSubscriptions = tempList.Where(sub =>
             MatchTopic(sub.TopicFilter.Topic, packet.Message.Topic));
 
         // Check behavior setting for overlapping subscriptions
@@ -324,13 +358,11 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
         if (behavior == OverlappingSubscriptionBehavior.FireFirstMatchingHandler)
         {
-            // Fire only the first matching subscription handler
-            var firstMatch = matchingSubscriptions.FirstOrDefault();
-            if (firstMatch != null)
+            // Fire only the first matching subscription handler (by subscription order)
+            var firstMatch = allMatchingSubscriptions.FirstOrDefault();
+            if (firstMatch?.MessageReceivedHandler is not null)
             {
-                var eventArgs = new OnMessageReceivedEventArgs(
-                    packet.Message,
-                    packet.Message.QoS == QualityOfService.AtMostOnceDelivery ? null : packet.PacketIdentifier);
+                var eventArgs = new OnMessageReceivedEventArgs(packet.Message, null);
 
                 _ = Task.Run(() =>
                 {
@@ -351,12 +383,12 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
         else
         {
             // Default: FireAllMatchingHandlers - fire all matching subscription handlers
+            var matchingSubscriptions = allMatchingSubscriptions.Where(sub => sub.MessageReceivedHandler is not null);
+
             // Create eventArgs only if we have subscription handlers (optimization: avoid allocation if not needed)
             if (matchingSubscriptions.Any())
             {
-                var eventArgs = new OnMessageReceivedEventArgs(
-                    packet.Message,
-                    packet.Message.QoS == QualityOfService.AtMostOnceDelivery ? null : packet.PacketIdentifier);
+                var eventArgs = new OnMessageReceivedEventArgs(packet.Message, null);
                 foreach (var subscription in matchingSubscriptions)
                 {
                     // We have a per-subscription message handler.
@@ -385,6 +417,85 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
             // We warn here about the lost message, but we don't throw an exception.
             Logger.Warn($"Lost Application Message ({packet.Message.Topic}): No global or subscription message handler found.  Register an event handler (before Subscribing) to receive all messages incoming.");
         }
+    }
+
+    private void OnMessageReceivedEventLauncherOrdered(PublishPacket packet)
+    {
+        var globalHandlers = Array.Empty<EventHandler<OnMessageReceivedEventArgs>>();
+
+        if (this.OnMessageReceived != null)
+        {
+            Logger.Trace("OnMessageReceivedEventLauncher");
+            globalHandlers = this.OnMessageReceived.GetInvocationList()
+                .Cast<EventHandler<OnMessageReceivedEventArgs>>()
+                .ToArray();
+        }
+
+        if (globalHandlers.Length == 0 && packet.Message.Topic is null)
+        {
+            Logger.Warn($"Lost Application Message ({packet.Message.Topic}): No global or subscription message handler found.  Register an event handler (before Subscribing) to receive all messages incoming.");
+            return;
+        }
+
+        var eventArgs = new OnMessageReceivedEventArgs(packet.Message, packet.PacketIdentifier);
+        var item = new MessageReceivedDispatchItem
+        {
+            Sender = this,
+            EventArgs = eventArgs,
+            GlobalHandlers = globalHandlers,
+            ResolveSubscriptionHandlers = packet.Message.Topic is null || !this.HasPerSubscriptionMessageHandlers
+                ? null
+                : () => this.ResolveOrderedSubscriptionHandlers(packet),
+        };
+
+        if (!this.MessageReceivedDispatcher.TryEnqueue(item))
+        {
+            Logger.Warn($"Dropped Application Message ({packet.Message.Topic}): message dispatch is quiescing or disposed.");
+        }
+    }
+
+    private IReadOnlyList<EventHandler<OnMessageReceivedEventArgs>> ResolveOrderedSubscriptionHandlers(PublishPacket packet)
+    {
+        if (packet.Message.Topic is null)
+        {
+            return Array.Empty<EventHandler<OnMessageReceivedEventArgs>>();
+        }
+        List<Subscription> tempList;
+        try
+        {
+            this.SubscriptionsSemaphore.Wait();
+#pragma warning disable IDE0305 // Collection initialization - ToList() is appropriate for .NET 6
+            tempList = this.Subscriptions.ToList();
+#pragma warning restore IDE0305
+        }
+        finally
+        {
+            _ = this.SubscriptionsSemaphore.Release();
+        }
+
+        var allMatchingSubscriptions = tempList.Where(sub =>
+            MatchTopic(sub.TopicFilter.Topic, packet.Message.Topic));
+
+        var behavior = this.Options.OverlappingSubscriptionBehavior;
+        var subscriptionHandlers = new List<EventHandler<OnMessageReceivedEventArgs>>();
+
+        if (behavior == OverlappingSubscriptionBehavior.FireFirstMatchingHandler)
+        {
+            var firstMatch = allMatchingSubscriptions.FirstOrDefault();
+            if (firstMatch?.MessageReceivedHandler is not null)
+            {
+                subscriptionHandlers.Add(firstMatch.MessageReceivedHandler);
+            }
+        }
+        else
+        {
+            foreach (var subscription in allMatchingSubscriptions.Where(sub => sub.MessageReceivedHandler is not null))
+            {
+                subscriptionHandlers.Add(subscription.MessageReceivedHandler!);
+            }
+        }
+
+        return subscriptionHandlers;
     }
 
     /* ========================================================================================= */
@@ -1019,4 +1130,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
     void IBaseMQTTClient.OnPingReqSentEventLauncher(PingReqPacket packet) => this.OnPingReqSentEventLauncher(packet);
 
     void IBaseMQTTClient.AfterDisconnectEventLauncher(bool clean) => this.AfterDisconnectEventLauncher(clean);
+
+    Task IBaseMQTTClient.QuiesceMessageDispatchAsync(TimeSpan timeout) =>
+        this.MessageReceivedDispatcher.QuiesceAsync(timeout);
 }
