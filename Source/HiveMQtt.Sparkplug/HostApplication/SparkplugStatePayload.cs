@@ -77,7 +77,7 @@ public sealed class SparkplugStatePayload
     /// <param name="timestampMs">Timestamp in milliseconds since Unix epoch (0 for LWT).</param>
     /// <returns>A new STATE payload with online=false.</returns>
     public static SparkplugStatePayload CreateOffline(long timestampMs = 0) =>
-        new SparkplugStatePayload(online: false, timestampMs);
+        new(online: false, timestampMs);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SparkplugStatePayload"/> class.

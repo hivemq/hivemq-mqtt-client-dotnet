@@ -5,14 +5,18 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using HiveMQtt.Client;
-using HiveMQtt.Client.Events;
-using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.Types;
 using Xunit;
 
 [Collection("Broker")]
 public class MessageOrderingTest
 {
+#pragma warning disable IDE0300 // Collection initialization - array syntax required for StyleCop SA1010
+    private static readonly string[] GlobalBeforePerSubExpected = new[] { "global", "persub" };
+
+    private static readonly int[] AsyncStartOrderExpected = new[] { 0, 1 };
+#pragma warning restore IDE0300
+
     [Fact]
     public async Task QoS1_GlobalHandler_PreservesInvocationOrderAsync()
     {
@@ -182,7 +186,7 @@ public class MessageOrderingTest
         await subscriber.DisconnectAsync().ConfigureAwait(false);
         await publisher.DisconnectAsync().ConfigureAwait(false);
 
-        Assert.Equal(new[] { "global", "persub" }, order);
+        Assert.Equal(GlobalBeforePerSubExpected, order);
     }
 
     [Fact]
@@ -233,17 +237,14 @@ public class MessageOrderingTest
         await subscriber.DisconnectAsync().ConfigureAwait(false);
         await publisher.DisconnectAsync().ConfigureAwait(false);
 
-        Assert.Equal(new[] { 0, 1 }, startOrder);
+        Assert.Equal(AsyncStartOrderExpected, startOrder);
     }
 
     [Fact]
-    public async Task ReentrantPublish_FromHandler_DoesNotDeadlockAsync()
-    {
+    public async Task ReentrantPublish_FromHandler_DoesNotDeadlockAsync() =>
         await RunReentrancyTestAsync(async (subscriber, publisher, testTopic, ackTopic) =>
-        {
-            await publisher.PublishAsync(ackTopic, "done", QualityOfService.AtMostOnceDelivery).ConfigureAwait(false);
-        }).ConfigureAwait(false);
-    }
+            await publisher.PublishAsync(ackTopic, "done", QualityOfService.AtMostOnceDelivery).ConfigureAwait(false))
+            .ConfigureAwait(false);
 
     [Fact]
     public async Task ReentrantSubscribe_FromHandler_DoesNotDeadlockAsync()

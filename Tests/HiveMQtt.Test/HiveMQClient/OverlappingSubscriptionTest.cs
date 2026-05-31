@@ -2,7 +2,6 @@ namespace HiveMQtt.Test.HiveMQClient;
 
 using System.Threading.Tasks;
 using HiveMQtt.Client;
-using HiveMQtt.Client.Events;
 using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.ReasonCodes;
 using HiveMQtt.MQTT5.Types;
@@ -17,8 +16,9 @@ public class OverlappingSubscriptionTest
     /// <summary>
     /// Test that FireAllMatchingHandlers (default) fires all matching subscription handlers.
     /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous test operation.</returns>
     [Fact]
-    public async Task FireAllMatchingHandlers_Behavior_FiresAllHandlers()
+    public async Task FireAllMatchingHandlers_Behavior_FiresAllHandlersAsync()
     {
         var options = new HiveMQClientOptionsBuilder()
             .WithClientId("FireAllMatchingHandlers_FiresAll")
@@ -49,18 +49,12 @@ public class OverlappingSubscriptionTest
 
         var opts2 = new SubscribeOptions();
         opts2.TopicFilters.Add(new TopicFilter($"{prefix}/room/a/b/#", QualityOfService.AtLeastOnceDelivery));
-        opts2.Handlers[$"{prefix}/room/a/b/#"] = (s, e) =>
-        {
-            Interlocked.Increment(ref handler2Count);
-        };
+        opts2.Handlers[$"{prefix}/room/a/b/#"] = (s, e) => Interlocked.Increment(ref handler2Count);
         await client.SubscribeAsync(opts2).ConfigureAwait(false);
 
         var opts3 = new SubscribeOptions();
         opts3.TopicFilters.Add(new TopicFilter($"{prefix}/room/a/#", QualityOfService.AtLeastOnceDelivery));
-        opts3.Handlers[$"{prefix}/room/a/#"] = (s, e) =>
-        {
-            Interlocked.Increment(ref handler3Count);
-        };
+        opts3.Handlers[$"{prefix}/room/a/#"] = (s, e) => Interlocked.Increment(ref handler3Count);
         await client.SubscribeAsync(opts3).ConfigureAwait(false);
 
         // Publish a message that matches all three subscriptions
@@ -82,8 +76,9 @@ public class OverlappingSubscriptionTest
     /// <summary>
     /// Test that FireFirstMatchingHandler fires only the first matching subscription handler.
     /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous test operation.</returns>
     [Fact]
-    public async Task FireFirstMatchingHandler_Behavior_FiresOnlyFirstHandler()
+    public async Task FireFirstMatchingHandler_Behavior_FiresOnlyFirstHandlerAsync()
     {
         var options = new HiveMQClientOptionsBuilder()
             .WithClientId("FireFirstMatchingHandler_FiresFirst")
@@ -114,18 +109,12 @@ public class OverlappingSubscriptionTest
 
         var opts2 = new SubscribeOptions();
         opts2.TopicFilters.Add(new TopicFilter($"{prefix}/room/a/b/#", QualityOfService.AtLeastOnceDelivery));
-        opts2.Handlers[$"{prefix}/room/a/b/#"] = (s, e) =>
-        {
-            Interlocked.Increment(ref handler2Count);
-        };
+        opts2.Handlers[$"{prefix}/room/a/b/#"] = (s, e) => Interlocked.Increment(ref handler2Count);
         await client.SubscribeAsync(opts2).ConfigureAwait(false);
 
         var opts3 = new SubscribeOptions();
         opts3.TopicFilters.Add(new TopicFilter($"{prefix}/room/a/#", QualityOfService.AtLeastOnceDelivery));
-        opts3.Handlers[$"{prefix}/room/a/#"] = (s, e) =>
-        {
-            Interlocked.Increment(ref handler3Count);
-        };
+        opts3.Handlers[$"{prefix}/room/a/#"] = (s, e) => Interlocked.Increment(ref handler3Count);
         await client.SubscribeAsync(opts3).ConfigureAwait(false);
 
         // Publish a message that matches all three subscriptions
@@ -147,8 +136,9 @@ public class OverlappingSubscriptionTest
     /// <summary>
     /// Test that FireFirstMatchingHandler with global handler fires both global and first subscription handler.
     /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous test operation.</returns>
     [Fact]
-    public async Task FireFirstMatchingHandler_WithGlobalHandler_BothFire()
+    public async Task FireFirstMatchingHandler_WithGlobalHandler_BothFireAsync()
     {
         var options = new HiveMQClientOptionsBuilder()
             .WithClientId("FireFirst_GlobalAndPerSub")
@@ -169,7 +159,7 @@ public class OverlappingSubscriptionTest
         // Set up global handler
         client.OnMessageReceived += (s, e) =>
         {
-            if (e.PublishMessage.Topic!.StartsWith(prefix))
+            if (e.PublishMessage.Topic!.StartsWith(prefix, StringComparison.Ordinal))
             {
                 Interlocked.Increment(ref globalCount);
             }
@@ -227,8 +217,9 @@ public class OverlappingSubscriptionTest
     /// <summary>
     /// Test edge case: FireFirstMatchingHandler when first subscription has no handler.
     /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous test operation.</returns>
     [Fact]
-    public async Task FireFirstMatchingHandler_FirstSubscriptionNoHandler_DoesNotFire()
+    public async Task FireFirstMatchingHandler_FirstSubscriptionNoHandler_DoesNotFireAsync()
     {
         var options = new HiveMQClientOptionsBuilder()
             .WithClientId("FireFirst_FirstNoHandler")
@@ -249,7 +240,7 @@ public class OverlappingSubscriptionTest
         // Set up global handler
         client.OnMessageReceived += (s, e) =>
         {
-            if (e.PublishMessage.Topic!.StartsWith(prefix))
+            if (e.PublishMessage.Topic!.StartsWith(prefix, StringComparison.Ordinal))
             {
                 Interlocked.Increment(ref globalCount);
                 messageReceived.TrySetResult(true);
@@ -262,10 +253,7 @@ public class OverlappingSubscriptionTest
         // Second subscription WITH a per-subscription handler
         var opts = new SubscribeOptions();
         opts.TopicFilters.Add(new TopicFilter($"{prefix}/room/+", QualityOfService.AtLeastOnceDelivery));
-        opts.Handlers[$"{prefix}/room/+"] = (s, e) =>
-        {
-            Interlocked.Increment(ref perSubCount);
-        };
+        opts.Handlers[$"{prefix}/room/+"] = (s, e) => Interlocked.Increment(ref perSubCount);
         await client.SubscribeAsync(opts).ConfigureAwait(false);
 
         // Publish a message that matches both
