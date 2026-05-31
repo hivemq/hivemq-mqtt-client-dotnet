@@ -16,13 +16,26 @@
 namespace HiveMQtt.Client;
 
 using System;
+using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 using HiveMQtt.MQTT5.Types;
 
 /// <inheritdoc />
 public partial class HiveMQClient : IDisposable, IHiveMQClient
 {
     private bool disposed;
+
+    private int perSubscriptionMessageHandlersPresent;
+
+    internal bool HasPerSubscriptionMessageHandlers =>
+        Volatile.Read(ref this.perSubscriptionMessageHandlersPresent) != 0;
+
+    private void RefreshPerSubscriptionMessageHandlersPresent()
+    {
+        this.perSubscriptionMessageHandlersPresent =
+            this.Subscriptions.Any(s => s.MessageReceivedHandler is not null) ? 1 : 0;
+    }
 
     /// <summary>
     /// Validates whether a subscription already exists.
@@ -205,6 +218,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient
 
                 // Dispose the connection manager
                 this.Connection?.Dispose();
+                this.MessageReceivedDispatcher?.Dispose();
             }
 
             // Call the appropriate methods to clean up

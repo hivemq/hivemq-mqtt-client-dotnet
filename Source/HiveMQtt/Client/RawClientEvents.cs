@@ -16,6 +16,7 @@
 namespace HiveMQtt.Client;
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using HiveMQtt.Client.Events;
 using HiveMQtt.Client.Internal;
@@ -273,13 +274,15 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
 
     internal virtual void OnMessageReceivedEventLauncher(PublishPacket packet)
     {
-        // RawClient does not maintain subscription state, so we simply fire the event if handlers are registered
-        if (this.OnMessageReceived != null)
+        if (this.OnMessageReceived == null)
+        {
+            return;
+        }
+
+        if (packet.Message.QoS is QualityOfService.AtMostOnceDelivery)
         {
             Logger.Trace("OnMessageReceivedEventLauncher");
-            var eventArgs = new OnMessageReceivedEventArgs(
-                packet.Message,
-                packet.Message.QoS == QualityOfService.AtMostOnceDelivery ? null : packet.PacketIdentifier);
+            var eventArgs = new OnMessageReceivedEventArgs(packet.Message, null);
             var handlers = this.OnMessageReceived.GetInvocationList();
             foreach (var handler in handlers)
             {
@@ -292,6 +295,30 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
                         }
                     }, TaskScheduler.Default);
             }
+
+            return;
+        }
+
+        Logger.Trace("OnMessageReceivedEventLauncher");
+        var globalHandlers = this.OnMessageReceived.GetInvocationList()
+            .Cast<EventHandler<OnMessageReceivedEventArgs>>()
+            .ToArray();
+        if (globalHandlers.Length == 0)
+        {
+            return;
+        }
+
+        var orderedEventArgs = new OnMessageReceivedEventArgs(packet.Message, packet.PacketIdentifier);
+        var item = new MessageReceivedDispatchItem
+        {
+            Sender = this,
+            EventArgs = orderedEventArgs,
+            GlobalHandlers = globalHandlers,
+        };
+
+        if (!this.MessageReceivedDispatcher.TryEnqueue(item))
+        {
+            Logger.Warn($"Dropped Application Message ({packet.Message.Topic}): message dispatch is quiescing or disposed.");
         }
     }
 
@@ -927,4 +954,7 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
     void IBaseMQTTClient.OnPingReqSentEventLauncher(PingReqPacket packet) => this.OnPingReqSentEventLauncher(packet);
 
     void IBaseMQTTClient.AfterDisconnectEventLauncher(bool clean) => this.AfterDisconnectEventLauncher(clean);
+
+    Task IBaseMQTTClient.QuiesceMessageDispatchAsync(TimeSpan timeout) =>
+        this.MessageReceivedDispatcher.QuiesceAsync(timeout);
 }

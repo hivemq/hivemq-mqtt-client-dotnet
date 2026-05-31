@@ -18,7 +18,7 @@ General events are triggered by high-level operations such as connecting, subscr
 | AfterSubscribe  | `AfterSubscribeEventArgs` |  `SubscribeResult` |
 | BeforeUnsubscribe | `BeforeUnsubscribeEventArgs` | `UnsubscribeOptions`  |
 | AfterUnsubscribe  | `AfterUnsubscribeEventArgs` |  `UnsubscribeResult` |
-| OnMessageReceived | `OnMessageReceivedEventArgs` |  `MQTT5PublishMessage` |
+| OnMessageReceived | `OnMessageReceivedEventArgs` |  `MQTT5PublishMessage` — QoS 1/2 handlers are started in FIFO order; see [Message Ordering](/docs/hivemqtt/how-to/message-ordering) |
 | BeforeDisconnect | `BeforeDisconnectEventArgs` |  None |
 | AfterDisconnect | `AfterDisconnectEventArgs` |  `CleanDisconnect` |
 

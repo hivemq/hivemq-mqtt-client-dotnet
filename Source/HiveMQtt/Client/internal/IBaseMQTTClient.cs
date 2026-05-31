@@ -15,6 +15,7 @@
  */
 namespace HiveMQtt.Client.Internal;
 
+using System;
 using System.Threading.Tasks;
 using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.Packets;
@@ -50,6 +51,13 @@ internal interface IBaseMQTTClient
     /// <param name="options">The disconnect options.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
     public Task<bool> DisconnectAsync(DisconnectOptions? options = null);
+
+    /// <summary>
+    /// Quiesces the ordered message dispatch queue: drop pending handlers and wait for in-flight handler.
+    /// </summary>
+    /// <param name="timeout">Maximum time to wait for the in-flight handler.</param>
+    /// <returns>A task that completes when quiesce finishes or times out.</returns>
+    public Task QuiesceMessageDispatchAsync(TimeSpan timeout);
 
     // Event launcher methods
     public void OnConnAckReceivedEventLauncher(ConnAckPacket packet);

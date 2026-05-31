@@ -55,7 +55,10 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient, IBaseMQTTClient
 
         // Initialize the connection manager
         this.Connection = new ConnectionManager(this);
+        this.MessageReceivedDispatcher = new MessageReceivedDispatcher();
     }
+
+    internal MessageReceivedDispatcher MessageReceivedDispatcher { get; }
 
     /// <inheritdoc />
     public Dictionary<string, string> LocalStore { get; } = new();
@@ -119,6 +122,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient, IBaseMQTTClient
         {
             await this.SubscriptionsSemaphore.WaitAsync().ConfigureAwait(false);
             this.Subscriptions.Clear();
+            this.RefreshPerSubscriptionMessageHandlersPresent();
         }
         finally
         {
@@ -194,6 +198,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient, IBaseMQTTClient
         if (connAck.ReasonCode == ConnAckReasonCode.Success)
         {
             this.Connection.State = ConnectState.Connected;
+            this.MessageReceivedDispatcher.ResetForConnect();
 
             // Ensure connection-ready signal is set for any writers awaiting readiness
             this.Connection.SignalNotDisconnected(); // Signal that we're not disconnected (already signaled at Connecting, but safe to call again)
@@ -591,6 +596,8 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient, IBaseMQTTClient
                 _ = this.Subscriptions.RemoveAll(s => s.TopicFilter.Topic == newSubscription.TopicFilter.Topic);
                 this.Subscriptions.Add(newSubscription);
             }
+
+            this.RefreshPerSubscriptionMessageHandlersPresent();
         }
         finally
         {
@@ -742,6 +749,7 @@ public partial class HiveMQClient : IDisposable, IHiveMQClient, IBaseMQTTClient
                 // remove subscriptions from client while locking them
                 await this.SubscriptionsSemaphore.WaitAsync().ConfigureAwait(false);
                 _ = this.Subscriptions.RemoveAll(subscriptionsToRemove.Contains);
+                this.RefreshPerSubscriptionMessageHandlersPresent();
             }
             finally
             {

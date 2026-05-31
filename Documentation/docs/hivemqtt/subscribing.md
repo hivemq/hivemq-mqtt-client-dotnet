@@ -153,6 +153,7 @@ In this example, the message handler is defined as a lambda function that writes
 Remember, prioritizing the setup of your message handler ensures that your application is ready to process incoming messages as soon as the connection to the broker is established.
 
 * See Also: [OnMessageReceivedEventArgs.cs](https://github.com/hivemq/hivemq-mqtt-client-dotnet/blob/main/Source/HiveMQtt/Client/Events/OnMessageReceivedEventArgs.cs)
+* See Also: [Message Ordering](/docs/hivemqtt/how-to/message-ordering) — QoS 1/2 handler start order and async handler limits
 
 ## Subscribe: Multiple Topics At Once
 

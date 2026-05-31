@@ -1,5 +1,6 @@
 namespace HiveMQtt.Client.Connection;
 
+using System;
 using HiveMQtt.Client.Exceptions;
 using HiveMQtt.Client.Internal;
 using HiveMQtt.Client.Options;
@@ -472,6 +473,8 @@ public partial class ConnectionManager
 
         // Reset the connection-ready signal for the next connect cycle
         this.ResetConnectedSignal();
+
+        await this.Client.QuiesceMessageDispatchAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
 
         // Cancel all background tasks BEFORE setting state to Disconnected
         // This prevents race conditions where tasks check state after it's set but before cancellation
