@@ -236,6 +236,15 @@ code {
   border-radius: 8px;
 }
 
+mark {
+  background-color: rgba(255, 193, 7, 0.35);
+  color: inherit;
+}
+
+[data-theme='dark'] mark {
+  background-color: rgba(255, 193, 7, 0.25);
+}
+
 /* ==========================================================================
    Cards & Containers
    ========================================================================== */

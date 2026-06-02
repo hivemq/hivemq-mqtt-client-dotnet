@@ -61,6 +61,17 @@ const config = {
     ],
   ],
 
+  plugins: [
+    [
+      'docusaurus-lunr-search',
+      {
+        languages: ['en'],
+        highlightResult: true,
+        maxHits: 8,
+      },
+    ],
+  ],
+
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
