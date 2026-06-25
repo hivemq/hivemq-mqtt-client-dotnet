@@ -55,7 +55,7 @@
   <ItemGroup>
     <!-- Update versions from Directory.Build.props -->
     <PackageReference Update="coverlet.collector" Version="6.0.2" />
-    <PackageReference Update="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Update="Microsoft.NET.Test.Sdk" Version="17.13.0" />
   </ItemGroup>
 
   <ItemGroup>
