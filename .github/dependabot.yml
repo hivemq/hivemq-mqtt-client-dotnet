@@ -7,9 +7,32 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+    commit-message:
+      prefix: ":arrow_up:"
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: "weekly"
     allow:
       - dependency-type: "all"
     commit-message:
       prefix: ":arrow_up:"
-    open-pull-requests-limit: 50
+    open-pull-requests-limit: 10
+    groups:
+      microsoft:
+        patterns:
+          - "Microsoft.*"
+      test-dependencies:
+        patterns:
+          - "NUnit*"
+          - "FluentAssertions"
+          - "coverlet*"
+          - "Moq"
+          - "xunit*"
+      analyzers:
+        patterns:
+          - "*Analyzers*"
+          - "StyleCop*"
