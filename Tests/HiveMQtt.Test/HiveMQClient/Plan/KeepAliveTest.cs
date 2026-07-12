@@ -174,7 +174,6 @@ public class KeepAliveTest
     {
         private TcpListener? listener;
         private CancellationTokenSource? cts;
-        private Task? acceptLoop;
 
         public int Port { get; private set; }
 
@@ -184,7 +183,7 @@ public class KeepAliveTest
             this.listener.Start();
             this.Port = ((IPEndPoint)this.listener.LocalEndpoint).Port;
             this.cts = new CancellationTokenSource();
-            this.acceptLoop = this.AcceptLoopAsync(this.cts.Token);
+            _ = this.AcceptLoopAsync(this.cts.Token);
             return Task.CompletedTask;
         }
 
