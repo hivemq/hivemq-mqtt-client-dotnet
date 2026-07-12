@@ -198,7 +198,15 @@ public class KeepAliveTest
                     // Parameterless AcceptTcpClientAsync for net6.0 compatibility;
                     // listener.Stop() in Dispose unblocks and exits the loop.
                     tcpClient = await this.listener!.AcceptTcpClientAsync().ConfigureAwait(false);
-                    _ = this.HandleClientAsync(tcpClient, cancellationToken);
+                    _ = this.HandleClientAsync(tcpClient, cancellationToken).ContinueWith(
+                        t =>
+                        {
+                            // Observe faults so they do not become unobserved task exceptions
+                            _ = t.Exception;
+                        },
+                        CancellationToken.None,
+                        TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
+                        TaskScheduler.Default);
                 }
                 catch (ObjectDisposedException)
                 {

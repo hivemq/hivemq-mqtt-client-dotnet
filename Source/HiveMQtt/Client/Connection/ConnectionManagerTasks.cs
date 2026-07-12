@@ -116,7 +116,40 @@ public partial class ConnectionManager
                         if (this.IsPingRespTimedOut(this.Client.Options.ResponseTimeoutInMs))
                         {
                             Logger.Warn($"{this.Client.Options.ClientId}-(CM)- PINGRESP not received within {this.Client.Options.ResponseTimeoutInMs}ms. Disconnecting...");
-                            await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
+
+                            // Fire-and-forget: HandleDisconnectionAsync awaits ConnectionMonitorThread via
+                            // CancelBackgroundTasksAsync, so awaiting it here would self-deadlock (~5s timeout).
+                            _ = Task.Run(async () =>
+                            {
+                                try
+                                {
+                                    if (this.State == ConnectState.Disconnected)
+                                    {
+                                        return;
+                                    }
+
+                                    if (!await this.disconnectionSemaphore.WaitAsync(0).ConfigureAwait(false))
+                                    {
+                                        return;
+                                    }
+
+                                    try
+                                    {
+                                        if (this.State != ConnectState.Disconnected)
+                                        {
+                                            await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
+                                        }
+                                    }
+                                    finally
+                                    {
+                                        this.disconnectionSemaphore.Release();
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    Logger.Warn($"{this.Client.Options.ClientId}-(CM)- Exception during PINGRESP timeout disconnect: {ex.Message}");
+                                }
+                            });
                             break;
                         }
 
