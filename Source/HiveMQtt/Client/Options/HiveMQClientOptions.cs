@@ -221,6 +221,7 @@ public class HiveMQClientOptions
     /// If PINGRESP is not received within this timeout after a PINGREQ is sent, the client
     /// closes the network connection (MQTT Keep Alive SHOULD).
     /// Use -1 (<c>Timeout.Infinite</c>) to disable the PINGRESP deadline; 0 means immediate timeout.
+    /// Values less than -1 are not valid for <c>WaitAsync</c> elsewhere and should not be used.
     /// </summary>
     public int ResponseTimeoutInMs { get; set; }
 

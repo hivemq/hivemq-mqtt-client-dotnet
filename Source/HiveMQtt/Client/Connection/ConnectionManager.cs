@@ -206,12 +206,16 @@ public partial class ConnectionManager : IDisposable
     /// </summary>
     /// <param name="timeoutMs">Maximum time to wait for PINGRESP after PINGREQ was sent.
     /// Aligns with <see cref="Task.WaitAsync(TimeSpan)"/> / <see cref="Timeout"/> semantics:
-    /// <see cref="Timeout.Infinite"/> (-1) and other negative values disable the check;
-    /// 0 means immediate timeout once the PINGREQ has been sent.</param>
+    /// only <see cref="Timeout.Infinite"/> (-1) disables the check;
+    /// 0 means immediate timeout once the PINGREQ has been sent.
+    /// Values less than -1 are invalid for <c>TimeSpan.FromMilliseconds</c>/<c>WaitAsync</c>
+    /// elsewhere and are treated as disabled here so the monitor does not throw.</param>
     /// <returns>True if the ping response has timed out.</returns>
     private bool IsPingRespTimedOut(int timeoutMs)
     {
-        // Negative values (Timeout.Infinite == -1, and < -1) disable the PINGRESP timeout
+        // Only Timeout.Infinite (-1) is the supported "no timeout" value (WaitAsync / TimeSpan).
+        // Values < -1 are invalid for TimeSpan.FromMilliseconds and are treated as disabled
+        // here to avoid crashing the connection monitor.
         if (timeoutMs < 0 || Volatile.Read(ref this.awaitingPingResp) == 0)
         {
             return false;

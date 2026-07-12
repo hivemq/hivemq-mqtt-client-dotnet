@@ -147,7 +147,7 @@ public partial class ConnectionManager
                                 }
                                 catch (Exception ex)
                                 {
-                                    Logger.Warn($"{this.Client.Options.ClientId}-(CM)- Exception during PINGRESP timeout disconnect: {ex.Message}");
+                                    Logger.Warn($"{this.Client.Options.ClientId}-(CM)- Exception during PINGRESP timeout disconnect: {ex}");
                                 }
                             });
                             break;
