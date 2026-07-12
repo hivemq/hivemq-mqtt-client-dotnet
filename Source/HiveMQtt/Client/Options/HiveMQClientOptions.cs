@@ -217,7 +217,9 @@ public class HiveMQClientOptions
 
     /// <summary>
     /// Gets or sets the time in milliseconds to wait for a response in a transactional operation.
-    /// This could be a Publish, Subscribe, Unsubscribe, or Disconnect operation.
+    /// This could be a Publish, Subscribe, Unsubscribe, Disconnect, or PINGRESP after PINGREQ.
+    /// If PINGRESP is not received within this timeout after a PINGREQ is sent, the client
+    /// closes the network connection (MQTT Keep Alive SHOULD).
     /// </summary>
     public int ResponseTimeoutInMs { get; set; }
 

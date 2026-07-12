@@ -44,6 +44,12 @@ public partial class ConnectionManager : IDisposable
     // This is how we kill innocent and not so innocent Tasks
     private CancellationTokenSource cancellationTokenSource;
 
+    // 1 when a PINGREQ has been sent and we are waiting for PINGRESP; 0 otherwise
+    private int awaitingPingResp;
+
+    // Environment.TickCount64 when the outstanding PINGREQ was marked
+    private long pingReqSentTimestamp;
+
     // The state of the connection (thread-safe using Interlocked)
     private int stateValue = (int)ConnectState.Disconnected;
 
@@ -165,6 +171,42 @@ public partial class ConnectionManager : IDisposable
     /// Resets the not-disconnected signal. Called when state transitions to Disconnected.
     /// </summary>
     internal void ResetNotDisconnectedSignal() => this.notDisconnectedSignal = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    /// <summary>
+    /// Marks that a PINGREQ has been sent and we are awaiting a PINGRESP.
+    /// Call before writing so a fast PINGRESP cannot race past the mark.
+    /// </summary>
+    private void MarkPingReqOutstanding()
+    {
+        Interlocked.Exchange(ref this.pingReqSentTimestamp, Environment.TickCount64);
+        Interlocked.Exchange(ref this.awaitingPingResp, 1);
+    }
+
+    /// <summary>
+    /// Clears the outstanding PINGREQ / awaiting-PINGRESP state.
+    /// </summary>
+    private void ClearAwaitingPingResp() => Interlocked.Exchange(ref this.awaitingPingResp, 0);
+
+    /// <summary>
+    /// Returns true when a PINGREQ is outstanding and the response deadline has elapsed.
+    /// </summary>
+    /// <param name="timeoutMs">Maximum time to wait for PINGRESP after PINGREQ was sent.</param>
+    /// <returns>True if the ping response has timed out.</returns>
+    private bool IsPingRespTimedOut(int timeoutMs)
+    {
+        if (Volatile.Read(ref this.awaitingPingResp) == 0)
+        {
+            return false;
+        }
+
+        var elapsedMs = Environment.TickCount64 - Volatile.Read(ref this.pingReqSentTimestamp);
+        return elapsedMs > timeoutMs;
+    }
+
+    /// <summary>
+    /// Returns true when a PINGREQ has been sent and PINGRESP has not yet arrived.
+    /// </summary>
+    private bool IsAwaitingPingResp() => Volatile.Read(ref this.awaitingPingResp) != 0;
 
     internal async Task<bool> ConnectAsync()
     {

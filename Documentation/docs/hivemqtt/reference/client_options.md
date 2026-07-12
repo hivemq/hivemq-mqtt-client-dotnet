@@ -32,7 +32,7 @@ The `HiveMQClientOptions` class provides options for configuring the HiveMQ MQTT
 ----------------
 
 * Type: `int`
-* Description: The maximum time interval that is permitted to elapse between the point at which the Client finishes transmitting one MQTT Control Packet and the point it starts sending the next.
+* Description: The maximum time interval that is permitted to elapse between the point at which the Client finishes transmitting one MQTT Control Packet and the point it starts sending the next. When a PINGREQ is sent and no PINGRESP arrives within `ResponseTimeoutInMs`, the client closes the connection.
 
 ### `CleanStart`
 ----------------
@@ -130,7 +130,7 @@ The `HiveMQClientOptions` class provides options for configuring the HiveMQ MQTT
 -------------------------
 
 * Type: `int`
-* Description: The time in milliseconds to wait for a response from transactional packets.
+* Description: The time in milliseconds to wait for a response from transactional packets (Publish, Subscribe, Unsubscribe, Disconnect). Also used as the maximum time to wait for a PINGRESP after sending a PINGREQ; if no PINGRESP arrives within this timeout, the client closes the connection (MQTT Keep Alive recommendation).
 
 ### `AutomaticReconnect`
 -------------------------

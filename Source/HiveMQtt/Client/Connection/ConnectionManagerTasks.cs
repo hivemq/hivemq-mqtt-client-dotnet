@@ -110,11 +110,25 @@ public partial class ConnectionManager
                 // If connected and no recent packets have been sent, send a ping
                 if (currentState == ConnectState.Connected)
                 {
-                    if (this.Client.Options.KeepAlive > 0 && this.lastCommunicationTimer.Elapsed > TimeSpan.FromSeconds(keepAlivePeriod))
+                    if (this.Client.Options.KeepAlive > 0)
                     {
-                        // Send PingReq
-                        Logger.Trace($"{this.Client.Options.ClientId}-(CM)- --> PingReq");
-                        this.SendQueue.Enqueue(new PingReqPacket());
+                        // MQTT Keep Alive SHOULD: disconnect if PINGRESP does not arrive in time
+                        if (this.IsPingRespTimedOut(this.Client.Options.ResponseTimeoutInMs))
+                        {
+                            Logger.Warn($"{this.Client.Options.ClientId}-(CM)- PINGRESP not received within {this.Client.Options.ResponseTimeoutInMs}ms. Disconnecting...");
+                            await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
+                            break;
+                        }
+
+                        // Do not enqueue another PINGREQ while one is still awaiting a response
+                        if (!this.IsAwaitingPingResp() &&
+                            this.lastCommunicationTimer.Elapsed > TimeSpan.FromSeconds(keepAlivePeriod))
+                        {
+                            // Mark before enqueue so the next monitor cycle cannot pile up PINGREQs
+                            this.MarkPingReqOutstanding();
+                            Logger.Trace($"{this.Client.Options.ClientId}-(CM)- --> PingReq");
+                            this.SendQueue.Enqueue(new PingReqPacket());
+                        }
                     }
                 }
 
@@ -340,8 +354,19 @@ public partial class ConnectionManager
 
                     case PingReqPacket pingReqPacket:
                         Logger.Trace($"{this.Client.Options.ClientId}-(W)- --> Sending PingReqPacket");
+
+                        // Mark outstanding before write so a fast PINGRESP cannot race past the mark
+                        this.MarkPingReqOutstanding();
                         writeSuccess = await this.Transport.WriteAsync(PingReqPacket.Encode(), cancellationToken).ConfigureAwait(false);
-                        this.Client.OnPingReqSentEventLauncher(pingReqPacket);
+                        if (!writeSuccess)
+                        {
+                            this.ClearAwaitingPingResp();
+                        }
+                        else
+                        {
+                            this.Client.OnPingReqSentEventLauncher(pingReqPacket);
+                        }
+
                         break;
 
                     default:
@@ -609,6 +634,7 @@ public partial class ConnectionManager
 
                     case PingRespPacket pingRespPacket:
                         Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- <-- Received PingResp");
+                        this.ClearAwaitingPingResp();
                         this.Client.OnPingRespReceivedEventLauncher(pingRespPacket);
                         break;
 
