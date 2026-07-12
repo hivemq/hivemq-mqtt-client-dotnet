@@ -471,6 +471,9 @@ public partial class ConnectionManager
 
         Logger.Debug($"HandleDisconnection: Handling disconnection. clean={clean}.");
 
+        // Clear any outstanding PINGREQ so the next connect cycle starts clean
+        this.ClearAwaitingPingResp();
+
         // Reset the connection-ready signal for the next connect cycle
         this.ResetConnectedSignal();
 

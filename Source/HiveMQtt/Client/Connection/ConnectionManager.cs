@@ -44,6 +44,12 @@ public partial class ConnectionManager : IDisposable
     // This is how we kill innocent and not so innocent Tasks
     private CancellationTokenSource cancellationTokenSource;
 
+    // 1 when a PINGREQ has been sent and we are waiting for PINGRESP; 0 otherwise
+    private int awaitingPingResp;
+
+    // Environment.TickCount64 when the outstanding PINGREQ was marked
+    private long pingReqSentTimestamp;
+
     // The state of the connection (thread-safe using Interlocked)
     private int stateValue = (int)ConnectState.Disconnected;
 
@@ -165,6 +171,77 @@ public partial class ConnectionManager : IDisposable
     /// Resets the not-disconnected signal. Called when state transitions to Disconnected.
     /// </summary>
     internal void ResetNotDisconnectedSignal() => this.notDisconnectedSignal = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    /// <summary>
+    /// Marks that a PINGREQ has been queued but not yet written.
+    /// Prevents pile-up without starting the PINGRESP deadline clock.
+    /// </summary>
+    private void MarkPingReqQueued()
+    {
+        Interlocked.Exchange(ref this.pingReqSentTimestamp, 0);
+        Interlocked.Exchange(ref this.awaitingPingResp, 1);
+    }
+
+    /// <summary>
+    /// Marks that a PINGREQ has been (or is about to be) written and starts the PINGRESP deadline.
+    /// Call immediately before the transport write so a fast PINGRESP cannot race past the mark.
+    /// </summary>
+    private void MarkPingReqSent()
+    {
+        Interlocked.Exchange(ref this.pingReqSentTimestamp, Environment.TickCount64);
+        Interlocked.Exchange(ref this.awaitingPingResp, 1);
+    }
+
+    /// <summary>
+    /// Clears the outstanding PINGREQ / awaiting-PINGRESP state.
+    /// </summary>
+    private void ClearAwaitingPingResp()
+    {
+        Interlocked.Exchange(ref this.pingReqSentTimestamp, 0);
+        Interlocked.Exchange(ref this.awaitingPingResp, 0);
+    }
+
+    /// <summary>
+    /// Returns true when a PINGREQ has been sent and the response deadline has elapsed.
+    /// </summary>
+    /// <param name="timeoutMs">Maximum time to wait for PINGRESP after PINGREQ was sent.
+    /// Aligns with <see cref="Task.WaitAsync(TimeSpan)"/> / <see cref="Timeout"/> semantics:
+    /// only <see cref="Timeout.Infinite"/> (-1) disables the check;
+    /// 0 means immediate timeout once the PINGREQ has been sent.
+    /// Values less than -1 are invalid for <c>TimeSpan.FromMilliseconds</c>/<c>WaitAsync</c>
+    /// elsewhere and are treated as disabled here so the monitor does not throw.</param>
+    /// <returns>True if the ping response has timed out.</returns>
+    private bool IsPingRespTimedOut(int timeoutMs)
+    {
+        // Only Timeout.Infinite (-1) is the supported "no timeout" value (WaitAsync / TimeSpan).
+        // Values < -1 are invalid for TimeSpan.FromMilliseconds and are treated as disabled
+        // here to avoid crashing the connection monitor.
+        if (timeoutMs < 0 || Volatile.Read(ref this.awaitingPingResp) == 0)
+        {
+            return false;
+        }
+
+        // Deadline starts only when the PINGREQ is actually written (timestamp != 0)
+        var sentTimestamp = Volatile.Read(ref this.pingReqSentTimestamp);
+        if (sentTimestamp == 0)
+        {
+            return false;
+        }
+
+        // 0 == immediate timeout once sent (WaitAsync(TimeSpan.Zero) semantics)
+        if (timeoutMs == 0)
+        {
+            return true;
+        }
+
+var elapsedMs = Environment.TickCount64 - sentTimestamp;
+return elapsedMs >= timeoutMs;
+    }
+
+    /// <summary>
+    /// Returns true when a PINGREQ is queued or sent and PINGRESP has not yet arrived.
+    /// </summary>
+    private bool IsAwaitingPingResp() => Volatile.Read(ref this.awaitingPingResp) != 0;
 
     internal async Task<bool> ConnectAsync()
     {

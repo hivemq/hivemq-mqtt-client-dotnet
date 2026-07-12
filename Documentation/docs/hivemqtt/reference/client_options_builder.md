@@ -88,7 +88,7 @@ Sets whether to use a clean start.
 
 Sets the keep alive period.
 
-**Description:** The keep alive period is the time interval between two control packets (PINGREQ and PINGRESP) sent by the client to the broker. This value is used to detect network failures and maintain the connection.
+**Description:** The keep alive period is the maximum time interval in seconds that is permitted to elapse between the point at which the client finishes transmitting one MQTT Control Packet and the point it starts sending the next. When idle, the client sends a PINGREQ; if no PINGRESP arrives within `ResponseTimeoutInMs`, the client closes the connection to detect half-open failures.
 
 **Example:** `WithKeepAlive(60)`
 
