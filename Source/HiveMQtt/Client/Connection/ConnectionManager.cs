@@ -234,8 +234,8 @@ public partial class ConnectionManager : IDisposable
             return true;
         }
 
-        var elapsedMs = Environment.TickCount64 - sentTimestamp;
-        return elapsedMs > timeoutMs;
+var elapsedMs = Environment.TickCount64 - sentTimestamp;
+return elapsedMs >= timeoutMs;
     }
 
     /// <summary>
