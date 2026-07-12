@@ -220,6 +220,7 @@ public class HiveMQClientOptions
     /// This could be a Publish, Subscribe, Unsubscribe, Disconnect, or PINGRESP after PINGREQ.
     /// If PINGRESP is not received within this timeout after a PINGREQ is sent, the client
     /// closes the network connection (MQTT Keep Alive SHOULD).
+    /// Use -1 (<c>Timeout.Infinite</c>) to disable the PINGRESP deadline; 0 means immediate timeout.
     /// </summary>
     public int ResponseTimeoutInMs { get; set; }
 

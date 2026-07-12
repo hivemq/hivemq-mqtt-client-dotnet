@@ -157,8 +157,8 @@ public partial class ConnectionManager
                         if (!this.IsAwaitingPingResp() &&
                             this.lastCommunicationTimer.Elapsed > TimeSpan.FromSeconds(keepAlivePeriod))
                         {
-                            // Mark before enqueue so the next monitor cycle cannot pile up PINGREQs
-                            this.MarkPingReqOutstanding();
+                            // Mark queued (not sent) so we do not start the deadline until the writer sends
+                            this.MarkPingReqQueued();
                             Logger.Trace($"{this.Client.Options.ClientId}-(CM)- --> PingReq");
                             this.SendQueue.Enqueue(new PingReqPacket());
                         }
@@ -388,8 +388,8 @@ public partial class ConnectionManager
                     case PingReqPacket pingReqPacket:
                         Logger.Trace($"{this.Client.Options.ClientId}-(W)- --> Sending PingReqPacket");
 
-                        // Mark outstanding before write so a fast PINGRESP cannot race past the mark
-                        this.MarkPingReqOutstanding();
+                        // Start the PINGRESP deadline immediately before write (not at enqueue time)
+                        this.MarkPingReqSent();
                         writeSuccess = await this.Transport.WriteAsync(PingReqPacket.Encode(), cancellationToken).ConfigureAwait(false);
                         if (!writeSuccess)
                         {
