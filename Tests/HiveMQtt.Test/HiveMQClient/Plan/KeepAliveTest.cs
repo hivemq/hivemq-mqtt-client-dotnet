@@ -195,8 +195,23 @@ public class KeepAliveTest
                 TcpClient? tcpClient = null;
                 try
                 {
-                    tcpClient = await this.listener!.AcceptTcpClientAsync(cancellationToken).ConfigureAwait(false);
+                    // Parameterless AcceptTcpClientAsync for net6.0 compatibility;
+                    // listener.Stop() in Dispose unblocks and exits the loop.
+                    tcpClient = await this.listener!.AcceptTcpClientAsync().ConfigureAwait(false);
                     _ = this.HandleClientAsync(tcpClient, cancellationToken);
+                }
+                catch (ObjectDisposedException)
+                {
+                    tcpClient?.Dispose();
+                    break;
+                }
+                catch (SocketException)
+                {
+                    tcpClient?.Dispose();
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        break;
+                    }
                 }
                 catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
                 {
@@ -226,7 +241,7 @@ public class KeepAliveTest
 
                 // MQTT 5 CONNACK: Success, no session present, empty properties
                 // Fixed header 0x20, remaining length 3, flags 0, reason 0, property length 0
-                byte[] connAck = [0x20, 0x03, 0x00, 0x00, 0x00];
+                byte[] connAck = new byte[] { 0x20, 0x03, 0x00, 0x00, 0x00 };
                 await stream.WriteAsync(connAck.AsMemory(0, connAck.Length), cancellationToken).ConfigureAwait(false);
                 await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
 

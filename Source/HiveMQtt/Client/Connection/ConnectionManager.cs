@@ -190,11 +190,13 @@ public partial class ConnectionManager : IDisposable
     /// <summary>
     /// Returns true when a PINGREQ is outstanding and the response deadline has elapsed.
     /// </summary>
-    /// <param name="timeoutMs">Maximum time to wait for PINGRESP after PINGREQ was sent.</param>
+    /// <param name="timeoutMs">Maximum time to wait for PINGRESP after PINGREQ was sent.
+    /// Values less than or equal to zero disable the PINGRESP timeout check.</param>
     /// <returns>True if the ping response has timed out.</returns>
     private bool IsPingRespTimedOut(int timeoutMs)
     {
-        if (Volatile.Read(ref this.awaitingPingResp) == 0)
+        // Match WaitAsync semantics where negative timeouts mean infinite / no timeout
+        if (timeoutMs <= 0 || Volatile.Read(ref this.awaitingPingResp) == 0)
         {
             return false;
         }
