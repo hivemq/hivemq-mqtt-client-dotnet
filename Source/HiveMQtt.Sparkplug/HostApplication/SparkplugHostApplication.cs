@@ -363,11 +363,15 @@ public sealed class SparkplugHostApplication : IDisposable
 
     private async Task PublishStateDeathAsync(CancellationToken cancellationToken)
     {
-        var (topic, payload) = BuildStateOfflineMessage(this.options);
+        // Graceful death uses the current timestamp so Edge Nodes treating Primary Host STATE
+        // accept offline (timestamp must be greater than the prior online STATE timestamp).
+        // LWT keeps timestamp 0 via BuildStateOfflineMessage (time of unexpected disconnect is unknown).
+        var topic = $"{this.options.SparkplugNamespace}/STATE/{this.options.HostApplicationId}";
+        var statePayload = SparkplugStatePayload.CreateOffline(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
         var message = new MQTT5PublishMessage
         {
             Topic = topic,
-            Payload = payload,
+            Payload = statePayload.ToUtf8Bytes(),
             QoS = QualityOfService.AtLeastOnceDelivery,
             Retain = true,
         };

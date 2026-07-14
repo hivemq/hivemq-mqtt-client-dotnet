@@ -197,7 +197,9 @@ public class SparkplugHostApplicationTest
         await host.StartAsync().ConfigureAwait(false);
         client.PublishedMessages.Clear();
 
+        var beforeStopMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         await host.StopAsync().ConfigureAwait(false);
+        var afterStopMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
         client.PublishedMessages.Should().ContainSingle();
         var stateDeath = client.PublishedMessages[0];
@@ -206,6 +208,8 @@ public class SparkplugHostApplicationTest
         stateDeath.Retain.Should().BeTrue();
         SparkplugStatePayload.TryDecode(stateDeath.Payload, out var payload).Should().BeTrue();
         payload!.Online.Should().BeFalse();
+        payload.Timestamp.Should().BeGreaterThan(0);
+        payload.Timestamp.Should().BeInRange(beforeStopMs, afterStopMs);
     }
 
     [Test]
