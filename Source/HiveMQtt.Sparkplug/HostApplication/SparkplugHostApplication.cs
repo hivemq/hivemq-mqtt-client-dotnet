@@ -77,7 +77,7 @@ public sealed class SparkplugHostApplication : IDisposable
         if (this.options.UseStateMessages && this.options.UseStateLwt && clientOptions.LastWillAndTestament is null && !string.IsNullOrWhiteSpace(this.options.HostApplicationId))
         {
             var (topic, payload) = BuildStateOfflineMessage(this.options);
-            clientOptions.LastWillAndTestament = new LastWillAndTestament(topic, payload, QualityOfService.AtLeastOnceDelivery, retain: false);
+            clientOptions.LastWillAndTestament = new LastWillAndTestament(topic, payload, QualityOfService.AtLeastOnceDelivery, retain: true);
         }
 
         this.client = new HiveMQClient(clientOptions);
@@ -356,20 +356,24 @@ public sealed class SparkplugHostApplication : IDisposable
             Topic = topic,
             Payload = statePayload.ToUtf8Bytes(),
             QoS = QualityOfService.AtLeastOnceDelivery,
-            Retain = false,
+            Retain = true,
         };
         await this.client.PublishAsync(message, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task PublishStateDeathAsync(CancellationToken cancellationToken)
     {
-        var (topic, payload) = BuildStateOfflineMessage(this.options);
+        // Graceful death uses the current timestamp so Edge Nodes treating Primary Host STATE
+        // accept offline (timestamp must be greater than the prior online STATE timestamp).
+        // LWT keeps timestamp 0 via BuildStateOfflineMessage (time of unexpected disconnect is unknown).
+        var topic = $"{this.options.SparkplugNamespace}/STATE/{this.options.HostApplicationId}";
+        var statePayload = SparkplugStatePayload.CreateOffline(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
         var message = new MQTT5PublishMessage
         {
             Topic = topic,
-            Payload = payload,
+            Payload = statePayload.ToUtf8Bytes(),
             QoS = QualityOfService.AtLeastOnceDelivery,
-            Retain = false,
+            Retain = true,
         };
         await this.client.PublishAsync(message, cancellationToken).ConfigureAwait(false);
     }
