@@ -77,7 +77,7 @@ public sealed class SparkplugHostApplication : IDisposable
         if (this.options.UseStateMessages && this.options.UseStateLwt && clientOptions.LastWillAndTestament is null && !string.IsNullOrWhiteSpace(this.options.HostApplicationId))
         {
             var (topic, payload) = BuildStateOfflineMessage(this.options);
-            clientOptions.LastWillAndTestament = new LastWillAndTestament(topic, payload, QualityOfService.AtLeastOnceDelivery, retain: false);
+            clientOptions.LastWillAndTestament = new LastWillAndTestament(topic, payload, QualityOfService.AtLeastOnceDelivery, retain: true);
         }
 
         this.client = new HiveMQClient(clientOptions);
@@ -356,7 +356,7 @@ public sealed class SparkplugHostApplication : IDisposable
             Topic = topic,
             Payload = statePayload.ToUtf8Bytes(),
             QoS = QualityOfService.AtLeastOnceDelivery,
-            Retain = false,
+            Retain = true,
         };
         await this.client.PublishAsync(message, cancellationToken).ConfigureAwait(false);
     }
@@ -369,7 +369,7 @@ public sealed class SparkplugHostApplication : IDisposable
             Topic = topic,
             Payload = payload,
             QoS = QualityOfService.AtLeastOnceDelivery,
-            Retain = false,
+            Retain = true,
         };
         await this.client.PublishAsync(message, cancellationToken).ConfigureAwait(false);
     }

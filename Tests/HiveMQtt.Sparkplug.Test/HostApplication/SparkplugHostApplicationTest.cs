@@ -18,6 +18,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using HiveMQtt.Client;
 using HiveMQtt.Client.Options;
+using HiveMQtt.MQTT5.Types;
 using HiveMQtt.Sparkplug.HostApplication;
 using HiveMQtt.Sparkplug.Payload;
 using HiveMQtt.Sparkplug.Protobuf;
@@ -156,6 +157,75 @@ public class SparkplugHostApplicationTest
         host.IsConnected.Should().BeTrue();
         client.Subscriptions.Should().HaveCount(1);
         client.Subscriptions[0].TopicFilter.Topic.Should().Be("spBv1.0/#");
+    }
+
+    [Test]
+    public async Task StartAsync_Publishes_Retained_State_Birth()
+    {
+        var client = new FakeHiveMQClient();
+        var options = new SparkplugHostApplicationOptions
+        {
+            SparkplugTopicFilter = "spBv1.0/#",
+            HostApplicationId = "host1",
+            UseStateMessages = true,
+        };
+        var host = new SparkplugHostApplication(client, options);
+
+        await host.StartAsync().ConfigureAwait(false);
+
+        client.PublishedMessages.Should().ContainSingle();
+        var stateBirth = client.PublishedMessages[0];
+        stateBirth.Topic.Should().Be("spBv1.0/STATE/host1");
+        stateBirth.QoS.Should().Be(QualityOfService.AtLeastOnceDelivery);
+        stateBirth.Retain.Should().BeTrue();
+        SparkplugStatePayload.TryDecode(stateBirth.Payload, out var payload).Should().BeTrue();
+        payload!.Online.Should().BeTrue();
+    }
+
+    [Test]
+    public async Task StopAsync_Publishes_Retained_State_Death()
+    {
+        var client = new FakeHiveMQClient();
+        var options = new SparkplugHostApplicationOptions
+        {
+            SparkplugTopicFilter = "spBv1.0/#",
+            HostApplicationId = "host1",
+            UseStateMessages = true,
+        };
+        var host = new SparkplugHostApplication(client, options);
+
+        await host.StartAsync().ConfigureAwait(false);
+        client.PublishedMessages.Clear();
+
+        await host.StopAsync().ConfigureAwait(false);
+
+        client.PublishedMessages.Should().ContainSingle();
+        var stateDeath = client.PublishedMessages[0];
+        stateDeath.Topic.Should().Be("spBv1.0/STATE/host1");
+        stateDeath.QoS.Should().Be(QualityOfService.AtLeastOnceDelivery);
+        stateDeath.Retain.Should().BeTrue();
+        SparkplugStatePayload.TryDecode(stateDeath.Payload, out var payload).Should().BeTrue();
+        payload!.Online.Should().BeFalse();
+    }
+
+    [Test]
+    public void Constructor_With_Owned_Client_Sets_Retained_State_Lwt()
+    {
+        var clientOptions = new HiveMQClientOptionsBuilder().WithClientId("host-lwt-test").Build();
+        var sparkplugOptions = new SparkplugHostApplicationOptions
+        {
+            SparkplugTopicFilter = "spBv1.0/#",
+            HostApplicationId = "host1",
+            UseStateMessages = true,
+            UseStateLwt = true,
+        };
+
+        using var host = new SparkplugHostApplication(clientOptions, sparkplugOptions);
+
+        clientOptions.LastWillAndTestament.Should().NotBeNull();
+        clientOptions.LastWillAndTestament!.Topic.Should().Be("spBv1.0/STATE/host1");
+        clientOptions.LastWillAndTestament.QoS.Should().Be(QualityOfService.AtLeastOnceDelivery);
+        clientOptions.LastWillAndTestament.Retain.Should().BeTrue();
     }
 
     [Test]
