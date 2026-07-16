@@ -58,6 +58,14 @@ public class SparkplugEdgeNodeOptions
     public bool UseDeathLwt { get; set; } = true;
 
     /// <summary>
+    /// Gets or sets the Primary Host Application ID. When set, the Edge Node subscribes to
+    /// <c>{SparkplugNamespace}/STATE/{PrimaryHostApplicationId}</c>, waits for an online STATE before publishing
+    /// NBIRTH, raises STATE events, and on a valid offline STATE publishes NDEATH and disconnects (single-broker
+    /// Primary Host Application behavior). When null or empty, Primary Host awareness is disabled.
+    /// </summary>
+    public string? PrimaryHostApplicationId { get; set; }
+
+    /// <summary>
     /// Validates the options and throws if invalid.
     /// </summary>
     /// <exception cref="InvalidOperationException">Thrown when required options are missing or invalid.</exception>
@@ -82,6 +90,11 @@ public class SparkplugEdgeNodeOptions
         {
             SparkplugIdValidator.ValidateGroupId(this.GroupId, nameof(this.GroupId), strict: true);
             SparkplugIdValidator.ValidateEdgeNodeId(this.EdgeNodeId, nameof(this.EdgeNodeId), strict: true);
+
+            if (!string.IsNullOrWhiteSpace(this.PrimaryHostApplicationId))
+            {
+                SparkplugIdValidator.ValidateHostApplicationId(this.PrimaryHostApplicationId, nameof(this.PrimaryHostApplicationId), strict: true);
+            }
         }
     }
 }

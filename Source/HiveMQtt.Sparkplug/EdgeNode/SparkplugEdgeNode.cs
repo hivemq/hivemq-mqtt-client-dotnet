@@ -46,6 +46,10 @@ public sealed class SparkplugEdgeNode : IDisposable
     private ulong? currentSessionBdSeq;
     private bool started;
     private bool disposed;
+    private TaskCompletionSource<bool>? primaryHostOnlineWait;
+    private long? lastPrimaryHostOnlineTimestamp;
+    private bool isPrimaryHostOnline;
+    private int primaryHostOfflineShutdownQueued;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SparkplugEdgeNode"/> class using an existing MQTT client.
@@ -96,7 +100,13 @@ public sealed class SparkplugEdgeNode : IDisposable
     public event EventHandler<SparkplugMessageReceivedEventArgs>? DeviceCommandReceived;
 
     /// <summary>
-    /// Event raised when a command message is received but could not be parsed.
+    /// Event raised when a Primary Host Application STATE message is received for the configured
+    /// <see cref="SparkplugEdgeNodeOptions.PrimaryHostApplicationId"/>.
+    /// </summary>
+    public event EventHandler<SparkplugMessageReceivedEventArgs>? StateMessageReceived;
+
+    /// <summary>
+    /// Event raised when a command or STATE message is received but could not be parsed.
     /// </summary>
     public event EventHandler<SparkplugMessageParseErrorEventArgs>? MessageParseError;
 
@@ -126,7 +136,19 @@ public sealed class SparkplugEdgeNode : IDisposable
     public ulong? CurrentSessionBdSeq => this.currentSessionBdSeq;
 
     /// <summary>
+    /// Gets a value indicating whether the configured Primary Host Application is currently considered online.
+    /// Always false when <see cref="SparkplugEdgeNodeOptions.PrimaryHostApplicationId"/> is not set.
+    /// </summary>
+    public bool IsPrimaryHostOnline => this.isPrimaryHostOnline;
+
+    private bool UsesPrimaryHost => !string.IsNullOrWhiteSpace(this.options.PrimaryHostApplicationId);
+
+    /// <summary>
     /// Connects the client, subscribes to NCMD and DCMD topics for this node, and publishes Node Birth (NBIRTH).
+    /// When <see cref="SparkplugEdgeNodeOptions.PrimaryHostApplicationId"/> is set, also subscribes to that Host's STATE
+    /// topic and waits for an online STATE (including a retained one) before publishing NBIRTH. If the Primary Host later
+    /// goes offline with a valid timestamp, the Edge Node publishes NDEATH and disconnects; call <see cref="StartAsync"/>
+    /// again after reconnect to resume (single-broker Primary Host support).
     /// After a reconnect (e.g. following connection loss and automatic or manual reconnection), call <see cref="StartAsync"/> again
     /// to publish a new NBIRTH (re-birth) and resume command subscriptions; the underlying client must be connected before calling.
     /// </summary>
@@ -150,6 +172,7 @@ public sealed class SparkplugEdgeNode : IDisposable
 
             var sessionBdSeq = this.bdSeq;
             this.bdSeq++;
+            Interlocked.Exchange(ref this.primaryHostOfflineShutdownQueued, 0);
 
             if (this.ownsClient && this.options.UseDeathLwt && this.client.Options is { } opts && opts.LastWillAndTestament is null && !string.IsNullOrWhiteSpace(this.options.GroupId) && !string.IsNullOrWhiteSpace(this.options.EdgeNodeId))
             {
@@ -176,6 +199,17 @@ public sealed class SparkplugEdgeNode : IDisposable
             var subOptions = new SubscribeOptions();
             subOptions.TopicFilters.Add(new TopicFilter(ncmdTopic.Build(), QualityOfService.AtLeastOnceDelivery));
             subOptions.TopicFilters.Add(new TopicFilter(dcmdFilter, QualityOfService.AtLeastOnceDelivery));
+
+            TaskCompletionSource<bool>? onlineWait = null;
+            if (this.UsesPrimaryHost)
+            {
+                var stateTopic = $"{this.options.SparkplugNamespace}/STATE/{this.options.PrimaryHostApplicationId}";
+                subOptions.TopicFilters.Add(new TopicFilter(stateTopic, QualityOfService.AtLeastOnceDelivery));
+                onlineWait = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                this.primaryHostOnlineWait = onlineWait;
+                this.isPrimaryHostOnline = false;
+            }
+
             var subscribeResult = await this.client.SubscribeAsync(subOptions).ConfigureAwait(false);
 
             if (subscribeResult.Subscriptions.Count != subOptions.TopicFilters.Count)
@@ -190,6 +224,21 @@ public sealed class SparkplugEdgeNode : IDisposable
                 if (!granted)
                 {
                     throw new InvalidOperationException($"Subscribe failed for topic filter index {i}: {reasonCode}.");
+                }
+            }
+
+            if (onlineWait is not null)
+            {
+                try
+                {
+                    await onlineWait.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+                }
+                finally
+                {
+                    if (ReferenceEquals(this.primaryHostOnlineWait, onlineWait))
+                    {
+                        this.primaryHostOnlineWait = null;
+                    }
                 }
             }
 
@@ -229,6 +278,8 @@ public sealed class SparkplugEdgeNode : IDisposable
         {
             // If startup fails after wiring, always unwind the handler to avoid duplicate command processing on retry.
             this.client.OnMessageReceived -= this.OnClientMessageReceived;
+            this.primaryHostOnlineWait = null;
+            this.isPrimaryHostOnline = false;
 
             // If this instance created the connection for this startup attempt, best-effort disconnect on failure.
             if (connectedByThisStart && this.ownsClient && this.client.IsConnected())
@@ -524,6 +575,12 @@ public sealed class SparkplugEdgeNode : IDisposable
             return;
         }
 
+        if (sparkplugTopic.MessageType == SparkplugMessageType.STATE)
+        {
+            this.HandleState(topicStr, e.PublishMessage.Payload, sparkplugTopic);
+            return;
+        }
+
         if (sparkplugTopic.GroupId != this.options.GroupId || sparkplugTopic.EdgeNodeId != this.options.EdgeNodeId)
         {
             return;
@@ -563,6 +620,136 @@ public sealed class SparkplugEdgeNode : IDisposable
         else
         {
             this.DeviceCommandReceived?.Invoke(this, args);
+        }
+    }
+
+    private void HandleState(string rawTopic, byte[]? payloadBytes, SparkplugTopic topic)
+    {
+        if (!this.UsesPrimaryHost)
+        {
+            return;
+        }
+
+        if (!string.Equals(topic.PrimaryHostId, this.options.PrimaryHostApplicationId, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        if (payloadBytes is null || payloadBytes.Length == 0)
+        {
+            this.MessageParseError?.Invoke(this, new SparkplugMessageParseErrorEventArgs(rawTopic, null, "Empty STATE payload."));
+            return;
+        }
+
+        if (!SparkplugStatePayload.TryDecode(payloadBytes, out var statePayload) || statePayload is null)
+        {
+            this.MessageParseError?.Invoke(
+                this,
+                new SparkplugMessageParseErrorEventArgs(
+                    rawTopic,
+                    payloadBytes,
+                    "STATE payload is not valid Sparkplug 3.0 JSON (expected { \"online\": true|false, \"timestamp\": <ms> })."));
+            return;
+        }
+
+        var args = new SparkplugMessageReceivedEventArgs(topic, rawTopic, statePayload);
+        this.StateMessageReceived?.Invoke(this, args);
+
+        if (statePayload.Online)
+        {
+            this.lastPrimaryHostOnlineTimestamp = statePayload.Timestamp;
+            this.isPrimaryHostOnline = true;
+            this.primaryHostOnlineWait?.TrySetResult(true);
+            return;
+        }
+
+        // Offline: only act when timestamp is greater than or equal to the last online STATE timestamp.
+        if (!this.lastPrimaryHostOnlineTimestamp.HasValue || statePayload.Timestamp < this.lastPrimaryHostOnlineTimestamp.Value)
+        {
+            return;
+        }
+
+        this.isPrimaryHostOnline = false;
+
+        if (!this.started)
+        {
+            return;
+        }
+
+        if (Interlocked.CompareExchange(ref this.primaryHostOfflineShutdownQueued, 1, 0) != 0)
+        {
+            return;
+        }
+
+        // Do not block the MQTT receive path on start/stop lock or network I/O.
+        _ = this.TerminateForPrimaryHostOfflineAsync();
+    }
+
+    private async Task TerminateForPrimaryHostOfflineAsync()
+    {
+        try
+        {
+            await this.startStopLock.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                if (!this.started)
+                {
+                    return;
+                }
+
+                this.client.OnMessageReceived -= this.OnClientMessageReceived;
+
+                try
+                {
+                    await this.publishSequenceLock.WaitAsync().ConfigureAwait(false);
+                    try
+                    {
+                        var deathPayload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), this.sequenceNumber);
+                        if (this.currentSessionBdSeq.HasValue)
+                        {
+                            deathPayload.Metrics.Insert(0, SparkplugPayloadEncoder.CreateBdSeqMetric(this.currentSessionBdSeq.Value));
+                        }
+
+                        await this.PublishPayloadAsync(
+                            SparkplugTopic.NodeDeath(this.options.GroupId!, this.options.EdgeNodeId!, this.options.SparkplugNamespace),
+                            deathPayload,
+                            CancellationToken.None).ConfigureAwait(false);
+                        this.sequenceNumber = SparkplugPayloadEncoder.NextSequenceNumber(this.sequenceNumber);
+                        this.currentSessionBdSeq = null;
+                    }
+                    finally
+                    {
+                        this.publishSequenceLock.Release();
+                    }
+                }
+                catch
+                {
+                    // Best-effort NDEATH; still disconnect and clear started.
+                }
+
+                try
+                {
+                    if (this.client.IsConnected())
+                    {
+                        await this.client.DisconnectAsync().ConfigureAwait(false);
+                    }
+                }
+                catch
+                {
+                    // Best-effort disconnect.
+                }
+
+                this.started = false;
+                this.isPrimaryHostOnline = false;
+            }
+            finally
+            {
+                this.startStopLock.Release();
+            }
+        }
+        finally
+        {
+            Interlocked.Exchange(ref this.primaryHostOfflineShutdownQueued, 0);
         }
     }
 

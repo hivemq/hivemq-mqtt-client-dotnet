@@ -28,7 +28,7 @@ Sparkplug B 3.0 extension for the [HiveMQ MQTT Client for .NET](https://github.c
 
 ### 🚀 Features
 - **Host Application**: Subscribe to Sparkplug topics (`spBv1.0/#` or scoped), track Edge Node and Device online/offline state, publish NCMD/DCMD, and optionally use STATE messages and LWT.
-- **Edge Node**: Publish NBIRTH/NDATA/NDEATH and DBIRTH/DDATA/DDEATH, subscribe to NCMD/DCMD, and manage birth/death lifecycle with `bdSeq`.
+- **Edge Node**: Publish NBIRTH/NDATA/NDEATH and DBIRTH/DDATA/DDEATH, subscribe to NCMD/DCMD, manage birth/death lifecycle with `bdSeq`, and optionally follow a Primary Host Application STATE (wait for online before NBIRTH; NDEATH + disconnect on offline).
 - **Payload Tooling**: Encode and decode Sparkplug B protobuf payloads, build metrics via `SparkplugMetricBuilder`, and build/parse topics safely.
 - **Spec-Aware Lifecycle**: Optional NDEATH Last Will and Testament (LWT) for spec-compliant session awareness on ungraceful disconnect.
 - **Validation Controls**: Optional strict identifier validation to reject invalid topic IDs (`#`, `+`) for Group, Edge Node, Device, and Host IDs.
