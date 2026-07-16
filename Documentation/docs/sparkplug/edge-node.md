@@ -12,6 +12,7 @@ Use `SparkplugEdgeNode` to publish Sparkplug node/device lifecycle data and proc
 - Subscribe to NCMD/DCMD commands from Host Applications.
 - Maintain proper birth/death lifecycle sequencing (`bdSeq`).
 - Optionally configure NDEATH LWT for ungraceful disconnect awareness.
+- Optionally follow a Primary Host Application STATE (wait for online, terminate on offline).
 
 ## Typical Setup
 
@@ -42,6 +43,36 @@ var metrics = new[]
 
 await edgeNode.PublishNodeDataAsync(metrics);
 ```
+
+## Primary Host Application
+
+When `PrimaryHostApplicationId` is set, the Edge Node uses single-broker Primary Host Application behavior:
+
+- Subscribes to the exact topic `spBv1.0/STATE/{PrimaryHostApplicationId}` (not `STATE/#`).
+- Waits for an online STATE (including a retained one) before publishing NBIRTH.
+- Raises `StateMessageReceived` for STATE updates.
+- Exposes `IsPrimaryHostOnline`.
+- On a valid offline STATE (`online=false` and timestamp ≥ last online timestamp), publishes NDEATH and disconnects. Call `StartAsync` again after the Host returns online.
+
+When `PrimaryHostApplicationId` is unset, behavior is unchanged (no STATE subscription).
+
+```csharp
+var sparkplugOptions = new SparkplugEdgeNodeOptions
+{
+    GroupId = "myGroup",
+    EdgeNodeId = "myNode",
+    PrimaryHostApplicationId = "myPrimaryHost",
+};
+
+var edgeNode = new SparkplugEdgeNode(clientOptions, sparkplugOptions);
+edgeNode.StateMessageReceived += (_, e) =>
+{
+    Console.WriteLine($"Primary Host online={e.StatePayload!.Online}");
+};
+await edgeNode.StartAsync();
+```
+
+Multi-MQTT-server cycling when the Primary Host goes offline is not implemented yet.
 
 ## Rebirth Handling
 
