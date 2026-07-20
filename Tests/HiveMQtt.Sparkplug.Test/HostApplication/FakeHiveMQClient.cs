@@ -53,6 +53,12 @@ internal sealed class FakeHiveMQClient : IHiveMQClient
 
     public Func<MQTT5PublishMessage, Exception?>? PublishFailureFactory { get; set; }
 
+    /// <summary>
+    /// Gets or sets an optional callback invoked after subscriptions are recorded and before <see cref="SubscribeAsync(SubscribeOptions)"/> returns.
+    /// Useful for delivering retained messages (e.g. Primary Host STATE) while the Edge Node is waiting for online.
+    /// </summary>
+    public Action<FakeHiveMQClient, SubscribeOptions>? AfterSubscribeCallback { get; set; }
+
     public bool IsConnected() => this.connected && !this.disposed;
 
     public Task<ConnectResult> ConnectAsync(ConnectOptions? connectOptions = null)
@@ -122,6 +128,8 @@ internal sealed class FakeHiveMQClient : IHiveMQClient
         {
             this.Subscriptions.Add(sub);
         }
+
+        this.AfterSubscribeCallback?.Invoke(this, options);
 
         return Task.FromResult(result);
     }
