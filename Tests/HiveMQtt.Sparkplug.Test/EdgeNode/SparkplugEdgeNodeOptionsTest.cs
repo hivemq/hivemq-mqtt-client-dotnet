@@ -31,6 +31,7 @@ public class SparkplugEdgeNodeOptionsTest
         options.SparkplugNamespace.Should().Be(SparkplugTopic.DefaultNamespace);
         options.GroupId.Should().BeNull();
         options.EdgeNodeId.Should().BeNull();
+        options.PrimaryHostApplicationId.Should().BeNull();
         options.UseDeathLwt.Should().BeTrue();
     }
 
@@ -136,5 +137,36 @@ public class SparkplugEdgeNodeOptionsTest
         Action act = options.Validate;
 
         act.Should().Throw<ArgumentException>().WithMessage("*Edge Node*'+'*");
+    }
+
+    [Test]
+    public void Validate_With_PrimaryHostApplicationId_Does_Not_Require_It()
+    {
+        var options = new SparkplugEdgeNodeOptions
+        {
+            GroupId = "g1",
+            EdgeNodeId = "n1",
+            PrimaryHostApplicationId = null,
+        };
+
+        Action act = options.Validate;
+
+        act.Should().NotThrow();
+    }
+
+    [Test]
+    public void Validate_With_StrictIdentifierValidation_And_PrimaryHostApplicationId_With_Hash_Throws()
+    {
+        var options = new SparkplugEdgeNodeOptions
+        {
+            GroupId = "g1",
+            EdgeNodeId = "n1",
+            PrimaryHostApplicationId = "host#1",
+            StrictIdentifierValidation = true,
+        };
+
+        Action act = options.Validate;
+
+        act.Should().Throw<ArgumentException>();
     }
 }

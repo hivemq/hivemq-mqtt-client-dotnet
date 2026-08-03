@@ -14,7 +14,10 @@
 
 namespace HiveMQtt.Sparkplug.Test.EdgeNode;
 
+using System;
 using System.Linq;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using HiveMQtt.Client;
@@ -400,5 +403,251 @@ public class SparkplugEdgeNodeTest
 
         await Task.Delay(100).ConfigureAwait(false);
         commandEvents.Should().Be(1, "message handler should be wired exactly once after retrying StartAsync.");
+    }
+
+    [Test]
+    public async Task StartAsync_With_PrimaryHost_Subscribes_To_Exact_State_Topic_And_Waits_For_Online()
+    {
+        var client = new FakeHiveMQClient();
+        var onlineTs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        client.AfterSubscribeCallback = (c, _) =>
+        {
+            c.SimulateMessageReceived(
+                "spBv1.0/STATE/host1",
+                SparkplugStatePayload.CreateOnline(onlineTs).ToUtf8Bytes());
+        };
+
+        SparkplugMessageReceivedEventArgs? stateArgs = null;
+        var options = new SparkplugEdgeNodeOptions
+        {
+            GroupId = "g1",
+            EdgeNodeId = "n1",
+            PrimaryHostApplicationId = "host1",
+        };
+        var node = new SparkplugEdgeNode(client, options);
+        node.StateMessageReceived += (_, e) => stateArgs = e;
+
+        await node.StartAsync().ConfigureAwait(false);
+
+        node.IsConnected.Should().BeTrue();
+        node.IsPrimaryHostOnline.Should().BeTrue();
+        client.Subscriptions.Should().HaveCount(3);
+        client.Subscriptions.Select(s => s.TopicFilter.Topic).Should().Contain("spBv1.0/STATE/host1");
+        client.PublishedMessages.Should().ContainSingle(m => m.Topic == "spBv1.0/g1/NBIRTH/n1");
+        stateArgs.Should().NotBeNull();
+        stateArgs!.PrimaryHostId.Should().Be("host1");
+        stateArgs.StatePayload!.Online.Should().BeTrue();
+        stateArgs.StatePayload.Timestamp.Should().Be(onlineTs);
+    }
+
+    [Test]
+    public async Task StartAsync_With_PrimaryHost_Does_Not_Publish_NBirth_While_Host_Offline()
+    {
+        var client = new FakeHiveMQClient();
+        client.AfterSubscribeCallback = (c, _) =>
+        {
+            c.SimulateMessageReceived(
+                "spBv1.0/STATE/host1",
+                SparkplugStatePayload.CreateOffline(timestampMs: 1).ToUtf8Bytes());
+        };
+
+        var options = new SparkplugEdgeNodeOptions
+        {
+            GroupId = "g1",
+            EdgeNodeId = "n1",
+            PrimaryHostApplicationId = "host1",
+        };
+        var node = new SparkplugEdgeNode(client, options);
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(200));
+        Func<Task> act = () => node.StartAsync(cancellationToken: cts.Token);
+
+        await act.Should().ThrowAsync<OperationCanceledException>().ConfigureAwait(false);
+        client.PublishedMessages.Should().NotContain(m => m.Topic == "spBv1.0/g1/NBIRTH/n1");
+        node.IsConnected.Should().BeFalse();
+    }
+
+    [Test]
+    public async Task PrimaryHost_Valid_Offline_Publishes_NDeath_And_Disconnects()
+    {
+        var client = new FakeHiveMQClient();
+        var onlineTs = 1000L;
+        client.AfterSubscribeCallback = (c, _) =>
+        {
+            c.SimulateMessageReceived(
+                "spBv1.0/STATE/host1",
+                SparkplugStatePayload.CreateOnline(onlineTs).ToUtf8Bytes());
+        };
+
+        var options = new SparkplugEdgeNodeOptions
+        {
+            GroupId = "g1",
+            EdgeNodeId = "n1",
+            PrimaryHostApplicationId = "host1",
+        };
+        var node = new SparkplugEdgeNode(client, options);
+        await node.StartAsync().ConfigureAwait(false);
+        client.PublishedMessages.Clear();
+
+        client.SimulateMessageReceived(
+            "spBv1.0/STATE/host1",
+            SparkplugStatePayload.CreateOffline(timestampMs: onlineTs + 1).ToUtf8Bytes());
+
+        await WaitUntilAsync(() => !node.IsConnected && client.PublishedMessages.Any(m => m.Topic == "spBv1.0/g1/NDEATH/n1")).ConfigureAwait(false);
+
+        node.IsConnected.Should().BeFalse();
+        node.IsPrimaryHostOnline.Should().BeFalse();
+        client.PublishedMessages.Should().Contain(m => m.Topic == "spBv1.0/g1/NDEATH/n1");
+        client.IsConnected().Should().BeFalse();
+    }
+
+    [Test]
+    public async Task PrimaryHost_Stale_Offline_Does_Not_Terminate_Session()
+    {
+        var client = new FakeHiveMQClient();
+        var onlineTs = 2000L;
+        client.AfterSubscribeCallback = (c, _) =>
+        {
+            c.SimulateMessageReceived(
+                "spBv1.0/STATE/host1",
+                SparkplugStatePayload.CreateOnline(onlineTs).ToUtf8Bytes());
+        };
+
+        var options = new SparkplugEdgeNodeOptions
+        {
+            GroupId = "g1",
+            EdgeNodeId = "n1",
+            PrimaryHostApplicationId = "host1",
+        };
+        var node = new SparkplugEdgeNode(client, options);
+        await node.StartAsync().ConfigureAwait(false);
+        client.PublishedMessages.Clear();
+
+        client.SimulateMessageReceived(
+            "spBv1.0/STATE/host1",
+            SparkplugStatePayload.CreateOffline(timestampMs: onlineTs - 1).ToUtf8Bytes());
+
+        await Task.Delay(150).ConfigureAwait(false);
+
+        node.IsConnected.Should().BeTrue();
+        client.PublishedMessages.Should().NotContain(m => m.Topic == "spBv1.0/g1/NDEATH/n1");
+        client.IsConnected().Should().BeTrue();
+    }
+
+    [Test]
+    public async Task PrimaryHost_Ignores_State_For_Different_Host_Id()
+    {
+        var client = new FakeHiveMQClient();
+        client.AfterSubscribeCallback = (c, _) =>
+        {
+            c.SimulateMessageReceived(
+                "spBv1.0/STATE/host1",
+                SparkplugStatePayload.CreateOnline(1000).ToUtf8Bytes());
+        };
+
+        var stateEvents = 0;
+        var options = new SparkplugEdgeNodeOptions
+        {
+            GroupId = "g1",
+            EdgeNodeId = "n1",
+            PrimaryHostApplicationId = "host1",
+        };
+        var node = new SparkplugEdgeNode(client, options);
+        node.StateMessageReceived += (_, _) => stateEvents++;
+        await node.StartAsync().ConfigureAwait(false);
+        stateEvents.Should().Be(1);
+
+        client.SimulateMessageReceived(
+            "spBv1.0/STATE/otherHost",
+            SparkplugStatePayload.CreateOffline(timestampMs: 9999).ToUtf8Bytes());
+
+        await Task.Delay(100).ConfigureAwait(false);
+
+        stateEvents.Should().Be(1);
+        node.IsConnected.Should().BeTrue();
+    }
+
+    [Test]
+    public async Task PrimaryHost_Invalid_State_Json_Raises_MessageParseError()
+    {
+        var client = new FakeHiveMQClient();
+        client.AfterSubscribeCallback = (c, _) =>
+        {
+            c.SimulateMessageReceived(
+                "spBv1.0/STATE/host1",
+                SparkplugStatePayload.CreateOnline(1000).ToUtf8Bytes());
+        };
+
+        SparkplugMessageParseErrorEventArgs? error = null;
+        var options = new SparkplugEdgeNodeOptions
+        {
+            GroupId = "g1",
+            EdgeNodeId = "n1",
+            PrimaryHostApplicationId = "host1",
+        };
+        var node = new SparkplugEdgeNode(client, options);
+        node.MessageParseError += (_, e) => error = e;
+        await node.StartAsync().ConfigureAwait(false);
+
+        client.SimulateMessageReceived("spBv1.0/STATE/host1", Encoding.UTF8.GetBytes("not-json"));
+
+        await Task.Delay(50).ConfigureAwait(false);
+
+        error.Should().NotBeNull();
+        error!.Reason.Should().Contain("STATE payload is not valid Sparkplug 3.0 JSON");
+        node.IsConnected.Should().BeTrue();
+    }
+
+    [Test]
+    public async Task PrimaryHost_Can_Restart_After_Offline_When_Host_Returns_Online()
+    {
+        var client = new FakeHiveMQClient();
+        var deliverOnline = true;
+        client.AfterSubscribeCallback = (c, _) =>
+        {
+            if (deliverOnline)
+            {
+                c.SimulateMessageReceived(
+                    "spBv1.0/STATE/host1",
+                    SparkplugStatePayload.CreateOnline(3000).ToUtf8Bytes());
+            }
+        };
+
+        var options = new SparkplugEdgeNodeOptions
+        {
+            GroupId = "g1",
+            EdgeNodeId = "n1",
+            PrimaryHostApplicationId = "host1",
+        };
+        var node = new SparkplugEdgeNode(client, options);
+        await node.StartAsync().ConfigureAwait(false);
+
+        client.SimulateMessageReceived(
+            "spBv1.0/STATE/host1",
+            SparkplugStatePayload.CreateOffline(timestampMs: 3001).ToUtf8Bytes());
+        await WaitUntilAsync(() => !node.IsConnected).ConfigureAwait(false);
+
+        client.PublishedMessages.Clear();
+        deliverOnline = true;
+        await node.StartAsync().ConfigureAwait(false);
+
+        node.IsConnected.Should().BeTrue();
+        client.PublishedMessages.Should().Contain(m => m.Topic == "spBv1.0/g1/NBIRTH/n1");
+    }
+
+    private static async Task WaitUntilAsync(Func<bool> condition, int timeoutMs = 2000)
+    {
+        var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
+        while (DateTime.UtcNow < deadline)
+        {
+            if (condition())
+            {
+                return;
+            }
+
+            await Task.Delay(20).ConfigureAwait(false);
+        }
+
+        condition().Should().BeTrue("condition should become true within timeout");
     }
 }
