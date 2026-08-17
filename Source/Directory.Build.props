@@ -22,7 +22,7 @@
   </PropertyGroup>
 
   <ItemGroup Label="Package References">
-    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="all" Version="10.0.301" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="all" Version="10.0.400" />
   </ItemGroup>
 
   <ItemGroup Label="Files">
