@@ -42,7 +42,7 @@ See [Configure Logging](/docs/hivemqtt/how-to/configure-logging) for the full NL
 
 ## Sparkplug and Google.Protobuf
 
-`HiveMQtt.Sparkplug` is also marked `IsAotCompatible`. Protobuf encode/decode of Sparkplug payloads is exercised under Native AOT publish, but [Google.Protobuf is not officially AOT-certified](https://github.com/protocolbuffers/protobuf/issues/25574). Treat Sparkplug AOT support as **best-effort** relative to that dependency.
+`HiveMQtt.Sparkplug` is also marked `IsAotCompatible` (trim/AOT analyzers are clean on net8.0+). [Google.Protobuf is not officially AOT-certified](https://github.com/protocolbuffers/protobuf/issues/25574), so treat Sparkplug AOT support as **best-effort** relative to that dependency. Validate `PublishAot` in your own application.
 
 ## See Also
 
