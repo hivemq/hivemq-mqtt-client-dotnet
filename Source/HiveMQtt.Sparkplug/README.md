@@ -23,6 +23,7 @@ Sparkplug B 3.0 extension for the [HiveMQ MQTT Client for .NET](https://github.c
 - **Easy-to-Install**: Available as a [NuGet package](https://www.nuget.org/packages/HiveMQtt.Sparkplug).
 - **Built for IIoT**: Adds Sparkplug Host Application and Edge Node workflows on top of `HiveMQtt`.
 - **Multi-Targeted**: Supports .NET 6.0, 7.0, 8.0, 9.0 and 10.0.
+- **Native AOT**: Marked `IsAotCompatible` for .NET 8.0 and later. `Google.Protobuf` payload support is best-effort (not officially AOT-certified by Google).
 - **Standards-Based**: Aligned with [Eclipse Sparkplug B 3.0](https://sparkplug.eclipse.org/specification/version/3.0) and `sparkplug_b.proto`.
 - **Status**: This extension is in **beta**. APIs may change before stable release.
 

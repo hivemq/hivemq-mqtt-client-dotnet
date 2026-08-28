@@ -5,6 +5,9 @@
   <PropertyGroup Label="Build">
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <!-- Native AOT: enable analyzers and metadata for net8.0+ (attributes incomplete before net8). -->
+    <IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</IsAotCompatible>
+    <WarningsAsErrors Condition="'$(IsAotCompatible)' == 'true'">$(WarningsAsErrors);IL2026;IL3050;IL3051</WarningsAsErrors>
   </PropertyGroup>
 
   <PropertyGroup Label="Signing">

@@ -21,6 +21,7 @@
 * **Easy-to-Install**: Available as a [NuGet package](https://www.nuget.org/packages/HiveMQtt).
 * **Globally Compatible**: Built to be a fully compliant MQTT 5.0 client compatible with all modern MQTT brokers.
 * **Multi-Targeted**: Supports .NET 6.0, 7.0, 8.0, 9.0 & 10.0
+* **Native AOT**: Marked `IsAotCompatible` for .NET 8.0 and later. See the [Native AOT guide](https://hivemq.github.io/hivemq-mqtt-client-dotnet/docs/hivemqtt/how-to/native-aot).
 * **Sparkplug Client extension**: The [HiveMQtt.Sparkplug](https://www.nuget.org/packages/HiveMQtt.Sparkplug) package adds Host Application and Edge Node support for industrial IoT (IIoT) using the [Eclipse Sparkplug B 3.0](https://sparkplug.eclipse.org/specification/version/3.0) specification—install with `dotnet add package HiveMQtt.Sparkplug` and see the [Sparkplug README](./Source/HiveMQtt.Sparkplug/README.md) for full details.
 
 ### 🚀 Features
