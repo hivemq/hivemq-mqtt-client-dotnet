@@ -59,6 +59,12 @@ internal sealed class FakeHiveMQClient : IHiveMQClient
     /// </summary>
     public Action<FakeHiveMQClient, SubscribeOptions>? AfterSubscribeCallback { get; set; }
 
+    /// <summary>
+    /// Gets or sets an optional callback invoked before a publish is recorded.
+    /// Useful for simulating Primary Host STATE changes during NBIRTH publish.
+    /// </summary>
+    public Action<FakeHiveMQClient, MQTT5PublishMessage>? BeforePublishCallback { get; set; }
+
     public bool IsConnected() => this.connected && !this.disposed;
 
     public Task<ConnectResult> ConnectAsync(ConnectOptions? connectOptions = null)
@@ -77,6 +83,8 @@ internal sealed class FakeHiveMQClient : IHiveMQClient
 
     public Task<PublishResult> PublishAsync(MQTT5PublishMessage message, CancellationToken cancellationToken = default)
     {
+        this.BeforePublishCallback?.Invoke(this, message);
+
         var publishFailure = this.PublishFailureFactory?.Invoke(message);
         if (publishFailure != null)
         {

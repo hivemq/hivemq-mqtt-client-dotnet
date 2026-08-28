@@ -245,6 +245,11 @@ public sealed class SparkplugEdgeNode : IDisposable
             await this.publishSequenceLock.WaitAsync(cancellationToken).ConfigureAwait(false);
             try
             {
+                if (this.UsesPrimaryHost && !this.isPrimaryHostOnline)
+                {
+                    throw new InvalidOperationException("Primary Host went offline before NBIRTH could be published.");
+                }
+
                 this.sequenceNumber = 0;
                 var birthPayload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), 0);
                 birthPayload.Metrics.Insert(0, SparkplugPayloadEncoder.CreateBdSeqMetric(sessionBdSeq));
@@ -266,6 +271,20 @@ public sealed class SparkplugEdgeNode : IDisposable
                 await this.PublishPayloadAsync(SparkplugTopic.NodeBirth(this.options.GroupId!, this.options.EdgeNodeId!, this.options.SparkplugNamespace), birthPayload, cancellationToken).ConfigureAwait(false);
                 this.sequenceNumber = SparkplugPayloadEncoder.NextSequenceNumber(this.sequenceNumber);
                 this.currentSessionBdSeq = sessionBdSeq;
+
+                // Host may have gone offline during NBIRTH publish; do not leave started=true with host offline.
+                if (this.UsesPrimaryHost && !this.isPrimaryHostOnline)
+                {
+                    var deathPayload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), this.sequenceNumber);
+                    deathPayload.Metrics.Insert(0, SparkplugPayloadEncoder.CreateBdSeqMetric(sessionBdSeq));
+                    await this.PublishPayloadAsync(
+                        SparkplugTopic.NodeDeath(this.options.GroupId!, this.options.EdgeNodeId!, this.options.SparkplugNamespace),
+                        deathPayload,
+                        cancellationToken).ConfigureAwait(false);
+                    this.sequenceNumber = SparkplugPayloadEncoder.NextSequenceNumber(this.sequenceNumber);
+                    this.currentSessionBdSeq = null;
+                    throw new InvalidOperationException("Primary Host went offline after NBIRTH was published; session aborted with NDEATH.");
+                }
 
                 this.started = true;
             }
@@ -657,7 +676,12 @@ public sealed class SparkplugEdgeNode : IDisposable
 
         if (statePayload.Online)
         {
-            this.lastPrimaryHostOnlineTimestamp = statePayload.Timestamp;
+            // Only advance the watermark; regressive online timestamps must not weaken stale-offline protection.
+            if (!this.lastPrimaryHostOnlineTimestamp.HasValue || statePayload.Timestamp >= this.lastPrimaryHostOnlineTimestamp.Value)
+            {
+                this.lastPrimaryHostOnlineTimestamp = statePayload.Timestamp;
+            }
+
             this.isPrimaryHostOnline = true;
             this.primaryHostOnlineWait?.TrySetResult(true);
             return;
@@ -673,6 +697,9 @@ public sealed class SparkplugEdgeNode : IDisposable
 
         if (!this.started)
         {
+            // Fail a still-pending online wait so StartAsync does not proceed to NBIRTH.
+            this.primaryHostOnlineWait?.TrySetException(
+                new InvalidOperationException("Primary Host went offline before Edge Node start completed."));
             return;
         }
 

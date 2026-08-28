@@ -49,7 +49,7 @@ await edgeNode.PublishNodeDataAsync(metrics);
 When `PrimaryHostApplicationId` is set, the Edge Node uses single-broker Primary Host Application behavior:
 
 - Subscribes to the exact topic `spBv1.0/STATE/{PrimaryHostApplicationId}` (not `STATE/#`).
-- Waits for an online STATE (including a retained one) before publishing NBIRTH.
+- Waits for an online STATE (including a retained one) before publishing NBIRTH. This wait can block indefinitely; pass a `CancellationToken` (or timeout) to `StartAsync`.
 - Raises `StateMessageReceived` for STATE updates.
 - Exposes `IsPrimaryHostOnline`.
 - On a valid offline STATE (`online=false` and timestamp ≥ last online timestamp), publishes NDEATH and disconnects. Call `StartAsync` again after the Host returns online.

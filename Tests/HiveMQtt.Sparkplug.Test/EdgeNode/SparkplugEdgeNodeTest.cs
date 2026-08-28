@@ -635,6 +635,84 @@ public class SparkplugEdgeNodeTest
         client.PublishedMessages.Should().Contain(m => m.Topic == "spBv1.0/g1/NBIRTH/n1");
     }
 
+    [Test]
+    public async Task PrimaryHost_Offline_During_NBirth_Aborts_Start_With_NDeath()
+    {
+        var client = new FakeHiveMQClient();
+        var onlineTs = 4000L;
+        client.AfterSubscribeCallback = (c, _) =>
+        {
+            c.SimulateMessageReceived(
+                "spBv1.0/STATE/host1",
+                SparkplugStatePayload.CreateOnline(onlineTs).ToUtf8Bytes());
+        };
+        client.BeforePublishCallback = (c, message) =>
+        {
+            if (message.Topic == "spBv1.0/g1/NBIRTH/n1")
+            {
+                c.SimulateMessageReceived(
+                    "spBv1.0/STATE/host1",
+                    SparkplugStatePayload.CreateOffline(timestampMs: onlineTs + 1).ToUtf8Bytes());
+            }
+        };
+
+        var options = new SparkplugEdgeNodeOptions
+        {
+            GroupId = "g1",
+            EdgeNodeId = "n1",
+            PrimaryHostApplicationId = "host1",
+        };
+        var node = new SparkplugEdgeNode(client, options);
+
+        Func<Task> act = () => node.StartAsync();
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*Primary Host went offline*")
+            .ConfigureAwait(false);
+
+        node.IsConnected.Should().BeFalse();
+        node.IsPrimaryHostOnline.Should().BeFalse();
+        client.PublishedMessages.Should().Contain(m => m.Topic == "spBv1.0/g1/NBIRTH/n1");
+        client.PublishedMessages.Should().Contain(m => m.Topic == "spBv1.0/g1/NDEATH/n1");
+    }
+
+    [Test]
+    public async Task PrimaryHost_Regressive_Online_Timestamp_Does_Not_Allow_Stale_Offline_Termination()
+    {
+        var client = new FakeHiveMQClient();
+        var onlineTs = 2000L;
+        client.AfterSubscribeCallback = (c, _) =>
+        {
+            c.SimulateMessageReceived(
+                "spBv1.0/STATE/host1",
+                SparkplugStatePayload.CreateOnline(onlineTs).ToUtf8Bytes());
+        };
+
+        var options = new SparkplugEdgeNodeOptions
+        {
+            GroupId = "g1",
+            EdgeNodeId = "n1",
+            PrimaryHostApplicationId = "host1",
+        };
+        var node = new SparkplugEdgeNode(client, options);
+        await node.StartAsync().ConfigureAwait(false);
+        client.PublishedMessages.Clear();
+
+        // Regressive online must not lower the watermark; offline with ts between old and new must be ignored.
+        client.SimulateMessageReceived(
+            "spBv1.0/STATE/host1",
+            SparkplugStatePayload.CreateOnline(1).ToUtf8Bytes());
+        client.SimulateMessageReceived(
+            "spBv1.0/STATE/host1",
+            SparkplugStatePayload.CreateOffline(timestampMs: 2).ToUtf8Bytes());
+
+        await Task.Delay(150).ConfigureAwait(false);
+
+        node.IsConnected.Should().BeTrue();
+        client.PublishedMessages.Should().NotContain(m => m.Topic == "spBv1.0/g1/NDEATH/n1");
+        client.IsConnected().Should().BeTrue();
+    }
+
     private static async Task WaitUntilAsync(Func<bool> condition, int timeoutMs = 2000)
     {
         var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
