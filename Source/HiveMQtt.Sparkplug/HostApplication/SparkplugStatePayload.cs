@@ -16,6 +16,7 @@ namespace HiveMQtt.Sparkplug.HostApplication;
 
 using System;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 /// <summary>
 /// Sparkplug 3.0 STATE message payload. STATE messages use JSON format:
@@ -23,12 +24,6 @@ using System.Text.Json;
 /// </summary>
 public sealed class SparkplugStatePayload
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = false,
-    };
-
     /// <summary>
     /// Tries to decode a STATE message payload from UTF-8 JSON bytes (Sparkplug 3.0 format).
     /// </summary>
@@ -45,7 +40,7 @@ public sealed class SparkplugStatePayload
 
         try
         {
-            var obj = JsonSerializer.Deserialize<JsonPayload>(data, JsonOptions);
+            var obj = JsonSerializer.Deserialize(data, SparkplugStateJsonContext.Default.SparkplugStateJsonPayload);
             if (obj is null)
             {
                 return false;
@@ -106,14 +101,28 @@ public sealed class SparkplugStatePayload
     /// <returns>The JSON payload as UTF-8 bytes.</returns>
     public byte[] ToUtf8Bytes()
     {
-        var obj = new JsonPayload { Online = this.Online, Timestamp = this.Timestamp };
-        return JsonSerializer.SerializeToUtf8Bytes(obj, JsonOptions);
+        var obj = new SparkplugStateJsonPayload { Online = this.Online, Timestamp = this.Timestamp };
+        return JsonSerializer.SerializeToUtf8Bytes(obj, SparkplugStateJsonContext.Default.SparkplugStateJsonPayload);
     }
+}
 
-    private sealed class JsonPayload
-    {
-        public bool Online { get; set; }
+/// <summary>
+/// DTO for Sparkplug STATE JSON serialization (source-generated for Native AOT).
+/// </summary>
+internal sealed class SparkplugStateJsonPayload
+{
+    public bool Online { get; set; }
 
-        public long Timestamp { get; set; }
-    }
+    public long Timestamp { get; set; }
+}
+
+/// <summary>
+/// AOT-compatible JSON serializer context for Sparkplug STATE payloads.
+/// </summary>
+[JsonSourceGenerationOptions(
+    PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
+    WriteIndented = false)]
+[JsonSerializable(typeof(SparkplugStateJsonPayload))]
+internal partial class SparkplugStateJsonContext : JsonSerializerContext
+{
 }

@@ -26,6 +26,7 @@ Then continue with the [Sparkplug Quickstart](/docs/sparkplug/quickstart).
 | **Depends On** | [HiveMQtt](https://www.nuget.org/packages/HiveMQtt) |
 | **Sparkplug Version** | [Sparkplug B 3.0](https://sparkplug.eclipse.org/specification/version/3.0) |
 | **.NET Support** | .NET 6.0, 7.0, 8.0, 9.0 and 10.0 |
+| **Native AOT** | Analyzer-clean on .NET 8.0+ (`IsAotCompatible`). `Google.Protobuf` payload support is best-effort (not officially AOT-certified). See [Native AOT](/docs/hivemqtt/how-to/native-aot). |
 | **Status** | Beta |
 
 ## What You Can Build

@@ -28,6 +28,7 @@ The Sparkplug client is documented separately. Start with [HiveMQtt.Sparkplug](/
 | **NuGet Package** | [HiveMQtt](https://www.nuget.org/packages/HiveMQtt) |
 | **MQTT Version** | Full [MQTT 5.0](https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.html) compliance |
 | **.NET Support** | .NET 6.0, 7.0, 8.0, 9.0 & 10.0 |
+| **Native AOT** | Compatible on .NET 8.0+ (`IsAotCompatible`). See [Native AOT](/docs/hivemqtt/how-to/native-aot). |
 | **License** | Apache 2.0 (Open Source) |
 
 ## Key Features

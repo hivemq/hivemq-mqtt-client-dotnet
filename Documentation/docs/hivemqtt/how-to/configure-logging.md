@@ -53,6 +53,11 @@ Setting `minlevel` to `Trace` will output all activity in the HiveMQtt package d
 2024-03-14 15:40:18.2775|TRACE|HiveMQtt.Client.HiveMQClient|AfterConnectEventLauncher
 ```
 
+## Native AOT
+
+When publishing with Native AOT (`PublishAot`), XML `NLog.config` alone may not keep File/Console targets from being trimmed. Register those targets in code (see [Native AOT](/docs/hivemqtt/how-to/native-aot)) so configuration continues to work after publish.
+
 ## See Also
 
 * [NLog](https://github.com/NLog/NLog)
+* [Native AOT](/docs/hivemqtt/how-to/native-aot)
