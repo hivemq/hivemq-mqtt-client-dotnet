@@ -54,6 +54,20 @@ public class PacketIDManagerUnitTest
     }
 
     [Fact]
+    public async Task Free_Out_Of_Range_Id_Is_No_Op_Async()
+    {
+        var manager = new PacketIDManager();
+        _ = await manager.GetAvailablePacketIDAsync().ConfigureAwait(true);
+
+        await manager.MarkPacketIDAsAvailableAsync(0).ConfigureAwait(true);
+        await manager.MarkPacketIDAsAvailableAsync(-1).ConfigureAwait(true);
+        await manager.MarkPacketIDAsAvailableAsync(65536).ConfigureAwait(true);
+
+        Assert.Equal(1, manager.Count);
+        Assert.Equal(0, manager.FreedCount);
+    }
+
+    [Fact]
     public async Task Double_Free_Does_Not_Grow_Queue_Async()
     {
         var manager = new PacketIDManager();

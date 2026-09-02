@@ -158,17 +158,24 @@ public class PacketIDManager
     /// Marks a packet ID as available and adds it to the reuse queue for immediate reuse.
     /// <para>
     /// Only IDs that are currently allocated are freed and enqueued. Freeing an ID that was
-    /// never allocated (or was already freed) is a no-op, preventing unbounded growth of the
-    /// reuse queue from stray frees of broker-assigned incoming packet IDs.
+    /// never allocated, already freed, or out of the valid MQTT range (1-65535) is a no-op,
+    /// preventing unbounded growth of the reuse queue and IndexOutOfRangeException from
+    /// stray or malformed identifiers.
     /// </para>
     /// <para>
     /// The method is synchronous but returns a Task for API compatibility.
     /// </para>
     /// </summary>
-    /// <param name="packetId">The packet ID to mark as available (must be in range 1-65535).</param>
+    /// <param name="packetId">The packet ID to mark as available (valid range 1-65535).</param>
     /// <returns>A completed Task representing the asynchronous operation.</returns>
     public Task MarkPacketIDAsAvailableAsync(int packetId)
     {
+        // MQTT packet identifiers are 1-65535; treat out-of-range as a no-op
+        if (packetId < 1 || packetId > 65535)
+        {
+            return Task.CompletedTask;
+        }
+
         lock (this.bitArrayLock)
         {
             if (this.PacketIDBitArray[packetId])
