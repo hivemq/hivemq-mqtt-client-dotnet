@@ -643,10 +643,12 @@ public partial class ConnectionManager
                     case SubAckPacket subAckPacket:
                         Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- <-- Received SubAck id={subAckPacket.PacketIdentifier}");
                         this.Client.OnSubAckReceivedEventLauncher(subAckPacket);
+                        await this.PacketIDManager.MarkPacketIDAsAvailableAsync(subAckPacket.PacketIdentifier).ConfigureAwait(false);
                         break;
                     case UnsubAckPacket unsubAckPacket:
                         Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- <-- Received UnsubAck id={unsubAckPacket.PacketIdentifier}");
                         this.Client.OnUnsubAckReceivedEventLauncher(unsubAckPacket);
+                        await this.PacketIDManager.MarkPacketIDAsAvailableAsync(unsubAckPacket.PacketIdentifier).ConfigureAwait(false);
                         break;
 
                     case PublishPacket publishPacket:

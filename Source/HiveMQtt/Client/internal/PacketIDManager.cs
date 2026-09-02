@@ -7,6 +7,11 @@ using System.Threading;
 /// <summary>
 /// Manages MQTT packet identifiers with optimized lock-free operations for high-performance scenarios.
 /// <para>
+/// Tracks only client-allocated outgoing packet IDs (Publish, Subscribe, Unsubscribe).
+/// Broker-assigned incoming publish packet IDs use a separate MQTT ID space and must not be
+/// freed into this manager.
+/// </para>
+/// <para>
 /// This implementation uses a hybrid approach combining lock-free operations with minimal locking:
 /// - Lock-free operations: Packet ID counter updates, freed ID queue operations.
 /// - Minimal locking: Only for BitArray updates to ensure thread safety.
@@ -152,13 +157,9 @@ public class PacketIDManager
     /// <summary>
     /// Marks a packet ID as available and adds it to the reuse queue for immediate reuse.
     /// <para>
-    /// This method performs two operations:
-    /// 1. Updates the BitArray to mark the ID as available (requires lock).
-    /// 2. Enqueues the ID to the reuse queue (lock-free operation).
-    /// </para>
-    /// <para>
-    /// The freed ID will be immediately available for reuse in subsequent calls to
-    /// <see cref="GetAvailablePacketIDAsync"/>, improving performance by avoiding allocation overhead.
+    /// Only IDs that are currently allocated are freed and enqueued. Freeing an ID that was
+    /// never allocated (or was already freed) is a no-op, preventing unbounded growth of the
+    /// reuse queue from stray frees of broker-assigned incoming packet IDs.
     /// </para>
     /// <para>
     /// The method is synchronous but returns a Task for API compatibility.
@@ -168,20 +169,39 @@ public class PacketIDManager
     /// <returns>A completed Task representing the asynchronous operation.</returns>
     public Task MarkPacketIDAsAvailableAsync(int packetId)
     {
-        // Lock only for BitArray update
         lock (this.bitArrayLock)
         {
             if (this.PacketIDBitArray[packetId])
             {
                 this.PacketIDBitArray[packetId] = false;
                 Interlocked.Decrement(ref this.activeCount);
+
+                // Enqueue only when the ID was actually in use
+                this.FreedPacketIds.Enqueue(packetId);
             }
         }
 
-        // Lock-free enqueue to reuse queue
-        this.FreedPacketIds.Enqueue(packetId);
-
         return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Resets all packet ID tracking state. Used when a clean session is established
+    /// (CONNACK SessionPresent = false) so stale in-use bits and free-queue entries
+    /// do not carry across connections.
+    /// </summary>
+    public void Reset()
+    {
+        lock (this.bitArrayLock)
+        {
+            this.PacketIDBitArray.SetAll(false);
+            Interlocked.Exchange(ref this.activeCount, 0);
+            Interlocked.Exchange(ref this.nextPacketId, 1);
+
+            while (this.FreedPacketIds.TryDequeue(out _))
+            {
+                // Drain reuse queue
+            }
+        }
     }
 
     /// <summary>
@@ -197,4 +217,10 @@ public class PacketIDManager
     /// </summary>
     /// <value>The number of packet IDs currently allocated (0-65535).</value>
     public int Count => Volatile.Read(ref this.activeCount);
+
+    /// <summary>
+    /// Gets the number of packet IDs currently waiting in the reuse queue.
+    /// Intended for diagnostics and tests.
+    /// </summary>
+    internal int FreedCount => this.FreedPacketIds.Count;
 }

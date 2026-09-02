@@ -30,6 +30,7 @@ public partial class ConnectionManager
         {
             this.IPubTransactionQueue.Clear();
             this.OPubTransactionQueue.Clear();
+            this.PacketIDManager.Reset();
 
             // Session is not present on the broker; clear local subscription tracking
             _ = this.Client.ClearSubscriptionsAsync();
@@ -111,7 +112,6 @@ public partial class ConnectionManager
                     {
                         Logger.Error($"QoS1: Couldn't update Publish --> PubAck QoS1 Chain for packet identifier {publishPacket.PacketIdentifier}. Discarded.");
                         this.IPubTransactionQueue.Remove(publishPacket.PacketIdentifier, out _);
-                        await this.PacketIDManager.MarkPacketIDAsAvailableAsync(publishPacket.PacketIdentifier).ConfigureAwait(false);
 
                         var opts = new DisconnectOptions
                         {
@@ -129,7 +129,6 @@ public partial class ConnectionManager
                         ReasonString = "Client internal error managing publish transaction chain.",
                     };
                     await this.Client.DisconnectAsync(opts).ConfigureAwait(false);
-                    await this.PacketIDManager.MarkPacketIDAsAvailableAsync(publishPacket.PacketIdentifier).ConfigureAwait(false);
                     Logger.Error($"QoS1: Received Publish with an unknown packet identifier {publishPacket.PacketIdentifier}.");
                 }
             }
@@ -162,7 +161,6 @@ public partial class ConnectionManager
                     {
                         Logger.Error($"QoS2: Couldn't update Publish --> PubRec QoS2 Chain for packet identifier {publishPacket.PacketIdentifier}. Discarded.");
                         this.IPubTransactionQueue.Remove(publishPacket.PacketIdentifier, out _);
-                        await this.PacketIDManager.MarkPacketIDAsAvailableAsync(publishPacket.PacketIdentifier).ConfigureAwait(false);
                     }
                 }
                 else
@@ -173,7 +171,6 @@ public partial class ConnectionManager
                         ReasonString = "Client internal error managing publish transaction chain.",
                     };
                     await this.Client.DisconnectAsync(opts).ConfigureAwait(false);
-                    await this.PacketIDManager.MarkPacketIDAsAvailableAsync(publishPacket.PacketIdentifier).ConfigureAwait(false);
                     Logger.Error($"QoS2: Received Publish with an unknown packet identifier {publishPacket.PacketIdentifier}.");
                 }
 
@@ -299,11 +296,12 @@ public partial class ConnectionManager
     }
 
     /// <summary>
-    /// Handle an incoming PubComp packet.
+    /// Handle a sent PubAck packet (completes an incoming QoS 1 publish).
+    /// Broker-assigned incoming packet IDs are not tracked by PacketIDManager.
     /// </summary>
-    /// <param name="pubAckPacket">The received PubComp packet.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    internal async Task HandleSentPubAckPacketAsync(PubAckPacket pubAckPacket)
+    /// <param name="pubAckPacket">The sent PubAck packet.</param>
+    /// <returns>A completed task.</returns>
+    internal Task HandleSentPubAckPacketAsync(PubAckPacket pubAckPacket)
     {
         // Remove the transaction chain from the transaction queue
         var success = this.IPubTransactionQueue.Remove(pubAckPacket.PacketIdentifier, out var publishQoS1Chain);
@@ -328,19 +326,18 @@ public partial class ConnectionManager
             Logger.Warn($"QoS1: Couldn't remove PubAck --> Publish QoS1 Chain for packet identifier {pubAckPacket.PacketIdentifier}.");
         }
 
-        // QoS1 transaction is done.  Release the packet identifier
-        await this.PacketIDManager.MarkPacketIDAsAvailableAsync(pubAckPacket.PacketIdentifier).ConfigureAwait(false);
-
         // The Packet Event
         this.Client.OnPubAckSentEventLauncher(pubAckPacket);
+        return Task.CompletedTask;
     }
 
     /// <summary>
-    /// Action to take once a PubComp packet is sent.
+    /// Action to take once a PubComp packet is sent (completes an incoming QoS 2 publish).
+    /// Broker-assigned incoming packet IDs are not tracked by PacketIDManager.
     /// </summary>
     /// <param name="pubCompPacket">The sent PubComp packet.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    internal async Task HandleSentPubCompPacketAsync(PubCompPacket pubCompPacket)
+    /// <returns>A completed task.</returns>
+    internal Task HandleSentPubCompPacketAsync(PubCompPacket pubCompPacket)
     {
         Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- <-- Sent PubComp id={pubCompPacket.PacketIdentifier} reason={pubCompPacket.ReasonCode}");
 
@@ -364,11 +361,9 @@ public partial class ConnectionManager
             }
         }
 
-        // QoS2 transaction is done.  Release the packet identifier
-        await this.PacketIDManager.MarkPacketIDAsAvailableAsync(pubCompPacket.PacketIdentifier).ConfigureAwait(false);
-
         // Trigger the general event
         this.Client.OnPubCompSentEventLauncher(pubCompPacket);
+        return Task.CompletedTask;
     }
 
     /// <summary>
