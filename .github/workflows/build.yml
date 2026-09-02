@@ -23,17 +23,18 @@ jobs:
 
     services:
       hivemq:
+        # Keep latest for CI; healthcheck probes MQTT (1883), not Control Center (8080).
+        # WebSocket tests use 8000. 8080 is Control Center only and is unused by this suite.
         image: hivemq/hivemq4:latest
         ports:
           - 1883:1883
           - 8000:8000
-          - 8080:8080
         options: >-
-          --health-cmd "curl -I http://localhost:8080/"
+          --health-cmd "bash -c 'exec 3<>/dev/tcp/127.0.0.1/1883'"
           --health-interval 10s
           --health-timeout 5s
-          --health-retries 10
-          --health-start-period 30s
+          --health-retries 12
+          --health-start-period 60s
 
     strategy:
       matrix:
