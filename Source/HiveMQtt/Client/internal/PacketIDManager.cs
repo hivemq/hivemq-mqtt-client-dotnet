@@ -196,7 +196,7 @@ public class PacketIDManager
     /// (CONNACK SessionPresent = false) so stale in-use bits and free-queue entries
     /// do not carry across connections.
     /// </summary>
-    public void Reset()
+    internal void Reset()
     {
         lock (this.bitArrayLock)
         {
