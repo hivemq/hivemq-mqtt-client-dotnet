@@ -30,10 +30,14 @@ using HiveMQtt.MQTT5.Types;
 /// </summary>
 public partial class ConnectionManager : IDisposable
 {
-    private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
-
     // The MQTT client this ConnectionManager is associated with
     internal IBaseMQTTClient Client { get; }
+
+    // The logger for this ConnectionManager, sourced from the client's options.
+    internal InternalLogger Logger { get; }
+
+    // Decodes inbound control packets.  Holds its own (cached) loggers.
+    private PacketDecoder PacketDecoder { get; }
 
     // This is used to know if and when we need to send a MQTT PingReq
     private readonly Stopwatch lastCommunicationTimer = new();
@@ -104,9 +108,11 @@ public partial class ConnectionManager : IDisposable
     internal ConnectionManager(IBaseMQTTClient client)
     {
         this.Client = client;
+        this.Logger = InternalLogger.For<ConnectionManager>(client.Options.LoggerFactory);
+        this.PacketDecoder = new PacketDecoder(client.Options.LoggerFactory);
         this.cancellationTokenSource = new CancellationTokenSource();
-        this.IPubTransactionQueue = new BoundedDictionaryX<int, List<ControlPacket>>(this.Client.Options.ClientReceiveMaximum);
-        this.OPubTransactionQueue = new BoundedDictionaryX<int, List<ControlPacket>>(65535);
+        this.IPubTransactionQueue = new BoundedDictionaryX<int, List<ControlPacket>>(this.Client.Options.ClientReceiveMaximum, client.Options.LoggerFactory);
+        this.OPubTransactionQueue = new BoundedDictionaryX<int, List<ControlPacket>>(65535, client.Options.LoggerFactory);
         this.State = ConnectState.Disconnected;
         this.ResetConnectedSignal();
         this.ResetNotDisconnectedSignal();
@@ -116,12 +122,12 @@ public partial class ConnectionManager : IDisposable
         // For now, initialize with TCPTransport as a placeholder - it will be replaced during ConnectAsync()
         this.Transport = new TCPTransport(this.Client.Options);
 
-        Logger.Trace("Trace Level Logging Legend:");
-        Logger.Trace("    -(W)-   == ConnectionWriter");
-        Logger.Trace("    -(PW)-  == ConnectionPublishWriter");
-        Logger.Trace("    -(R)-   == ConnectionReader");
-        Logger.Trace("    -(CM)-  == ConnectionMonitor");
-        Logger.Trace("    -(RPH)- == ReceivedPacketsHandler");
+        this.Logger.Trace("Trace Level Logging Legend:");
+        this.Logger.Trace("    -(W)-   == ConnectionWriter");
+        this.Logger.Trace("    -(PW)-  == ConnectionPublishWriter");
+        this.Logger.Trace("    -(R)-   == ConnectionReader");
+        this.Logger.Trace("    -(CM)-  == ConnectionMonitor");
+        this.Logger.Trace("    -(RPH)- == ReceivedPacketsHandler");
     }
 
     internal Task WaitUntilConnectedAsync(CancellationToken cancellationToken) => this.connectedSignal.Task.WaitAsync(cancellationToken);
@@ -266,7 +272,7 @@ return elapsedMs >= timeoutMs;
 
         if (!connected)
         {
-            Logger.Error("Failed to connect to broker");
+            this.Logger.Error("Failed to connect to broker");
             return false;
         }
 
@@ -326,23 +332,23 @@ return elapsedMs >= timeoutMs;
             {
                 // Wait for all tasks to complete with a 5 second timeout
                 await Task.WhenAll(tasksToWait).WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
-                Logger.Trace("All background tasks completed successfully");
+                this.Logger.Trace("All background tasks completed successfully");
             }
             catch (TimeoutException)
             {
-                Logger.Warn($"Background tasks did not complete within timeout. {tasksToWait.Count} task(s) may still be running.");
+                this.Logger.Warn($"Background tasks did not complete within timeout. {tasksToWait.Count} task(s) may still be running.");
             }
             catch (Exception ex)
             {
                 // Observe exceptions from tasks to prevent unobserved task exceptions
-                Logger.Warn($"Exception while waiting for background tasks to complete: {ex.Message}");
+                this.Logger.Warn($"Exception while waiting for background tasks to complete: {ex.Message}");
 
                 // Log individual task exceptions if any are faulted
                 foreach (var task in tasksToWait)
                 {
                     if (task.IsFaulted && task.Exception != null)
                     {
-                        Logger.Warn($"Task faulted during cancellation: {task.Exception.GetBaseException().Message}");
+                        this.Logger.Warn($"Task faulted during cancellation: {task.Exception.GetBaseException().Message}");
                     }
                 }
             }
@@ -430,7 +436,7 @@ return elapsedMs >= timeoutMs;
     /// <param name="disposing">True if called from user code.</param>
     protected virtual void Dispose(bool disposing)
     {
-        Logger.Trace("Disposing ConnectionManager");
+        this.Logger.Trace("Disposing ConnectionManager");
 
         // Check to see if Dispose has already been called.
         if (!this.disposed)
