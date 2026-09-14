@@ -49,12 +49,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="NLog" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Update="NLog.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Update="HiveMQClient\TestFiles\hivemq-server-cert.pem">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
