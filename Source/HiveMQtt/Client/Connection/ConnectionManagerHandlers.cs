@@ -20,7 +20,7 @@ public partial class ConnectionManager
     /// <param name="connAckPacket">The received ConnAck packet.</param>
     internal void HandleIncomingConnAckPacket(ConnAckPacket connAckPacket)
     {
-        Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- <-- Received ConnAck");
+        this.Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- <-- Received ConnAck");
 
         // If SessionPresent is false, we need to reset any in-flight transactions
         // To manage disconnections, users should subscribe to the OnPublishSent event and timeout
@@ -38,10 +38,10 @@ public partial class ConnectionManager
 
         if (connAckPacket.ReasonCode == ConnAckReasonCode.Success && connAckPacket.Properties.ReceiveMaximum != null)
         {
-            Logger.Debug($"{this.Client.Options.ClientId}-(RPH)- <-- Broker ReceiveMaximum is {connAckPacket.Properties.ReceiveMaximum}.");
+            this.Logger.Debug($"{this.Client.Options.ClientId}-(RPH)- <-- Broker ReceiveMaximum is {connAckPacket.Properties.ReceiveMaximum}.");
 
             // Replace the OPubTransactionQueue BoundedDictionary with a new one with the broker's ReceiveMaximum
-            this.OPubTransactionQueue = new BoundedDictionaryX<int, List<ControlPacket>>((int)connAckPacket.Properties.ReceiveMaximum);
+            this.OPubTransactionQueue = new BoundedDictionaryX<int, List<ControlPacket>>((int)connAckPacket.Properties.ReceiveMaximum, this.Client.Options.LoggerFactory);
         }
 
         this.ConnectionProperties = connAckPacket.Properties;
@@ -59,7 +59,7 @@ public partial class ConnectionManager
     /// <returns>A task that represents the asynchronous operation.</returns>
     internal async Task HandleIncomingDisconnectPacketAsync(DisconnectPacket disconnectPacket)
     {
-        Logger.Error($"--> Disconnect received <--: {disconnectPacket.DisconnectReasonCode} {disconnectPacket.Properties.ReasonString}");
+        this.Logger.Error($"--> Disconnect received <--: {disconnectPacket.DisconnectReasonCode} {disconnectPacket.Properties.ReasonString}");
         await this.HandleDisconnectionAsync(false).ConfigureAwait(false);
         this.Client.OnDisconnectReceivedEventLauncher(disconnectPacket);
     }
@@ -77,14 +77,14 @@ public partial class ConnectionManager
 
         if (publishPacket.Message.QoS is QualityOfService.AtMostOnceDelivery)
         {
-            Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- <-- Received QoS 0 Publish");
+            this.Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- <-- Received QoS 0 Publish");
             this.Client.OnMessageReceivedEventLauncher(publishPacket);
         }
         else if (publishPacket.Message.QoS is QualityOfService.AtLeastOnceDelivery)
         {
             // We've received a QoS 1 publish.  The transaction chain was created & added
             // by ConnectionReaderAsync to enforce the client's ReceiveMaximum
-            Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- <-- Received QoS 1 Publish id={publishPacket.PacketIdentifier}");
+            this.Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- <-- Received QoS 1 Publish id={publishPacket.PacketIdentifier}");
 
             if (this.Client.Options.ManualAckEnabled)
             {
@@ -110,7 +110,7 @@ public partial class ConnectionManager
                     }
                     else
                     {
-                        Logger.Error($"QoS1: Couldn't update Publish --> PubAck QoS1 Chain for packet identifier {publishPacket.PacketIdentifier}. Discarded.");
+                        this.Logger.Error($"QoS1: Couldn't update Publish --> PubAck QoS1 Chain for packet identifier {publishPacket.PacketIdentifier}. Discarded.");
                         this.IPubTransactionQueue.Remove(publishPacket.PacketIdentifier, out _);
 
                         var opts = new DisconnectOptions
@@ -129,7 +129,7 @@ public partial class ConnectionManager
                         ReasonString = "Client internal error managing publish transaction chain.",
                     };
                     await this.Client.DisconnectAsync(opts).ConfigureAwait(false);
-                    Logger.Error($"QoS1: Received Publish with an unknown packet identifier {publishPacket.PacketIdentifier}.");
+                    this.Logger.Error($"QoS1: Received Publish with an unknown packet identifier {publishPacket.PacketIdentifier}.");
                 }
             }
         }
@@ -137,7 +137,7 @@ public partial class ConnectionManager
         {
             // We've received a QoS 2 publish.  The transaction chain was created & added
             // by ConnectionReaderAsync to enforce the client's ReceiveMaximum.
-            Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- <-- Received QoS 2 Publish id={publishPacket.PacketIdentifier}");
+            this.Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- <-- Received QoS 2 Publish id={publishPacket.PacketIdentifier}");
 
             if (this.Client.Options.ManualAckEnabled)
             {
@@ -159,7 +159,7 @@ public partial class ConnectionManager
                     // Update the chain in the queue
                     if (!this.IPubTransactionQueue.TryUpdate(publishPacket.PacketIdentifier, publishQoS2Chain, publishQoS2Chain))
                     {
-                        Logger.Error($"QoS2: Couldn't update Publish --> PubRec QoS2 Chain for packet identifier {publishPacket.PacketIdentifier}. Discarded.");
+                        this.Logger.Error($"QoS2: Couldn't update Publish --> PubRec QoS2 Chain for packet identifier {publishPacket.PacketIdentifier}. Discarded.");
                         this.IPubTransactionQueue.Remove(publishPacket.PacketIdentifier, out _);
                     }
                 }
@@ -171,7 +171,7 @@ public partial class ConnectionManager
                         ReasonString = "Client internal error managing publish transaction chain.",
                     };
                     await this.Client.DisconnectAsync(opts).ConfigureAwait(false);
-                    Logger.Error($"QoS2: Received Publish with an unknown packet identifier {publishPacket.PacketIdentifier}.");
+                    this.Logger.Error($"QoS2: Received Publish with an unknown packet identifier {publishPacket.PacketIdentifier}.");
                 }
 
                 this.SendQueue.Enqueue(pubRecResponse);
@@ -186,7 +186,7 @@ public partial class ConnectionManager
     /// <returns>A task that represents the asynchronous operation.</returns>
     internal async Task HandleIncomingPubAckPacketAsync(PubAckPacket pubAckPacket)
     {
-        Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- <-- Received PubAck id={pubAckPacket.PacketIdentifier} reason={pubAckPacket.ReasonCode}");
+        this.Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- <-- Received PubAck id={pubAckPacket.PacketIdentifier} reason={pubAckPacket.ReasonCode}");
         this.Client.OnPubAckReceivedEventLauncher(pubAckPacket);
 
         // This is in response to a publish that we sent
@@ -201,7 +201,7 @@ public partial class ConnectionManager
         }
         else
         {
-            Logger.Warn($"QoS1: Received PubAck with an unknown packet identifier {pubAckPacket.PacketIdentifier}. Discarded.");
+            this.Logger.Warn($"QoS1: Received PubAck with an unknown packet identifier {pubAckPacket.PacketIdentifier}. Discarded.");
         }
 
         // QoS1 transaction is done.  Release the packet identifier
@@ -215,7 +215,7 @@ public partial class ConnectionManager
     /// <returns>A task that represents the asynchronous operation.</returns>
     internal async Task HandleIncomingPubRecPacketAsync(PubRecPacket pubRecPacket)
     {
-        Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- <-- Received PubRec id={pubRecPacket.PacketIdentifier} reason={pubRecPacket.ReasonCode}");
+        this.Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- <-- Received PubRec id={pubRecPacket.PacketIdentifier} reason={pubRecPacket.ReasonCode}");
         this.Client.OnPubRecReceivedEventLauncher(pubRecPacket);
 
         // This is in response to a publish that we sent
@@ -238,7 +238,7 @@ public partial class ConnectionManager
             // Update the chain in the queue
             if (!this.OPubTransactionQueue.TryUpdate(pubRecPacket.PacketIdentifier, newPublishQoS2Chain, originalPublishQoS2Chain))
             {
-                Logger.Error($"QoS2: Couldn't update PubRec --> PubRel QoS2 Chain for packet identifier {pubRecPacket.PacketIdentifier}.");
+                this.Logger.Error($"QoS2: Couldn't update PubRec --> PubRel QoS2 Chain for packet identifier {pubRecPacket.PacketIdentifier}.");
                 this.OPubTransactionQueue.Remove(pubRecPacket.PacketIdentifier, out _);
                 await this.PacketIDManager.MarkPacketIDAsAvailableAsync(pubRecPacket.PacketIdentifier).ConfigureAwait(false);
 
@@ -263,7 +263,7 @@ public partial class ConnectionManager
     /// <param name="pubRelPacket">The received PubRel packet.</param>
     internal void HandleIncomingPubRelPacket(PubRelPacket pubRelPacket)
     {
-        Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- <-- Received PubRel id={pubRelPacket.PacketIdentifier} reason={pubRelPacket.ReasonCode}");
+        this.Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- <-- Received PubRel id={pubRelPacket.PacketIdentifier} reason={pubRelPacket.ReasonCode}");
         this.Client.OnPubRelReceivedEventLauncher(pubRelPacket);
 
         PubCompPacket pubCompResponsePacket;
@@ -280,12 +280,12 @@ public partial class ConnectionManager
 
             if (!this.IPubTransactionQueue.TryUpdate(pubRelPacket.PacketIdentifier, publishQoS2Chain, publishQoS2Chain))
             {
-                Logger.Warn($"QoS2: Couldn't update PubRel --> PubComp QoS2 Chain for packet identifier {pubRelPacket.PacketIdentifier}.");
+                this.Logger.Warn($"QoS2: Couldn't update PubRel --> PubComp QoS2 Chain for packet identifier {pubRelPacket.PacketIdentifier}.");
             }
         }
         else
         {
-            Logger.Warn($"QoS2: Received PubRel with an unknown packet identifier {pubRelPacket.PacketIdentifier}. " +
+            this.Logger.Warn($"QoS2: Received PubRel with an unknown packet identifier {pubRelPacket.PacketIdentifier}. " +
                          "Responding with PubComp PacketIdentifierNotFound.");
 
             // Send a PUBCOMP with PacketIdentifierNotFound
@@ -323,7 +323,7 @@ public partial class ConnectionManager
         else
         {
             // FIXME: Send an appropriate disconnect packet?
-            Logger.Warn($"QoS1: Couldn't remove PubAck --> Publish QoS1 Chain for packet identifier {pubAckPacket.PacketIdentifier}.");
+            this.Logger.Warn($"QoS1: Couldn't remove PubAck --> Publish QoS1 Chain for packet identifier {pubAckPacket.PacketIdentifier}.");
         }
 
         // The Packet Event
@@ -339,7 +339,7 @@ public partial class ConnectionManager
     /// <returns>A completed task.</returns>
     internal Task HandleSentPubCompPacketAsync(PubCompPacket pubCompPacket)
     {
-        Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- <-- Sent PubComp id={pubCompPacket.PacketIdentifier} reason={pubCompPacket.ReasonCode}");
+        this.Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- <-- Sent PubComp id={pubCompPacket.PacketIdentifier} reason={pubCompPacket.ReasonCode}");
 
         // PubCompReasonCode is either Success or PacketIdentifierNotFound.  If the latter,
         // there won't be a transaction chain to remove.
@@ -373,7 +373,7 @@ public partial class ConnectionManager
     /// <returns>A task that represents the asynchronous operation.</returns>
     internal async Task HandleIncomingPubCompPacketAsync(PubCompPacket pubCompPacket)
     {
-        Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- <-- Received PubComp id={pubCompPacket.PacketIdentifier} reason={pubCompPacket.ReasonCode}");
+        this.Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- <-- Received PubComp id={pubCompPacket.PacketIdentifier} reason={pubCompPacket.ReasonCode}");
         this.Client.OnPubCompReceivedEventLauncher(pubCompPacket);
 
         // This is in response to a QoS2 publish that we sent
@@ -390,7 +390,7 @@ public partial class ConnectionManager
         }
         else
         {
-            Logger.Warn($"QoS2: Received PubComp with an unknown packet identifier {pubCompPacket.PacketIdentifier}. Discarded.");
+            this.Logger.Warn($"QoS2: Received PubComp with an unknown packet identifier {pubCompPacket.PacketIdentifier}. Discarded.");
         }
 
         // QoS2 transaction is done.  Release the packet identifier
@@ -430,7 +430,7 @@ public partial class ConnectionManager
             }
 
             this.SendQueue.Enqueue(pubAckResponse);
-            Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- Manual ack: enqueued PubAck for id={packetIdentifier}");
+            this.Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- Manual ack: enqueued PubAck for id={packetIdentifier}");
         }
         else if (publishPacket.Message.QoS == QualityOfService.ExactlyOnceDelivery)
         {
@@ -442,7 +442,7 @@ public partial class ConnectionManager
             }
 
             this.SendQueue.Enqueue(pubRecResponse);
-            Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- Manual ack: enqueued PubRec for id={packetIdentifier}");
+            this.Logger.Trace($"{this.Client.Options.ClientId}-(RPH)- Manual ack: enqueued PubRec for id={packetIdentifier}");
         }
         else
         {
@@ -460,11 +460,11 @@ public partial class ConnectionManager
         // Thread-safe check: if already disconnected, return early
         if (this.State == ConnectState.Disconnected)
         {
-            Logger.Trace("HandleDisconnection: Already disconnected.");
+            this.Logger.Trace("HandleDisconnection: Already disconnected.");
             return false;
         }
 
-        Logger.Debug($"HandleDisconnection: Handling disconnection. clean={clean}.");
+        this.Logger.Debug($"HandleDisconnection: Handling disconnection. clean={clean}.");
 
         // Clear any outstanding PINGREQ so the next connect cycle starts clean
         this.ClearAwaitingPingResp();
@@ -493,12 +493,12 @@ public partial class ConnectionManager
         {
             if (!this.SendQueue.IsEmpty)
             {
-                Logger.Warn($"HandleDisconnection: Send queue not empty. {this.SendQueue.Count} packets pending but we are disconnecting.");
+                this.Logger.Warn($"HandleDisconnection: Send queue not empty. {this.SendQueue.Count} packets pending but we are disconnecting.");
             }
 
             if (!this.OutgoingPublishQueue.IsEmpty)
             {
-                Logger.Warn($"HandleDisconnection: Outgoing publish queue not empty. {this.OutgoingPublishQueue.Count} packets pending but we are disconnecting.");
+                this.Logger.Warn($"HandleDisconnection: Outgoing publish queue not empty. {this.OutgoingPublishQueue.Count} packets pending but we are disconnecting.");
             }
 
             // We only clear the queues on explicit disconnect
