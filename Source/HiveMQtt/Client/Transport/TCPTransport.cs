@@ -42,7 +42,8 @@ public class TCPTransport : BaseTransport, IDisposable
     // Semaphore to serialize write operations and prevent concurrent writes
     private readonly SemaphoreSlim writeSemaphore = new(1, 1);
 
-    public TCPTransport(HiveMQClientOptions options) => this.Options = options;
+    public TCPTransport(HiveMQClientOptions options)
+        : base(options?.LoggerFactory) => this.Options = options!;
 
     /// <summary>
     /// SSLStream Callback.  This is used to always allow invalid broker certificates.
@@ -75,7 +76,7 @@ public class TCPTransport : BaseTransport, IDisposable
     /// <param name="chain">The chain of certificate authorities associated with the remote certificate.</param>
     /// <param name="sslPolicyErrors">One or more errors associated with the remote certificate.</param>
     /// <returns>A Boolean indicating whether the TLS certificate is valid.</returns>
-    internal static bool ValidateServerCertificate(
+    internal bool ValidateServerCertificate(
         object sender,
         X509Certificate? certificate,
         X509Chain? chain,
@@ -89,21 +90,21 @@ public class TCPTransport : BaseTransport, IDisposable
             return true;
         }
 
-        Logger.Warn("Broker TLS Certificate error: {0}", sslPolicyErrors);
+        this.Logger.Warn("Broker TLS Certificate error: {0}", sslPolicyErrors);
 
         // Log additional certificate details for debugging
         if (certificate != null)
         {
-            Logger.Debug(CultureInfo.InvariantCulture, "Certificate Subject: {0}", certificate.Subject);
-            Logger.Debug(CultureInfo.InvariantCulture, "Certificate Issuer: {0}", certificate.Issuer);
-            Logger.Debug(CultureInfo.InvariantCulture, "Certificate Serial Number: {0}", certificate.GetSerialNumberString());
+            this.Logger.Debug("Certificate Subject: {0}", certificate.Subject);
+            this.Logger.Debug("Certificate Issuer: {0}", certificate.Issuer);
+            this.Logger.Debug("Certificate Serial Number: {0}", certificate.GetSerialNumberString());
         }
 
         // Validate certificate chain if provided
         if (chain != null)
         {
             var chainStatus = chain.ChainStatus.Length > 0 ? string.Join(", ", chain.ChainStatus.Select(cs => cs.Status)) : "Valid";
-            Logger.Debug(CultureInfo.InvariantCulture, "Certificate chain validation status: {0}", chainStatus);
+            this.Logger.Debug("Certificate chain validation status: {0}", chainStatus);
         }
 
         // Do not allow this client to communicate with unauthenticated servers.
@@ -112,7 +113,7 @@ public class TCPTransport : BaseTransport, IDisposable
 
     private async Task<bool> CreateTLSConnectionAsync(Stream stream)
     {
-        Logger.Trace("Creating TLS connection");
+        this.Logger.Trace("Creating TLS connection");
 
         var tlsOptions = new SslClientAuthenticationOptions
         {
@@ -123,7 +124,7 @@ public class TCPTransport : BaseTransport, IDisposable
 
         if (this.Options.AllowInvalidBrokerCertificates)
         {
-            Logger.Trace("Allowing invalid broker certificates");
+            this.Logger.Trace("Allowing invalid broker certificates");
 #pragma warning disable CA5359
             var yesMan = new RemoteCertificateValidationCallback((sender, certificate, chain, errors) => true);
 #pragma warning restore CA5359
@@ -131,47 +132,47 @@ public class TCPTransport : BaseTransport, IDisposable
         }
         else
         {
-            tlsOptions.RemoteCertificateValidationCallback = ValidateServerCertificate;
+            tlsOptions.RemoteCertificateValidationCallback = this.ValidateServerCertificate;
         }
 
         try
         {
-            Logger.Trace("Authenticating TLS connection");
+            this.Logger.Trace("Authenticating TLS connection");
             this.Stream = new SslStream(stream);
             await ((SslStream)this.Stream).AuthenticateAsClientAsync(tlsOptions).ConfigureAwait(false);
 
-            Logger.Info($"Connected via TLS: {((SslStream)this.Stream).IsEncrypted}");
+            this.Logger.Info($"Connected via TLS: {((SslStream)this.Stream).IsEncrypted}");
 #if NET10_0_OR_GREATER
-            Logger.Debug($"Cipher: {((SslStream)this.Stream).NegotiatedCipherSuite}");
+            this.Logger.Debug($"Cipher: {((SslStream)this.Stream).NegotiatedCipherSuite}");
 #else
-            Logger.Debug($"Cipher Algorithm: {((SslStream)this.Stream).CipherAlgorithm}");
-            Logger.Debug($"Cipher Strength: {((SslStream)this.Stream).CipherStrength}");
-            Logger.Debug($"Hash Algorithm: {((SslStream)this.Stream).HashAlgorithm}");
-            Logger.Debug($"Hash Strength: {((SslStream)this.Stream).HashStrength}");
-            Logger.Debug($"Key Exchange Algorithm: {((SslStream)this.Stream).KeyExchangeAlgorithm}");
-            Logger.Debug($"Key Exchange Strength: {((SslStream)this.Stream).KeyExchangeStrength}");
+            this.Logger.Debug($"Cipher Algorithm: {((SslStream)this.Stream).CipherAlgorithm}");
+            this.Logger.Debug($"Cipher Strength: {((SslStream)this.Stream).CipherStrength}");
+            this.Logger.Debug($"Hash Algorithm: {((SslStream)this.Stream).HashAlgorithm}");
+            this.Logger.Debug($"Hash Strength: {((SslStream)this.Stream).HashStrength}");
+            this.Logger.Debug($"Key Exchange Algorithm: {((SslStream)this.Stream).KeyExchangeAlgorithm}");
+            this.Logger.Debug($"Key Exchange Strength: {((SslStream)this.Stream).KeyExchangeStrength}");
 #endif
 
             var remoteCertificate = ((SslStream)this.Stream).RemoteCertificate;
             if (remoteCertificate != null)
             {
-                Logger.Info($"Remote Certificate Subject: {remoteCertificate.Subject}");
-                Logger.Info($"Remote Certificate Issuer: {remoteCertificate.Issuer}");
-                Logger.Info($"Remote Certificate Serial Number: {remoteCertificate.GetSerialNumberString()}");
+                this.Logger.Info($"Remote Certificate Subject: {remoteCertificate.Subject}");
+                this.Logger.Info($"Remote Certificate Issuer: {remoteCertificate.Issuer}");
+                this.Logger.Info($"Remote Certificate Serial Number: {remoteCertificate.GetSerialNumberString()}");
             }
 
-            Logger.Info($"TLS Protocol: {((SslStream)this.Stream).SslProtocol}");
+            this.Logger.Info($"TLS Protocol: {((SslStream)this.Stream).SslProtocol}");
             return true;
         }
         catch (Exception e)
         {
-            Logger.Error(e.Message);
+            this.Logger.Error(e.Message);
             if (e.InnerException != null)
             {
-                Logger.Error(e.InnerException.Message);
+                this.Logger.Error(e.InnerException.Message);
             }
 
-            Logger.Error("Error while establishing TLS connection - closing the connection.");
+            this.Logger.Error("Error while establishing TLS connection - closing the connection.");
             return false;
         }
     }
@@ -186,7 +187,7 @@ public class TCPTransport : BaseTransport, IDisposable
     /// <returns>True if the tunnel was established successfully, false otherwise.</returns>
     private async Task<bool> EstablishProxyTunnelAsync(NetworkStream stream, string targetHost, int targetPort, CancellationToken cancellationToken)
     {
-        Logger.Trace($"Establishing HTTP CONNECT tunnel to {targetHost}:{targetPort}");
+        this.Logger.Trace($"Establishing HTTP CONNECT tunnel to {targetHost}:{targetPort}");
 
         var targetAddress = string.Format(CultureInfo.InvariantCulture, "{0}:{1}", targetHost, targetPort);
 
@@ -208,7 +209,7 @@ public class TCPTransport : BaseTransport, IDisposable
                     var authBytes = Encoding.ASCII.GetBytes(authString);
                     var authBase64 = Convert.ToBase64String(authBytes);
                     requestBuilder.Append(CultureInfo.InvariantCulture, $"Proxy-Authorization: Basic {authBase64}\r\n");
-                    Logger.Trace("Added Proxy-Authorization header");
+                    this.Logger.Trace("Added Proxy-Authorization header");
                 }
             }
         }
@@ -220,7 +221,7 @@ public class TCPTransport : BaseTransport, IDisposable
         await stream.WriteAsync(requestBytes.AsMemory(), cancellationToken).ConfigureAwait(false);
         await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
 
-        Logger.Trace("Sent HTTP CONNECT request");
+        this.Logger.Trace("Sent HTTP CONNECT request");
 
         // Read the proxy response
         var responseBuffer = new byte[4096];
@@ -233,7 +234,7 @@ public class TCPTransport : BaseTransport, IDisposable
             var bytesRead = await stream.ReadAsync(responseBuffer.AsMemory(totalBytesRead, responseBuffer.Length - totalBytesRead), cancellationToken).ConfigureAwait(false);
             if (bytesRead == 0)
             {
-                Logger.Error("Proxy closed connection before completing response");
+                this.Logger.Error("Proxy closed connection before completing response");
                 throw new HiveMQttClientException("Proxy closed connection before completing response");
             }
 
@@ -249,7 +250,7 @@ public class TCPTransport : BaseTransport, IDisposable
         }
 
         var response = responseBuilder.ToString();
-        Logger.Trace($"Received proxy response: {response.Split('\r')[0]}");
+        this.Logger.Trace($"Received proxy response: {response.Split('\r')[0]}");
 
         // Parse the response status line
         var statusLine = response.Split('\r')[0];
@@ -257,7 +258,7 @@ public class TCPTransport : BaseTransport, IDisposable
 
         if (statusParts.Length < 2)
         {
-            Logger.Error($"Invalid proxy response: {statusLine}");
+            this.Logger.Error($"Invalid proxy response: {statusLine}");
             throw new HiveMQttClientException($"Invalid proxy response: {statusLine}");
         }
 
@@ -266,11 +267,11 @@ public class TCPTransport : BaseTransport, IDisposable
         if (statusCode != "200")
         {
             var errorMessage = string.Format(CultureInfo.InvariantCulture, "Proxy connection failed with status {0}: {1}", statusCode, statusLine);
-            Logger.Error(errorMessage);
+            this.Logger.Error(errorMessage);
             throw new HiveMQttClientException(errorMessage);
         }
 
-        Logger.Info($"HTTP CONNECT tunnel established to {targetAddress}");
+        this.Logger.Info($"HTTP CONNECT tunnel established to {targetAddress}");
         return true;
     }
 
@@ -315,7 +316,7 @@ public class TCPTransport : BaseTransport, IDisposable
         }
         else
         {
-            var lookupResult = await LookupHostNameAsync(proxyHost, this.Options.PreferIPv6).ConfigureAwait(false);
+            var lookupResult = await this.LookupHostNameAsync(proxyHost, this.Options.PreferIPv6).ConfigureAwait(false);
             if (lookupResult != null)
             {
                 proxyEndPoint = new IPEndPoint(lookupResult, proxyPort);
@@ -344,7 +345,7 @@ public class TCPTransport : BaseTransport, IDisposable
                 throw new HiveMQttClientException("Failed to resolve proxy server address. Check your proxy configuration.");
             }
 
-            Logger.Trace($"Using HTTP proxy at {connectionEndPoint}");
+            this.Logger.Trace($"Using HTTP proxy at {connectionEndPoint}");
         }
         else
         {
@@ -355,7 +356,7 @@ public class TCPTransport : BaseTransport, IDisposable
             }
             else
             {
-                var lookupResult = await LookupHostNameAsync(this.Options.Host, this.Options.PreferIPv6).ConfigureAwait(false);
+                var lookupResult = await this.LookupHostNameAsync(this.Options.Host, this.Options.PreferIPv6).ConfigureAwait(false);
 
                 if (lookupResult != null)
                 {
@@ -416,11 +417,11 @@ public class TCPTransport : BaseTransport, IDisposable
 
         if (useProxy)
         {
-            Logger.Trace($"Socket connected to broker {this.Options.Host}:{this.Options.Port} through proxy");
+            this.Logger.Trace($"Socket connected to broker {this.Options.Host}:{this.Options.Port} through proxy");
         }
         else
         {
-            Logger.Trace($"Socket connected to {this.Socket.RemoteEndPoint}");
+            this.Logger.Trace($"Socket connected to {this.Socket.RemoteEndPoint}");
         }
 
         return socketConnected;
@@ -493,7 +494,7 @@ public class TCPTransport : BaseTransport, IDisposable
 
             if (writeResult.IsCompleted || writeResult.IsCanceled)
             {
-                Logger.Debug($"-(TCP)- WriteAsync: The party is over. IsCompleted={writeResult.IsCompleted} IsCancelled={writeResult.IsCanceled}");
+                this.Logger.Debug($"-(TCP)- WriteAsync: The party is over. IsCompleted={writeResult.IsCompleted} IsCancelled={writeResult.IsCanceled}");
                 return false;
             }
 
@@ -525,18 +526,18 @@ public class TCPTransport : BaseTransport, IDisposable
 
             if (readResult.IsCanceled || readResult.IsCompleted)
             {
-                Logger.Debug($"-(TCP)- ReadAsync: The party is over. IsCompleted={readResult.IsCompleted} IsCancelled={readResult.IsCanceled}");
+                this.Logger.Debug($"-(TCP)- ReadAsync: The party is over. IsCompleted={readResult.IsCompleted} IsCancelled={readResult.IsCanceled}");
                 return new TransportReadResult(true);
             }
         }
         catch (SocketException ex)
         {
-            Logger.Debug($"SocketException in ReadAsync: {ex.Message}");
+            this.Logger.Debug($"SocketException in ReadAsync: {ex.Message}");
             return new TransportReadResult(true);
         }
         catch (IOException ex)
         {
-            Logger.Debug($"SocketException in ReadAsync: {ex.Message}");
+            this.Logger.Debug($"SocketException in ReadAsync: {ex.Message}");
             return new TransportReadResult(true);
         }
 
@@ -576,7 +577,7 @@ public class TCPTransport : BaseTransport, IDisposable
     /// <param name="disposing">True if called from user code.</param>
     protected virtual void Dispose(bool disposing)
     {
-        Logger.Trace("Disposing TCPTransport");
+        this.Logger.Trace("Disposing TCPTransport");
 
         // Check to see if Dispose has already been called.
         if (!this.disposed)
@@ -604,7 +605,7 @@ public class TCPTransport : BaseTransport, IDisposable
                     }
                     catch (Exception ex)
                     {
-                        Logger.Warn($"Error closing stream: {ex.Message}");
+                        this.Logger.Warn($"Error closing stream: {ex.Message}");
                     }
                     finally
                     {
@@ -625,7 +626,7 @@ public class TCPTransport : BaseTransport, IDisposable
                     }
                     catch (Exception ex)
                     {
-                        Logger.Warn($"Error shutting down socket: {ex.Message}");
+                        this.Logger.Warn($"Error shutting down socket: {ex.Message}");
                     }
                     finally
                     {
