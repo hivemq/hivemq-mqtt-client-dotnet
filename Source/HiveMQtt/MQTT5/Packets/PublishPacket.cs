@@ -100,13 +100,13 @@ public class PublishPacket : ControlPacket
         if (this.OnPublishQoS1Complete != null && this.OnPublishQoS1Complete.GetInvocationList().Length > 0)
         {
             var eventArgs = new OnPublishQoS1CompleteEventArgs(packet);
-            Logger.Trace("OnPublishQoS1CompleteEventLauncher");
+            this.Logger.Trace("OnPublishQoS1CompleteEventLauncher");
             _ = Task.Run(() => this.OnPublishQoS1Complete?.Invoke(this, eventArgs)).ContinueWith(
                 t =>
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("OnPublishQoS1CompleteEventLauncher exception: " + t.Exception?.Message);
+                        this.Logger.Error("OnPublishQoS1CompleteEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);
@@ -131,13 +131,13 @@ public class PublishPacket : ControlPacket
         if (this.OnPublishQoS2Complete != null && this.OnPublishQoS2Complete.GetInvocationList().Length > 0)
         {
             var eventArgs = new OnPublishQoS2CompleteEventArgs(packetList);
-            Logger.Trace("OnPublishQoS2CompleteEventLauncher");
+            this.Logger.Trace("OnPublishQoS2CompleteEventLauncher");
             _ = Task.Run(() => this.OnPublishQoS2Complete?.Invoke(this, eventArgs)).ContinueWith(
                 t =>
                 {
                     if (t.IsFaulted)
                     {
-                        Logger.Error("OnPublishQoS2CompleteEventLauncher exception: " + t.Exception?.Message);
+                        this.Logger.Error("OnPublishQoS2CompleteEventLauncher exception: " + t.Exception?.Message);
                     }
                 },
                 TaskScheduler.Default);

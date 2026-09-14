@@ -37,8 +37,6 @@ using HiveMQtt.MQTT5.Types;
 /// </summary>
 public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
 {
-    private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
-
     internal ConnectionManager Connection { get; set; }
 
     /// <summary>
@@ -50,16 +48,27 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
         options ??= new HiveMQClientOptions();
         options.Validate();
 
-        Logger.Trace($"New RawClient created: Client ID: {options.ClientId}");
+        this.Logger = InternalLogger.For<RawClient>(options.LoggerFactory);
+        this.PacketLogger = InternalLogger.For<ControlPacket>(options.LoggerFactory);
+
+        this.Logger.Trace($"New RawClient created: Client ID: {options.ClientId}");
 
         this.Options = options;
 
         // Initialize the connection manager
         this.Connection = new ConnectionManager(this);
-        this.MessageReceivedDispatcher = new MessageReceivedDispatcher();
+        this.MessageReceivedDispatcher = new MessageReceivedDispatcher(options.LoggerFactory);
     }
 
     internal MessageReceivedDispatcher MessageReceivedDispatcher { get; }
+
+    internal InternalLogger Logger { get; }
+
+    /// <summary>
+    /// Gets the logger handed to outbound control packets so their event launchers log
+    /// under the same category inbound (decoded) packets use.
+    /// </summary>
+    internal InternalLogger PacketLogger { get; }
 
     /// <inheritdoc />
     public Dictionary<string, string> LocalStore { get; } = new();
@@ -120,7 +129,7 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
         this.Connection.State = ConnectState.Connecting;
         this.Connection.SignalNotDisconnected();
 
-        Logger.Info("Connecting to broker at {0}:{1}", this.Options.Host, this.Options.Port);
+        this.Logger.Info("Connecting to broker at {0}:{1}", this.Options.Host, this.Options.Port);
 
         // Apply the connect override options if provided
         if (connectOptions != null)
@@ -154,7 +163,7 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
 
         // Construct the MQTT Connect packet and queue to send
         var connPacket = new ConnectPacket(this.Options);
-        Logger.Trace($"Queuing CONNECT packet for send.");
+        this.Logger.Trace($"Queuing CONNECT packet for send.");
         this.Connection.SendQueue.Enqueue(connPacket);
 
         ConnAckPacket connAck;
@@ -167,7 +176,7 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
         {
             this.Connection.State = ConnectState.Disconnected;
             this.Connection.ResetNotDisconnectedSignal();
-            Logger.Error($"Connect timeout.  No response received in {this.Options.ConnectTimeoutInMs} milliseconds.");
+            this.Logger.Error($"Connect timeout.  No response received in {this.Options.ConnectTimeoutInMs} milliseconds.");
             throw new HiveMQttClientException($"Connect timeout.  No response received in {this.Options.ConnectTimeoutInMs} milliseconds.");
         }
         finally
@@ -217,13 +226,13 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
 
         if (this.Connection.State != ConnectState.Connected)
         {
-            Logger.Warn($"DisconnectAsync called but this client is not connected.  State is {this.Connection.State}.");
+            this.Logger.Warn($"DisconnectAsync called but this client is not connected.  State is {this.Connection.State}.");
             return false;
         }
 
         options ??= new DisconnectOptions();
 
-        Logger.Info("Disconnecting from broker at {0}:{1}", this.Options.Host, this.Options.Port);
+        this.Logger.Info("Disconnecting from broker at {0}:{1}", this.Options.Host, this.Options.Port);
 
         // Fire the corresponding event
         this.BeforeDisconnectEventLauncher();
@@ -242,7 +251,7 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
         EventHandler<OnDisconnectSentEventArgs> eventHandler = TaskHandler;
         this.OnDisconnectSent += eventHandler;
 
-        Logger.Trace($"Queuing DISCONNECT packet for send.");
+        this.Logger.Trace($"Queuing DISCONNECT packet for send.");
         this.Connection.SendQueue.Enqueue(disconnectPacket);
 
         try
@@ -275,7 +284,7 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
             this.Connection?.State == ConnectState.Connected &&
             this.connectionPropertiesCached)
         {
-            var publishPacket = new PublishPacket(message, 0);
+            var publishPacket = new PublishPacket(message, 0) { Logger = this.PacketLogger };
             this.Connection.OutgoingPublishQueue.Enqueue(publishPacket);
             return new PublishResult(publishPacket.Message);
         }
@@ -323,15 +332,15 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
                 throw new HiveMQttClientException("Connection is not available");
             }
 
-            Logger.Debug($"Reducing message QoS from {message.QoS} to broker enforced maximum of {maximumQoS}");
+            this.Logger.Debug($"Reducing message QoS from {message.QoS} to broker enforced maximum of {maximumQoS}");
             message.QoS = (QualityOfService)maximumQoS.Value;
         }
 
         // QoS 0: Fast Service
         if (message.QoS == QualityOfService.AtMostOnceDelivery)
         {
-            var publishPacket = new PublishPacket(message, 0);
-            Logger.Trace($"Queuing QoS 0 publish packet for send: {publishPacket.GetType().Name}");
+            var publishPacket = new PublishPacket(message, 0) { Logger = this.PacketLogger };
+            this.Logger.Trace($"Queuing QoS 0 publish packet for send: {publishPacket.GetType().Name}");
 
             this.Connection?.OutgoingPublishQueue.Enqueue(publishPacket);
             return new PublishResult(publishPacket.Message);
@@ -350,10 +359,10 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
             }
 
             var packetIdentifier = await this.Connection.PacketIDManager.GetAvailablePacketIDAsync().ConfigureAwait(false);
-            var publishPacket = new PublishPacket(message, (ushort)packetIdentifier);
+            var publishPacket = new PublishPacket(message, (ushort)packetIdentifier) { Logger = this.PacketLogger };
             PubAckPacket pubAckPacket;
 
-            Logger.Trace($"Queuing QoS 1 publish packet for send: {publishPacket.GetType().Name} id={publishPacket.PacketIdentifier}");
+            this.Logger.Trace($"Queuing QoS 1 publish packet for send: {publishPacket.GetType().Name} id={publishPacket.PacketIdentifier}");
             this.Connection.OutgoingPublishQueue.Enqueue(publishPacket);
 
             try
@@ -365,7 +374,7 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
             }
             catch (OperationCanceledException)
             {
-                Logger.Debug("PublishAsync: Operation cancelled by user.");
+                this.Logger.Debug("PublishAsync: Operation cancelled by user.");
                 throw;
             }
 
@@ -385,10 +394,10 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
             }
 
             var packetIdentifier = await this.Connection.PacketIDManager.GetAvailablePacketIDAsync().ConfigureAwait(false);
-            var publishPacket = new PublishPacket(message, (ushort)packetIdentifier);
+            var publishPacket = new PublishPacket(message, (ushort)packetIdentifier) { Logger = this.PacketLogger };
             var publishResult = new PublishResult(publishPacket.Message);
 
-            Logger.Trace($"Queuing QoS 2 publish packet for send: {publishPacket.GetType().Name} id={publishPacket.PacketIdentifier}");
+            this.Logger.Trace($"Queuing QoS 2 publish packet for send: {publishPacket.GetType().Name} id={publishPacket.PacketIdentifier}");
             this.Connection.OutgoingPublishQueue.Enqueue(publishPacket);
 
             List<ControlPacket> packetList;
@@ -401,7 +410,7 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
             }
             catch (OperationCanceledException)
             {
-                Logger.Debug("PublishAsync: Operation cancelled by user.");
+                this.Logger.Debug("PublishAsync: Operation cancelled by user.");
                 throw;
             }
 
@@ -523,7 +532,7 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
 
         // Construct the MQTT Subscribe packet
         var packetIdentifier = await this.Connection.PacketIDManager.GetAvailablePacketIDAsync().ConfigureAwait(false);
-        var subscribePacket = new SubscribePacket(options, (ushort)packetIdentifier);
+        var subscribePacket = new SubscribePacket(options, (ushort)packetIdentifier) { Logger = this.PacketLogger };
 
         // Setup the task completion source to wait for the SUBACK
         var taskCompletionSource = new TaskCompletionSource<SubAckPacket>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -551,7 +560,7 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
         }
         catch (TimeoutException)
         {
-            Logger.Error("Subscribe timeout.  No SUBACK response received in time.");
+            this.Logger.Error("Subscribe timeout.  No SUBACK response received in time.");
             throw;
         }
         finally
@@ -706,7 +715,7 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
             {
                 if (this.Connection?.State == Internal.ConnectState.Connected)
                 {
-                    Logger.Trace("RawClient Dispose: Disconnecting connected client.");
+                    this.Logger.Trace("RawClient Dispose: Disconnecting connected client.");
                     try
                     {
                         var disconnectTask = Task.Run(async () => await this.DisconnectAsync().ConfigureAwait(false));
@@ -718,12 +727,12 @@ public partial class RawClient : IDisposable, IRawClient, IBaseMQTTClient
                         }
                         catch (TimeoutException)
                         {
-                            Logger.Warn("Disconnect operation timed out during RawClient dispose");
+                            this.Logger.Warn("Disconnect operation timed out during RawClient dispose");
                         }
                     }
                     catch (Exception ex)
                     {
-                        Logger.Warn($"Error disconnecting RawClient during dispose: {ex.Message}");
+                        this.Logger.Warn($"Error disconnecting RawClient during dispose: {ex.Message}");
                     }
                 }
 

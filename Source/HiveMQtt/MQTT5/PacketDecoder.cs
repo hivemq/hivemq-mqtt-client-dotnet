@@ -16,16 +16,26 @@
 namespace HiveMQtt.MQTT5;
 
 using System.Buffers;
+using HiveMQtt.Client.Internal;
 using HiveMQtt.MQTT5.Packets;
+using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// Decodes a Control Packet from a buffer.
 /// </summary>
-internal class PacketDecoder
+internal sealed class PacketDecoder
 {
-    private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+    private readonly InternalLogger packetLogger;
 
-    public static bool TryDecode(ReadOnlySequence<byte> buffer, out ControlPacket decodedPacket, out SequencePosition consumed)
+    internal PacketDecoder(ILoggerFactory? loggerFactory)
+    {
+        this.Logger = InternalLogger.For<PacketDecoder>(loggerFactory);
+        this.packetLogger = InternalLogger.For<ControlPacket>(loggerFactory);
+    }
+
+    private InternalLogger Logger { get; }
+
+    public bool TryDecode(ReadOnlySequence<byte> buffer, out ControlPacket decodedPacket, out SequencePosition consumed)
     {
         try
         {
@@ -54,7 +64,7 @@ internal class PacketDecoder
             if (buffer.Length < packetLength)
             {
                 // Not all data for this packet has arrived yet.  Try again...
-                Logger.Trace($"PacketDecoder.TryDecode: Waiting on more data: {buffer.Length} < {packetLength} - Returning PartialPacket.");
+                this.Logger.Trace($"PacketDecoder.TryDecode: Waiting on more data: {buffer.Length} < {packetLength} - Returning PartialPacket.");
                 decodedPacket = new PartialPacket();
                 consumed = default;
                 return false;
@@ -77,15 +87,16 @@ internal class PacketDecoder
                 _ => new MalformedPacket(packetData),
             };
 
+            packet.Logger = this.packetLogger;
             consumed = buffer.GetPosition(packetLength);
             decodedPacket = packet;
 
-            // Logger.Trace($"PacketDecoder: Decoded Packet: consumed={consumed.GetInteger()}, packet={packet} id={packet.PacketIdentifier}");
+            // this.Logger.Trace($"PacketDecoder: Decoded Packet: consumed={consumed.GetInteger()}, packet={packet} id={packet.PacketIdentifier}");
             return true;
         }
         catch (Exception ex)
         {
-            Logger.Error(ex, $"PacketDecoder.Decode: Exception caught.  Returning MalformedPacket.");
+            this.Logger.Error(ex, $"PacketDecoder.Decode: Exception caught.  Returning MalformedPacket.");
             consumed = buffer.Start;
             decodedPacket = new MalformedPacket(buffer);
             return false;

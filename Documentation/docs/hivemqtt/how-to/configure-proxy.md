@@ -286,8 +286,15 @@ var options = builder.Build();
 Enable debug logging to troubleshoot proxy connection issues:
 
 ```csharp
-// In your NLog.config or logging configuration
-<logger name="HiveMQtt.*" minlevel="Trace" writeTo="console" />
+// The proxy handshake is logged by the transport layer.
+using var loggerFactory = LoggerFactory.Create(builder => builder
+    .AddSimpleConsole()
+    .AddFilter("HiveMQtt.Client.Transport", LogLevel.Trace));
+
+var options = new HiveMQClientOptionsBuilder()
+    .WithBroker("127.0.0.1")
+    .WithLoggerFactory(loggerFactory)
+    .Build();
 ```
 
 ## Proxy Server Requirements
