@@ -18,10 +18,20 @@ namespace HiveMQtt.Client.Transport;
 using System.Net;
 using System.Net.Sockets;
 using HiveMQtt.Client.Exceptions;
+using HiveMQtt.Client.Internal;
+using Microsoft.Extensions.Logging;
 
 public abstract class BaseTransport
 {
-    protected static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BaseTransport"/> class with no logging.
+    /// </summary>
+    protected BaseTransport() => this.Logger = default;
+
+    private protected BaseTransport(ILoggerFactory? loggerFactory) =>
+        this.Logger = InternalLogger.For<BaseTransport>(loggerFactory);
+
+    private protected InternalLogger Logger { get; }
 
     public abstract Task<bool> ConnectAsync(CancellationToken cancellationToken = default);
 
@@ -42,7 +52,7 @@ public abstract class BaseTransport
     /// <param name="preferIPv6">A value indicating whether to prefer IPv6 addresses.</param>
     /// <returns>The IP address of the hostname.</returns>
     /// <exception cref="HiveMQttClientException">Thrown when the hostname cannot be resolved.</exception>
-    protected static async Task<IPAddress?> LookupHostNameAsync(string host, bool preferIPv6)
+    protected async Task<IPAddress?> LookupHostNameAsync(string host, bool preferIPv6)
     {
         try
         {
@@ -87,7 +97,7 @@ public abstract class BaseTransport
         }
         catch (SocketException socketException)
         {
-            Logger.Debug(socketException.Message);
+            this.Logger.Debug(socketException.Message);
             return null;
         }
     }
