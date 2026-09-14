@@ -23,7 +23,13 @@ Before reaching out, try these common debugging steps:
 Start with the [Configure Logging](/docs/hivemqtt/how-to/configure-logging) guide, then enable TRACE output while troubleshooting:
 
 ```csharp
-// Add NLog.config to your project with TRACE level
+using var loggerFactory = LoggerFactory.Create(builder =>
+    builder.AddSimpleConsole().SetMinimumLevel(LogLevel.Trace));
+
+var options = new HiveMQClientOptionsBuilder()
+    .WithBroker("127.0.0.1")
+    .WithLoggerFactory(loggerFactory)
+    .Build();
 ```
 
 ### Check Connection Issues

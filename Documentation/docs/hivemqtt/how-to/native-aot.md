@@ -28,17 +28,22 @@ You do **not** set `IsAotCompatible` in your app — that property is for librar
 
 ## Logging under Native AOT
 
-HiveMQtt uses [NLog 6](https://nlog-project.org/2025/06/21/nlog-6-0-released.html), which supports AOT. If you load logging from an XML `NLog.config`, the AOT/trimmer cannot see target types referenced only by `xsi:type`. Register the targets your config uses before logging starts:
+HiveMQtt depends only on `Microsoft.Extensions.Logging.Abstractions` and holds no static logging
+state: there is no configuration-file discovery and no reflection-based target loading to trim away.
+You pass in an `ILoggerFactory` and HiveMQtt uses it — nothing more.
 
 ```csharp
-NLog.LogManager.Setup().SetupExtensions(ext =>
-{
-    ext.RegisterTarget<NLog.Targets.FileTarget>();
-    ext.RegisterTarget<NLog.Targets.ConsoleTarget>();
-});
+using var loggerFactory = LoggerFactory.Create(builder =>
+    builder.AddSimpleConsole().SetMinimumLevel(LogLevel.Information));
+
+var options = new HiveMQClientOptionsBuilder()
+    .WithBroker("127.0.0.1")
+    .WithLoggerFactory(loggerFactory)
+    .Build();
 ```
 
-See [Configure Logging](/docs/hivemqtt/how-to/configure-logging) for the full NLog setup.
+Whatever AOT caveats apply are your logging provider's, not HiveMQtt's — follow that provider's AOT
+guidance.  See [Configure Logging](/docs/hivemqtt/how-to/configure-logging).
 
 ## Sparkplug and Google.Protobuf
 
