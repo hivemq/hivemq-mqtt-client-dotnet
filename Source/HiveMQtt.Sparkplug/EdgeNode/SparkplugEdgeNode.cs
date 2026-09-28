@@ -787,7 +787,10 @@ public sealed class SparkplugEdgeNode : IDisposable
         {
             Topic = topic.Build(),
             Payload = bytes,
-            QoS = QualityOfService.AtLeastOnceDelivery,
+
+            // Sparkplug B 3.0: NDEATH is QoS 1 (like its Will Message); NBIRTH, DBIRTH, NDATA, DDATA and DDEATH are QoS 0
+            // (tck-id-payloads-nbirth-qos, tck-id-payloads-dbirth-qos, tck-id-payloads-ddata-qos, tck-id-topics-ddeath-mqtt).
+            QoS = topic.MessageType == SparkplugMessageType.NDEATH ? QualityOfService.AtLeastOnceDelivery : QualityOfService.AtMostOnceDelivery,
             Retain = false,
         };
         return this.client.PublishAsync(message, cancellationToken);

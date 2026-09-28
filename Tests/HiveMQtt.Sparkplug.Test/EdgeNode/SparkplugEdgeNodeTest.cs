@@ -106,6 +106,28 @@ public class SparkplugEdgeNodeTest
     }
 
     [Test]
+    public async Task Publishes_NDeath_With_QoS1_And_All_Other_Messages_With_QoS0()
+    {
+        var client = new FakeHiveMQClient();
+        var options = new SparkplugEdgeNodeOptions { GroupId = "g1", EdgeNodeId = "n1" };
+        var node = new SparkplugEdgeNode(client, options);
+        var metrics = new[] { SparkplugMetricBuilder.Create("x").WithInt32Value(42).Build() };
+
+        await node.StartAsync().ConfigureAwait(false);
+        await node.PublishNodeDataAsync(metrics).ConfigureAwait(false);
+        await node.PublishDeviceBirthAsync("d1", metrics).ConfigureAwait(false);
+        await node.PublishDeviceDataAsync("d1", metrics).ConfigureAwait(false);
+        await node.PublishDeviceDeathAsync("d1").ConfigureAwait(false);
+        await node.StopAsync().ConfigureAwait(false);
+
+        client.PublishedMessages.Should().HaveCount(6);
+        client.PublishedMessages.Where(m => m.Topic != "spBv1.0/g1/NDEATH/n1")
+            .Should().OnlyContain(m => m.QoS == QualityOfService.AtMostOnceDelivery);
+        client.PublishedMessages.Single(m => m.Topic == "spBv1.0/g1/NDEATH/n1").QoS
+            .Should().Be(QualityOfService.AtLeastOnceDelivery);
+    }
+
+    [Test]
     public async Task PublishNodeDataAsync_Publishes_To_NDATA_And_Advances_Sequence()
     {
         var client = new FakeHiveMQClient();
