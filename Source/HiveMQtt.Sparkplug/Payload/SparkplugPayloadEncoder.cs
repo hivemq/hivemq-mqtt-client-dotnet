@@ -143,9 +143,9 @@ public static class SparkplugPayloadEncoder
     /// Creates a bdSeq metric for inclusion in birth and death payloads. Callers should add it to payload.Metrics.
     /// </summary>
     /// <param name="bdSeq">The birth/death sequence value (UInt64 per Sparkplug spec).</param>
-    /// <returns>A metric with name "bdSeq" and the given value.</returns>
+    /// <returns>A metric with name "bdSeq", the given value and the current timestamp.</returns>
     public static Protobuf.Payload.Types.Metric CreateBdSeqMetric(ulong bdSeq) =>
-        SparkplugMetricBuilder.Create(BdSeqMetricName).WithUInt64Value(bdSeq).Build();
+        SparkplugMetricBuilder.Create(BdSeqMetricName).WithCurrentTimestamp().WithUInt64Value(bdSeq).Build();
 
     /// <summary>
     /// Metric name for the Sparkplug Node Control Rebirth command. Used in NCMD and NBIRTH.

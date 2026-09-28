@@ -282,9 +282,11 @@ public sealed class SparkplugEdgeNode : IDisposable
                 var birthPayload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), 0);
                 birthPayload.Metrics.Insert(0, SparkplugPayloadEncoder.CreateBdSeqMetric(sessionBdSeq));
 
-                // Add the required Node Control/Rebirth metric per Sparkplug B 3.0 spec (tck-id-topics-nbirth-rebirth-metric)
+                // Add the required Node Control/Rebirth metric per Sparkplug B 3.0 spec (tck-id-topics-nbirth-rebirth-metric);
+                // every NBIRTH metric carries a timestamp (tck-id-payloads-name-birth-data-requirement)
                 birthPayload.Metrics.Add(
                     SparkplugMetricBuilder.Create(SparkplugPayloadEncoder.NodeControlRebirthMetricName)
+                        .WithCurrentTimestamp()
                         .WithBooleanValue(false)
                         .Build());
 
@@ -411,9 +413,11 @@ public sealed class SparkplugEdgeNode : IDisposable
                     payload.Metrics.Insert(0, SparkplugPayloadEncoder.CreateBdSeqMetric(this.currentSessionBdSeq.Value));
                 }
 
-                // Add the required Node Control/Rebirth metric per Sparkplug B 3.0 spec (tck-id-topics-nbirth-rebirth-metric)
+                // Add the required Node Control/Rebirth metric per Sparkplug B 3.0 spec (tck-id-topics-nbirth-rebirth-metric);
+                // every NBIRTH metric carries a timestamp (tck-id-payloads-name-birth-data-requirement)
                 payload.Metrics.Add(
                     SparkplugMetricBuilder.Create(SparkplugPayloadEncoder.NodeControlRebirthMetricName)
+                        .WithCurrentTimestamp()
                         .WithBooleanValue(false)
                         .Build());
 

@@ -149,6 +149,25 @@ public class SparkplugEdgeNodeTest
     }
 
     [Test]
+    public async Task NBIRTH_Metrics_Added_By_The_Node_Carry_Timestamps()
+    {
+        var client = new FakeHiveMQClient();
+        var options = new SparkplugEdgeNodeOptions { GroupId = "g1", EdgeNodeId = "n1" };
+        var node = new SparkplugEdgeNode(client, options);
+        await node.StartAsync().ConfigureAwait(false);
+        await node.PublishNodeBirthAsync(null).ConfigureAwait(false);
+
+        var births = client.PublishedMessages.Where(m => m.Topic == "spBv1.0/g1/NBIRTH/n1").ToList();
+        births.Should().HaveCount(2);
+        foreach (var birth in births)
+        {
+            var metrics = SparkplugPayloadEncoder.Decode(birth.Payload!).Metrics;
+            metrics.Select(m => m.Name).Should().Contain(new[] { SparkplugPayloadEncoder.BdSeqMetricName, SparkplugPayloadEncoder.NodeControlRebirthMetricName });
+            metrics.Should().OnlyContain(m => m.HasTimestamp && m.Timestamp > 0);
+        }
+    }
+
+    [Test]
     public async Task PublishNodeDataAsync_Publishes_To_NDATA_And_Advances_Sequence()
     {
         var client = new FakeHiveMQClient();
