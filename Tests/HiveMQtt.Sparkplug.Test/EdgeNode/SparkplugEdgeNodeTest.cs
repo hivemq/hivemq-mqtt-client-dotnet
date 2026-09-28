@@ -22,6 +22,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using HiveMQtt.Client;
 using HiveMQtt.Client.Options;
+using HiveMQtt.MQTT5.ReasonCodes;
 using HiveMQtt.MQTT5.Types;
 using HiveMQtt.Sparkplug.EdgeNode;
 using HiveMQtt.Sparkplug.HostApplication;
@@ -584,6 +585,7 @@ public class SparkplugEdgeNodeTest
         node.IsPrimaryHostOnline.Should().BeFalse();
         client.PublishedMessages.Should().Contain(m => m.Topic == "spBv1.0/g1/NDEATH/n1");
         client.IsConnected().Should().BeFalse();
+        client.LastDisconnectOptions!.ReasonCode.Should().Be(DisconnectReasonCode.DisconnectWithWillMessage);
     }
 
     [Test]

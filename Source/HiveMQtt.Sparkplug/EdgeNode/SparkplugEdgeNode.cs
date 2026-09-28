@@ -89,6 +89,11 @@ public sealed class SparkplugEdgeNode : IDisposable
         return (topic, SparkplugPayloadEncoder.Encode(payload));
     }
 
+    // Sparkplug B 3.0 (MQTT 5): an Edge Node that disconnects intentionally after publishing NDEATH MUST use the
+    // 'Disconnect with Will Message' reason code (tck-id-payloads-ndeath-will-message-publisher-disconnect-mqtt50).
+    private static DisconnectOptions DisconnectAfterNodeDeath() =>
+        new() { ReasonCode = DisconnectReasonCode.DisconnectWithWillMessage };
+
     // Sparkplug B 3.0: an NDEATH payload carries only the bdSeq metric and MUST NOT include a sequence number
     // (tck-id-payloads-ndeath-seq, tck-id-topics-ndeath-seq, tck-id-topics-ndeath-payload).
     private static Payload CreateNodeDeathPayload(ulong? bdSeq, ulong? timestamp)
@@ -376,7 +381,7 @@ public sealed class SparkplugEdgeNode : IDisposable
 
             if (this.ownsClient)
             {
-                await this.client.DisconnectAsync().ConfigureAwait(false);
+                await this.client.DisconnectAsync(DisconnectAfterNodeDeath()).ConfigureAwait(false);
             }
 
             this.started = false;
@@ -764,7 +769,7 @@ public sealed class SparkplugEdgeNode : IDisposable
                 {
                     if (this.client.IsConnected())
                     {
-                        await this.client.DisconnectAsync().ConfigureAwait(false);
+                        await this.client.DisconnectAsync(DisconnectAfterNodeDeath()).ConfigureAwait(false);
                     }
                 }
                 catch

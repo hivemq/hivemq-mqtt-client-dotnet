@@ -75,8 +75,11 @@ internal sealed class FakeHiveMQClient : IHiveMQClient
         return Task.FromResult(result);
     }
 
+    public DisconnectOptions? LastDisconnectOptions { get; private set; }
+
     public Task<bool> DisconnectAsync(DisconnectOptions? options = null)
     {
+        this.LastDisconnectOptions = options;
         this.connected = false;
         return Task.FromResult(true);
     }
