@@ -128,6 +128,26 @@ public class SparkplugEdgeNodeTest
     }
 
     [Test]
+    public async Task PublishNodeBirthAsync_Rebirth_Restarts_Sequence_At_Zero()
+    {
+        var client = new FakeHiveMQClient();
+        var options = new SparkplugEdgeNodeOptions { GroupId = "g1", EdgeNodeId = "n1" };
+        var node = new SparkplugEdgeNode(client, options);
+        var metrics = new[] { SparkplugMetricBuilder.Create("x").WithInt32Value(42).Build() };
+        await node.StartAsync().ConfigureAwait(false);
+        await node.PublishNodeDataAsync(metrics).ConfigureAwait(false);
+        await node.PublishNodeDataAsync(metrics).ConfigureAwait(false);
+        client.PublishedMessages.Clear();
+
+        await node.PublishNodeBirthAsync(metrics).ConfigureAwait(false);
+        await node.PublishNodeDataAsync(metrics).ConfigureAwait(false);
+
+        SparkplugPayloadEncoder.Decode(client.PublishedMessages[0].Payload!).Seq.Should().Be(0UL);
+        SparkplugPayloadEncoder.Decode(client.PublishedMessages[1].Payload!).Seq.Should().Be(1UL);
+        node.SequenceNumber.Should().Be(2);
+    }
+
+    [Test]
     public async Task PublishNodeDataAsync_Publishes_To_NDATA_And_Advances_Sequence()
     {
         var client = new FakeHiveMQClient();

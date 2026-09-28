@@ -422,7 +422,8 @@ public sealed class SparkplugEdgeNode : IDisposable
 
                 return payload;
             },
-            cancellationToken);
+            cancellationToken,
+            resetSequence: true);
     }
 
     /// <summary>
@@ -801,14 +802,21 @@ public sealed class SparkplugEdgeNode : IDisposable
         return this.client.PublishAsync(message, cancellationToken);
     }
 
+    // resetSequence: an NBIRTH (including a rebirth) always starts the sequence again at 0 (tck-id-topics-nbirth-seq-num).
     private async Task<PublishResult> PublishPayloadAndAdvanceSequenceAsync(
         SparkplugTopic topic,
         Func<int, Payload> buildPayload,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool resetSequence = false)
     {
         await this.publishSequenceLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            if (resetSequence)
+            {
+                this.sequenceNumber = 0;
+            }
+
             var payload = buildPayload(this.sequenceNumber);
             var result = await this.PublishPayloadAsync(topic, payload, cancellationToken).ConfigureAwait(false);
             this.sequenceNumber = SparkplugPayloadEncoder.NextSequenceNumber(this.sequenceNumber);
