@@ -369,6 +369,26 @@ public class SparkplugEdgeNodeTest
     }
 
     [Test]
+    public async Task NDEATH_Payload_Has_Only_BdSeq_Metric_And_No_Sequence_Number()
+    {
+        var client = new FakeHiveMQClient();
+        var options = new SparkplugEdgeNodeOptions { GroupId = "g1", EdgeNodeId = "n1" };
+        var node = new SparkplugEdgeNode(client, options);
+        await node.StartAsync().ConfigureAwait(false);
+        await node.PublishNodeDeathAsync().ConfigureAwait(false);
+        await node.StopAsync().ConfigureAwait(false);
+
+        var ndeaths = client.PublishedMessages.Where(m => m.Topic == "spBv1.0/g1/NDEATH/n1").ToList();
+        ndeaths.Should().HaveCount(2);
+        foreach (var ndeath in ndeaths)
+        {
+            var payload = SparkplugPayloadEncoder.Decode(ndeath.Payload!);
+            payload.HasSeq.Should().BeFalse();
+            payload.Metrics.Should().ContainSingle().Which.Name.Should().Be(SparkplugPayloadEncoder.BdSeqMetricName);
+        }
+    }
+
+    [Test]
     public async Task Second_StartAsync_After_Stop_Uses_Incremented_BdSeq()
     {
         var client = new FakeHiveMQClient();

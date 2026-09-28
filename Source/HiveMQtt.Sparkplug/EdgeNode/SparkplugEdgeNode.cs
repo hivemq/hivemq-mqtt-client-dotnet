@@ -84,9 +84,26 @@ public sealed class SparkplugEdgeNode : IDisposable
     private static (string Topic, byte[] Payload) BuildDeathLwtMessage(SparkplugEdgeNodeOptions options, ulong bdSeq)
     {
         var topic = SparkplugTopic.NodeDeath(options.GroupId!, options.EdgeNodeId!, options.SparkplugNamespace).Build();
-        var payload = SparkplugPayloadEncoder.CreatePayload(timestamp: 0, sequenceNumber: 0);
-        payload.Metrics.Insert(0, SparkplugPayloadEncoder.CreateBdSeqMetric(bdSeq));
+        var payload = CreateNodeDeathPayload(bdSeq, timestamp: null);
         return (topic, SparkplugPayloadEncoder.Encode(payload));
+    }
+
+    // Sparkplug B 3.0: an NDEATH payload carries only the bdSeq metric and MUST NOT include a sequence number
+    // (tck-id-payloads-ndeath-seq, tck-id-topics-ndeath-seq, tck-id-topics-ndeath-payload).
+    private static Payload CreateNodeDeathPayload(ulong? bdSeq, ulong? timestamp)
+    {
+        var payload = new Payload();
+        if (timestamp.HasValue)
+        {
+            payload.Timestamp = timestamp.Value;
+        }
+
+        if (bdSeq.HasValue)
+        {
+            payload.Metrics.Add(SparkplugPayloadEncoder.CreateBdSeqMetric(bdSeq.Value));
+        }
+
+        return payload;
     }
 
     /// <summary>
@@ -275,8 +292,7 @@ public sealed class SparkplugEdgeNode : IDisposable
                 // Host may have gone offline during NBIRTH publish; do not leave started=true with host offline.
                 if (this.UsesPrimaryHost && !this.isPrimaryHostOnline)
                 {
-                    var deathPayload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), this.sequenceNumber);
-                    deathPayload.Metrics.Insert(0, SparkplugPayloadEncoder.CreateBdSeqMetric(sessionBdSeq));
+                    var deathPayload = CreateNodeDeathPayload(sessionBdSeq, SparkplugPayloadEncoder.GetCurrentTimestamp());
                     await this.PublishPayloadAsync(
                         SparkplugTopic.NodeDeath(this.options.GroupId!, this.options.EdgeNodeId!, this.options.SparkplugNamespace),
                         deathPayload,
@@ -341,11 +357,7 @@ public sealed class SparkplugEdgeNode : IDisposable
             await this.publishSequenceLock.WaitAsync(cancellationToken).ConfigureAwait(false);
             try
             {
-                var deathPayload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), this.sequenceNumber);
-                if (this.currentSessionBdSeq.HasValue)
-                {
-                    deathPayload.Metrics.Insert(0, SparkplugPayloadEncoder.CreateBdSeqMetric(this.currentSessionBdSeq.Value));
-                }
+                var deathPayload = CreateNodeDeathPayload(this.currentSessionBdSeq, SparkplugPayloadEncoder.GetCurrentTimestamp());
 
                 await this.PublishPayloadAsync(SparkplugTopic.NodeDeath(this.options.GroupId!, this.options.EdgeNodeId!, this.options.SparkplugNamespace), deathPayload, cancellationToken).ConfigureAwait(false);
                 this.sequenceNumber = SparkplugPayloadEncoder.NextSequenceNumber(this.sequenceNumber);
@@ -450,16 +462,7 @@ public sealed class SparkplugEdgeNode : IDisposable
         var topic = SparkplugTopic.NodeDeath(this.options.GroupId!, this.options.EdgeNodeId!, this.options.SparkplugNamespace);
         return this.PublishPayloadAndAdvanceSequenceAsync(
             topic,
-            seq =>
-            {
-                var payload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), seq);
-                if (this.currentSessionBdSeq.HasValue)
-                {
-                    payload.Metrics.Insert(0, SparkplugPayloadEncoder.CreateBdSeqMetric(this.currentSessionBdSeq.Value));
-                }
-
-                return payload;
-            },
+            _ => CreateNodeDeathPayload(this.currentSessionBdSeq, SparkplugPayloadEncoder.GetCurrentTimestamp()),
             cancellationToken);
     }
 
@@ -731,11 +734,7 @@ public sealed class SparkplugEdgeNode : IDisposable
                     await this.publishSequenceLock.WaitAsync().ConfigureAwait(false);
                     try
                     {
-                        var deathPayload = SparkplugPayloadEncoder.CreatePayload(SparkplugPayloadEncoder.GetCurrentTimestamp(), this.sequenceNumber);
-                        if (this.currentSessionBdSeq.HasValue)
-                        {
-                            deathPayload.Metrics.Insert(0, SparkplugPayloadEncoder.CreateBdSeqMetric(this.currentSessionBdSeq.Value));
-                        }
+                        var deathPayload = CreateNodeDeathPayload(this.currentSessionBdSeq, SparkplugPayloadEncoder.GetCurrentTimestamp());
 
                         await this.PublishPayloadAsync(
                             SparkplugTopic.NodeDeath(this.options.GroupId!, this.options.EdgeNodeId!, this.options.SparkplugNamespace),
