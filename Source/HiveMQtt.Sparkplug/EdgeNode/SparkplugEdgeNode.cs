@@ -45,6 +45,7 @@ public sealed class SparkplugEdgeNode : IDisposable
     private ulong bdSeq;
     private ulong? currentSessionBdSeq;
     private bool started;
+    private bool ownsDeathLwt;
     private bool disposed;
     private TaskCompletionSource<bool>? primaryHostOnlineWait;
     private long? lastPrimaryHostOnlineTimestamp;
@@ -191,10 +192,15 @@ public sealed class SparkplugEdgeNode : IDisposable
             this.bdSeq++;
             Interlocked.Exchange(ref this.primaryHostOfflineShutdownQueued, 0);
 
-            if (this.ownsClient && this.options.UseDeathLwt && this.client.Options is { } opts && opts.LastWillAndTestament is null && !string.IsNullOrWhiteSpace(this.options.GroupId) && !string.IsNullOrWhiteSpace(this.options.EdgeNodeId))
+            // The Will is registered on every start with this session's bdSeq so that it always matches the NBIRTH.
+            // (Setting it only once pinned the first attempt's bdSeq: after a failed connect and a retry, NBIRTH carried
+            // bdSeq 1 or more while the Will still carried 0, and Host Applications ignored the resulting NDEATH.)
+            // A Will supplied by the caller is left untouched.
+            if (this.ownsClient && this.options.UseDeathLwt && this.client.Options is { } opts && (opts.LastWillAndTestament is null || this.ownsDeathLwt) && !string.IsNullOrWhiteSpace(this.options.GroupId) && !string.IsNullOrWhiteSpace(this.options.EdgeNodeId))
             {
                 var (topic, payload) = BuildDeathLwtMessage(this.options, sessionBdSeq);
                 opts.LastWillAndTestament = new LastWillAndTestament(topic, payload, QualityOfService.AtLeastOnceDelivery, retain: false);
+                this.ownsDeathLwt = true;
             }
 
             if (!this.client.IsConnected())

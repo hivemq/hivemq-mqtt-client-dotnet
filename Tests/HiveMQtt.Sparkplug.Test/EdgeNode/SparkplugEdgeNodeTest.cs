@@ -333,6 +333,29 @@ public class SparkplugEdgeNodeTest
     }
 
     [Test]
+    public async Task StartAsync_Retry_Registers_Death_Lwt_With_The_Current_Session_BdSeq()
+    {
+        // Nothing listens on port 1: every start attempt fails to connect, as when the broker is not up yet.
+        var clientOptions = new HiveMQClientOptionsBuilder()
+            .WithBroker("127.0.0.1")
+            .WithPort(1)
+            .WithClientId("edge-lwt-retry")
+            .Build();
+        var options = new SparkplugEdgeNodeOptions { GroupId = "g1", EdgeNodeId = "n1", UseDeathLwt = true };
+        var node = new SparkplugEdgeNode(clientOptions, options);
+
+        for (var attempt = 0UL; attempt < 3; attempt++)
+        {
+            var act = () => node.StartAsync();
+            await act.Should().ThrowAsync<Exception>().ConfigureAwait(false);
+
+            var will = SparkplugPayloadEncoder.Decode(clientOptions.LastWillAndTestament!.Payload!);
+            will.HasSeq.Should().BeFalse();
+            will.Metrics.Should().ContainSingle().Which.LongValue.Should().Be(attempt);
+        }
+    }
+
+    [Test]
     public async Task StartAsync_Sets_CurrentSessionBdSeq_And_NBIRTH_Contains_BdSeq_Metric()
     {
         var client = new FakeHiveMQClient();
