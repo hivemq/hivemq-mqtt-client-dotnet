@@ -22,6 +22,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using HiveMQtt.Client;
 using HiveMQtt.Client.Options;
+using HiveMQtt.MQTT5.ReasonCodes;
 using HiveMQtt.MQTT5.Types;
 using HiveMQtt.Sparkplug.EdgeNode;
 using HiveMQtt.Sparkplug.HostApplication;
@@ -103,6 +104,67 @@ public class SparkplugEdgeNodeTest
 
         node.IsConnected.Should().BeFalse();
         client.PublishedMessages.Should().Contain(m => m.Topic == "spBv1.0/g1/NDEATH/n1");
+    }
+
+    [Test]
+    public async Task Publishes_NDeath_With_QoS1_And_All_Other_Messages_With_QoS0()
+    {
+        var client = new FakeHiveMQClient();
+        var options = new SparkplugEdgeNodeOptions { GroupId = "g1", EdgeNodeId = "n1" };
+        var node = new SparkplugEdgeNode(client, options);
+        var metrics = new[] { SparkplugMetricBuilder.Create("x").WithInt32Value(42).Build() };
+
+        await node.StartAsync().ConfigureAwait(false);
+        await node.PublishNodeDataAsync(metrics).ConfigureAwait(false);
+        await node.PublishDeviceBirthAsync("d1", metrics).ConfigureAwait(false);
+        await node.PublishDeviceDataAsync("d1", metrics).ConfigureAwait(false);
+        await node.PublishDeviceDeathAsync("d1").ConfigureAwait(false);
+        await node.StopAsync().ConfigureAwait(false);
+
+        client.PublishedMessages.Should().HaveCount(6);
+        client.PublishedMessages.Where(m => m.Topic != "spBv1.0/g1/NDEATH/n1")
+            .Should().OnlyContain(m => m.QoS == QualityOfService.AtMostOnceDelivery);
+        client.PublishedMessages.Single(m => m.Topic == "spBv1.0/g1/NDEATH/n1").QoS
+            .Should().Be(QualityOfService.AtLeastOnceDelivery);
+    }
+
+    [Test]
+    public async Task PublishNodeBirthAsync_Rebirth_Restarts_Sequence_At_Zero()
+    {
+        var client = new FakeHiveMQClient();
+        var options = new SparkplugEdgeNodeOptions { GroupId = "g1", EdgeNodeId = "n1" };
+        var node = new SparkplugEdgeNode(client, options);
+        var metrics = new[] { SparkplugMetricBuilder.Create("x").WithInt32Value(42).Build() };
+        await node.StartAsync().ConfigureAwait(false);
+        await node.PublishNodeDataAsync(metrics).ConfigureAwait(false);
+        await node.PublishNodeDataAsync(metrics).ConfigureAwait(false);
+        client.PublishedMessages.Clear();
+
+        await node.PublishNodeBirthAsync(metrics).ConfigureAwait(false);
+        await node.PublishNodeDataAsync(metrics).ConfigureAwait(false);
+
+        SparkplugPayloadEncoder.Decode(client.PublishedMessages[0].Payload!).Seq.Should().Be(0UL);
+        SparkplugPayloadEncoder.Decode(client.PublishedMessages[1].Payload!).Seq.Should().Be(1UL);
+        node.SequenceNumber.Should().Be(2);
+    }
+
+    [Test]
+    public async Task NBIRTH_Metrics_Added_By_The_Node_Carry_Timestamps()
+    {
+        var client = new FakeHiveMQClient();
+        var options = new SparkplugEdgeNodeOptions { GroupId = "g1", EdgeNodeId = "n1" };
+        var node = new SparkplugEdgeNode(client, options);
+        await node.StartAsync().ConfigureAwait(false);
+        await node.PublishNodeBirthAsync(null).ConfigureAwait(false);
+
+        var births = client.PublishedMessages.Where(m => m.Topic == "spBv1.0/g1/NBIRTH/n1").ToList();
+        births.Should().HaveCount(2);
+        foreach (var birth in births)
+        {
+            var metrics = SparkplugPayloadEncoder.Decode(birth.Payload!).Metrics;
+            metrics.Select(m => m.Name).Should().Contain(new[] { SparkplugPayloadEncoder.BdSeqMetricName, SparkplugPayloadEncoder.NodeControlRebirthMetricName });
+            metrics.Should().OnlyContain(m => m.HasTimestamp && m.Timestamp > 0);
+        }
     }
 
     [Test]
@@ -311,6 +373,29 @@ public class SparkplugEdgeNodeTest
     }
 
     [Test]
+    public async Task StartAsync_Retry_Registers_Death_Lwt_With_The_Current_Session_BdSeq()
+    {
+        // Nothing listens on port 1: every start attempt fails to connect, as when the broker is not up yet.
+        var clientOptions = new HiveMQClientOptionsBuilder()
+            .WithBroker("127.0.0.1")
+            .WithPort(1)
+            .WithClientId("edge-lwt-retry")
+            .Build();
+        var options = new SparkplugEdgeNodeOptions { GroupId = "g1", EdgeNodeId = "n1", UseDeathLwt = true };
+        var node = new SparkplugEdgeNode(clientOptions, options);
+
+        for (var attempt = 0UL; attempt < 3; attempt++)
+        {
+            var act = () => node.StartAsync();
+            await act.Should().ThrowAsync<Exception>().ConfigureAwait(false);
+
+            var will = SparkplugPayloadEncoder.Decode(clientOptions.LastWillAndTestament!.Payload!);
+            will.HasSeq.Should().BeFalse();
+            will.Metrics.Should().ContainSingle().Which.LongValue.Should().Be(attempt);
+        }
+    }
+
+    [Test]
     public async Task StartAsync_Sets_CurrentSessionBdSeq_And_NBIRTH_Contains_BdSeq_Metric()
     {
         var client = new FakeHiveMQClient();
@@ -344,6 +429,26 @@ public class SparkplugEdgeNodeTest
         var bdSeqMetric = payload.Metrics.FirstOrDefault(m => m.Name == SparkplugPayloadEncoder.BdSeqMetricName);
         bdSeqMetric.Should().NotBeNull();
         bdSeqMetric!.LongValue.Should().Be(0UL);
+    }
+
+    [Test]
+    public async Task NDEATH_Payload_Has_Only_BdSeq_Metric_And_No_Sequence_Number()
+    {
+        var client = new FakeHiveMQClient();
+        var options = new SparkplugEdgeNodeOptions { GroupId = "g1", EdgeNodeId = "n1" };
+        var node = new SparkplugEdgeNode(client, options);
+        await node.StartAsync().ConfigureAwait(false);
+        await node.PublishNodeDeathAsync().ConfigureAwait(false);
+        await node.StopAsync().ConfigureAwait(false);
+
+        var ndeaths = client.PublishedMessages.Where(m => m.Topic == "spBv1.0/g1/NDEATH/n1").ToList();
+        ndeaths.Should().HaveCount(2);
+        foreach (var ndeath in ndeaths)
+        {
+            var payload = SparkplugPayloadEncoder.Decode(ndeath.Payload!);
+            payload.HasSeq.Should().BeFalse();
+            payload.Metrics.Should().ContainSingle().Which.Name.Should().Be(SparkplugPayloadEncoder.BdSeqMetricName);
+        }
     }
 
     [Test]
@@ -499,6 +604,7 @@ public class SparkplugEdgeNodeTest
         node.IsPrimaryHostOnline.Should().BeFalse();
         client.PublishedMessages.Should().Contain(m => m.Topic == "spBv1.0/g1/NDEATH/n1");
         client.IsConnected().Should().BeFalse();
+        client.LastDisconnectOptions!.ReasonCode.Should().Be(DisconnectReasonCode.DisconnectWithWillMessage);
     }
 
     [Test]
