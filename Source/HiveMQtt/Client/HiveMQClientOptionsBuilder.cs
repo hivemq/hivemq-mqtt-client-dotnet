@@ -20,8 +20,11 @@ using System.Collections.Generic;
 using System.Net;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
+using HiveMQtt.Client.Internal;
 using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.Types;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 /// <summary>
 /// A builder for HiveMQClientOptions.
@@ -63,8 +66,24 @@ using HiveMQtt.MQTT5.Types;
 /// </summary>
 public class HiveMQClientOptionsBuilder
 {
-    private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
     private readonly HiveMQClientOptions options = new();
+
+    private InternalLogger Logger => InternalLogger.For<HiveMQClientOptionsBuilder>(this.options.LoggerFactory);
+
+    /// <summary>
+    /// Sets the <see cref="ILoggerFactory"/> that HiveMQtt uses for all of its internal logging.
+    /// <para>
+    /// When not set, HiveMQtt logs nothing (<see cref="NullLoggerFactory"/>).  Call this before the
+    /// other <c>With...</c> methods if you also want this builder's own validation messages logged.
+    /// </para>
+    /// </summary>
+    /// <param name="loggerFactory">The logger factory to use.  <see langword="null"/> disables logging.</param>
+    /// <returns>The HiveMQClientOptionsBuilder instance.</returns>
+    public HiveMQClientOptionsBuilder WithLoggerFactory(ILoggerFactory? loggerFactory)
+    {
+        this.options.LoggerFactory = loggerFactory ?? NullLoggerFactory.Instance;
+        return this;
+    }
 
     /// <summary>
     /// Sets the address of the broker to connect to.
@@ -247,7 +266,7 @@ public class HiveMQClientOptionsBuilder
     {
         if (clientId.Length is < 0 or > 65535)
         {
-            Logger.Error("Client Id must be between 0 and 65535 characters.");
+            this.Logger.Error("Client Id must be between 0 and 65535 characters.");
             throw new ArgumentException("Client Id must be between 0 and 65535 characters.");
         }
 
@@ -338,18 +357,18 @@ public class HiveMQClientOptionsBuilder
             }
             catch (UnauthorizedAccessException)
             {
-                Logger.Error("WithClientCertificate: File exists but is not readable due to access permissions.");
+                this.Logger.Error("WithClientCertificate: File exists but is not readable due to access permissions.");
                 throw;
             }
             catch (IOException)
             {
-                Logger.Error("WithClientCertificate: An I/O error occurred while trying to read the file.");
+                this.Logger.Error("WithClientCertificate: An I/O error occurred while trying to read the file.");
                 throw;
             }
         }
         else
         {
-            Logger.Error("WithClientCertificate: The specified client certificate file does not exist.");
+            this.Logger.Error("WithClientCertificate: The specified client certificate file does not exist.");
             throw new FileNotFoundException($"The specified client certificate file does not exist: {clientCertificatePath}");
         }
     }
@@ -390,18 +409,18 @@ public class HiveMQClientOptionsBuilder
             }
             catch (UnauthorizedAccessException)
             {
-                Logger.Error("WithClientCertificate: File exists but is not readable due to access permissions.");
+                this.Logger.Error("WithClientCertificate: File exists but is not readable due to access permissions.");
                 throw;
             }
             catch (IOException)
             {
-                Logger.Error("WithClientCertificate: An I/O error occurred while trying to read the file.");
+                this.Logger.Error("WithClientCertificate: An I/O error occurred while trying to read the file.");
                 throw;
             }
         }
         else
         {
-            Logger.Error("WithClientCertificate: The specified client certificate file does not exist.");
+            this.Logger.Error("WithClientCertificate: The specified client certificate file does not exist.");
             throw new FileNotFoundException($"The specified client certificate file does not exist: {clientCertificatePath}");
         }
     }
@@ -466,7 +485,7 @@ public class HiveMQClientOptionsBuilder
     {
         if (method.Length is < 1 or > 65535)
         {
-            Logger.Error("Authentication method must be between 1 and 65535 characters.");
+            this.Logger.Error("Authentication method must be between 1 and 65535 characters.");
             throw new ArgumentException("Authentication method must be between 1 and 65535 characters.");
         }
 
@@ -504,13 +523,13 @@ public class HiveMQClientOptionsBuilder
     {
         if (key.Length is < 1 or > 65535)
         {
-            Logger.Error("User property key must be between 1 and 65535 characters.");
+            this.Logger.Error("User property key must be between 1 and 65535 characters.");
             throw new ArgumentException("User property key must be between 1 and 65535 characters.");
         }
 
         if (value.Length is < 1 or > 65535)
         {
-            Logger.Error("User property value must be between 1 and 65535 characters.");
+            this.Logger.Error("User property value must be between 1 and 65535 characters.");
             throw new ArgumentException("User property value must be between 1 and 65535 characters.");
         }
 
@@ -651,7 +670,7 @@ public class HiveMQClientOptionsBuilder
     {
         if (username.Length is < 0 or > 65535)
         {
-            Logger.Error("Username must be between 0 and 65535 characters.");
+            this.Logger.Error("Username must be between 0 and 65535 characters.");
             throw new ArgumentException("Username must be between 0 and 65535 characters.");
         }
 
@@ -692,7 +711,7 @@ public class HiveMQClientOptionsBuilder
 
         if (password.Length > 65535)
         {
-            Logger.Error("Password must be between 0 and 65535 characters.");
+            this.Logger.Error("Password must be between 0 and 65535 characters.");
             throw new ArgumentException("Password must be between 0 and 65535 characters.");
         }
 
@@ -735,7 +754,7 @@ public class HiveMQClientOptionsBuilder
 
         if (password.Length is < 0 or > 65535)
         {
-            Logger.Error("Password must be between 0 and 65535 characters.");
+            this.Logger.Error("Password must be between 0 and 65535 characters.");
             throw new ArgumentException("Password must be between 0 and 65535 characters.");
         }
 

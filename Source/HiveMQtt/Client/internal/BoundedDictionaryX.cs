@@ -4,6 +4,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// A finite (bounded) dictionary that can be awaited on for slots to become available.
@@ -13,8 +14,6 @@ using System.Threading.Tasks;
 public class BoundedDictionaryX<TKey, TVal> : IDisposable
     where TKey : notnull
 {
-    private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
-
     /// <summary>
     /// The semaphore used to signal when items are enqueued.
     /// </summary>
@@ -30,12 +29,16 @@ public class BoundedDictionaryX<TKey, TVal> : IDisposable
     /// </summary>
     public int Capacity { get; private set; }
 
+    private InternalLogger Logger { get; }
+
     /// <summary>
     /// Initializes a new instance of the <see cref="BoundedDictionaryX{I, T}"/> class.
     /// </summary>
     /// <param name="capacity">The capacity of the queue.</param>
-    public BoundedDictionaryX(int capacity)
+    /// <param name="loggerFactory">The logger factory used for internal logging.  Optional.</param>
+    public BoundedDictionaryX(int capacity, ILoggerFactory? loggerFactory = null)
     {
+        this.Logger = InternalLogger.For<BoundedDictionaryX<TKey, TVal>>(loggerFactory);
         this.Capacity = capacity;
         this.semaphore = new SemaphoreSlim(capacity);
         this.dictionary = new ConcurrentDictionary<TKey, TVal>();
@@ -52,8 +55,8 @@ public class BoundedDictionaryX<TKey, TVal> : IDisposable
     {
         bool errorDetected;
 
-        Logger.Trace("Adding item {0}", key);
-        Logger.Trace("Open slots: {0}  Dictionary Count: {1}", this.semaphore.CurrentCount, this.dictionary.Count);
+        this.Logger.Trace("Adding item {0}", key);
+        this.Logger.Trace("Open slots: {0}  Dictionary Count: {1}", this.semaphore.CurrentCount, this.dictionary.Count);
 
         // Wait for an available slot
         await this.semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -66,19 +69,19 @@ public class BoundedDictionaryX<TKey, TVal> : IDisposable
             }
             else
             {
-                Logger.Warn("Duplicate key: {0}", key);
+                this.Logger.Warn("Duplicate key: {0}", key);
 
                 errorDetected = true;
             }
         }
         catch (ArgumentNullException ex)
         {
-            Logger.Warn("ArgumentNull Exception: {0}", ex);
+            this.Logger.Warn("ArgumentNull Exception: {0}", ex);
             errorDetected = true;
         }
         catch (OverflowException ex)
         {
-            Logger.Warn("Overflow Exception: {0}", ex);
+            this.Logger.Warn("Overflow Exception: {0}", ex);
             errorDetected = true;
         }
 
@@ -99,8 +102,8 @@ public class BoundedDictionaryX<TKey, TVal> : IDisposable
     /// <returns><c>true</c> if the item was removed; otherwise, <c>false</c>.</returns>
     public bool Remove(TKey key, out TVal value)
     {
-        Logger.Trace("Removing item {0}", key);
-        Logger.Trace("Open slots: {0}  Dictionary Count: {1}", this.semaphore.CurrentCount, this.dictionary.Count);
+        this.Logger.Trace("Removing item {0}", key);
+        this.Logger.Trace("Open slots: {0}  Dictionary Count: {1}", this.semaphore.CurrentCount, this.dictionary.Count);
 
         try
         {
@@ -113,16 +116,16 @@ public class BoundedDictionaryX<TKey, TVal> : IDisposable
             }
             else
             {
-                Logger.Warn("Key not found: {0}", key);
+                this.Logger.Warn("Key not found: {0}", key);
             }
         }
         catch (ArgumentNullException ex)
         {
-            Logger.Warn("ArgumentNull Exception: {0}", ex);
+            this.Logger.Warn("ArgumentNull Exception: {0}", ex);
         }
         catch (OverflowException ex)
         {
-            Logger.Warn("Overflow Exception: {0}", ex);
+            this.Logger.Warn("Overflow Exception: {0}", ex);
         }
 
         value = default!;
@@ -178,15 +181,15 @@ public class BoundedDictionaryX<TKey, TVal> : IDisposable
         }
         catch (ArgumentNullException ex)
         {
-            Logger.Warn("ArgumentNull Exception: {0}", ex);
+            this.Logger.Warn("ArgumentNull Exception: {0}", ex);
         }
         catch (OverflowException ex)
         {
-            Logger.Warn("Overflow Exception: {0}", ex);
+            this.Logger.Warn("Overflow Exception: {0}", ex);
         }
         catch (Exception ex)
         {
-            Logger.Warn("Exception: {0}", ex);
+            this.Logger.Warn("Exception: {0}", ex);
         }
 
         return false;

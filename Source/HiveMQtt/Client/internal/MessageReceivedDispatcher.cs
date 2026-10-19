@@ -4,14 +4,13 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using HiveMQtt.Client.Events;
+using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// Serializes QoS 1/2 <see cref="HiveMQClient.OnMessageReceived"/> handler invocation in FIFO order.
 /// </summary>
 internal sealed class MessageReceivedDispatcher : IDisposable
 {
-    private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
-
     private static readonly AsyncLocal<bool> IsDispatchThread = new();
 
     private readonly AwaitableQueueX<MessageReceivedDispatchItem> queue = new();
@@ -21,8 +20,13 @@ internal sealed class MessageReceivedDispatcher : IDisposable
     private int disposed;
     private int inFlight;
 
-    public MessageReceivedDispatcher() =>
+    private InternalLogger Logger { get; }
+
+    public MessageReceivedDispatcher(ILoggerFactory? loggerFactory = null)
+    {
+        this.Logger = InternalLogger.For<MessageReceivedDispatcher>(loggerFactory);
         this.consumerTask = Task.Run(() => this.ConsumerLoopAsync(this.cts.Token));
+    }
 
     /// <summary>
     /// Gets a value indicating whether the current thread is executing a message dispatch handler.
@@ -83,7 +87,7 @@ internal sealed class MessageReceivedDispatcher : IDisposable
         {
             if (Environment.TickCount64 >= deadline)
             {
-                Logger.Warn("MessageReceivedDispatcher quiesce timed out waiting for in-flight handler.");
+                this.Logger.Warn("MessageReceivedDispatcher quiesce timed out waiting for in-flight handler.");
                 break;
             }
 
@@ -111,14 +115,14 @@ internal sealed class MessageReceivedDispatcher : IDisposable
         }
         catch (Exception ex)
         {
-            Logger.Warn($"MessageReceivedDispatcher dispose wait failed: {ex.Message}");
+            this.Logger.Warn($"MessageReceivedDispatcher dispose wait failed: {ex.Message}");
         }
 
         this.cts.Dispose();
         this.queue.Dispose();
     }
 
-    private static void DispatchItem(MessageReceivedDispatchItem item)
+    private void DispatchItem(MessageReceivedDispatchItem item)
     {
 #pragma warning disable IDE0301 // Collection initialization - Array.Empty is required for StyleCop SA1010
         var subscriptionHandlers =
@@ -127,7 +131,7 @@ internal sealed class MessageReceivedDispatcher : IDisposable
 
         if (item.GlobalHandlers.Count == 0 && subscriptionHandlers.Count == 0)
         {
-            Logger.Warn(
+            this.Logger.Warn(
                 $"Lost Application Message ({item.EventArgs.PublishMessage.Topic}): No global or subscription message handler found.  Register an event handler (before Subscribing) to receive all messages incoming.");
             return;
         }
@@ -140,7 +144,7 @@ internal sealed class MessageReceivedDispatcher : IDisposable
             }
             catch (Exception ex)
             {
-                Logger.Error($"OnMessageReceived Handler exception: {ex.Message}");
+                this.Logger.Error($"OnMessageReceived Handler exception: {ex.Message}");
             }
         }
 
@@ -152,7 +156,7 @@ internal sealed class MessageReceivedDispatcher : IDisposable
             }
             catch (Exception ex)
             {
-                Logger.Error(
+                this.Logger.Error(
                     $"per-subscription MessageReceivedEventLauncher faulted ({item.EventArgs.PublishMessage.Topic}): {ex.Message}");
             }
         }
@@ -178,7 +182,7 @@ internal sealed class MessageReceivedDispatcher : IDisposable
                 Interlocked.Increment(ref this.inFlight);
                 try
                 {
-                    DispatchItem(item);
+                    this.DispatchItem(item);
                 }
                 finally
                 {

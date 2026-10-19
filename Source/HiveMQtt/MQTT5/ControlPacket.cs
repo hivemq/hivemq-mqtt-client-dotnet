@@ -19,6 +19,7 @@ using System;
 using System.Buffers;
 using System.IO;
 using System.Text;
+using HiveMQtt.Client.Internal;
 using HiveMQtt.MQTT5.Exceptions;
 using HiveMQtt.MQTT5.Types;
 
@@ -27,7 +28,11 @@ using HiveMQtt.MQTT5.Types;
 /// </summary>
 public abstract class ControlPacket
 {
-    internal static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+    /// <summary>
+    /// Gets or sets the logger used by this packet.  Assigned by the decoder (for inbound
+    /// packets) or by the client (for outbound packets).  Defaults to a no-op logger.
+    /// </summary>
+    internal InternalLogger Logger { get; set; }
 
     public ControlPacket() => this.Properties = new MQTT5Properties();
 

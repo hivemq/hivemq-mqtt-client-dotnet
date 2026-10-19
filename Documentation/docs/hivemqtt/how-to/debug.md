@@ -19,19 +19,20 @@ This level of detail is invaluable for debugging complex issues.
 
 ## Quick Setup
 
-Create an `NLog.config` file in your application directory:
+Hand the client an `ILoggerFactory` configured for `Trace`:
 
-```xml
-<?xml version="1.0" encoding="utf-8" ?>
-<nlog xmlns="http://www.nlog-project.org/schemas/NLog.xsd"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <targets>
-    <target name="logconsole" xsi:type="Console" />
-  </targets>
-  <rules>
-    <logger name="HiveMQtt.*" minlevel="Trace" writeTo="logconsole" />
-  </rules>
-</nlog>
+```csharp
+using Microsoft.Extensions.Logging;
+
+using var loggerFactory = LoggerFactory.Create(builder =>
+    builder.AddSimpleConsole().SetMinimumLevel(LogLevel.Trace));
+
+var options = new HiveMQClientOptionsBuilder()
+    .WithBroker("127.0.0.1")
+    .WithLoggerFactory(loggerFactory)
+    .Build();
+
+var client = new HiveMQClient(options);
 ```
 
 See [Configure Logging](/docs/hivemqtt/how-to/configure-logging) for more detailed configuration options.

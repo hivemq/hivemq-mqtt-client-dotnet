@@ -15,16 +15,32 @@
  */
 namespace HiveMQtt.Client;
 
+using HiveMQtt.Client.Internal;
 using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.ReasonCodes;
+using Microsoft.Extensions.Logging;
 
 public class DisconnectOptionsBuilder
 {
-    private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
-
     private readonly DisconnectOptions options;
 
     public DisconnectOptionsBuilder() => this.options = new DisconnectOptions();
+
+    private InternalLogger Logger { get; set; }
+
+    /// <summary>
+    /// Sets the <see cref="ILoggerFactory"/> used for this builder's validation messages.
+    /// <para>
+    /// When not set, this builder logs nothing.  Validation failures still throw as before.
+    /// </para>
+    /// </summary>
+    /// <param name="loggerFactory">The logger factory to use.  <see langword="null"/> disables logging.</param>
+    /// <returns>The builder instance.</returns>
+    public DisconnectOptionsBuilder WithLoggerFactory(ILoggerFactory? loggerFactory)
+    {
+        this.Logger = InternalLogger.For<DisconnectOptionsBuilder>(loggerFactory);
+        return this;
+    }
 
     /// <summary>
     /// Sets the session expiry interval for the disconnect.
@@ -59,13 +75,13 @@ public class DisconnectOptionsBuilder
     {
         if (reasonString is null)
         {
-            Logger.Error("Reason string cannot be null.");
+            this.Logger.Error("Reason string cannot be null.");
             throw new ArgumentNullException(nameof(reasonString));
         }
 
         if (reasonString.Length is < 1 or > 65535)
         {
-            Logger.Error("Reason string must be between 1 and 65535 characters.");
+            this.Logger.Error("Reason string must be between 1 and 65535 characters.");
             throw new ArgumentException("Reason string must be between 1 and 65535 characters.");
         }
 
@@ -85,25 +101,25 @@ public class DisconnectOptionsBuilder
     {
         if (key is null)
         {
-            Logger.Error("User property key cannot be null.");
+            this.Logger.Error("User property key cannot be null.");
             throw new ArgumentNullException(nameof(key));
         }
 
         if (value is null)
         {
-            Logger.Error("User property value cannot be null.");
+            this.Logger.Error("User property value cannot be null.");
             throw new ArgumentNullException(nameof(value));
         }
 
         if (key.Length is < 1 or > 65535)
         {
-            Logger.Error("User property key must be between 1 and 65535 characters.");
+            this.Logger.Error("User property key must be between 1 and 65535 characters.");
             throw new ArgumentException("User property key must be between 1 and 65535 characters.");
         }
 
         if (value.Length is < 1 or > 65535)
         {
-            Logger.Error("User property value must be between 1 and 65535 characters.");
+            this.Logger.Error("User property value must be between 1 and 65535 characters.");
             throw new ArgumentException("User property value must be between 1 and 65535 characters.");
         }
 
@@ -124,25 +140,25 @@ public class DisconnectOptionsBuilder
         {
             if (property.Key is null)
             {
-                Logger.Error("User property key cannot be null.");
+                this.Logger.Error("User property key cannot be null.");
                 throw new ArgumentNullException(nameof(properties));
             }
 
             if (property.Value is null)
             {
-                Logger.Error("User property value cannot be null.");
+                this.Logger.Error("User property value cannot be null.");
                 throw new ArgumentNullException(nameof(properties));
             }
 
             if (property.Key.Length is < 1 or > 65535)
             {
-                Logger.Error("User property key must be between 1 and 65535 characters.");
+                this.Logger.Error("User property key must be between 1 and 65535 characters.");
                 throw new ArgumentException("User property key must be between 1 and 65535 characters.");
             }
 
             if (property.Value.Length is < 1 or > 65535)
             {
-                Logger.Error("User property value must be between 1 and 65535 characters.");
+                this.Logger.Error("User property value must be between 1 and 65535 characters.");
                 throw new ArgumentException("User property value must be between 1 and 65535 characters.");
             }
 

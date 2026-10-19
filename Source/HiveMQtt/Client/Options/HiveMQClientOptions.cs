@@ -23,17 +23,22 @@ using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using HiveMQtt.Client;
 using HiveMQtt.Client.Exceptions;
+using HiveMQtt.Client.Internal;
 using HiveMQtt.MQTT5.Types;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 /// <summary>
 /// A class to manage the MQTT options available in the Client.
 /// </summary>
 public class HiveMQClientOptions
 {
-    private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
-
     // The set of valid characters that a client identifier can consist of
     private readonly string clientIdCharset = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+#pragma warning disable IDE0032 // Use auto property: the setter normalizes null to NullLoggerFactory.
+    private ILoggerFactory loggerFactory = NullLoggerFactory.Instance;
+#pragma warning restore IDE0032
 
     public HiveMQClientOptions()
     {
@@ -55,6 +60,26 @@ public class HiveMQClientOptions
         this.AutomaticReconnect = false;
         this.ManualAckEnabled = false;
     }
+
+    /// <summary>
+    /// Gets or sets the <see cref="ILoggerFactory"/> used for all internal HiveMQtt logging.
+    ///
+    /// <para>
+    /// Defaults to <see cref="NullLoggerFactory.Instance"/> which discards all log messages.
+    /// Set this (or use <see cref="HiveMQClientOptionsBuilder.WithLoggerFactory"/>) to route
+    /// HiveMQtt's internal logs into your own logging pipeline.
+    /// </para>
+    /// </summary>
+    public ILoggerFactory LoggerFactory
+    {
+        get => this.loggerFactory;
+        set => this.loggerFactory = value ?? NullLoggerFactory.Instance;
+    }
+
+    /// <summary>
+    /// Gets the internal logger for this options instance.
+    /// </summary>
+    internal InternalLogger Logger => InternalLogger.For<HiveMQClientOptions>(this.LoggerFactory);
 
     // Client Identifier to be used in the Client.  Will be set automatically if not specified.
     public string? ClientId { get; set; }
@@ -341,7 +366,7 @@ public class HiveMQClientOptions
 
     public void ValidateOptions()
     {
-        Logger.Warn("HiveMQClientOptions.ValidateOptions() is deprecated.  Use Validate() instead.");
+        this.Logger.Warn("HiveMQClientOptions.ValidateOptions() is deprecated.  Use Validate() instead.");
         this.Validate();
     }
 
@@ -424,7 +449,7 @@ public class HiveMQClientOptions
 
         if (this.ClientId is not null && this.ClientId.Length > 23)
         {
-            Logger.Debug($"Client ID {this.ClientId} is longer than 23 characters.  This may cause issues with some brokers.");
+            this.Logger.Debug($"Client ID {this.ClientId} is longer than 23 characters.  This may cause issues with some brokers.");
         }
     }
 

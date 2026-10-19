@@ -71,7 +71,7 @@ public class SubscribePacket : ControlPacket
         if (this.OnComplete != null && this.OnComplete.GetInvocationList().Length > 0)
         {
             var eventArgs = new OnSubAckReceivedEventArgs(packet);
-            Logger.Trace("SubscribePacket.OnCompleteEventLauncher");
+            this.Logger.Trace("SubscribePacket.OnCompleteEventLauncher");
             _ = Task.Run(() => this.OnComplete?.Invoke(this, eventArgs)).ContinueWith(
                 t =>
                 {
@@ -79,10 +79,10 @@ public class SubscribePacket : ControlPacket
                     {
                         if (t.Exception is not null)
                         {
-                            Logger.Error("SubscribePacket.OnCompleteEventLauncher exception: " + t.Exception.Message);
+                            this.Logger.Error("SubscribePacket.OnCompleteEventLauncher exception: " + t.Exception.Message);
                             foreach (var ex in t.Exception.InnerExceptions)
                             {
-                                Logger.Error("SubscribePacket.OnCompleteEventLauncher inner exception: " + ex.Message);
+                                this.Logger.Error("SubscribePacket.OnCompleteEventLauncher inner exception: " + ex.Message);
                             }
                         }
                     }
