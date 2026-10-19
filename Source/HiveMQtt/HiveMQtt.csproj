@@ -69,7 +69,7 @@
   <ItemGroup>
     <PackageReference Include="System.IO.Pipelines" Version="10.0.12" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" />
-    <PackageReference Include="NLog" Version="6.2.1" />
+    <PackageReference Include="NLog" Version="6.2.2" />
   </ItemGroup>
 
   <ItemGroup>
